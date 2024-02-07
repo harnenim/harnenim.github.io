@@ -1526,7 +1526,7 @@ function onload() {
 		var previewContent = document.getElementById("previewContent");
 		addEL(viewFileList, "click", "span.preview", async (e) => {
 			e.preventDefault();
-			previewContent.innreHTML = "";
+			previewContent.innerHTML = "";
 			var url = e.srcElement.parentElement.href;
 			switch (e.srcElement.className.substring(8)) {
 				case "text": {
