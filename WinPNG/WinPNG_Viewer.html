@@ -1721,5 +1721,10 @@ function getImage(e) {
 		</div>
 	</div>
 </form>
+<script>
+if (clientInformation.appVersion.toLowerCase().indexOf("kakao") > 0) {
+	location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+}
+</script>
 </body>
 </html>
