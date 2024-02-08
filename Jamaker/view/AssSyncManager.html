@@ -1,0 +1,306 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>ASS 화면 싱크 매니저</title>
+	<script src="lib/jquery-3.2.1.min.js"></script>
+	<script src="lib/webview.js"></script>
+	<script src="lib/SubtitleObject.js"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css" />
+	<script>
+var sw = 0;
+
+function isDragToOrigin(x, y) {
+	var w = innerWidth - sw;
+	var h = innerHeight;
+	return (x*h + y*w) < (w * h);
+}
+function dragover(x, y) {
+	$(".hover").removeClass("hover");
+	if (isDragToOrigin(x, y)) {
+		$originTotal.addClass("hover");
+	} else {
+		$resultFrame.addClass("hover");
+	}
+}
+function drop(x, y) {
+	if (isDragToOrigin(x, y)) {
+		binder.dropFile();
+	} else {
+		binder.dropFrameFile();
+	}
+}
+
+function setFile(text, name) {
+	if (/^.*\.ass$/.test(name.toLowerCase())) {
+		$originTotal.val(text);
+		resizeTextarea($originTotal, $resultTotal);
+	}
+}
+function setFrameFile(text, name) {
+	if (/^.*\.ass$/.test(name.toLowerCase())) {
+		var lines = [];
+		var ass = new Subtitle.AssFile().fromTxt(text);
+		ass.header = "";
+		$resultFrame.val(ass.toTxt());
+		resizeTextarea($originFrame, $resultFrame);
+	}
+}
+
+var $originTotal = null;
+var $resultTotal = null;
+var $originFrame = null;
+var $resultFrame = null;
+var $highlight = null;
+var $checker = null;
+
+var totalAss = null;
+var lines = [[], [], []];
+function getFrameSync() {
+	totalAss = new Subtitle.AssFile().fromTxt($originTotal.val());
+	var add = totalAss.header.split("\n").length - 1;
+	var body = totalAss.body;
+	lines = [[], [], []];
+	
+	$highlight.empty();
+	for (var i = 0; i < body.length; i++) {
+		if (body[i].text.startsWith("{}")) {
+			if (body[i].text.endsWith("{}")) {
+				// 시작-종료 싱크
+				lines[2].push(i);
+			} else {
+				// 종료 싱크
+				lines[1].push(i);
+			}
+		} else {
+			if (body[i].text.endsWith("{}")) {
+				// 시작 싱크
+				lines[0].push(i);
+			} else {
+				// 해당 없음
+				continue;
+			}
+		}
+		$highlight.append($("<div>").css({
+				position: "absolute"
+			,	top: (add + i) * 14
+			,	left: 0
+			,	width: "100%"
+			,	height: "14px"
+			,	background: "rgba(255, 255, 0, 0.3)"
+		}));
+	}
+	
+	var frameLines = [];
+	for (var i = 0; i < lines[0].length; i++) {
+		var line = body[lines[0][i]];
+		frameLines.push(new Subtitle.Ass(line.start, line.end, "（］", line.text).toTxt());
+	}
+	for (var i = 0; i < lines[1].length; i++) {
+		var line = body[lines[1][i]];
+		frameLines.push(new Subtitle.Ass(line.start, line.end, "［）", "{\\c&HFFFF00&}" + line.text.substring(2).split("{").join("{}\\")).toTxt());
+	}
+	for (var i = 0; i < lines[2].length; i++) {
+		var line = body[lines[2][i]];
+		frameLines.push(new Subtitle.Ass(line.start, line.end, "［］", "{\\c&H00FFFF&}" + line.text.substring(2).split("{").join("{}\\")).toTxt());
+	}
+	var text = frameLines.join("\n");
+	$originFrame.val(text).focus();
+	resizeTextarea($originFrame, $resultFrame);
+	
+	setTimeout(function() {
+		confirm("작업할 내역을 복사하시겠습니까?\nAegisub에서 작업이 필요합니다.", function() {
+			navigator.clipboard.writeText(text);
+			/*
+			$originFrame[0].select();
+			$originFrame.scrollTop(0).scrollLeft(0);
+			document.execCommand("copy");
+			*/
+		});
+	}, 1);
+}
+
+var joinnable = false;
+function checkFrameSyncs() {
+	var originAss = new Subtitle.AssFile().fromTxt($originFrame.val()).body;
+	var resultAss = new Subtitle.AssFile().fromTxt($resultFrame.val()).body;
+	joinnable = true;
+	
+	var length = lines[0].length + lines[1].length + lines[2].length;
+	if (originAss.length != length || resultAss.length != length) {
+		joinnable = false;
+	}
+	
+	$checker.empty();
+	for (var i = 0; i < originAss.length && i < resultAss.length; i++) {
+		// 과도한 싱크 이동 검사
+		var dist = Math.max(
+				Math.abs(originAss[i].start - resultAss[i].start)
+			,	Math.abs(originAss[i].end   - resultAss[i].end  )
+		);
+		if (dist > 20) {
+			if (dist > 50) {
+				joinnable = false;
+			}
+			// 싱크 오차 과다 경고
+			var alpha = Math.min(0.5, ((dist - 10) / 100));
+			$checker.append($("<div>").css({
+					position: "absolute"
+				,	top: i * 14
+				,	left: 0
+				,	width: "100%"
+				,	height: "14px"
+				,	background: "rgba(255, 0, 0, " + alpha + ")"
+			}));
+		}
+	}
+}
+
+function setFrameSync() {
+	checkFrameSyncs();
+	if (!joinnable) {
+		alert("오차가 큽니다");
+		return;
+	}
+
+	var frameAss = new Subtitle.AssFile().fromTxt($resultFrame.val());
+	
+	var index = 0;
+	for (var i = 0; i < 3; i++) {
+		for (var j = 0; j < lines[i].length; j++) {
+			var total = totalAss.body[lines[i][j]];
+			var frame = frameAss.body[index++];
+			total.start = frame.start;
+			total.end   = frame.end;
+		}
+	}
+	
+	$resultTotal.val(totalAss.toTxt());
+}
+
+function resizeTextarea(origin, result) {
+	var originLines = origin.val().split("\n");
+	var resultLines = result.val().split("\n");
+	
+	var height = Math.max(originLines.length, resultLines.length) * 14 + 4;
+	origin.css({ height: height });
+	result.css({ height: height });
+}
+
+$(function() {
+	$originTotal = $("#originTotal");
+	$resultTotal = $("#resultTotal");
+	$originFrame = $("#originFrame");
+	$resultFrame = $("#resultFrame");
+	$highlight   = $("#highlight"  );
+	$checker     = $("#checker"    );
+	
+	sw = (innerWidth - $highlight.width());
+	$("#areaBtnConvert").css({ width: "calc(100% - " + sw + "px)" });
+	$("#btnSaveFile,#btnSaveFrameFile").css({ left: "calc((100% - " + sw + "px) / 2 - 10px" });
+	
+	$("#btnGetFrameSync").on("click", function() {
+		getFrameSync();
+	});
+	$("#btnSaveFrameFile").on("click", function() {
+		binder.saveFrameFile($originFrame.val());
+	});
+	$("#btnSetFrameSync").on("click", function() {
+		setFrameSync();
+	});
+	$("#btnSaveFile").on("click", function() {
+		binder.saveFile($resultTotal.val());
+	});
+	
+	$originTotal.on("input propertychange", function() { resizeTextarea($originTotal, $resultTotal); });
+	$resultTotal.on("input propertychange", function() { resizeTextarea($originTotal, $resultTotal); });
+	$originFrame.on("input propertychange", function() { resizeTextarea($originFrame, $resultFrame); checkFrameSyncs(); });
+	$resultFrame.on("input propertychange", function() { resizeTextarea($originFrame, $resultFrame); checkFrameSyncs(); });
+	
+});
+	</script>
+	<style>
+body > * {
+	position: absolute;
+}
+body.drag-file .hover {
+	border: 2px solid #f00;
+}
+
+#areaTotal,
+#areaFrame {
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: calc(50% - 10px);
+	overflow-y: scroll;
+	background: #fff;
+}
+#areaFrame { top: calc(50% + 10px); }
+
+#areaBtnConvert {
+	top: calc(50% - 10px);
+	left: 0;
+	width: 100%;
+	height: 20px;
+}
+#btnGetFrameSync,
+#btnSetFrameSync {
+	display: block;
+	width: calc(50% - 10px);
+	height: 100%;
+	float: left;
+}
+#btnSetFrameSync {
+	float: right;
+}
+
+textarea {
+	position: absolute;
+	width: calc(50% - 10px);
+	min-height: 100%;
+	overflow-x: hidden;
+	overflow-y: hidden;
+	background: transparent;
+}
+textarea:focus {
+	outline: none;
+	border-color: #088;
+}
+#resultTotal,
+#resultFrame {
+	left: calc(50% + 10px);
+}
+#btnSaveFile,
+#btnSaveFrameFile {
+	position: fixed;
+	top: 0;
+	left: calc(50% - 10px);
+	width: 20px;
+	height: calc(50% - 10px);
+}
+#btnSaveFrameFile {
+	top: calc(50% + 10px);
+}
+	</style>
+</head>
+<body>
+	<div id="areaTotal">
+		<div id="highlight"></div>
+		<textarea tabindex="1" wrap="off" id="originTotal" spellcheck="false" placeholder="입력 파일"></textarea>
+		<textarea tabindex="7" wrap="off" id="resultTotal" spellcheck="false" placeholder="출력 파일"></textarea>
+	</div>
+	<div id="areaBtnConvert">
+		<button tabindex="2" id="btnGetFrameSync">∨</button>
+		<button tabindex="6" id="btnSetFrameSync">∧</button>
+	</div>
+	<div id="areaFrame">
+		<div id="checker"></div>
+		<textarea tabindex="3" wrap="off" id="originFrame" spellcheck="false" placeholder="화면 싱크 수정 전"></textarea>
+		<textarea tabindex="5" wrap="off" id="resultFrame" spellcheck="false" placeholder="화면 싱크 수정 후"></textarea>
+	</div>
+	<button tabindex="4" id="btnSaveFrameFile">→<br />💾</button>
+	<button tabindex="8" id="btnSaveFile"     >←<br />💾</button>
+</body>
+</html>
