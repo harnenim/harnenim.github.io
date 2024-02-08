@@ -1249,7 +1249,7 @@ input.onload = async function() {
 		}
 		var minWidth = 0;
 		for (var i = 0; i < viewFileList.children.length; i++) {
-			var aWidth = 20;
+			var aWidth = 2;
 			var a = viewFileList.children[i];
 			for (var j = 0; j < a.children.length; j++) {
 				aWidth += a.children[j].offsetWidth;
@@ -1503,11 +1503,10 @@ function onload() {
 		var previewContent = document.getElementById("previewContent");
 		addEL(viewFileList, "click", "span.preview", async (e) => {
 			e.preventDefault();
-			previewContent.innerHTML = "";
-			previewContent.scrollTo(0,0);
 			
 			var url = e.srcElement.parentElement.href;
 			
+			previewContent.innerHTML = "";
 			switch (e.srcElement.parentElement.className) {
 				case "text": {
 					var file = files[url];
@@ -1523,6 +1522,7 @@ function onload() {
 					preview.style.display = "block";
 				}
 			}
+			previewContent.scrollTo(0,0);
 		});
 		document.getElementById("btnClosePreview").addEventListener("click", (e) => {
 			preview.style.display = "";
@@ -1612,8 +1612,8 @@ fieldset button[type=submit] {
 }
 #viewFileList a {
 	display: block;
-	padding: 10px 10px 10px 2px;
-	line-height: 20px;
+	padding-left: 2px;
+	line-height: 40px;
 	text-decoration: none;
 	color: #000;
 	background: linear-gradient(#fff, #eee);
@@ -1648,6 +1648,7 @@ fieldset button[type=submit] {
 #viewFileList a > span.preview {
 	float: right;
 	color: #666;
+	padding: 0 10px;
 }
 #preview {
 	position: fixed;
