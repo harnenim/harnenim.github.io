@@ -1,20 +1,20 @@
 { "name": "WinPNG"
 , "icons":
-  [ { "src": "/_/WinPNG/icon.png"
+  [ { "src": "/WinPNG/icon.png"
     , "sizes": "128x128"
     , "type": "image/png"
     }
-  , { "src": "/_/WinPNG/icon192.png"
+  , { "src": "/WinPNG/icon192.png"
     , "sizes": "192x192"
     , "type": "image/png"
     }
-  , { "src": "/_/WinPNG/icon512.png"
+  , { "src": "/WinPNG/icon512.png"
     , "sizes": "512x512"
     , "type": "image/png"
     }
   ]
 , "display": "fullscreen"
-, "start_url": "/_/WinPNG/WinPNG_Viewer.html"
+, "start_url": "/WinPNG/WinPNG_Viewer.html"
 , "description": "WinPNG"
 , "short_name": "WinPNG"
 , "background_color": "#FFFFFF"

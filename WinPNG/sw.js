@@ -1,7 +1,7 @@
 self.addEventListener('install', (e) => {
 	e.waitUntil(
-		caches.open('kr-store').then((cache) => cache.addAll([
-				'/_/WinPNG/WinPNG_Viewer.html'
+		caches.open('ohli-store').then((cache) => cache.addAll([
+				'/WinPNG/WinPNG_Viewer.html'
 		]))
     );
 });
