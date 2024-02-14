@@ -11,23 +11,11 @@
 if (clientInformation.appVersion.toLowerCase().indexOf("kakao") > 0) {
 	location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
 }
-if (location.href.startsWith("http") && window == window.parent && !window.opener && location.search != "?app") {
-	location.href = "index.html";
-}
 var files = {};
 function blobToUrl(blob) {
 	var url = URL.createObjectURL(blob);
 	files[url] = blob;
 	return url;
-}
-</script>
-<script title="a2hs">
-if (location.href.startsWith("http")) {
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('sw.js').then(function() {
-			console.log('Service Worker Registered');
-		});
-	}
 }
 </script>
 <script title="java.awt.image.BufferedImage">
@@ -1232,7 +1220,7 @@ input.onload = async function() {
 		context.drawImage(input, 0, 0);
 		
 		var oldFiles = files;
-		//files = {};
+		files = {};
 		
 		var bmp = new BufferedImage(canvas);
 		var possibility = WithTarget.possibility(bmp);
@@ -1253,11 +1241,9 @@ input.onload = async function() {
 			}
 		}
 		
-		/*
 		for (var url in oldFiles) {
 			URL.revokeObjectURL(url);
 		}
-		*/
 
 		preview.style.display = "";
 		showTargetImage(parsed.targetImage);
@@ -1281,28 +1267,16 @@ input.onload = async function() {
 	} catch (e) {
 		console.error(e);
 		if (e.message.indexOf("cross-origin") > 0) {
-			if (window.parent.loadUrl) {
-				var src = this.src;
-				setTimeout(function() {
-					alert("외부 이미지를 직접 읽을 수 없습니다.");
-					window.parent.loadUrl(src);
-				}, 100);
-			} else {
-				setTimeout(function() {
-					alert("외부 이미지를 읽을 수 없습니다.\n주소 이외의 방식으로 여시기 바랍니다.");
-				}, 100);
-			}
+			setTimeout(function() {
+				alert("외부 이미지를 읽을 수 없습니다.\n주소 이외의 방식으로 여시기 바랍니다.");
+			}, 100);
 		}
 	}
 }
 input.onerror = function(err) {
-	if (window.parent.loadUrl) {
-		window.parent.loadUrl(this.src);
-	} else {
-		setTimeout(function() {
-			alert("이미지를 열지 못했습니다.");
-		}, 100);
-	}
+	setTimeout(function() {
+		alert("이미지를 열지 못했습니다.");
+	}, 100);
 }
 function compare(path1, path2) {
 	var index1 = path1.indexOf("/");
@@ -1562,6 +1536,43 @@ function onload() {
 	}
 }
 </script>
+<script title="a2hs">
+//Register service worker to control making site work offline
+
+if ('serviceWorker' in navigator) {
+	navigator.serviceWorker.register('sw.js').then(function() {
+		console.log('Service Worker Registered');
+	});
+}
+
+//Code to handle install prompt on desktop
+
+var deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+	(deferredPrompt = e).preventDefault();
+	btnInstall.style.display = "block";
+});
+function callInstall() {
+	if (!deferredPrompt) {
+		alert("설치가 지원되지 않는 환경입니다.");
+		location.href = "/sub/krhome/rail_network_plan/mobile/index.html";
+		return;
+	}
+	// Show the prompt
+	deferredPrompt.prompt();
+	// Wait for the user to respond to the prompt
+	deferredPrompt.userChoice.then(function(choiceResult) {
+		if (choiceResult.outcome === 'accepted') {
+			console.log('User accepted the A2HS prompt');
+			btnInstall.style.display = "none";
+		} else {
+			console.log('User dismissed the A2HS prompt');
+		}
+		deferredPrompt = null;
+	});
+}
+</script>
 <style>
 * {
 	margin: 0;
@@ -1646,7 +1657,6 @@ fieldset button[type=submit] {
 	display: block;
 	padding-left: 2px;
 	line-height: 40px;
-	font-size: 16px;
 	text-decoration: none;
 	color: #000;
 	background: linear-gradient(#fff, #eee);

@@ -60,10 +60,15 @@ BufferedImage.prototype.update = function() {
 
 //안드로이드 크롬/엣지 등에서 한 번에 넣으면 값이 틀어져서 나눠야 함
 var unit = 64;
-function drawImage(context, input, w, h) {
+function drawImage(context, input) {
+	var w = input.naturalWidth;
+	var h = input.naturalHeight;
 	for (var x = 0; x < w; x += unit) {
 		for (var y = 0; y < h; y += unit) {
-			context.drawImage(input, x, y, Math.min(x+unit, w)-x, Math.min(y+unit, h)-y, x, y, Math.min(x+unit, w)-x, Math.min(y+unit, h)-y);
+			context.drawImage(input
+					, x, y, Math.min(x+unit, w)-x, Math.min(y+unit, h)-y
+					, x, y, Math.min(x+unit, w)-x, Math.min(y+unit, h)-y
+					);
 		}
 	}
 }
@@ -214,17 +219,17 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 		console_debug("pixelCount: " + pixelCount);
 		console_debug("contHeight: " + contHeight);
 		if (pathLength > 255) { // pathLengthFromRGB 적용하면서 이렇게 나올 일이 없음...
-			console.warn("잘못된 경로 길이: " + pathLength);
+			console_warn("잘못된 경로 길이: " + pathLength);
 			break;
 		}
 		if (offsetY + contHeight > height) {
-			console.warn("잘못된 데이터 크기: " + offsetY + contHeight > height);
+			console_warn("잘못된 데이터 크기: " + offsetY + contHeight > height);
 			break;
 		}
 		
 		var rgbs = bmp.getRGBs(0, offsetY, width, contHeight);
 		var cont = new Container(rgbs, shift, xors);
-		console_debug("path: " + cont.path);
+		console_info("path: " + cont.path + "(" + pathLength + ")");
 		
 		if (pathLength == 0) {
 			// 경로가 없음: 이중 변환 or 정크 영역
@@ -241,36 +246,36 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 				canvas.style.width  = (canvas.width  = w) + "px";
 				canvas.style.height = (canvas.height = h) + "px";
 				//canvas.getContext("2d").drawImage(subImg, 0, 0);
-				drawImage(canvas.getContext("2d"), subImg, w, h);
+				drawImage(canvas.getContext("2d"), subImg);
 				
 				if (offsetY) {
 					console_debug("offsetY: " + offsetY);
-					bmp = new BufferedImage(canvas);
-					canvas = bmp.update().canvas;
-					canvas.style.border = "1px solid #000";
-
-					ivTarget.innerHTML = "";
-					//ivTarget.append(subImg);
-					ivTarget.innerHTML = "<a href='" + subImg.src + "'>asdfsdafsdaf</a>";
-					/*
-					ivTarget.append(canvas);
+					subImg.style.display = "block";
+					subImg.style.border = "1px solid #000";
+					
+					var a = document.createElement("a");
+					a.href = subImg.src;
+					a.append(subImg);
+					
+					var span = document.createElement("span");
+					span.innerText = "Show Image";
+					span.style.display = "block";
+					a.append(span);
+					
 					var height = ivTarget.clientHeight;
-					var ratio = height / bmp.height;
-					var width = bmp.width * ratio;
+					var ratio = height / subImg.naturalHeight;
+					var width = subImg.naturalWidth * ratio;
 					if (width > ivTarget.clientWidth) {
 						width = ivTarget.clientWidth;
-						ratio = width / bmp.width;
-						height = bmp.height * ratio;
+						ratio = width / subImg.naturalWidth;
+						height = subImg.naturalHeight * ratio;
 					}
-					bmp.canvas.style.width = width + "px";
-					bmp.canvas.style.height = height + "px";
-					bmp.canvas.style.margin = (-height / 2) + "px " + (-width / 2) + "px";
+					subImg.style.width = width + "px";
+					subImg.style.height = height + "px";
+					subImg.style.margin = (-height / 2) + "px " + (-width / 2) + "px";
 					
-					console_debug("w: " + w);
-					console_debug("h: " + h);
-					console_debug("width: " + width);
-					console_debug("height: " + height);
-					*/
+					ivTarget.innerHTML = "";
+					ivTarget.append(a);
 				}
 				
 				containers = containers.concat(await Container.fromBitmap(new BufferedImage(canvas)));
@@ -293,7 +298,7 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 			 || cont.path.indexOf("�") >= 0
 					) {
 				//throw new Exception("잘못된 경로");
-				console.warn("잘못된 경로: " + cont.path);
+				console_warn("잘못된 경로: " + cont.path);
 				break;
 			}
 			// 경로가 있음: 일반 파일
@@ -316,7 +321,7 @@ var TYPE_114v3 = 6;
 var TYPE_124   = 7;
 var TYPE_114 = TYPE_114v3;
 
-var CHECKSUM_SAMPLE_COUNT = 10; // 패리티 검증 체크섬 샘플 개수
+var CHECKSUM_SAMPLE_COUNT = 100; // 패리티 검증 체크섬 샘플 개수
 var CAN_PROTOTYPE = 1;
 var CAN_114v1 = 1 << TYPE_114v1;
 var CAN_149   = 1 << TYPE_149;
@@ -1264,13 +1269,37 @@ input.onload = async function() {
 		canvas.style.height = (canvas.height = h) + "px";
 		
 		var context = canvas.getContext("2d");
-		//context.drawImage(input, 0, 0);
-		drawImage(context, input, w, h);
 		
-		var oldFiles = files;
-		//files = {};
+		// Problem example
+		//var x = 240; var y = 169;
+		var x = 308; var y = 165;
+		//var x = 28; var y = 149;
+		var bmp = null;
+		console_info("sample(" + x + ", " + y + ")");
+		console_info("");
 		
-		var bmp = new BufferedImage(canvas);
+		{	// Android Chrome/Edge gets incorrect value
+			context.drawImage(this, 0, 0);
+			bmp = new BufferedImage(canvas);
+			console_info("after context.drawImage(this, 0, 0);");
+			console_info("a : " + toHex(bmp.getRGB(2*x  , 2*y  ), 6));
+			console_info("bn: " + toHex(bmp.getRGB(2*x+1, 2*y  ), 6));
+			console_info("cn: " + toHex(bmp.getRGB(2*x  , 2*y+1), 6));
+			console_info("an: " + toHex(bmp.getRGB(2*x+1, 2*y+1), 6));
+			console_info("");
+		}
+		
+		if (false)
+		{	// Split draw for correct value
+			drawImage(context, this);
+			bmp = new BufferedImage(canvas);
+			console_info("after drawImage(context, this);");
+			console_info("a : " + toHex(bmp.getRGB(2*x  , 2*y  ), 6));
+			console_info("bn: " + toHex(bmp.getRGB(2*x+1, 2*y  ), 6));
+			console_info("cn: " + toHex(bmp.getRGB(2*x  , 2*y+1), 6));
+			console_info("an: " + toHex(bmp.getRGB(2*x+1, 2*y+1), 6));
+			console_info("");
+		}
 		
 		var possibility = WithTarget.possibility(bmp);
 		
@@ -1291,12 +1320,6 @@ input.onload = async function() {
 				return;
 			}
 		}
-		
-		/*
-		for (var url in oldFiles) {
-			URL.revokeObjectURL(url);
-		}
-		*/
 
 		preview.style.display = "";
 		showTargetImage(parsed.targetImage);
@@ -1475,7 +1498,10 @@ function console_info(msg) {
 	logger.innerText += msg + "\n";
 }
 function console_debug(msg) {
-	logger.innerText += msg + "\n";
+	logger.innerText += "　　" + msg + "\n";
+}
+function console_warn(msg) {
+	logger.innerText += "warn: " + msg + "\n";
 }
 async function paste(e) {
 	if (e.clipboardData.files.length) {
@@ -1610,6 +1636,8 @@ function onload() {
 			preview.style.display = "";
 		});
 	}
+	
+	parse();
 }
 </script>
 <style>
@@ -1696,7 +1724,7 @@ fieldset button[type=submit] {
 #logger {
 	width: 100%;
 	height: calc(100% - 240px);
-	font-size: 8px;
+	font-size: 10px;
 	overflow: auto;
 }
 #viewFileList a {
@@ -1794,7 +1822,7 @@ function getImage(e) {
 <form onsubmit="return parse();">
 	<fieldset>
 		<label for="inputUrl">URL:</label>
-		<input type="text" id="inputUrl" autocomplete="off" />
+		<input type="text" id="inputUrl" autocomplete="off" value="sample.png" />
 		<button type="submit">열기</button>
 		<button type="button" id="btnOpenFile">파일 열기</button>
 	</fieldset>
