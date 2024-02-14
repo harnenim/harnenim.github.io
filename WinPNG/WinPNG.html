@@ -81,10 +81,15 @@ BufferedImage.prototype.update = function() {
 
 // 안드로이드 크롬/엣지 등에서 한 번에 넣으면 값이 틀어져서 나눠야 함
 var unit = 64;
-function drawImage(context, input, w, h) {
-	for (var x = 0; x+unit < w; x += unit) {
-		for (var y = 0; y+unit < h; y += unit) {
-			context.drawImage(input, x, y, Math.min(x+unit, w), Math.min(y+unit, h), x, y, Math.min(x+unit, w), Math.min(y+unit, h));
+function drawImage(context, input) {
+	var w = input.naturalWidth;
+	var h = input.naturalHeight;
+	for (var x = 0; x < w; x += unit) {
+		for (var y = 0; y < h; y += unit) {
+			context.drawImage(input
+					, x, y, Math.min(x+unit, w)-x, Math.min(y+unit, h)-y
+					, x, y, Math.min(x+unit, w)-x, Math.min(y+unit, h)-y
+					);
 		}
 	}
 }
@@ -260,7 +265,7 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 				canvas.style.width  = (canvas.width  = w) + "px";
 				canvas.style.height = (canvas.height = h) + "px";
 				//canvas.getContext("2d").drawImage(subImg, 0, 0);
-				drawImage(canvas.getContext("2d"), subImg, w, h);
+				drawImage(canvas.getContext("2d"), subImg);
 
 				containers = containers.concat(await Container.fromBitmap(new BufferedImage(canvas)));
 				
@@ -1246,10 +1251,7 @@ input.onload = async function() {
 		canvas.style.height = (canvas.height = h) + "px";
 		
 		var context = canvas.getContext("2d");
-		drawImage(context, input, w, h);
-		
-		var oldFiles = files;
-		//files = {};
+		drawImage(context, input);
 		
 		var bmp = new BufferedImage(canvas);
 		var possibility = WithTarget.possibility(bmp);
@@ -1269,12 +1271,6 @@ input.onload = async function() {
 				return;
 			}
 		}
-		
-		/*
-		for (var url in oldFiles) {
-			URL.revokeObjectURL(url);
-		}
-		*/
 
 		preview.style.display = "";
 		showTargetImage(parsed.targetImage);
