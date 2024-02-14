@@ -1283,19 +1283,19 @@ input.onload = async function() {
 			bmp = new BufferedImage(canvas);
 			console_info("after context.drawImage(this, 0, 0);");
 			console_info("a : " + toHex(bmp.getRGB(2*x  , 2*y  ), 6));
-			console_info("bn: " + toHex(bmp.getRGB(2*x+1, 2*y  ), 6));
+			console_info("bn: " + toHex(bmp.getRGB(2*x+1, 2*y  ), 6) + " <- Android Chrome/Edge gets incorrect value");
 			console_info("cn: " + toHex(bmp.getRGB(2*x  , 2*y+1), 6));
 			console_info("an: " + toHex(bmp.getRGB(2*x+1, 2*y+1), 6));
 			console_info("");
 		}
 		
-		if (false)
+		//if (false)
 		{	// Split draw for correct value
 			drawImage(context, this);
 			bmp = new BufferedImage(canvas);
 			console_info("after drawImage(context, this);");
 			console_info("a : " + toHex(bmp.getRGB(2*x  , 2*y  ), 6));
-			console_info("bn: " + toHex(bmp.getRGB(2*x+1, 2*y  ), 6));
+			console_info("bn: " + toHex(bmp.getRGB(2*x+1, 2*y  ), 6) + " <- correct value");
 			console_info("cn: " + toHex(bmp.getRGB(2*x  , 2*y+1), 6));
 			console_info("an: " + toHex(bmp.getRGB(2*x+1, 2*y+1), 6));
 			console_info("");
