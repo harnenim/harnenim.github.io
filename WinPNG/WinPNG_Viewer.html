@@ -8,9 +8,6 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <title>WinPNG 뷰어</title>
 <script>
-if (clientInformation.appVersion.toLowerCase().indexOf("kakao") > 0) {
-	location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
-}
 var files = {};
 function blobToUrl(blob) {
 	var url = URL.createObjectURL(blob);
@@ -18,18 +15,35 @@ function blobToUrl(blob) {
 	return url;
 }
 </script>
+<script title="a2hs">
+if (location.href.startsWith("https")) {
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('sw.js').then(function() {
+			console.log('Service Worker Registered');
+		});
+	}
+}
+</script>
 <script title="java.awt.image.BufferedImage">
 var BufferedImage = function(w, h) {
 	if (typeof w == "object") {
-		this.canvas = w;
-		this.width  = this.canvas.width ;
-		this.height = this.canvas.height;
+		this.image = w;
+		var w = this.image.naturalWidth;
+		var h = this.image.naturalHeight;
+		this.canvas = document.createElement("canvas");
+		this.canvas.width  = this.width  = w;
+		this.canvas.height = this.height = h;
+		
+		this.context = this.canvas.getContext("2d");
+		this.context.imageSmoothingEnabled = false;
+		this.context.drawImage(this.image, 0, 0, w, h);
+		
 	} else {
 		this.canvas = document.createElement("canvas");
-		this.canvas.style.width  = (this.canvas.width  = this.width  = w) + "px";
-		this.canvas.style.height = (this.canvas.height = this.height = h) + "px";
+		this.canvas.width  = this.width  = w;
+		this.canvas.height = this.height = h;
+		this.context = this.canvas.getContext("2d");
 	}
-	this.context = this.canvas.getContext("2d");
 	this.data = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
 }
 BufferedImage.prototype.getWidth  = function() { return this.width ; };
@@ -224,16 +238,8 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 				var subImg = new Image();
 				subImg.src = blobToUrl(new Blob([cont.binary], { type: "image/png" }));
 				await subImg.decode();
-
-				var w = subImg.naturalWidth;
-				var h = subImg.naturalHeight;
-
-				var canvas = document.createElement("canvas");
-				canvas.style.width  = (canvas.width  = w) + "px";
-				canvas.style.height = (canvas.height = h) + "px";
-				canvas.getContext("2d").drawImage(subImg, 0, 0);
-
-				containers = containers.concat(await Container.fromBitmap(new BufferedImage(canvas)));
+				
+				containers = containers.concat(await Container.fromBitmap(new BufferedImage(subImg)));
 				
 			} catch (e) {
 				console.info("JUNK DATA");
@@ -1210,19 +1216,8 @@ input.onload = async function() {
 	try {
 		viewFileList.innerHTML = "";
 		viewFileList.style.minWidth = "";
-		
-		var w = this.naturalWidth;
-		var h = this.naturalHeight;
-		canvas.style.width  = (canvas.width  = w) + "px";
-		canvas.style.height = (canvas.height = h) + "px";
-		
-		var context = canvas.getContext("2d");
-		context.drawImage(input, 0, 0);
-		
-		var oldFiles = files;
-		files = {};
-		
-		var bmp = new BufferedImage(canvas);
+
+		var bmp = new BufferedImage(this);
 		var possibility = WithTarget.possibility(bmp);
 		var parsed = await WithTarget.fromBitmap(bmp, possibility);
 
@@ -1241,10 +1236,6 @@ input.onload = async function() {
 			}
 		}
 		
-		for (var url in oldFiles) {
-			URL.revokeObjectURL(url);
-		}
-
 		preview.style.display = "";
 		showTargetImage(parsed.targetImage);
 		parsed.containers.sort((cont1, cont2) => {
@@ -1534,43 +1525,6 @@ function onload() {
 			preview.style.display = "";
 		});
 	}
-}
-</script>
-<script title="a2hs">
-//Register service worker to control making site work offline
-
-if ('serviceWorker' in navigator) {
-	navigator.serviceWorker.register('sw.js').then(function() {
-		console.log('Service Worker Registered');
-	});
-}
-
-//Code to handle install prompt on desktop
-
-var deferredPrompt = null;
-
-window.addEventListener('beforeinstallprompt', function(e) {
-	(deferredPrompt = e).preventDefault();
-	btnInstall.style.display = "block";
-});
-function callInstall() {
-	if (!deferredPrompt) {
-		alert("설치가 지원되지 않는 환경입니다.");
-		location.href = "/sub/krhome/rail_network_plan/mobile/index.html";
-		return;
-	}
-	// Show the prompt
-	deferredPrompt.prompt();
-	// Wait for the user to respond to the prompt
-	deferredPrompt.userChoice.then(function(choiceResult) {
-		if (choiceResult.outcome === 'accepted') {
-			console.log('User accepted the A2HS prompt');
-			btnInstall.style.display = "none";
-		} else {
-			console.log('User dismissed the A2HS prompt');
-		}
-		deferredPrompt = null;
-	});
 }
 </script>
 <style>
