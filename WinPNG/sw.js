@@ -1,7 +1,7 @@
 self.addEventListener('install', (e) => {
 	e.waitUntil(
 		caches.open('ohli-store').then((cache) => cache.addAll([
-				'/WinPNG/WinPNG_Viewer.html'
+				'/WinPNG/Viewer.html'
 		]))
     );
 });

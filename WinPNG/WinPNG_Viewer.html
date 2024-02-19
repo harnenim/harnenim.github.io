@@ -8,6 +8,10 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <title>WinPNG 뷰어</title>
 <script>
+location.href = "Viewer.html";
+</script>
+<!--
+<script>
 var files = {};
 function blobToUrl(blob) {
 	var url = URL.createObjectURL(blob);
@@ -1684,8 +1688,9 @@ fieldset button[type=submit] {
 	cursor: pointer;
 }
 </style>
+-->
 </head>
-<body onload="onload();">
+<body>
 <!-- 이미지 to base64
 <input type="file" onchange="getImage(event)" />
 <script>
@@ -1697,7 +1702,6 @@ function getImage(e) {
 	reader.readAsDataURL(e.target.files[0]);
 }
 </script>
--->
 <form onsubmit="return parse();">
 	<fieldset>
 		<label for="inputUrl">URL:</label>
@@ -1718,5 +1722,6 @@ function getImage(e) {
 		</div>
 	</div>
 </form>
+-->
 </body>
 </html>
