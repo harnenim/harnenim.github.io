@@ -1305,26 +1305,27 @@ input.onload = async function() {
 	} catch (e) {
 		console.error(e);
 		if (e.message.indexOf("cross-origin") > 0) {
-			if (window.innerWidth > 800) { // PC
-				popup = window.open(popupUrl = inputUrl.value, "left", "location=no"
-						+ ",top=" + window.screenTop
-						+ ",left=" + window.screenLeft
-						+ ",width=" + (window.innerWidth - 600)
-						+ ",height=" + (window.outerHeight - 74));
-				document.body.className = "withPopup";
-				inputUrl.value = "외부 이미지를 팝업창에서 드래그해서 가져오세요.";
-				
-			} else { // Mobile
-				document.body.className = "withExternal";
-				document.getElementsByTagName("iframe")[0].src = inputUrl.value;
-			}
+			loadExternal(inputUrl.value);
 		}
 	}
 }
 input.onerror = function(err) {
-	setTimeout(function() {
-		alert("이미지를 열지 못했습니다.");
-	}, 100);
+	loadExternal(inputUrl.value);
+}
+function loadExternal(url) {
+	if (window.innerWidth > 800) { // PC
+		popup = window.open(popupUrl = url, "left", "location=no"
+				+ ",top=" + window.screenTop
+				+ ",left=" + window.screenLeft
+				+ ",width=" + (window.innerWidth - 600)
+				+ ",height=" + (window.outerHeight - 74));
+		document.body.className = "withPopup";
+		inputUrl.value = "외부 이미지를 팝업창에서 드래그해서 가져오세요.";
+		
+	} else { // Mobile
+		document.body.className = "withExternal";
+		document.getElementsByTagName("iframe")[0].src = inputUrl.value;
+	}
 }
 function compare(path1, path2) {
 	var index1 = path1.indexOf("/");
