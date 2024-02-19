@@ -1319,8 +1319,12 @@ function loadExternal(url) {
 				+ ",left=" + window.screenLeft
 				+ ",width=" + (window.innerWidth - 600)
 				+ ",height=" + (window.outerHeight - 74));
-		document.body.className = "withPopup";
-		inputUrl.value = "외부 이미지를 팝업창에서 드래그해서 가져오세요.";
+		if (popup) {
+			document.body.className = "withPopup";
+			inputUrl.value = "외부 이미지를 팝업창에서 드래그해서 가져오세요.";
+		} else {
+			alert("팝업이 차단됐습니다.");
+		}
 		
 	} else { // Mobile
 		document.body.className = "withExternal";
