@@ -10,33 +10,30 @@
 -->
 <title>WinPNG 뷰어</title>
 <script>
-if (clientInformation.appVersion.toLowerCase().indexOf("kakao") > 0) {
-	location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
-}
-var files = {};
-function blobToUrl(blob) {
-	var url = URL.createObjectURL(blob);
-	files[url] = blob;
+URL.files = {};
+URL.from = function(blob) {
+	const url = URL.createObjectURL(blob);
+	this.files[url] = blob;
 	return url;
 }
-</script>
-<!--
-<script title="a2hs">
-if (location.href.startsWith("https")) {
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('sw.js').then(function() {
-			console.log('Service Worker Registered');
-		});
+URL.clear = function(without) {
+	for (let url in this.files) {
+		if (url == without) continue;
+		URL.revokeObjectURL(url);
+		delete this.files[url];
 	}
 }
+URL.reset = function(blob) {
+	this.clear();
+	return this.from(blob);
+}
 </script>
--->
 <script title="java.awt.image.BufferedImage">
-var BufferedImage = function(w, h) {
+const BufferedImage = function(w, h) {
 	if (typeof w == "object") {
 		this.image = w;
-		var w = this.image.naturalWidth;
-		var h = this.image.naturalHeight;
+		w = this.image.naturalWidth;
+		h = this.image.naturalHeight;
 		this.canvas = document.createElement("canvas");
 		this.canvas.width  = this.width  = w;
 		this.canvas.height = this.height = h;
@@ -56,22 +53,22 @@ var BufferedImage = function(w, h) {
 BufferedImage.prototype.getWidth  = function() { return this.width ; };
 BufferedImage.prototype.getHeight = function() { return this.height; };
 BufferedImage.prototype.getRGB = function(x, y) {
-	var index = 4 * ((this.width * y) + x);
+	const index = 4 * ((this.width * y) + x);
 	return (this.data.data[index  ] << 16)
 	     | (this.data.data[index+1] <<  8)
 	     | (this.data.data[index+2]      );
 }
 BufferedImage.prototype.setRGB = function(x, y, rgb) {
-	var index = 4 * ((this.width * y) + x);
+	const index = 4 * ((this.width * y) + x);
 	this.data.data[index  ] = (rgb >> 16) & 0xFF;
 	this.data.data[index+1] = (rgb >>  8) & 0xFF;
 	this.data.data[index+2] = (rgb      ) & 0xFF;
 	this.data.data[index+3] = 0xFF;
 }
 BufferedImage.prototype.getRGBs = function(offsetX, offsetY, width, height) {
-	var result = [];
-	for (var x = 0; x < width; x++) {
-		for (var y = 0; y < height; y++) {
+	const result = [];
+	for (let x = 0; x < width; x++) {
+		for (let y = 0; y < height; y++) {
 			result[(width * y) + x] = this.getRGB(offsetX + x, offsetY + y);
 		}
 	}
@@ -104,11 +101,11 @@ function pathLengthFromRGB(rgb) {
 }
 
 function bytesToRGBs(bytes) {
-	var result = new Array(Math.floor((bytes.length + 2) / 3));
-	for (var i = 0; i < result.length; i++) {
+	const result = new Array(Math.floor((bytes.length + 2) / 3));
+	for (let i = 0; i < result.length; i++) {
 		result[i] = 0;
 	}
-	for (var i = 0; i < bytes.length; i++) {
+	for (let i = 0; i < bytes.length; i++) {
 		result[Math.floor(i / 3)] |= ((bytes[i] & 0xFF) << ((2 - (i % 3)) * 8)) & 0xFFFFFF;
 	}
 	return result;
@@ -117,8 +114,8 @@ function getShift(key) {
 	return fibonacci(key.length);
 }
 function getXors(key) {
-	var bytes = new TextEncoder().encode(key);
-	for (var i = 0; i < bytes.length; i++) {
+	const bytes = new TextEncoder().encode(key);
+	for (let i = 0; i < bytes.length; i++) {
 		bytes[i] =                      // 75361420
 				( ((bytes[i] << (7-0)) & 0b10000000)
 				| ((bytes[i] << (5-1)) & 0b01000000)
@@ -145,19 +142,19 @@ function subFibonacci(before, current, left) {
 	}
 }
 
-var Container = function(rgbs, shift=0, xors=[]) {
+const Container = function(rgbs, shift=0, xors=[]) {
 	console.debug("pathLength  : " + toHex(rgbs[ shift    % rgbs.length], 8));
 	console.debug("binaryLength: " + toHex(rgbs[(shift+1) % rgbs.length], 8));
 	// xor 연산 수행
 	if (xors.length > 0) {
 		console.debug("xors0       : " + toHex(xors[ shift    % xors.length], 8));
 		console.debug("xors1       : " + toHex(xors[(shift+1) % xors.length], 8));
-		for (var i = 0; i < rgbs.length; i++) {
+		for (let i = 0; i < rgbs.length; i++) {
 			rgbs[i] ^= xors[i % xors.length];
 		}
 	}
-	var pathLength = pathLengthFromRGB(rgbs[ shift    % rgbs.length]);
-	var binaryLength = 0xFFFFFF &      rgbs[(shift+1) % rgbs.length];
+	const pathLength = pathLengthFromRGB(rgbs[ shift    % rgbs.length]);
+	const binaryLength = 0xFFFFFF &      rgbs[(shift+1) % rgbs.length];
 	console.debug("pathLength  : " + pathLength);
 	console.debug("binaryLength: " + binaryLength);
 	
@@ -169,12 +166,12 @@ Container.prototype.setDataFromRGBs = function(rgbs, shift, pathLength, binaryLe
 		throw new Exception("이미지 해석 오류");
 	}
 	
-	var offset = shift + 2;
+	let offset = shift + 2;
 	
 	// RGB
 	console.debug("RGB");
-	var bytes = new Uint8Array(pathLength);
-	for (var i = 0; i < pathLength; i++) {
+	let bytes = new Uint8Array(pathLength);
+	for (let i = 0; i < pathLength; i++) {
 		bytes[i] = ((rgbs[(offset + Math.floor(i/3)) % rgbs.length] >> (8 * (2-(i%3)))) & 0xFF);
 	}
 	console.debug("pathBytes: " + bytes.length);
@@ -182,7 +179,7 @@ Container.prototype.setDataFromRGBs = function(rgbs, shift, pathLength, binaryLe
 	offset += Math.floor((pathLength + 2) / 3);
 	
 	this.binary = new Uint8Array(binaryLength);
-	for (var i = 0; i < binaryLength; i++) {
+	for (let i = 0; i < binaryLength; i++) {
 		this.binary[i] = ((rgbs[(offset + Math.floor(i/3)) % rgbs.length] >> (8 * (2-(i%3)))) & 0xFF);
 	}
 }
@@ -196,19 +193,19 @@ Container.prototype.setDataFromRGBs = function(rgbs, shift, pathLength, binaryLe
  */
 Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 	console.info("\nContainer.fromBitmap");
-	var containers = [];
+	let containers = [];
 	
-	var offsetY = 0;
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	let offsetY = 0;
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	shift = shift % width;
 	console.info("input size: " + width + " x " + height);
 	
 	while (offsetY < height) {
 		console.debug("shift: " + shift);
 		console.debug("xors.length: " + xors.length);
-		var pathLength   = 0xFFFFFF & bmp.getRGB( shift    % width, offsetY);
-		var binaryLength = 0xFFFFFF & bmp.getRGB((shift+1) % width, offsetY);
+		let pathLength   = 0xFFFFFF & bmp.getRGB( shift    % width, offsetY);
+		let binaryLength = 0xFFFFFF & bmp.getRGB((shift+1) % width, offsetY);
 		console.debug("pathLength  : " + toHex(pathLength  , 8));
 		console.debug("binaryLength: " + toHex(binaryLength, 8));
 		if (xors.length > 0) {
@@ -218,8 +215,8 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 			binaryLength = (binaryLength ^ xors[(shift+1) % xors.length]) & 0xFFFFFF;
 		}
 		pathLength = pathLengthFromRGB(pathLength);
-		var pixelCount = 2 + Math.ceil(pathLength / 3) + Math.ceil(binaryLength / 3);
-		var contHeight = Math.floor((pixelCount + width - 1) / width);
+		const pixelCount = 2 + Math.ceil(pathLength / 3) + Math.ceil(binaryLength / 3);
+		const contHeight = Math.floor((pixelCount + width - 1) / width);
 		console.debug("");
 		console.debug("pathLength  : " + pathLength);
 		console.debug("binaryLength: " + binaryLength);
@@ -234,19 +231,20 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 			break;
 		}
 		
-		var rgbs = bmp.getRGBs(0, offsetY, width, contHeight);
-		var cont = new Container(rgbs, shift, xors);
+		const rgbs = bmp.getRGBs(0, offsetY, width, contHeight);
+		const cont = new Container(rgbs, shift, xors);
 		console.debug("path: " + cont.path);
 		
 		if (pathLength == 0) {
 			// 경로가 없음: 이중 변환 or 정크 영역
 			try {
 				// 이중 변환으로 가정하고 해석 시도
-				var subImg = new Image();
-				subImg.src = blobToUrl(new Blob([cont.binary], { type: "image/png" }));
+				const subImg = new Image();
+				subImg.src = URL.createObjectURL(new Blob([cont.binary], { type: "image/png" }), true);
 				await subImg.decode();
 				
 				containers = containers.concat(await Container.fromBitmap(new BufferedImage(subImg)));
+				URL.revokeObjectURL(subImg.src);
 				
 			} catch (e) {
 				console.info("JUNK DATA");
@@ -277,33 +275,33 @@ Container.fromBitmap = async function(bmp, shift=0, xors=[]) {
 }
 </script>
 <script title="moe.ohli.pngb.Container.WithTarget">
-var TYPE_114v1 = 1;
-var TYPE_149   = 2;
-var TYPE_238   = 3;
-var TYPE_429   = 4;
-var TYPE_114v2 = 5;
-var TYPE_114v3 = 6;
-var TYPE_124   = 7;
-var TYPE_114 = TYPE_114v3;
+const TYPE_114v1 = 1;
+const TYPE_149   = 2;
+const TYPE_238   = 3;
+const TYPE_429   = 4;
+const TYPE_114v2 = 5;
+const TYPE_114v3 = 6;
+const TYPE_124   = 7;
+const TYPE_114 = TYPE_114v3;
 
-var SAMPLING_UNIT = 7; // 패리티 검증 체크섬 샘플링 단위
-var MIN_SAMPLE_COUNT = 10; // 패리티 검증 체크섬 샘플 최소 갯수
+const SAMPLING_UNIT = 7; // 패리티 검증 체크섬 샘플링 단위
+const MIN_SAMPLE_COUNT = 10; // 패리티 검증 체크섬 샘플 최소 갯수
 function getChecksumPoints(w, h) {
-	var points = [];
-	var xCount = Math.floor((w + SAMPLING_UNIT - 1) / SAMPLING_UNIT);
-	var yCount = Math.floor((h + SAMPLING_UNIT - 1) / SAMPLING_UNIT);
-	var count = xCount * yCount;
+	const points = [];
+	const xCount = Math.floor((w + SAMPLING_UNIT - 1) / SAMPLING_UNIT);
+	const yCount = Math.floor((h + SAMPLING_UNIT - 1) / SAMPLING_UNIT);
+	const count = xCount * yCount;
 	
 	if (count < MIN_SAMPLE_COUNT) {
-		for (var i = 0; i < MIN_SAMPLE_COUNT; i++) {
+		for (let i = 0; i < MIN_SAMPLE_COUNT; i++) {
 			points.push([
 					Math.floor((Math.random() * w) / 2)
 				,	Math.floor((Math.random() * h) / 2)
 			]);
 		}
 	} else {
-		for (var y = 0; y < yCount; y++) {
-			for (var x = 0; x < xCount; x++) {
+		for (let y = 0; y < yCount; y++) {
+			for (let x = 0; x < xCount; x++) {
 				points.push([
 						x * SAMPLING_UNIT + Math.floor(Math.random() * Math.min(SAMPLING_UNIT, w - (x * SAMPLING_UNIT)))
 					,	y * SAMPLING_UNIT + Math.floor(Math.random() * Math.min(SAMPLING_UNIT, h - (y * SAMPLING_UNIT)))
@@ -313,16 +311,16 @@ function getChecksumPoints(w, h) {
 	}
 	return points;
 }
-var CAN_PROTOTYPE = 1;
-var CAN_114v1 = 1 << TYPE_114v1;
-var CAN_149   = 1 << TYPE_149;
-var CAN_238   = 1 << TYPE_238;
-var CAN_429   = 1 << TYPE_429;
-var CAN_114v2 = 1 << TYPE_114v2;
-var CAN_114v3 = 1 << TYPE_114v3;
-var CAN_124   = 1 << TYPE_124;
+const CAN_PROTOTYPE = 1;
+const CAN_114v1 = 1 << TYPE_114v1;
+const CAN_149   = 1 << TYPE_149;
+const CAN_238   = 1 << TYPE_238;
+const CAN_429   = 1 << TYPE_429;
+const CAN_114v2 = 1 << TYPE_114v2;
+const CAN_114v3 = 1 << TYPE_114v3;
+const CAN_124   = 1 << TYPE_124;
 
-var WithTarget = function(targetImage, containers, type) {
+const WithTarget = function(targetImage, containers, type) {
 	this.targetImage = targetImage;
 	this.containers = containers;
 	this.type = type;
@@ -334,7 +332,7 @@ var WithTarget = function(targetImage, containers, type) {
  * @return 가능한 알고리즘
  */
 WithTarget.possibility = function(bmp) {
-	var result = 0;
+	let result = 0;
 	if (WithTarget.canPrototype(bmp)) { result |= CAN_PROTOTYPE; }
 	if (WithTarget.can114v3    (bmp)) { result |= CAN_114v3;     }
 	if (WithTarget.can114v2    (bmp)) { result |= CAN_114v2;     }
@@ -371,7 +369,7 @@ function getD(b, c) {
 // {½ + a - b - c} = {½ + 2a/₂ - (a+d)/₂ - (1+a-d)/₂} = {(1+2a-a-d-1-a+d)/₂} = 0
 function isValid(a, b, c, d) {
 	//              1/2      +  a           -  b           -  c
-	var checksum = (0x800000 + (a&0xFF0000) - (b&0xFF0000) - (c&0xFF0000))
+	const checksum = (0x800000 + (a&0xFF0000) - (b&0xFF0000) - (c&0xFF0000))
 	             + (0x008000 + (a&0x00FF00) - (b&0x00FF00) - (c&0x00FF00))
 	             + (0x000080 + (a&0x0000FF) - (b&0x0000FF) - (c&0x0000FF));
 
@@ -386,7 +384,7 @@ function isValid(a, b, c, d) {
 	           + " / " + toHex(d, 6)
 	           + " } -> checksum: " + toHex(checksum, 6));
 	
-	var compare = (((a&0x010101)+(d&0x010101))&0x010101); // 정수연산 한계로 a+d가 홀수일 땐 1이 나옴
+	const compare = (((a&0x010101)+(d&0x010101))&0x010101); // 정수연산 한계로 a+d가 홀수일 땐 1이 나옴
 	
 	if (checksum == compare) {
 		return true;
@@ -474,7 +472,7 @@ function getA124x(ax, nx, a1x) {
 }
 
 function padRGB(value) {
-	var str = pad0(Integer.toBinaryString(value), 24);
+	const str = pad0(Integer.toBinaryString(value), 24);
 	return str.substring(0, 8) + " " + str.substring(8, 16) + " " + str.substring(16, 24);
 }
 
@@ -487,8 +485,8 @@ function padRGB(value) {
 WithTarget.canPrototype = function(bmp) {
 	console.info("\nis it prototype?");
 	
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 1:1:4 결합 이미지일 경우 크기는 짝수여야 함
@@ -496,12 +494,12 @@ WithTarget.canPrototype = function(bmp) {
 		return false;
 	};
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 2, height / 2);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 2, height / 2);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		
 		// (2x,2y)와 (2x+1,2y+1)은 둘 다 출력물 이미지의 원본 픽셀로 같은 값이어야 함
 		if ((bmp.getRGB(2*x, 2*y  ) & 0xFFFFFF) != (bmp.getRGB(2*x+1, 2*y+1) & 0xFFFFFF)) {
@@ -532,8 +530,8 @@ WithTarget.canPrototype = function(bmp) {
 WithTarget.can114 = function(bmp) {
 	console.info("\nis it 1:1:4?");
 	
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 1:1:4 결합 이미지일 경우 크기는 짝수여야 함
@@ -541,14 +539,14 @@ WithTarget.can114 = function(bmp) {
 		return false;
 	}
 	
-	var a, b, c, d;
+	let a, b, c, d;
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 2, height / 2);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 2, height / 2);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		console.debug("sample(" + pad(x, 4) + ", " + pad(y, 4) + ")");
 		
 		// (2x,2y)와 (2x+1,2y+1)은 둘 다 출력물 이미지의 원본 픽셀로 같은 값이어야 함
@@ -586,8 +584,8 @@ WithTarget.can114 = function(bmp) {
 WithTarget.can114v2 = function(bmp) {
 	console.info("\nis it 1:1:4 v2?");
 	
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 1:1:4 결합 이미지일 경우 크기는 짝수여야 함
@@ -595,14 +593,14 @@ WithTarget.can114v2 = function(bmp) {
 		return false;
 	}
 	
-	var a, bn, cn, an, ap, b, c;
+	let a, bn, cn, an, ap, b, c;
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 2, height / 2);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 2, height / 2);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		console.debug("sample(" + pad(x, 4) + ", " + pad(y, 4) + ")");
 		
 		a  = bmp.getRGB(2*x  , 2*y  );
@@ -636,8 +634,8 @@ WithTarget.can114v2 = function(bmp) {
 WithTarget.can114v3 = function(bmp) {
 	console.info("\nis it 1:1:4 v3?");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 1:1:4 결합 이미지일 경우 크기는 짝수여야 함
@@ -645,14 +643,14 @@ WithTarget.can114v3 = function(bmp) {
 		return false;
 	}
 	
-	var a, bn, cn, an, ap, b, c;
+	let a, bn, cn, an, ap, b, c;
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 2, height / 2);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 2, height / 2);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		console.debug("sample(" + pad(x, 4) + ", " + pad(y, 4) + ")");
 		
 		a  = bmp.getRGB(2*x  , 2*y  );
@@ -685,8 +683,8 @@ WithTarget.can114v3 = function(bmp) {
 WithTarget.can149 = function(bmp) {
 	console.info("\nis it 1:4:9?");
 	
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 1:4:9 결합 이미지일 경우 크기는 3의 배수여야 함
@@ -694,16 +692,16 @@ WithTarget.can149 = function(bmp) {
 		return false;
 	}
 	
-	var b1, c1, b2
+	let b1, c1, b2
 	  , c4, a , c2
 	  , b4, c3, b3;
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 3, height / 3);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 3, height / 3);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		console.debug("sample(" + pad(x, 4) + ", " + pad(y, 4) + "):");
 		
 		a  = bmp.getRGB(3*x+1, 3*y+1);
@@ -739,8 +737,8 @@ WithTarget.can149 = function(bmp) {
 WithTarget.can238 = function(bmp) {
 	console.info("\nis it 2:3:8?");
 	
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 2:3:8 결합 이미지일 경우 크기는 6x4의 배수여야 함
@@ -748,17 +746,17 @@ WithTarget.can238 = function(bmp) {
 		return false;
 	}
 	
-	var b1, a1
+	let b1, a1
 	  , c1, b2
 	  , a2, c2
 	  , b3, c3, a3;
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 2, height / 4);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 2, height / 4);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		console.debug("sample(" + pad(x, 4) + ", " + pad(y, 4) + "):");
 		
 		a1 = bmp.getRGB(2*x+1, 4*y  );
@@ -795,8 +793,8 @@ WithTarget.can238 = function(bmp) {
 WithTarget.can429 = function(bmp) {
 	console.info("\nis it 4:2:9?");
 	
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 4:2:9 결합 이미지일 경우 크기는 3의 배수여야 함
@@ -804,16 +802,16 @@ WithTarget.can429 = function(bmp) {
 		return false;
 	}
 	
-	var a1, b1, aA
+	let a1, b1, aA
 	  , c1,aAB, c2
 	  , aB, b2, a2;
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 3, height / 3);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 3, height / 3);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		console.debug("sample(" + pad(x, 4) + ", " + pad(y, 4) + "):");
 		
 		a1 = bmp.getRGB(3*x  , 3*y  );
@@ -853,8 +851,8 @@ WithTarget.can429 = function(bmp) {
 WithTarget.can124 = function(bmp) {
 	console.info("\nis it 1:2:4?");
 	
-	var width = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
 	// 1:2:4 결합 이미지일 경우 크기는 2의 배수여야 함
@@ -862,14 +860,14 @@ WithTarget.can124 = function(bmp) {
 		return false;
 	}
 	
-	var a, ad1, ad2;
+	let a, ad1, ad2;
 	
-	var checkFailed = false;
+	let checkFailed = false;
 	
-	var points = getChecksumPoints(width / 2, height / 2);
-	for (var i = 0; i < points.length; i++) {
-		var x = points[i][0];
-		var y = points[i][1];
+	const points = getChecksumPoints(width / 2, height / 2);
+	for (let i = 0; i < points.length; i++) {
+		const x = points[i][0];
+		const y = points[i][1];
 		console.debug("sample(" + pad(x, 4) + ", " + pad(y, 4) + "):");
 
 		a   = bmp.getRGB(2*x  , 2*y  );
@@ -899,19 +897,19 @@ WithTarget.can124 = function(bmp) {
 WithTarget.fromBitmap114 = async function(bmp, shift, xors) {
 	console.info("\nWithTarget.fromBitmap 1:1:4");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
-	var xSize = width / 2, ySize = height / 2;
+	const xSize = width / 2, ySize = height / 2;
 	
-	var a, b, c;
+	let a, b, c;
 	
-	var targetImage = new BufferedImage(xSize, ySize);
-	var dataImage   = new BufferedImage(xSize, ySize);
+	const targetImage = new BufferedImage(xSize, ySize);
+	const dataImage   = new BufferedImage(xSize, ySize);
 	
-	for (var y = 0; y < ySize; y++) {
-		for (var x = 0; x < xSize; x++) {
+	for (let y = 0; y < ySize; y++) {
+		for (let x = 0; x < xSize; x++) {
 			a = bmp.getRGB(2*x  , 2*y  );
 			b = bmp.getRGB(2*x+1, 2*y  );
 			c = bmp.getRGB(2*x  , 2*y+1);
@@ -921,7 +919,7 @@ WithTarget.fromBitmap114 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	var containers = await Container.fromBitmap(dataImage, shift, xors);
+	let containers = await Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_114v1);
 	}
@@ -937,19 +935,19 @@ WithTarget.fromBitmap114 = async function(bmp, shift, xors) {
 WithTarget.fromBitmap114v2 = async function(bmp, shift, xors) {
 	console.info("\nWithTarget.fromBitmap 1:1:4 v2");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
-	var xSize = width / 2, ySize = height / 2;
+	const xSize = width / 2, ySize = height / 2;
 	
-	var a, an, bn, cn, ap;
+	let a, an, bn, cn, ap;
 	
-	var targetImage = new BufferedImage(xSize, ySize);
-	var dataImage   = new BufferedImage(xSize, ySize);
+	const targetImage = new BufferedImage(xSize, ySize);
+	const dataImage   = new BufferedImage(xSize, ySize);
 	
-	for (var y = 0; y < ySize; y++) {
-		for (var x = 0; x < xSize; x++) {
+	for (let y = 0; y < ySize; y++) {
+		for (let x = 0; x < xSize; x++) {
 			a  = bmp.getRGB(2*x  , 2*y  );
 			bn = bmp.getRGB(2*x+1, 2*y  );
 			cn = bmp.getRGB(2*x  , 2*y+1);
@@ -961,7 +959,7 @@ WithTarget.fromBitmap114v2 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	var containers = await Container.fromBitmap(dataImage, shift, xors);
+	let containers = await Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_114v2);
 	}
@@ -977,19 +975,19 @@ WithTarget.fromBitmap114v2 = async function(bmp, shift, xors) {
 WithTarget.fromBitmap114v3 = async function(bmp, shift, xors) {
 	console.info("\nWithTarget.fromBitmap 1:1:4 v3");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
-	var xSize = width / 2, ySize = height / 2;
+	const xSize = width / 2, ySize = height / 2;
 	
-	var a, an, bn, cn, ap;
+	let a, an, bn, cn, ap;
 	
-	var targetImage = new BufferedImage(xSize, ySize);
-	var dataImage   = new BufferedImage(xSize, ySize);
+	const targetImage = new BufferedImage(xSize, ySize);
+	const dataImage   = new BufferedImage(xSize, ySize);
 	
-	for (var y = 0; y < ySize; y++) {
-		for (var x = 0; x < xSize; x++) {
+	for (let y = 0; y < ySize; y++) {
+		for (let x = 0; x < xSize; x++) {
 			a  = bmp.getRGB(2*x  , 2*y  );
 			bn = bmp.getRGB(2*x+1, 2*y  );
 			cn = bmp.getRGB(2*x  , 2*y+1);
@@ -1001,7 +999,7 @@ WithTarget.fromBitmap114v3 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	var containers = await Container.fromBitmap(dataImage, shift, xors);
+	let containers = await Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_114v3);
 	}
@@ -1017,21 +1015,21 @@ WithTarget.fromBitmap114v3 = async function(bmp, shift, xors) {
 WithTarget.fromBitmap149 = (bmp, shift, xors) => {
 	console.info("\nWithTarget.fromBitmap 1:4:9");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
-	var xSize = width / 3, ySize = height / 3;
+	const xSize = width / 3, ySize = height / 3;
 	
-	var b1, c1, b2
+	let b1, c1, b2
 	  , c4, a , c2
 	  , b4, c3, b3;
 	
-	var targetImage = new BufferedImage(xSize  , ySize  , BufferedImage.TYPE_3BYTE_BGR);
-	var dataImage   = new BufferedImage(xSize*2, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
+	const targetImage = new BufferedImage(xSize  , ySize  , BufferedImage.TYPE_3BYTE_BGR);
+	const dataImage   = new BufferedImage(xSize*2, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
 	
-	for (var y = 0; y < ySize; y++) {
-		for (var x = 0; x < xSize; x++) {
+	for (let y = 0; y < ySize; y++) {
+		for (let x = 0; x < xSize; x++) {
 			a  = bmp.getRGB(3*x+1, 3*y+1);
 			b1 = bmp.getRGB(3*x  , 3*y  );
 			c1 = bmp.getRGB(3*x+1, 3*y  );
@@ -1050,7 +1048,7 @@ WithTarget.fromBitmap149 = (bmp, shift, xors) => {
 		}
 	}
 	
-	var containers = Container.fromBitmap(dataImage, shift, xors);
+	const containers = Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_149);
 	}
@@ -1066,22 +1064,22 @@ WithTarget.fromBitmap149 = (bmp, shift, xors) => {
 WithTarget.fromBitmap238 = async function(bmp, shift, xors) {
 	console.info("\nWithTarget.fromBitmap 2:3:8");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
-	var xSize = width / 2, ySize = height / 4;
+	const xSize = width / 2, ySize = height / 4;
 	
-	var b1, a1
+	let b1, a1
 	  , c1, b2
 	  , a2, c2
 	  , b3, c3;
 	
-	var targetImage = new BufferedImage(xSize, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
-	var dataImage   = new BufferedImage(xSize, ySize*3, BufferedImage.TYPE_3BYTE_BGR);
+	const targetImage = new BufferedImage(xSize, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
+	const dataImage   = new BufferedImage(xSize, ySize*3, BufferedImage.TYPE_3BYTE_BGR);
 	
-	for (var y = 0; y < ySize; y++) {
-		for (var x = 0; x < xSize; x++) {
+	for (let y = 0; y < ySize; y++) {
+		for (let x = 0; x < xSize; x++) {
 			a1 = bmp.getRGB(2*x+1, 4*y  );
 			a2 = bmp.getRGB(2*x  , 4*y+2);
 			b1 = bmp.getRGB(2*x  , 4*y  );
@@ -1099,7 +1097,7 @@ WithTarget.fromBitmap238 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	var containers = await Container.fromBitmap(dataImage, shift, xors);
+	let containers = await Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_238);
 	}
@@ -1115,21 +1113,21 @@ WithTarget.fromBitmap238 = async function(bmp, shift, xors) {
 WithTarget.fromBitmap429 = async function(bmp, shift, xors) {
 	console.info("\nWithTarget.fromBitmap 4:2:9");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
-	var xSize = width / 3, ySize = height / 3;
+	const xSize = width / 3, ySize = height / 3;
 	
-	var a1, b1, aA
+	let a1, b1, aA
 	  , c1,     c2
 	  , aB, b2, a2;
 	
-	var targetImage = new BufferedImage(xSize*2, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
-	var dataImage   = new BufferedImage(xSize  , ySize*2, BufferedImage.TYPE_3BYTE_BGR);
+	const targetImage = new BufferedImage(xSize*2, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
+	const dataImage   = new BufferedImage(xSize  , ySize*2, BufferedImage.TYPE_3BYTE_BGR);
 	
-	for (var y = 0; y < ySize; y++) {
-		for (var x = 0; x < xSize; x++) {
+	for (let y = 0; y < ySize; y++) {
+		for (let x = 0; x < xSize; x++) {
 			a1 = bmp.getRGB(3*x  , 3*y  );
 			aA = bmp.getRGB(3*x+2, 3*y  );
 			aB = bmp.getRGB(3*x  , 3*y+2);
@@ -1148,7 +1146,7 @@ WithTarget.fromBitmap429 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	var containers = await Container.fromBitmap(dataImage, shift, xors);
+	let containers = await Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_429);
 	}
@@ -1164,19 +1162,19 @@ WithTarget.fromBitmap429 = async function(bmp, shift, xors) {
 WithTarget.fromBitmap124 = async function(bmp, shift, xors) {
 	console.info("\nWithTarget.fromBitmap 1:2:4");
 	
-	var width  = bmp.getWidth();
-	var height = bmp.getHeight();
+	const width  = bmp.getWidth();
+	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
 	
-	var xSize = width / 2, ySize = height / 2;
+	const xSize = width / 2, ySize = height / 2;
 	
-	var a, ad1, ad2, a1;
+	let a, ad1, ad2, a1;
 	
-	var targetImage = new BufferedImage(xSize, ySize  , BufferedImage.TYPE_3BYTE_BGR);
-	var dataImage   = new BufferedImage(xSize, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
+	const targetImage = new BufferedImage(xSize, ySize  , BufferedImage.TYPE_3BYTE_BGR);
+	const dataImage   = new BufferedImage(xSize, ySize*2, BufferedImage.TYPE_3BYTE_BGR);
 	
-	for (var y = 0; y < ySize; y++) {
-		for (var x = 0; x < xSize; x++) {
+	for (let y = 0; y < ySize; y++) {
+		for (let x = 0; x < xSize; x++) {
 			a   = bmp.getRGB(2*x  , 2*y  );
 			ad1 = bmp.getRGB(2*x+1, 2*y  );
 			ad2 = bmp.getRGB(2*x  , 2*y+1);
@@ -1188,7 +1186,7 @@ WithTarget.fromBitmap124 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	var containers = awaitContainer.fromBitmap(dataImage, shift, xors);
+	let containers = awaitContainer.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_124);
 	}
@@ -1236,7 +1234,7 @@ WithTarget.fromBitmap = async function(bmp, possibility, shift=0, xors=[]) {
 	}
 	
 	console.info("Without target 해석 시도");
-	var containers = await Container.fromBitmap(bmp, shift, xors);
+	let containers = await Container.fromBitmap(bmp, shift, xors);
 	if (containers.length) {
 		return new WithTarget(null, containers, 0);
 	}
@@ -1245,16 +1243,16 @@ WithTarget.fromBitmap = async function(bmp, possibility, shift=0, xors=[]) {
 }
 </script>
 <script>
-var inputUrl;
-var ivTarget;
-var viewFileList;
-var preview;
-var popup;
-var popupUrl;
+let inputUrl;
+let ivTarget;
+let viewFileList;
+let preview;
+let popup;
+let popupUrl;
 
-var input = new Image();
+const input = new Image();
 input.crossorigin = "anonymous";
-var canvas = document.createElement("canvas");
+const canvas = document.createElement("canvas");
 input.onload = async function() {
 	try {
 		if (popup && popup.window) {
@@ -1267,13 +1265,13 @@ input.onload = async function() {
 		viewFileList.innerHTML = "";
 		viewFileList.style.minWidth = "";
 
-		var bmp = new BufferedImage(this);
-		var possibility = WithTarget.possibility(bmp);
-		var parsed = await WithTarget.fromBitmap(bmp, possibility);
+		const bmp = new BufferedImage(this);
+		const possibility = WithTarget.possibility(bmp);
+		let parsed = await WithTarget.fromBitmap(bmp, possibility);
 
 		if (!parsed) {
 			// 키값 입력받아서 재시도
-			var key = prompt("이미지를 해석할 수 없습니다.\n비밀번호가 있다면 키를 입력하세요.");
+			const key = prompt("이미지를 해석할 수 없습니다.\n비밀번호가 있다면 키를 입력하세요.");
 			parsed = await WithTarget.fromBitmap(bmp, possibility, getShift(key), getXors(key));
 			
 			if (!parsed) {
@@ -1291,14 +1289,14 @@ input.onload = async function() {
 		parsed.containers.sort((cont1, cont2) => {
 			return compare(cont1.path, cont2.path);
 		});
-		for (var i = 0; i < parsed.containers.length; i++) {
+		for (let i = 0; i < parsed.containers.length; i++) {
 			addFile(parsed.containers[i]);
 		}
-		var minWidth = 0;
-		for (var i = 0; i < viewFileList.children.length; i++) {
-			var aWidth = 2;
-			var a = viewFileList.children[i];
-			for (var j = 0; j < a.children.length; j++) {
+		let minWidth = 0;
+		for (let i = 0; i < viewFileList.children.length; i++) {
+			let aWidth = 2;
+			const a = viewFileList.children[i];
+			for (let j = 0; j < a.children.length; j++) {
 				aWidth += a.children[j].offsetWidth;
 			}
 			minWidth = Math.max(minWidth, aWidth);
@@ -1316,6 +1314,10 @@ input.onerror = function(err) {
 	loadExternal(inputUrl.value);
 }
 function loadExternal(url) {
+	if (url.startsWith("blob:")) {
+		alert("열 수 없는 경로입니다.");
+		return;
+	}
 	if (window.innerWidth > 800) { // PC
 		popup = window.open(popupUrl = url, "left", "location=no"
 				+ ",top=" + window.screenTop
@@ -1335,8 +1337,8 @@ function loadExternal(url) {
 	}
 }
 function compare(path1, path2) {
-	var index1 = path1.indexOf("/");
-	var index2 = path2.indexOf("/");
+	const index1 = path1.indexOf("/");
+	const index2 = path2.indexOf("/");
 	if (index1 < 0) {
 		if (index2 < 0) {
 			// 파일끼리 대소문자 무시하고 비교
@@ -1350,8 +1352,8 @@ function compare(path1, path2) {
 			// Java 버전과 달리 폴더보다 파일이 먼저 보이게 함
 			return 1;
 		} else {
-			var dir1 = path1.substring(0, index1);
-			var dir2 = path2.substring(0, index2);
+			const dir1 = path1.substring(0, index1);
+			const dir2 = path2.substring(0, index2);
 			if (dir1 == dir2) {
 				// 같은 폴더면 하위 내용물 비교
 				return compare(path1.substring(index1 + 1), path2.substring(index2 + 1));
@@ -1363,25 +1365,25 @@ function compare(path1, path2) {
 	}
 }
 function addFile(cont) {
-	var path = cont.path.split("/");
-	var filename = path[path.length - 1];
+	const path = cont.path.split("/");
+	const filename = path[path.length - 1];
 	
-	var a = document.createElement("a");
+	const a = document.createElement("a");
 	
-	var labelDir = document.createElement("span");
+	const labelDir = document.createElement("span");
 	labelDir.innerText = cont.path.substring(0, cont.path.lastIndexOf('/') + 1);
 	
-	var labelFile = document.createElement("span");
+	const labelFile = document.createElement("span");
 	labelFile.className = "file";
-	var file = new File([cont.binary], filename);
-	a.href = blobToUrl(file);
+	const file = new File([cont.binary], filename);
+	a.href = URL.from(file);
 	a.download = labelFile.innerText = filename;
 	
 	a.append(labelDir);
 	a.append(labelFile);
 	viewFileList.append(a);
 	
-	var type = "";
+	let type = "";
 	switch (filename.substring(filename.lastIndexOf(".") + 1).toLowerCase()) {
 		case "png":
 		case "bmp":
@@ -1421,7 +1423,7 @@ function addFile(cont) {
 	}
 	
 	if (type) {
-		var labelPreview = document.createElement("span");
+		const labelPreview = document.createElement("span");
 		labelPreview.className = "preview";
 		labelPreview.innerText = "[미리보기]";
 		a.append(labelPreview);
@@ -1430,7 +1432,7 @@ function addFile(cont) {
 function showTargetImage(bmp) {
 	ivTarget.innerHTML = "";
 	if (bmp == null) {
-		var comment = document.createElement("div");
+		const comment = document.createElement("div");
 		comment.id = "comment";
 		comment.append("입력 이미지 없이 생성한");
 		comment.append(document.createElement("br"));
@@ -1439,9 +1441,9 @@ function showTargetImage(bmp) {
 		return;
 	}
 	ivTarget.append(bmp.update().canvas);
-	var height = ivTarget.clientHeight;
-	var ratio = height / bmp.height;
-	var width = bmp.width * ratio;
+	let height = ivTarget.clientHeight;
+	let ratio = height / bmp.height;
+	let width = bmp.width * ratio;
 	if (width > ivTarget.clientWidth) {
 		width = ivTarget.clientWidth;
 		ratio = width / bmp.width;
@@ -1454,7 +1456,9 @@ function showTargetImage(bmp) {
 
 function parse() {
 	try {
-		input.src = inputUrl.value;
+		const url = inputUrl.value;
+		URL.clear(url.startsWith("blob:") ? url : null);
+		input.src = url;
 	} catch (e) {
 		console.debug(e);
 	}
@@ -1463,15 +1467,14 @@ function parse() {
 async function paste(e) {
 	if (e.clipboardData.files.length) {
 		e.preventDefault();
-		var file = e.clipboardData.files[0];
-		inputUrl.value = input.src = blobToUrl(file);
+		inputUrl.value = input.src = URL.reset(e.clipboardData.files[0]);
 	} else {
 		inputUrl.value = "";
 		inputUrl.focus();
 	}
 }
 
-function onload() {
+async function onload() {
 	inputUrl = document.getElementById("inputUrl");
 	ivTarget = document.getElementById("ivTarget");
 	viewFileList = document.getElementById("viewFileList");
@@ -1481,11 +1484,11 @@ function onload() {
 	document.addEventListener("paste", paste);
 	
 	{	// 파일 열기
-		var inputFile = document.createElement("input");
+		const inputFile = document.createElement("input");
 		inputFile.type = "file";
 		inputFile.addEventListener("change", (e) => {
 			if (inputFile.files.length) {
-				inputUrl.value = input.src = blobToUrl(inputFile.files[0]);
+				inputUrl.value = input.src = URL.reset(inputFile.files[0]);
 				inputFile.value = "";
 			}
 		});
@@ -1495,7 +1498,7 @@ function onload() {
 	}
 	
 	{	// 이미지 드래그해서 열기
-		var cover = document.createElement("div");
+		const cover = document.createElement("div");
 		document.body.append(cover);
 		cover.style.position = "fixed";
 		cover.style.top = 0;
@@ -1520,12 +1523,12 @@ function onload() {
 			e.preventDefault();
 			cover.style.display = "none";
 			if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-				var file = e.dataTransfer.files[0];
-				var ext = file.name.substring(file.name.length - 4);
+				const file = e.dataTransfer.files[0];
+				const ext = file.name.substring(file.name.length - 4);
 				switch (ext.toLowerCase()) {
 					case ".png":
 					case ".bmp": {
-						inputUrl.value = input.src = blobToUrl(file);
+						inputUrl.value = input.src = URL.reset(file);
 					}
 				}
 			}
@@ -1542,43 +1545,40 @@ function onload() {
 				els = [els];
 			}
 			els.forEach((el) => {
-				var wrapperHandler = null;
-				if (handler) {
-					wrapperHandler = (e) => {
+				const wrapperHandler = handler
+				?	(e) => {
 						if (!e.target) return;
-						var child = e.target.closest(selector);
+						const child = e.target.closest(selector);
 						if (child) {
 							handler.call(child, e);
 						}
-					};
-				} else {
-					handler = selector;
-					wrapperHandler = (e) => {
-						handler.call(el, e);
 					}
-				}
+				:	(e) => {
+						selector.call(el, e);
+					}
+				;
 				en.replace(" ", ",").split(",").forEach((e) => {
 					el.addEventListener(e.trim(), wrapperHandler);
 				});
 			});
 		}
-		var previewContent = document.getElementById("previewContent");
+		const previewContent = document.getElementById("previewContent");
 		addEL(viewFileList, "click", "span.preview", async (e) => {
 			e.preventDefault();
 			
-			var url = e.srcElement.parentElement.href;
+			const url = e.srcElement.parentElement.href;
 			
 			previewContent.innerHTML = "";
 			switch (e.srcElement.parentElement.className) {
 				case "text": {
-					var file = files[url];
-					var text = await file.text();
+					const file = URL.files[url];
+					let text = await file.text();
 					previewContent.innerText = text;
 					preview.style.display = "block";
 					break;
 				}
 				case"image": {
-					var img = new Image();
+					const img = new Image();
 					img.src = url;
 					previewContent.append(img);
 					preview.style.display = "block";
@@ -1592,14 +1592,33 @@ function onload() {
 	}
 
 	if (location.search.length) {
-		var params = location.search.substring(1).split("&");
-		for (var i = 0; i < params.length; i++) {
+		const params = location.search.substring(1).split("&");
+		for (let i = 0; i < params.length; i++) {
 			if (params[i].startsWith("url=")) {
 				inputUrl.value = decodeURI(params[i].substring(4));
 				parse();
 				break;
 			}
 		}
+	}
+
+	if (location.href.startsWith("http")) {
+		/*
+		if (location.href.startsWith("https")) {
+			if ('serviceWorker' in navigator) {
+				navigator.serviceWorker.register('sw.js').then(function() {
+					console.log('Service Worker Registered');
+				});
+			}
+		}
+		*/
+		
+		var a = document.getElementById("downloadViewer");
+		a.href = URL.createObjectURL(await fetch(location.href).then(result => result.blob()));
+		a.download = "WinPNG_Viewer.html";
+		
+	} else {
+		document.getElementsByTagName("form")[0].className = "offline";
 	}
 }
 </script>
@@ -1660,6 +1679,9 @@ body.withPopup form {
 #winpng {
 	height: 20px;
 	text-align: right;
+}
+form.offline #winpng {
+	display: none;
 }
 fieldset {
 	height: 40px;
@@ -1723,6 +1745,9 @@ fieldset button[type=submit] {
 	height: calc(100% - 260px);
 	overflow: auto;
 	background: #eee;
+}
+form.offline #areaFileList {
+	height: calc(100% - 240px);
 }
 #viewFileList a {
 	display: block;
@@ -1806,7 +1831,7 @@ fieldset button[type=submit] {
 <!-- 이미지 to base64
 <input type="file" onchange="getImage(event)" />
 <script>
-var reader = new FileReader();
+const reader = new FileReader();
 reader.onload = function(e) {
 	console.log(e.target.result);
 }
@@ -1817,7 +1842,10 @@ function getImage(e) {
 -->
 <div id="externalFrame"><iframe></iframe><div>↑ 이미지 길게 터치 후 복사<br />↓ URL란에 길게 터치 후 붙여넣기</div></div>
 <form onsubmit="return parse();">
-	<div id="winpng"><a href="https://github.com/harnenim/WinPNG">WinPNG 알아보기</a></div>
+	<div id="winpng">
+		<a href="https://github.com/harnenim/WinPNG">[WinPNG 알아보기]</a>
+		<a href="" id="downloadViewer">[HTML 파일 다운로드]</a>
+	</div>
 	<fieldset>
 		<label for="inputUrl">URL:</label>
 		<input type="text" id="inputUrl" autocomplete="off" />
