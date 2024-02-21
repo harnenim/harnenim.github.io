@@ -16,9 +16,9 @@ URL.from = function(blob) {
 	this.files[url] = blob;
 	return url;
 }
-URL.clear = function(without) {
+URL.clear = function(required) {
 	for (let url in this.files) {
-		if (url == without) continue;
+		if (url == required) continue;
 		URL.revokeObjectURL(url);
 		delete this.files[url];
 	}
@@ -39,6 +39,9 @@ const BufferedImage = function(w, h) {
 		this.canvas.height = this.height = h;
 		
 		this.context = this.canvas.getContext("2d");
+		// 1:1로 리사이즈 없이 그려도
+		// 안드로이드 크롬/엣지 등 일부 브라우저에선
+		// Smoothing이 동작해서 이웃 픽셀 색이 섞이는 경우가 발생
 		this.context.imageSmoothingEnabled = false;
 		this.context.drawImage(this.image, 0, 0, w, h);
 		
@@ -583,7 +586,7 @@ WithTarget.can114 = function(bmp) {
  */
 WithTarget.can114v2 = function(bmp) {
 	console.info("\nis it 1:1:4 v2?");
-	
+
 	const width  = bmp.getWidth();
 	const height = bmp.getHeight();
 	console.info("input size: " + width + " x " + height);
@@ -1335,6 +1338,7 @@ function loadExternal(url) {
 		document.body.className = "withExternal";
 		document.getElementsByTagName("iframe")[0].src = inputUrl.value;
 	}
+	history.replaceState({}, null, window.location.pathname + "?url=" + encodeURIComponent(url));
 }
 function compare(path1, path2) {
 	const index1 = path1.indexOf("/");
@@ -1595,7 +1599,7 @@ async function onload() {
 		const params = location.search.substring(1).split("&");
 		for (let i = 0; i < params.length; i++) {
 			if (params[i].startsWith("url=")) {
-				inputUrl.value = decodeURI(params[i].substring(4));
+				inputUrl.value = decodeURIComponent(params[i].substring(4));
 				parse();
 				break;
 			}
@@ -1844,7 +1848,7 @@ function getImage(e) {
 <form onsubmit="return parse();">
 	<div id="winpng">
 		<a href="https://github.com/harnenim/WinPNG">[WinPNG 알아보기]</a>
-		<a href="" id="downloadViewer">[HTML 파일 다운로드]</a>
+		<a href="" id="downloadViewer">[뷰어 다운로드]</a>
 	</div>
 	<fieldset>
 		<label for="inputUrl">URL:</label>
