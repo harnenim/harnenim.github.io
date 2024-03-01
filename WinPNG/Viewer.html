@@ -1602,6 +1602,12 @@ async function onload() {
 				inputUrl.value = decodeURIComponent(params[i].substring(4));
 				parse();
 				break;
+			} else if(params[i].startsWith("ref")) {
+				if (document.referrer) {
+					inputUrl.value = document.referrer;
+					parse();
+					break;
+				}
 			}
 		}
 	}
