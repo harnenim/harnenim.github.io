@@ -2,99 +2,49 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>WinPNG 뷰어</title>
-<script title="java.awt.image.BufferedImage">
-var BufferedImage = function(w, h) {
-	if (typeof w == "object") {
-		this.image = w;
-		var w = this.image.naturalWidth;
-		var h = this.image.naturalHeight;
-		this.canvas = document.createElement("canvas");
-		this.canvas.width  = this.width  = w;
-		this.canvas.height = this.height = h;
+<title>drawImage</title>
+<script>
+async function onload() {
+	const input = document.getElementById("input");
+	input.crossorigin = "anonymous";
+	input.onload = async function() {
+		const w = this.naturalWidth;
+		const h = this.naturalHeight;
 		
-		this.context = this.canvas.getContext("2d");
-		this.context.imageSmoothingEnabled = false;
-		this.context.drawImage(this.image, 0, 0, w, h);
-		
-	} else {
-		this.canvas = document.createElement("canvas");
-		this.canvas.width  = this.width  = w;
-		this.canvas.height = this.height = h;
-		this.context = this.canvas.getContext("2d");
+		let data1, data2;
+		{
+			const canvas = document.getElementById("output1");
+			canvas.width  = w;
+			canvas.height = h;
+			
+			const context = canvas.getContext("2d");
+			// 리사이즈 없이 1:1로 draw 하는 상황에서도 브라우저에 따라
+			// imageSmoothingEnabled = true 상태에선 픽셀끼리 색이 섞이는 경우 발생
+			context.drawImage(this, 0, 0, w, h);
+			data1 = context.getImageData(0, 0, w, h).data;
+		}
+		{
+			const canvas = document.getElementById("output2");
+			canvas.width  = w;
+			canvas.height = h;
+			
+			const context = canvas.getContext("2d");
+			context.imageSmoothingEnabled = false; // 이 상태에선 원본 그대로 그려짐
+			context.drawImage(this, 0, 0, w, h);
+			data2 = context.getImageData(0, 0, w, h).data;
+		}
+		const result = [];
+		for (let i = 0; i < data1.length; i++) {
+			if (data1[i] != data2[i]) {
+				const point = Math.floor(i / 4);
+				const rgb = "RGBA"[i % 4];
+				result.push("(" + (point % 18) + "," + Math.floor(point / 18) + ")" + rgb + ": " + data1[i] + " / " + data2[i]);
+			}
+		}
+		document.getElementById("sample").innerText = result.join("\n");
 	}
-	this.data = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+	input.src = "data:image/png;base64,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";
 }
-
-var sample = new Image();
-sample.onload = function() {
-	console.log(1);
-	
-	var w = this.naturalWidth;
-	var h = this.naturalHeight;
-	
-	{	// case1
-		var canvas = document.createElement("canvas");
-		canvas.width  = w*3;
-		canvas.height = h*3;
-		
-		var context = canvas.getContext("2d");
-		context.drawImage(this, 0, 0, w, h, 0, 0, w*3, h*3);
-		
-		document.getElementById("case1").append(canvas);
-	}
-	
-	{	// case2
-		var canvas = document.createElement("canvas");
-		canvas.width  = w*3;
-		canvas.height = h*3;
-		
-		var context = canvas.getContext("2d");
-		context.imageSmoothingEnabled = false;
-		context.drawImage(this, 0, 0, w, h, 0, 0, w*3, h*3);
-		
-		document.getElementById("case2").append(canvas);
-	}
-	
-	/*
-	{	// case3
-		var canvas = document.createElement("canvas");
-		canvas.width  = w*3;
-		canvas.height = h*3;
-		
-		var context = canvas.getContext("2d");
-		context.imageSmoothingQuality = "low";
-		context.drawImage(this, 0, 0, w, h, 0, 0, w*3, h*3);
-		
-		document.getElementById("case3").append(canvas);
-	}
-	
-	{	// case4
-		var canvas = document.createElement("canvas");
-		canvas.width  = w*3;
-		canvas.height = h*3;
-		
-		var context = canvas.getContext("2d");
-		context.imageSmoothingQuality = "medium";
-		context.drawImage(this, 0, 0, w, h, 0, 0, w*3, h*3);
-		
-		document.getElementById("case4").append(canvas);
-	}
-	
-	{	// case5
-		var canvas = document.createElement("canvas");
-		canvas.width  = w*3;
-		canvas.height = h*3;
-		
-		var context = canvas.getContext("2d");
-		context.imageSmoothingQuality = "high";
-		context.drawImage(this, 0, 0, w, h, 0, 0, w*3, h*3);
-		
-		document.getElementById("case5").append(canvas);
-	}
-	*/
-}
-sample.src = "icon72.png";
 </script>
 <style>
 * {
@@ -106,20 +56,15 @@ sample.src = "icon72.png";
 html, body {
 	width: 100%;
 	height: 100%;
-}
-span {
-	display: inline-block;
-	width: 150px;
+	background: #000;
+	color: #fff;
 }
 </style>
 </head>
-<body>
-	<div id="case1"><span>smoothing true  :</span> </div>
-	<div id="case2"><span>smoothing false :</span> </div>
-	<!--
-	<div id="case3"><span>smoothing low   :</span> </div>
-	<div id="case4"><span>smoothing medium:</span> </div>
-	<div id="case5"><span>smoothing high  :</span> </div>
-	-->
+<body onload="onload();">
+<img id="input" />
+<canvas id="output1"></canvas>
+<canvas id="output2"></canvas>
+<pre id="sample"></pre>
 </body>
 </html>
