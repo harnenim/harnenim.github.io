@@ -1192,7 +1192,7 @@ WithTarget.fromBitmap124 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	let containers = awaitContainer.fromBitmap(dataImage, shift, xors);
+	let containers = await Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_124);
 	}
