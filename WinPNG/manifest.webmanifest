@@ -14,7 +14,7 @@
     }
   ]
 , "display": "fullscreen"
-, "start_url": "/WinPNG/WinPNG_Viewer.html"
+, "start_url": "/WinPNG/Viewer.html"
 , "description": "WinPNG"
 , "short_name": "WinPNG"
 , "background_color": "#FFFFFF"
