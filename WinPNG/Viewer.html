@@ -8,6 +8,9 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <title>WinPNG 뷰어</title>
 <script>
+if (clientInformation.appVersion.toLowerCase().indexOf("kakao") > 0) {
+	location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+}
 URL.files = {};
 URL.from = function(blob) {
 	const url = URL.createObjectURL(blob);
@@ -1651,7 +1654,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.04.v1';
+			window.CURRENT_VERSION = '2024.03.04.v2';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
