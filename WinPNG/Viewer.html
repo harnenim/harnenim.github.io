@@ -1205,7 +1205,7 @@ WithTarget.fromBitmap124 = async function(bmp, shift, xors) {
 		}
 	}
 	
-	let containers = awaitContainer.fromBitmap(dataImage, shift, xors);
+	let containers = await Container.fromBitmap(dataImage, shift, xors);
 	if (containers.length) {
 		return new WithTarget(targetImage, containers, TYPE_124);
 	}
@@ -1648,6 +1648,12 @@ async function onload() {
 				inputUrl.value = decodeURIComponent(params[i].substring(4));
 				parse();
 				break;
+			} else if(params[i].startsWith("ref")) {
+				if (document.referrer) {
+					inputUrl.value = document.referrer;
+					parse();
+					break;
+				}
 			}
 		}
 	}
