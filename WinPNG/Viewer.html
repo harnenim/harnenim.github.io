@@ -12,32 +12,35 @@
 	const userAgent = clientInformation.userAgent.toLowerCase();
 	const redirect = (() => {
 		let url = location.href.split("?")[0];
-		try {
-			if (location.search.length) {
-				const params = location.search.substring(1).split("&");
-				for (let i = 0; i < params.length; i++) {
-					if (params[i].startsWith("ref") && document.referrer) {
-						url += "?url=" + encodeURIComponent(document.referrer);
-						break;
-					}
+		if (location.search.length) {
+			const params = location.search.substring(1).split("&");
+			for (let i = 0; i < params.length; i++) {
+				if (params[i].startsWith("ref") && document.referrer) {
+					url += "?url=" + encodeURIComponent(document.referrer);
+					break;
 				}
 			}
-		} catch (e) {
-			alert(e);
 		}
+		
 		if (userAgent.indexOf("kakao") > 0) {
 			return "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);
 			
 		} else if (userAgent.indexOf("android") > 0) {
 			let and = false;
 			if (userAgent.startsWith("tistory/")) {
-				alert("티스토리 인앱 브라우저에선\n정상적인 이용이 어렵습니다.");
 				and = true;
 			} else if (userAgent.indexOf("naver") > 0) {
-				//alert("네이버 인앱 브라우저입니다.");
 				and = true;
 			}
+			if (!and && clientInformation.userAgentData && clientInformation.userAgentData.brands) {
+				clientInformation.userAgentData.brands.forEach((brand) => {
+				    if (brand.brand == "Android WebView") {
+				    	and = true;
+				    }
+				});
+			}
 			if (and) {
+				alert("인앱 브라우저에선\n정상적인 이용이 어렵습니다.");
 				return "intent://" + url.replace(/https?:\/\//i, "") + "#Intent;scheme=https;package=com.android.chrome;end";
 			} else {
 				return null;
@@ -1699,7 +1702,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.05.v9';
+			window.CURRENT_VERSION = '2024.03.05.v900';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
