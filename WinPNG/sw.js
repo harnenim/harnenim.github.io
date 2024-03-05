@@ -1,4 +1,4 @@
-const VERSION = "2024.03.05.v1";
+const VERSION = "2024.03.05.v2";
 
 if (self.window) {
 	setTimeout(async function() {

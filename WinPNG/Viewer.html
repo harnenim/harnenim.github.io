@@ -8,8 +8,23 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <title>WinPNG 뷰어</title>
 <script>
-if (clientInformation.appVersion.toLowerCase().indexOf("kakao") > 0) {
-	location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+{
+	const userAgent = clientInformation.userAgent.toLowerCase();
+	const redirect = (() => {
+		if (userAgent.indexOf("kakao") > 0) {
+			return "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+		} else if (userAgent.indexOf("android") > 0) {
+			let and = false;
+			if (userAgent.startsWith("Tistory/") > 0) {
+				and = true;
+			}
+			return and ? ("intent://" + location.href.replace(/https?:\/\//i, "") + "#Intent;scheme=https;package=com.android.chrome;end") : null;
+		}
+		return null;
+	})();
+	if (redirect) {
+		location.href = redirect;
+	}
 }
 URL.files = {};
 URL.from = function(blob) {
@@ -1659,7 +1674,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.05.v1';
+			window.CURRENT_VERSION = '2024.03.05.v2';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
