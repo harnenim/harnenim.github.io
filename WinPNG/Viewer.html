@@ -11,12 +11,12 @@
 {
 	const userAgent = clientInformation.userAgent.toLowerCase();
 	const redirect = (() => {
-		let url = location.href.split("?")[0];
+		let url = location.href;
 		if (location.search.length) {
 			const params = location.search.substring(1).split("&");
 			for (let i = 0; i < params.length; i++) {
 				if (params[i].startsWith("ref") && document.referrer) {
-					url += "?url=" + encodeURIComponent(document.referrer);
+					url = url.split("?")[0] + "?url=" + encodeURIComponent(document.referrer);
 					break;
 				}
 			}
@@ -1702,7 +1702,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.05.v900';
+			window.CURRENT_VERSION = '2024.03.05.v901';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
