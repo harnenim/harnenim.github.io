@@ -11,8 +11,24 @@
 {
 	const userAgent = clientInformation.userAgent.toLowerCase();
 	const redirect = (() => {
+		let url = location.href;
+		try {
+			if (location.search.length) {
+				const params = location.search.substring(1).split("&");
+				for (let i = 0; i < params.length; i++) {
+					if (params[i].startsWith("ref") && document.referrer) {
+						url = url.split("?")[0] + "?url=" + encodeURIComponent(document.referrer);
+						break;
+					}
+				}
+			}
+		} catch (e) {
+			alert(e);
+		}
+		console.log("url: " + url);
 		if (userAgent.indexOf("kakao") > 0) {
-			return "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+			return "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);
+			
 		} else if (userAgent.indexOf("android") > 0) {
 			let and = false;
 			if (userAgent.startsWith("tistory/")) {
@@ -23,22 +39,6 @@
 				and = true;
 			}
 			if (and) {
-				let url = location.href;
-				try {
-					if (location.search.length) {
-						const params = location.search.substring(1).split("&");
-						for (let i = 0; i < params.length; i++) {
-							if (params[i].startsWith("ref") && document.referrer) {
-								inputUrl.value = document.referrer;
-								parse();
-								url = url.split("?")[0] + "?url=" + encodeURIComponent(document.referrer);
-								break;
-							}
-						}
-					}
-				} catch (e) {
-					alert(e);
-				}
 				return "intent://" + url.replace(/https?:\/\//i, "") + "#Intent;scheme=https;package=com.android.chrome;end";
 			} else {
 				return null;
@@ -1700,7 +1700,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.05.v7';
+			window.CURRENT_VERSION = '2024.03.05.v8';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
