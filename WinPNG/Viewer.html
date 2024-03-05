@@ -22,13 +22,30 @@
 				alert("네이버 인앱 브라우저입니다.");
 				and = true;
 			}
-			return and ? ("intent://" + location.href.replace(/https?:\/\//i, "") + "#Intent;scheme=https;package=com.android.chrome;end") : null;
+			if (and) {
+				let url = location.href;
+				if (location.search.length) {
+					const params = location.search.substring(1).split("&");
+					for (let i = 0; i < params.length; i++) {
+						if (params[i].startsWith("ref") && document.referrer) {
+							inputUrl.value = document.referrer;
+							parse();
+							url = url.split("?")[0] + "?url=" + encodeURIComponent(document.referrer);
+							break;
+						}
+					}
+				}
+				return "intent://" + url.replace(/https?:\/\//i, "") + "#Intent;scheme=https;package=com.android.chrome;end";
+			} else {
+				return null;
+			}
 		}
 		return null;
 	})();
 	if (redirect) {
 		alert("다음 URL을 실행합니다.\n" + redirect);
 		location.href = redirect;
+		history.back();
 	}
 }
 URL.files = {};
@@ -1679,7 +1696,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.05.v5';
+			window.CURRENT_VERSION = '2024.03.05.v6';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
