@@ -24,16 +24,20 @@
 			}
 			if (and) {
 				let url = location.href;
-				if (location.search.length) {
-					const params = location.search.substring(1).split("&");
-					for (let i = 0; i < params.length; i++) {
-						if (params[i].startsWith("ref") && document.referrer) {
-							inputUrl.value = document.referrer;
-							parse();
-							url = url.split("?")[0] + "?url=" + encodeURIComponent(document.referrer);
-							break;
+				try {
+					if (location.search.length) {
+						const params = location.search.substring(1).split("&");
+						for (let i = 0; i < params.length; i++) {
+							if (params[i].startsWith("ref") && document.referrer) {
+								inputUrl.value = document.referrer;
+								parse();
+								url = url.split("?")[0] + "?url=" + encodeURIComponent(document.referrer);
+								break;
+							}
 						}
 					}
+				} catch (e) {
+					alert(e);
 				}
 				return "intent://" + url.replace(/https?:\/\//i, "") + "#Intent;scheme=https;package=com.android.chrome;end";
 			} else {
@@ -1696,7 +1700,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.05.v6';
+			window.CURRENT_VERSION = '2024.03.05.v7';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
