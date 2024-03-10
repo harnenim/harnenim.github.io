@@ -1615,14 +1615,18 @@ async function onload() {
 		cover.addEventListener("drop", async (e) => {
 			e.preventDefault();
 			cover.style.display = "none";
-			if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-				const file = e.dataTransfer.files[0];
-				const ext = file.name.substring(file.name.length - 4);
-				switch (ext.toLowerCase()) {
-					case ".png":
-					case ".bmp": {
-						inputUrl.value = input.src = URL.reset(file);
+			if (e.dataTransfer) {
+				if (e.dataTransfer.files && e.dataTransfer.files.length) {
+					const file = e.dataTransfer.files[0];
+					const ext = file.name.substring(file.name.length - 4);
+					switch (ext.toLowerCase()) {
+						case ".png":
+						case ".bmp": {
+							inputUrl.value = input.src = URL.reset(file);
+						}
 					}
+				} else if (e.dataTransfer.items && e.dataTransfer.items.length) {
+					alert("이미지 드래그가 지원되지 않는 환경입니다.\n이미지 복사-붙여넣기로 시도하시기 바랍니다.");
 				}
 			}
 		});
