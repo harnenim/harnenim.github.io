@@ -1396,7 +1396,12 @@ function loadExternal(url) {
 		popup = window.open(popupUrl = url, "left", "location=no"
 				+ ",top=" + window.screenTop
 				+ ",left=" + window.screenLeft
-				+ ",width=" + (window.innerWidth - 600)
+				+ ",width=" + ( (window.innerWidth > 1200)
+				              ? ( (window.innerWidth > 1600)
+				                ? (window.innerWidth - 800)
+				                : (window.innerWidth / 2)
+				                )
+				              : (window.innerWidth - 600))
 				+ ",height=" + (window.outerHeight - 74));
 		if (popup) {
 			document.body.className = "withPopup";
@@ -1706,7 +1711,7 @@ async function onload() {
 
 	if (location.href.startsWith("http")) {
 		if (location.href.startsWith("https")) {
-			window.CURRENT_VERSION = '2024.03.05.v901';
+			window.CURRENT_VERSION = '2024.04.25.v1';
 			
 			let sw = document.createElement("script");
 			sw.src = "sw.js?" + Math.random();
@@ -1762,7 +1767,7 @@ body.withExternal form { height: 40%; }
 body.withPopup #externalFrame {
 	display: block;
 	float: left;
-	width: calc(100% - 600px);
+	width: calc(100% - 800px);
 	height: 100%;
 }
 body.withPopup #externalFrame > div {
@@ -1771,10 +1776,16 @@ body.withPopup #externalFrame > div {
 body.withPopup #externalFrame iframe {
 	height: 100%;
 }
-body.withPopup form { 
+body.withImage #externalFrame iframe { display: none; }
+body.withImage #externalFrame span   { display: block; }
+body.withImage #externalFrame img    { display: initial; }
+body.withPopup form,
+body.withImage form {
 	float: right;
-	width: 600px;
+	width: 800px;
 }
+@media (max-width:1600px) { body.withPopup #externalFrame { width: 50%;                } body.withPopup form, body.withImage form { width: 50%;   } }
+@media (max-width:1200px) { body.withPopup #externalFrame { width: calc(100% - 600px); } body.withPopup form, body.withImage form { width: 600px; } }
 
 #winpng {
 	height: 20px;
