@@ -12,11 +12,14 @@ html, body {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
+	font-family: 맑은 고딕;
+	transition: 0.5s;
 }
 div {
 	position: relative;
 	width: 100%;
 	max-width: 1920px;
+	margin: 0 auto;
 	line-height: 0;
 }
 div > * {
@@ -24,6 +27,9 @@ div > * {
 }
 img {
 	width: 100%;
+}
+img:not(:first-child) {
+	border: 1px solid #000;
 }
 div > div {
 	display: none;
@@ -34,22 +40,38 @@ h1, h2, h3, p {
 }
 h3, p {
 	background: rgba(232, 228, 217, 0.7);
-	border-radius: 1vw;
+	border-radius: 10px;
 }
 h1 {
 	font-size: 77px;
 	color: #815285;
 	text-align: right;
-	line-height: 7vw;
+	line-height: 134px;
 	background: rgba(45, 111, 171, 0.5);
-	border-radius: 2vw;
+	border-radius: 77px;
+	text-shadow:  0px -6px 3px #C971BB
+	           , -4px -4px 3px #C971BB
+	           , -6px  0px 3px #C971BB
+	           , -4px  4px 3px #C971BB
+	           ,  0px  6px 3px #C971BB
+	           ,  4px  4px 3px #C971BB
+	           ,  6px  0px 3px #C971BB
+	           ,  4px -4px 3px #C971BB;
 }
 h1 span { font-size: 115px; }
 h2 {
 	font-size: 38px;
 	color: #fff;
 	background: rgba(86, 36, 39, 0.5);
-	border-radius: 1vw;
+	border-radius: 19px;
+	text-shadow:  0px -3px 1.5px #C971BB
+	           , -2px -2px 1.5px #C971BB
+	           , -3px  0px 1.5px #C971BB
+	           , -2px  2px 1.5px #C971BB
+	           ,  0px  3px 1.5px #C971BB
+	           ,  2px  2px 1.5px #C971BB
+	           ,  3px  0px 1.5px #C971BB
+	           ,  2px -2px 1.5px #C971BB;
 }
 h3 {
 	color: #57B6CF;
@@ -64,7 +86,7 @@ h3 {
 	           ,  2px -2px 1.5px #8668B7;
 }
 p {
-	font-size: 16px;
+	font-size: 16.1px;
 	font-weight: bold;
 }
 img.overlay {
@@ -72,7 +94,9 @@ img.overlay {
 }
 @media (max-width: 1920px) {
 	h1 {
+		border-radius: 4vw;
 		font-size: 4vw;
+		line-height: 7vw;
 		text-shadow:  0.00vw -0.28vw 0.14vw #C971BB
 		           , -0.20vw -0.20vw 0.14vw #C971BB
 		           , -0.28vw  0.00vw 0.14vw #C971BB
@@ -84,6 +108,7 @@ img.overlay {
 	}
 	h1 span { font-size: 6vw; }
 	h2 {
+		border-radius: 1vw;
 		font-size: 2vw;
 		text-shadow:  0.00vw -0.14vw 0.07vw #C971BB
 		           , -0.10vw -0.10vw 0.07vw #C971BB
@@ -93,6 +118,9 @@ img.overlay {
 		           ,  0.10vw  0.10vw 0.07vw #C971BB
 		           ,  0.14vw  0.00vw 0.07vw #C971BB
 		           ,  0.10vw -0.10vw 0.07vw #C971BB;
+	}
+	h3, p {
+		border-radius: 0.5vw;
 	}
 	h3 {
 		font-size: 1.3vw;
@@ -106,18 +134,18 @@ img.overlay {
 		           ,  0.10vw -0.10vw 0.07vw #8668B7;
 	}
 	p {
-		font-size: 0.83vw;
+		font-size: 0.84vw;
 	}
 }
 </style>
 <style id="styleForTranslate"></style>
-<style id="styleForOverlay"  >.overlay { display: none; }</style>
+<style id="styleForOverlay"  >.overlay { opacity: 0; }</style>
 <script>
 function showOrHideTranslate() {
-	document.getElementById("styleForTranslate").innerHTML = (document.getElementById("cbShowTranslate").checked ? "" : "h1, h2, h3, p { display: none; }");
+	document.getElementById("styleForTranslate").innerHTML = (document.getElementById("cbShowTranslate").checked ? "" : "h1, h2, h3, p { opacity: 0; }");
 }
 function showOrHideOverlay  () {
-	document.getElementById("styleForOverlay"  ).innerHTML = (document.getElementById("cbShowOverlay"  ).checked ? "" : ".overlay { display: none; }");
+	document.getElementById("styleForOverlay"  ).innerHTML = (document.getElementById("cbShowOverlay"  ).checked ? "" : ".overlay { opacity: 0; }");
 }
 </script>
 </head>
@@ -134,8 +162,7 @@ function showOrHideOverlay  () {
 		<br />
 		<label>
 			<input type="checkbox" id="cbShowOverlay" onclick="showOrHideOverlay();" />
-			가린 글자 보기<br />
-			(이미지 추가 예정)
+			가린 글자 보기
 		</label>
 	</div>
 	<div>
@@ -154,8 +181,8 @@ function showOrHideOverlay  () {
 	
 	<div>
 		<img src="2.jpg" />
-		<img src="2.jpg" class="overlay" style="top: 53%; left : 0; width: 10%;" />
-		<img src="2.jpg" class="overlay" style="top: 53%; right: 0; width: 10%;" />
+		<img src="2l.jpg" class="overlay" style="top: 53%; left : -1px; width: 10%;" />
+		<img src="2r.jpg" class="overlay" style="top: 53%; right: -1px; width: 10%;" />
 		<div>
 			第一話
 			エスカレーターからウラ練馬
@@ -242,8 +269,8 @@ function showOrHideOverlay  () {
 	
 	<div>
 		<img src="3.jpg" />
-		<img src="3.jpg" class="overlay" style="top: 50%; left : 0; width: 10%;" />
-		<img src="3.jpg" class="overlay" style="top: 50%; right: 0; width: 10%;" />
+		<img src="3l.jpg" class="overlay" style="top: 50%; left : -1px; width: 10%;" />
+		<img src="3r.jpg" class="overlay" style="top: 50%; right: -1px; width: 10%;" />
 		<div>
 			第三話
 			恐怖の皇帝 運沌 現れる

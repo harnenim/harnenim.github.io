@@ -1,0 +1,2121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>종말 트레인 감독 생방 트위터</title>
+<style>
+html, body {
+	width: 100%;
+	height: 100%;
+}
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+table {
+	table-layout: fixed;
+	width: 100%;
+	max-width: 1300px;
+	margin: 0 auto;
+	border-collapse: collapse;
+	line-height: 26px;
+}
+th, td {
+	border: 1px solid #ccc;
+}
+tr.first td {
+	border-top: 3px double #ccc;
+}
+tbody td {
+	padding: 4px;
+}
+td:first-child,
+td:last-child {
+	text-align: center;
+}
+td:nth-child(2) > a {
+	text-decoration: none;
+	color: #000;
+}
+td:nth-child(3),
+td:last-child {
+	word-break: keep-all;
+}
+td:last-child a:before { content: "[ "; }
+td:last-child a:after  { content: " ]"; }
+select {
+	width: 100%;
+	border: 0;
+	background: #fff;
+}
+
+#header {
+	position: fixed;
+	top: 0;
+	left: calc(50% - 650px);
+	background: #fff;
+}
+#body {
+	margin-top: 27px;
+}
+#header th {
+	border-bottom: 3px double #ccc;
+}
+@media (max-width: 1300px) {
+	#header { left: 0; }
+}
+</style>
+<style id="styleForEpisode"></style>
+<script>
+function selectEpisode(value) {
+	var css = "#tbody > tr { display: table-row; }";
+	if (value) {
+		css = "#tbody > tr { display: none; }\n"
+		    + "#tbody > tr." + value + " { display: table-row; }";
+	}
+	document.getElementById("styleForEpisode").innerHTML = css;
+	history.replaceState({}, null, window.location.pathname + "?ep=" + value);
+}
+function onload() {
+	if (location.search && location.search.startsWith("?ep=")) {
+		selectEpisode(document.getElementById("selectEpisode").value = location.search.substring(4));
+	}
+}
+</script>
+</head>
+<body onload="onload();">
+<table id="header">
+	<colgroup>
+		<col style="width: 60px;" />
+		<col style="width: 40%;" />
+		<col style="width: 40%;" />
+		<col style="width: calc(20% - 60px);" />
+	</colgroup>
+	<thead>
+		<tr>
+			<th>
+				<select id="selectEpisode" onchange="selectEpisode(this.value)">
+					<option value="">전체</option>
+					<option value="ep01">1화</option>
+					<option value="ep02">2화</option>
+					<option value="ep03">3화</option>
+					<option value="ep04">4화</option>
+					<option value="ep05">5화</option>
+					<option value="ep06">6화</option>
+					<option value="ep07">7화</option>
+					<!--
+					<option value="ep08">8화</option>
+					<option value="ep09">9화</option>
+					<option value="ep10">10화</option>
+					<option value="ep11">11화</option>
+					<option value="ep12">12화</option>
+					-->
+				</select>
+			</th>
+			<th>원문</th>
+			<th>번역</th>
+			<th>참고</th>
+		</tr>
+	</thead>
+</table>
+<table id="body">
+	<colgroup>
+		<col style="width: 60px;" />
+		<col style="width: 40%;" />
+		<col style="width: 40%;" />
+		<col style="width: calc(20% - 60px);" />
+	</colgroup>
+	<tbody id="tbody">
+		<tr class="ep01 first">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774792070387126637">
+				「終末トレインどこへいく？」<br />
+				これからオンエア(すみません、関東圏のMXに合わせます)のタイミングでちょくちょく、つぶやいていこうと思っています。<br />
+				よろしくお願いします。</a></td>
+			<td>「종말 트레인 어디로 가나?」<br />
+				앞으로 온에어(죄송합니다, 간토권 MX에 맞춥니다) 타이밍에 이따금 떠들려고 합니다.<br />
+				잘 부탁합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774801949885600182">
+				なるべくネタバレしない様に気を付けるつもりですが、このお話の世界観や裏設定など、人によっては「それネタバレっぽくねー？」と感じる方もいるかも知れません。<br />
+				注意はもちろんしますが、<br />
+				どうかご容赦を！ </a></td>
+			<td>가급적 스포일러 안 하도록 조심할 생각이지만, 이 이야기는 세계관이나 뒷설정 등, 사람에 따라선 「그거 스포일러 같지 않음?」 싶은 분도 있을지도 모릅니다.<br />
+				주의는 물론 하겠지만,<br />
+				부디 용서해주세요!</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774807868958753227">
+				第四話がまだ、出来てないのであります。<br />
+				いいのかつぶやいてて？<br />
+				いやー、どうだろう？ </a></td>
+			<td>제4화가 아직 완성 안 됐습니다.<br />
+				떠들고 있어도 되는 건가?<br />
+				이래도 되나 모르겠네?</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808017718100387">
+				とりあえす3ヶ月、短い間ですがお付き合い下さいませ。</a></td>
+			<td>아무튼 3개월, 짧지만 어울려 주셨으면 합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808118633107526">
+				「終末トレインどこへいく？」<br />
+				なぜ数ある中で西武線をモデルにしたのかというと、アニメ業界人的にすごーく馴染みが深いからです。それだけです。</a></td>
+			<td>「종말 트레인 어디로 가나?」<br />
+				왜 수많은 곳 중에 세이부선을 모델로 삼았는가 하면, 아니메 업계인에게 굉장히 친숙하기 때문입니다. 그게 답니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808275458097549">
+				アニメに携わる人は、西武新宿線、西武池袋線、中央線沿線に住んでいる人が多いです。<br />
+				圧倒的です(あえて断言) </a></td>
+			<td>아니메에 종사하는 사람은 세이부 신주쿠선, 세이부 이케부쿠로선, 추오선 연선에 사는 사람이 많습니다.<br />
+				압도적입니다 (굳이 단언)</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808418194423936">
+				それ以外だと丸の内線、京王線、東武東上線、かなあ。<br />
+				東横線沿線の人だったりすると「珍しい！」と思ったりします。</a></td>
+			<td>그 이외에도 마루노우치선, 케이오선, 토부토조선, 이려나.<br />
+				토요코선 연선 사람쯤 되면 「신기하다!」 싶기도 합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808514780951028">
+				正直に言うと、まずは馴染み多い西武鉄道さんにアニメ化のお話をしに行って、ダメだったらほかの鉄道を当たろうと思っていました。<br />
+				即、OKでした。<br />
+				スタッフ一同大喜びでした。</a></td>
+			<td>솔직히 말하자면, 우선 친숙한 세이부 철도 쪽에 애니화 얘기를 하러 가서, 안 된다면 다른 철도를 알아볼 생각이었습니다.<br />
+				즉시 OK였습니다.<br />
+				스태프 모두 크게 기뻐했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808715608404306">
+				2000系を使ったのも、西武線というとこの黄色い電車のイメージが強かったからです。<br />
+				「西武線ならやっぱ黄色いのでしょ」と皆さん賛同してくれました。<br />
+				個人的には30000系のスマイルトレインも可愛くて好きです。<br />
+				101系も好きです。</a></td>
+			<td>2000계를 쓴 것도, 세이부선인 것도, 노란 전철의 이미지가 강했기 때문입니다.<br />
+				「세이부선이라면 역시 노란색이지」라고 다들 찬동해줬습니다.<br />
+				개인적으론 30000계의 스마일 트레인도 귀여워서 맘에 듭니다.<br />
+				101계도 좋아합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808822307238094">
+				2両編成にするのは最初から決めていました。<br />
+				2両編成はアニメの絵柄的にとても収まりが良いからです。<br />
+				2000系に2両編成がなければでっち上げようと思っていました。<br />
+				そしたら、ありました！ </a></td>
+			<td>2량 편성으로 하는 건 처음부터 결정돼 있었습니다.<br />
+				2량 편성은 애니의 구도에 아주 담기 좋기 때문입니다.<br />
+				2000계에 2량 편성이 없으면 지어낼 생각이었습니다.<br />
+				그랬더니, 있었습니다!</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808915680846279">
+				初期の初期にはこの作品の車両を機関車にする、という案もありましたが、TVシリーズ的には負荷が高すぎるので見送りました。</a></td>
+			<td>초기의 초기엔 이 작품의 차량을 기관차로 하는 안도 있었지만, TV 시리즈로 만들기엔 부하가 너무 커서 제꼈습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774808980512260547">
+				もし機関車だったらC57がいいなと思っていたので小金井公園に見に行きました。<br />
+				うん、やはり、いい。</a></td>
+			<td>만약 기관차였으면 C57이 좋겠다고 생각했기에 코가네이 공원을 보러 갔습니다.<br />
+				음, 역시, 좋네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809071516078362">
+				新橋に置いてあるC11を盗んで山手線上を走る、なんていうストーリー案もありました。<br />
+				どうやって？<br />
+				機関車なら陸路も行ける、はず。<br />
+				曲がれないけど。</a></td>
+			<td>신바시에 놓여있는 C11을 훔쳐서 야마노테선 위를 달린다는 스토리 안도 있었습니다.<br />
+				어떻게?<br />
+				기관차라면 육로도 갈 수 있을 겁니다, 아마도.<br />
+				꺾진 못하지만.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809175413199122">
+				吾野駅を舞台にしたのは西武池袋線の終点だからです。<br />
+				恥ずかしながら、西武池袋線を調べていて初めて知りました。<br />
+				あがの、と読めませんでした。<br />
+				ごの？われの？ </a></td>
+			<td>아가노(吾野)역을 무대로 한 건 세이부 이케부쿠로선의 종점이기 때문입니다.<br />
+				부끄럽지만, 세이부 이케부쿠로선을 조사해보고 처음 알았습니다.<br />
+				'아가노'라고 읽을 수 없었습니다.<br />
+				고노? 와레노?</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809267633267139">
+				まずあとりあえずみんなで吾野駅に行き、まわりをうろうろしました。<br />
+				とても静かでした。<br />
+				かわいい犬がいました。<br />
+				吾野宿の人と出会いました。</a></td>
+			<td>우선 일단 다들 아가노역에 가서, 주위를 어슬렁거렸습니다.<br />
+				대단히 조용했습니다.<br />
+				귀여운 개가 있었습니다.<br />
+				아가노 민박 사람을 만났습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809330149413018">
+				吾野の動物たちがたむろしている吾野宿、実際にあります。<br />
+				泊まれますよ。<br />
+				貸切も出来るらしいです。</a></td>
+			<td>아가노의 동물들이 모여있는 아가노 민박, 실제로 있습니다.<br />
+				묵을 수 있답니다.<br />
+				전세 내는 것도 가능한 모양입니다.</td>
+			<td><a href="https://www.google.com/maps/@35.9103127,139.2312469,0a,90y,168.94h,105.53t/data=!3m4!1e1!3m2!1sQYxcPplcRzFBYKRcdDVi1g!2e0?utm_source=mstt_0&g_ep=CAESCjExLjEyMS4xMDIYACCBgQEqJCw5NDIxNjQxMyw5NDIxMjQ5Niw0NzA3NTkxNSw0NzA4NDM5M0ICS1I%3D"
+				>구글 스트리트 뷰</a></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809436873494996">
+				7Gとは第7世代移動通信システムのことです。<br />
+				ちまたの5Gの、次の次の技術です。<br />
+				この世界の7Gは架空ですが、もしかしたらどこかで開発が始まっているのかも知れません。</a></td>
+			<td>7G란 제7세대 이동통신 시스템을 뜻합니다.<br />
+				한창인 5G의 다다음 기술입니다.<br />
+				이 세계의 7G는 가공이지만, 어쩌면 어딘가에서 개발이 시작됐을지도 모릅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809503009300586">
+				7Gはあまりにも急ぎ過ぎた技術でした。<br />
+				よって暴走しました。<br />
+				世界がぐちゃぐちゃになりました。</a></td>
+			<td>7G는 너무 성급한 기술이었습니다.<br />
+				따라서 폭주했습니다.<br />
+				세상이 엉망진창이 됐습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809604972753070">
+				7Gの暴走で吾野の住民は動物になりました。<br />
+				若い人はそのままですが21才　3ヶ月を越えると自動的に動物になります。<br />
+				種類は選べません。</a></td>
+			<td>7G의 폭주로 아가노의 주민은 동물이 됐습니다.<br />
+				젊은 사람은 그대로지만 21세 3개월을 넘으면 자동으로 동물이 됩니다.<br />
+				종류는 고를 수 없습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809683523748304">
+				作中のアツシという青年はついついこのあいだ、アイアイになったばっかりです。<br />
+				ショックからまだ立ち直ってない様です。<br />
+				そりゃあ、ねえ。</a></td>
+			<td>작중 아츠시라는 청년은 자기도 모르게 요전에 막 아이아이(마다가스카르손가락원숭이)가 된 참입니다.<br />
+				쇼크로 아직 재기불능인 모양입니다.<br />
+				그야 그렇겠죠.</td>
+			<td><a href="https://ko.wikipedia.org/wiki/%EC%95%84%EC%9D%B4%EC%95%84%EC%9D%B4"
+				>아이아이</a></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809770790420552">
+				マレーグマは雑食です。<br />
+				本当はそこまで肉にはこだわらないみたいです。<br />
+				マレーグマになった政晴さんは「クマなんだから肉！」と思い込みが激しいタイプだと思います。</a></td>
+			<td>말레이곰은 잡식입니다.<br />
+				사실은 그렇게까지 고기를 고집하지 않나 봅니다.<br />
+				말레이곰이 된 마사하루 씨는 「곰이니까 고기!」라는 믿음이 과한 타입으로 보입니다.</td>
+			<td><a href="https://ko.wikipedia.org/wiki/%ED%83%9C%EC%96%91%EA%B3%B0"
+				>태양곰(말레이곰)</a></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809889807990800">
+				なる動物は現世動物だけでなく古代生物も含まれます。<br />
+				一番古代のものは三葉虫で、玲実のおじいちゃんです。<br />
+				本編には出て来ませんが、会話の中で少し出てきます。</a></td>
+			<td>되는 동물은 현세의 동물뿐만 아니라 고대 생물도 포함됩니다.<br />
+				가장 고대인 것은 삼엽충으로, 레이미의 할아버지입니다.<br />
+				본편에는 나오지 않았지만, 대화 중에 살짝 언급됩니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774809963313127740">
+				玲実のお父さんはハダカデバネズミです。<br />
+				画面を探すとたまに、います。</a></td>
+			<td>레이미의 아버지는 벌거숭이두더지쥐입니다.<br />
+				화면을 찾아보면 가끔씩, 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810040882606228">
+				私はカンガルーがいいな。<br />
+				強いし楽しそう。<br />
+				ハダカデバネズミはやだな。</a></td>
+			<td>전 캥거루가 좋겠네요.<br />
+				강하고 즐거워 보여요.<br />
+				벌거숭이두더지쥐는 싫네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810159258468453">
+				吾野の住民は、7Gが暴走した時に吾野を離れていたとしても、もれなく動物になります。<br />
+				住んでいる所、が重要らしい。</a></td>
+			<td>아가노의 주민은 7G가 폭주했을 때 아가노를 벗어나 있었다 해도, 빠짐없이 동물이 됩니다.<br />
+				'살고 있는 곳'이 중요한 모양.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810263352717667">
+				駅ごとに7G（以後7Gの暴走のことを7Gと略します）の影響は違います。<br />
+				吾野は動物でした。<br />
+				他の駅はどうなってるかは、お楽しみに。</a></td>
+			<td>역마다 7G(이후 7G의 폭주를 7G로 줄여 씁니다)의 영향은 다릅니다.<br />
+				아가노는 동물이었죠.<br />
+				다른 역은 어떻게 됐는지는, 기대하세요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810445498749060">
+				7Gでぐちゃぐちゃになった世界ですが、宅配便はがんばってます。<br />
+				宅配便は大体、月に一回来ます。<br />
+				駅と駅の間がびよーんと伸びてしまったので、回るのが大変です。</a></td>
+			<td>7G로 엉망이 된 세상이지만, 택배편은 열심입니다.<br />
+				택배편은 대체로 한 달에 한 번 옵니다.<br />
+				역과 역 사이가 쫙 늘어나 버려서, 돌아다니는 게 큰일입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810513895268749">
+				宅配便で回る際、危険な地域も多いので重武装は必須です。<br />
+				命がけです。</a></td>
+			<td>택배편으로 돌아다닐 때, 위험한 지역도 많으므로 중무장은 필수입니다.<br />
+				목숨 건 일입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810445498749060">
+				7G後、吾野は何故だかゴーヤの産地になりました。<br />
+				甘味があり、かつ、旨味のかたまりです。<br />
+				ご飯によく合います。<br />
+				吾野では他に米と中麦が獲れる様になりました。</a></td>
+			<td>7G 이후, 아가노는 어째선지 여주의 산지가 됐습니다.<br />
+				단 맛이 있으면서, 동시에 감칠맛 덩어리죠.<br />
+				밥에 잘 어울립니다.<br />
+				아가노에선 그 밖에 쌀과 밀보리를 수확하게 됐습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810764102209904">
+				中麦とは名前どおり、大麦と小麦の中間ぐらいの麦です。<br />
+				7Gの影響で、突然発生しました。<br />
+				よく言えば、大麦と小麦のいいとこ取り。<br />
+				わるく言えば、中途半端らしいです。</a></td>
+			<td>밀보리(中麦)란 건 이름대로, 보리(大麦)와 밀(小麦)의 중간 정도인 곡물입니다.<br />
+				7G의 영향으로 갑자기 발생했습니다.<br />
+				좋게 말하자면, 보리와 밀의 장점을 취했고<br />
+				나쁘게 말하자면, 어중간한 모양입니다.</td>
+			<td>한국에선 대보리/소보리 같은 표현으로 쓰지 않아, 이를 직역하기보단 밀보리로 표현</td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810864379707689">
+				吾野柔術は、吾野に伝わる伝統的な柔術です。<br />
+				柔術なのに殴打技が多いです。<br />
+				静留の得意技はロシアンフック。</a></td>
+			<td>아가노 유술은 아가노에 전해지는 전통적인 유술입니다.<br />
+				유술 주제에 구타 기술이 많습니다.<br />
+				시즈루의 특기는 러시안 훅.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810927399063716">
+				吾野弓術というのもあります。</a></td>
+			<td>아가노 궁술이란 것도 있습니다</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774810995271299442">
+				7G後、出版はほとんどされていません。<br />
+				主に古本が出回っています。</a></td>
+			<td>7G 이후, 출판은 거의 이뤄지지 않습니다.<br />
+				주로 헌책이 돌아다닙니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811074803720627">
+				7G後、TVやインターネットはなくなりました。<br />
+				ラジオは一部で残っています。</a></td>
+			<td>7G 이후, TV나 인터넷은 없어졌습니다.<br />
+				라디오는 일부 남아있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811136996921491">
+				7Gで携帯も使えなくなりました。<br />
+				PHSは使えます。<br />
+				物持ちの良い人の勝ちですね。</a></td>
+			<td>7G로 휴대전화도 쓸 수 없게 됐습니다.<br />
+				PHS는 쓸 수 있습니다.<br />
+				소지품을 잘 보관한 사람이 승자네요.</td>
+			<td><a href="https://namu.wiki/w/PHS"
+				>PHS</a></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811258010865794">
+				善次郎は7G回線の危険性を訴えていました。<br />
+				それで口封じとして、強制的に謎の手術をされちゃいました。<br />
+				うにゃうにゃとは何かの手術の隠語です。</a></td>
+			<td>젠지로는 7G 회선의 위험성을 호소했습니다.<br />
+				그래서 입막음으로 강제로 수수께끼의 수술을 받고 말았습니다.<br />
+				음냐음냐란 어떤 수술의 은어입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811331063091304">
+				善次郎は手術後に故郷の吾野へ遺棄されました。<br />
+				何故人間の姿のままなのかというと、うにゃうにゃ手術の前は違う場所に住んでいたからです</a></td>
+			<td>젠지로는 수술 후에 고향 아가노에 유기당했습니다.<br />
+				왜 인간의 모습을 유지했느냐면, 음냐음냐 수술 전엔 다른 곳에 살았기 때문입니다</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811452567941247">
+				ポチさんは秋田犬です。<br />
+				一般的な秋田犬よりやや、というかかなりぽっちゃりしています。</a></td>
+			<td>포치는 아키타견입니다.<br />
+				일반적인 아키타견보다 조금, 아니 상당히 통통합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811554858533368">
+				静留のお父さんは7G後、この世界を解明するために消防団の仲間と旅立ちました。<br />
+				それから2年近く経ちましたが消息不明です。<br />
+				2週間くらいで帰って来るって言ったのに。</a></td>
+			<td>시즈루의 아버지는 7G 이후, 이 세계를 해명하기 위해 소방대원 동료와 여행을 떠났습니다.<br />
+				그 후로 2년 가까이 지났지만 행방불명입니다.<br />
+				2주 정도면 돌아온다고 했으면서.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811642355945797">
+				吾野は小さい集落なので、中高一貫です。<br />
+				分校に近い規模です。</a></td>
+			<td>아가노는 작은 마을인지라, 중고등학교 통합입니다.<br />
+				분교에 가까운 모양입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811720164462815">
+				撫子は高三、<br />
+				静留は高二、<br />
+				玲実は高一、<br />
+				晶は中三です。</a></td>
+			<td>나데코는 고3,<br />
+				시즈루는 고2,<br />
+				레이미는 고1,<br />
+				아키라는 중3입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811779639783803">
+				界磁チョッパ制御、という言葉をこの作品で覚えました。</a></td>
+			<td>'계자 초퍼 제어'라는 말을 이 작품에서 배웠습니다.</td>
+			<td><a href="https://ko.wikipedia.org/wiki/%EA%B3%84%EC%9E%90_%EC%B4%88%ED%8D%BC_%EC%A0%9C%EC%96%B4"
+				>계자 초퍼 제어</a></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774811837193756847">
+				7Gで架線がなくなりました。<br />
+				一部で少し残っていますが架線としては使えません。</a></td>
+			<td>7G로 가선이 없어졌습니다.<br />
+				일부엔 조금 남아있지만 가선으론 쓸 수 없습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774812513516851278">
+				電車の行き先スイッチ、本当は後方車両にあります。</a></td>
+			<td>열차의 행선지 스위치, 사실은 후방 차량에 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep01">
+			<td>1화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1774812867369594896">
+				第一話、ご視聴して下さってありがとうございました。<br />
+				これからも引き続き、<br />
+				よろしくお願いします。</a></td>
+			<td>제1화, 시청해주셔서 감사합니다.<br />
+				앞으로도 계속해서,<br />
+				잘 부탁드립니다.</td>
+			<td></td>
+		</tr>
+		
+		<tr class="ep02 first">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777342902626357472">
+				第2話、また少しつぶやいていこうと思います。<br />
+				よろしくお願いします。</a></td>
+			<td>제2화, 또 조금 떠들어 보려고 합니다.<br />
+				잘 부탁합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777344209366008014">
+				第4話、絵はさっき完成したのですが、納品がまだなのです。</a></td>
+			<td>제4화, 그림은 미리 완성됐지만, 납품이 아직입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777344843112694077">
+				高麗川は、「こまがわ」と読みます。この作品に携わるまで「こうらいがわ」だと思っていました。</a></td>
+			<td>高麗川는 '코마가와'라고 읽습니다. 이 작품에 참가하기 전까진 '코라이가와'라고 생각했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777344994095083608">
+				高麗の由来は高句麗の人たちが移住してきたからそれにちなんで、と言われています。<br />
+				唐や新羅に追われて移り住んだのだとか。<br />
+				すみません、歴史はニワカです。この作品で知りました。</a></td>
+			<td>코마(高麗)의 유래는 고구려 사람들이 이주해와서, 그와 관련된 거라고 합니다.<br />
+				당과 신라에 쫓겨 이주했다나요.<br />
+				죄송합니다, 역사는 맛보기만 했습니다. 이 작품으로 알았습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777345078450934007">
+				本物の運転席や車掌席（？）の後ろにガラス窓がありますが、乗務員室と客室を挟んで会話がしたかったので、この作品ではガラス窓を外してあります。</a></td>
+			<td>진짜 운전석과 차장석(?) 뒤엔 유리창이 있지만, 승무원실과 객실을 끼고 대화를 하고 싶었기에 이 작품에선 유리창을 뗐습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777345232243458415">
+				運転席の後にいっぱいあるスイッチの位置は、プロの方に聞いたので大体合っていると思います。<br />
+				ひとつひとつ説明すると長くなる。</a></td>
+			<td>운전석 뒤에 잔뜩 있는 스위치의 위치는 프로인 분께 물어본 것이니 대강 맞을 겁니다.<br />
+				하나하나 설명하자면 길어짐.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777345294595916221">
+				マスコンてどの位置でも加速は一緒みたいです。<br />
+				最高速が違うだけみたいです。<br />
+				みたいです、と自信がないので曖昧に言っておきます。</a></td>
+			<td>마스콘(마스터 컨트롤러)는 어느 위치에서나 가속은 똑같은 것 같습니다.<br />
+				최고 속도가 다를 뿐인 것 같습니다.<br />
+				'같습니다'라고 자신이 없어 애매하게 말해둡니다.</td>
+			<td><a href="https://ja.wikipedia.org/wiki/%E3%83%9E%E3%82%B9%E3%82%BF%E3%83%BC%E3%83%BB%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%A9%E3%83%BC"
+				>마스터 컨트롤러(日)</a></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777345649765462490">
+				高崎観音が7G(の影響で）高麗川に移動しています。</a></td>
+			<td>타카사키 관음이 7G(의 영향으로) 코마가와로 이동했습니다.</td>
+			<td><a href="https://www.city.takasaki.gunma.jp/site/sightseeing/3527.html"
+				>타카사키 백의 대관음(日)</a><br />
+				<a href="https://maps.app.goo.gl/EzXEhVqDtUZpRtfc9"
+				>구글 지도</a>
+			</td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346219238691205">
+				メメントモリ。<br />
+				人はいつか必ず死ぬ。そのことを忘れるな。<br />
+				そんな感じの意味です。ゲームのことではないよ。</a></td>
+			<td>메멘토 모리.<br />
+				인간은 언젠가 반드시 죽는다. 그걸 잊지 말라.<br />
+				그런 느낌의 의미입니다. 게임 같은 게 아니라.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346292924268855">
+				2000系と略して言ってますがこれは新2000系です。</a></td>
+			<td>2000계라고 줄여서 말하지만, 이건 신2000계입니다.</td>
+			<td><a href="https://ja.wikipedia.org/wiki/%E8%A5%BF%E6%AD%A62000%E7%B3%BB%E9%9B%BB%E8%BB%8A"
+				>세이부 2000계(日)</a></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346378248917156">
+				玲美が言っているシュルシュルリは多分シュクメルリのことです。<br />
+				おいしいよね。私は松屋のしか食べたことないけど。</a></td>
+			<td>레이미가 말하는 슈루슈루리는 아마 슈크메룰리(Chkmeruli)일 겁니다.<br />
+				맛있죠. 전 마츠야에서밖에 먹어본 적 없지만요.</td>
+			<td><a href="https://cookpad.com/recipe/6029365"
+				>마츠야 슈크메룰리(日)</a></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346464680972296">
+				Tシャツの絵柄のスーちゃんは「練馬の国のアリス」の主要登場人物です。<br />
+				キャラ人気では、アリスと二分するらしいです。</a></td>
+			<td>티셔츠 그림의 수짱은 「네리마 나라의 앨리스」의 주요 등장인물입니다.<br />
+				캐릭터 인기로는 앨리스와 양분하는 모양입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346532796399772">
+				スーちゃんのスーはスーサイドのスーです。<br />
+				首吊りひもをいつも首に巻いてます。</a></td>
+			<td>수짱의 수는 수어사이드의 수입니다.<br />
+				목 매다는 줄을 언제나 목에 감고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346617018106197">
+				静留があまり好きではないと言っているゴーヤですが、<br />
+				「嫌いじゃないけど毎日食べすぎて食傷気味なのであまり好きではない」くらいの意味です。<br />
+				多分ゴーヤ、好きでしょう。</a></td>
+			<td>시즈루가 그다지 좋아하지 않는다는 여주 말인데요,<br />
+				「싫은 건 아니지만 매일 너무 먹어서, 식상해서 그다지 좋아하지 않는다」 정도의 의미입니다.<br />
+				아마 여주, 좋아할 겁니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346681740374086">
+				撫子は争いごとが本当に嫌いです。<br />
+				争いごとをやめさせるためには手段を選びません。<br />
+				過去に何かあったのかも知れませんね。</a></td>
+			<td>나데코는 다투는 걸 정말 싫어합니다.<br />
+				다투는 걸 멈추기 위해선 수단을 가리지 않습니다.<br />
+				과거에 무슨 일이 있었을지도 모르겠네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346754494792095">
+				コマッシーは高麗川に生息するという噂の恐竜らしいです。<br />
+				ホントにいるかどうかは知りません。7G前の噂です。<br />
+				便乗したコマッシー焼きとかコマッシーまんじゅうがあるとかないとか。</a></td>
+			<td>코마시는 코마가와에 서식한다는 소문의 공룡인 모양입니다.<br />
+				정말로 있을지는 모르겠습니다. 7G 이전의 소문입니다.<br />
+				이에 편승한 코마시야키나 코마시만주가 있다나 뭐라나.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346911902838975">
+				スワン仙人は池袋の住人というわけではなく、要町（かなめちょう）という駅のあたりの住人です。副都心線と有楽町線の駅です。<br />
+				池袋にたまたま来ていた時、7G事件が起きました。<br />
+				7G後、要町はまだ発見されてないみたいです。</a></td>
+			<td>백조 도인은 이케부쿠로의 주민은 아니고, 카나메초라는 역 부근의 주민입니다. 후쿠토신선과 유라쿠초선의 역입니다.<br />
+				이케부쿠로에 우연히 왔을 때 7G 사건이 일어났습니다.<br />
+				7G 이후, 카나메초는 아직 발견되지 않은 모양입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777346981335302176">
+				実際の中池袋公園はアニメイトの庭の様になってますね。<br />
+				賑やかです。仲間がいっぱい。</a></td>
+			<td>실제 나카이케부쿠로 공원은 아니메이트의 앞마당처럼 돼있죠.<br />
+				활기 넘칩니다. 동료가 잔뜩.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777347088243986463">
+				仙人がノストラダムス的なわけのわからないことを言ってますが、話数が進んだ時にここに戻ってもう一度聞いてもらえると、意味がわかるかも。</a></td>
+			<td>도인이 노스트라다무스스러운, 못 알아들을 소릴 했는데요, 에피소드가 진행됐을 때 여기로 돌아와 다시 한 번 들어보시면 의미가 있을지도.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777347088243986463">
+				仙人は加熱式カートリッジをもらって喜んでいますが加熱式タバコの機械は持っていません。<br />
+				多分そのまま燃やして吸うのでしょう。</a></td>
+			<td>도인은 가열식 카트리지를 얻어 기뻐하지만, 가열식 담배 기계는 갖고 있지 않습니다.<br />
+				아마 그대로 태워서 들이킬 겁니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777347488040767918">
+				善次郎は吾野から出られません。うにゃうにゃ手術と7Gの相互作用のせいらしいです。</a></td>
+			<td>젠지로는 아가노를 벗어날 수 없습니다. 음냐음냐 수술과 7G의 상호작용 때문이라는 모양입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777347562670026915">
+				電車の操作を西武鉄道さんに、みんなで教わりに行きました。<br />
+				電車なんてマスコンとブレーキと、あとは警笛とドアの開閉くらいでしょ、と軽く考えていたら全然違いました。<br />
+				ワイパー、アナウンス、部分的ドアの開閉、エアコンや扇風機、<br />
+				覚えられなくてクラクラしました。</a></td>
+			<td>열차 조작을 세이부 철도에 다 같이 배우러 갔습니다.<br />
+				열차는 마스콘과 브레이크, 또 경적과 문 개폐 정도일 거라는 가벼운 생각이었는데 전혀 달랐습니다.<br />
+				와이퍼, 아나운스, 부분적 문 개폐, 에어컨에 선풍기,<br />
+				외워지지 않아서 어질어질했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777347746376380535">
+				EB（エマージェンシーブレーキ）リセットとかATS解放スイッチとかSIV（サイレントインバーター）リセットとか色々教わりました。</a></td>
+			<td>EB(이머전시 브레이크) 리셋이니 ATS 해방 스위치니 SIV(사일런트 인버터) 리셋이니, 이것저것 배웠습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777347827762704436">
+				もし本格鉄道アニメならその辺りも描写したいですが、この作品では割愛しています。<br />
+				ただ、知っているのと知らないのでは、作品に対する心構えが全然違います。</a></td>
+			<td>만약 본격 철도 애니라면 그런 부분도 묘사하고 싶겠지만, 이 작품에선 생략했습니다.<br />
+				다만, 아는 상태와 모르는 상태는 작품에 대한 마음가짐이 전혀 다릅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777348359730434463">
+				地図は私が書きました。すみません。</a></td>
+			<td>지도는 제가 그렸습니다. 죄송합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777348469126295648">
+				最初はモールス翻訳ソフトで文章を変換して真面目にセリフをトンツーしていたのですが、テンポ重視で一番大事な信号同士の「間」を全部削ってしまったので、ただやかましい音になっています。</a></td>
+			<td>처음엔 모스 번역 프로그램으로 문장을 변환해서 진지하게 대사를 돈·쓰로 표현했지만, 템포를 중시하느라 제일 중요한 신호 간의 「간격」을 전부 없애버려서, 그냥 시끄러운 소리가 됐습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777348553628930290">
+				カナヅチの角で短く線路を叩くのが「トン」<br />
+				カナヅチの面でしっかり叩くのが「ツー」のつもりです。<br />
+				その使い分けをしっかり描こうと思いましたが、早すぎて無理でした。<br />
+				でも叩く動きはちゃんと音に合わせてますよ。</a></td>
+			<td>망치의 모서리로 짧게 선로를 치는 게 「돈」<br />
+				망치의 면으로 제대로 때리는 게 「쓰」라고 생각했습니다.<br />
+				그 쓰임새를 제대로 그려보려고 했지만, 너무 빨라서 무리였습니다.<br />
+				하지만 치는 움직임은 제대로 소리에 맞췄답니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777349454812844292">
+				東吾野駅には架線が少し残っています。<br />
+				使い物にはなりません。</a></td>
+			<td>히가시아가노역엔 가선이 조금 남아있습니다.<br />
+				쓸 건 못 됩니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777349557443326210">
+				もう観きれないくらい沢山のアニメがある中、<br />
+				終末トレインをご視聴くださって、ありがとうございました。</a></td>
+			<td>정말 다 볼 수 없을 정도로 많은 애니가 있는 가운데,<br />
+				종말 트레인을 시청해주셔서 감사합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep02">
+			<td>2화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1777349637617377746">
+				総集編が出ない限り、ずっとつぶやいて行こうと思っています。<br />
+				引き続き、よろしくお願いします。</a></td>
+			<td>총집편이 나오지 않는 한, 쭉 떠들어 보려고 합니다.<br />
+				계속해서 잘 부탁드립니다.</td>
+			<td></td>
+		</tr>
+		
+		<tr class="ep03 first">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881098685911382">
+				「終末トレインどこへいく？」第3話、<br />
+				またつぶやいていこうと思っています。<br />
+				お付き合いのほど、よろしくお願いします。</a></td>
+			<td>「종말 트레인 어디로 가나?」 제3화,<br />
+				또 떠들어보려고 합니다.<br />
+				어울려주시는 여러분, 잘 부탁합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881238121316640">
+				先行上映会の感想ツイートを見たのですが、第３話、混乱した方が多かったみたいです。</a></td>
+			<td>선행 상영회의 감상 트윗을 봤는데요, 제3화, 혼란스러운 분이 많았나 봅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881340193907086">
+				自分のプランとしては、<br />
+				第1話から第3話までは比較的シンプルにわかりやすく、第４話からはカオスに行くというつもりでした。</a></td>
+			<td>저 자신의 플랜은,<br />
+				제1화부터 3화까지는 비교적 심플하고 알기 쉽고, 제4화부터는 카오스로 간단 생각입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881433361945007">
+				ですが、もうすでに第３話がカオスだという感想が多く、ちょっと心配しています。<br />
+				ま、気にしててもしょうがないので、ブレずに行きます。</a></td>
+			<td>하지만 이미 3화가 카오스라는 감상이 많아, 좀 걱정됩니다.<br />
+				뭐, 신경 써봐야 소용없으니, 흔들림 없이 갑니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881534360809551">
+				そんなこんなで第５話、まだ作ってます。</a></td>
+			<td>여차저차 해서 제5화, 아직 만들고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881623993078094">
+				2000系の電圧計はどういう法則で動くのか新2000系の運転席の後ろにはりついて、ずっと見ていた事があります。<br />
+				減速する時ちょっとだけ針が上がる、くらいしかよくわかりませんでした。<br />
+				扉を閉める時も少し上がる？<br />
+				でも上がらない時もあった。</a></td>
+			<td>2000계의 전압계는 어떤 법칙으로 움직이는지, 신2000계의 운전석 뒤에 매달려서 내내 지켜본 적이 있습니다.<br />
+				'감속할 때 살짝 침이 올라간다' 정도밖에 잘 알 수 없었습니다.<br />
+				문을 닫을 때도 조금 올라갔나?<br />
+				하지만 안 올라갈 때도 있었고요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881681153081753">
+				音響効果は小山恭正さん、<br />
+				録音調整は山口貴之さんです。<br />
+				いつもの頼れるメンバーです。</a></td>
+			<td>음향 효과는 코야마 야스마사 씨,<br />
+				녹음 조정은 야마구치 타카유키 씨입니다.<br />
+				언제나 든든한 멤버입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881733393117642">
+				吾野のパンダはだらしない。<br />
+				パンダになる前からだらしなかったらしい。</a></td>
+			<td>아가노의 판다는 칠칠치 못합니다.<br />
+				판다가 되기 전부터 칠칠치 못했던 모양입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881810480251189">
+				静留とマツタの会話がチグハグなのは、マツタが以前池袋にいたのは7Gまえの事で、静留が知りたいのは7Gあとの事だからです。</a></td>
+			<td>시즈루와 마츠타의 대화가 뒤죽박죽인 건, 마츠타가 이전에 이케부쿠로에 있던 건 7G 이전이고, 시즈루가 알고 싶은 건 7G 이후이기 때문입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779881900678742044">
+				秋田犬のポチさんの声は、小型犬の声だそうです。<br />
+				こちらからはそうする様に指示をしていません。<br />
+				音響効果の小山さんのアイディアです。</a></td>
+			<td>아키타견 포치의 목소리는 소형견의 목소리라나 봅니다.<br />
+				이쪽은 그렇게 지시를 하진 않았습니다.<br />
+				음향 효과 코야마 씨의 아이디어입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779882010993156246">
+				本物のミストサウナには木材は使わないと思います。<br />
+				サウナの雰囲気を優先しました。</a></td>
+			<td>진짜 미스트 사우나엔 목재를 쓰지 않을 거라고 생각합니다.<br />
+				사우나 분위기를 우선했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779882465068548139">
+				晶、トイレは一人で行けるといいながらポチさんを起こしています。</a></td>
+			<td>아키라, 화장실은 혼자 갈 수 있다면서 포치를 깨웠습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779883191517741419">
+				東吾野の平均湿度は80%くらいです。<br />
+				種類にもよりますが、キノコにはとっても良い環境です。</a></td>
+			<td>히가시아가노의 평균 습도는 80% 정도입니다.<br />
+				종류에 따라 다르지만, 버섯에겐 무척 좋은 환경입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779883842897400029">
+				こま商店、<br />
+				自分で作るわたあめ機とゲームのテーブル筐体が置いてあります。どうでも良い話ですが気になります。<br />
+				何のゲームなんだろ？<br />
+				私の予想では「ボスコニアン」<br />
+				勝手にコンビニエンスストアと名乗ってます。</a></td>
+			<td>코마 상점,<br />
+				직접 만드는 솜사탕 기계와 게임기 내장 테이블이 놓여있습니다. 아무래도 좋지만 신경 쓰이네요.<br />
+				무슨 게임일까?<br />
+				제 예상으론 「보스코니안」<br />
+				멋대로 편의점이라고 자처하고 있습니다.</td>
+			<td><a href="https://store-jp.nintendo.com/list/software/70010000068723.html"
+				>보스코니안</a><br />
+				<a href="https://namu.wiki/w/%EB%B3%B4%EC%8A%A4%EC%BD%94%EB%8B%88%EC%95%88"
+				>나무위키</a></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779884614791958956">
+				線路はグニャグニャになったけど、切れてはいません。　</a></td>
+			<td>선로는 쭈글쭈글해졌지만, 끊기진 않았습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779884646723191041">
+				最近のトリュフは、豚ではなく犬が探すのだとか。<br />
+				豚はトリュフを食べちゃうからだとか。<br />
+				詳しくは知りません。</a></td>
+			<td>최근의 송로버섯은 돼지가 아닌 개가 찾는다나요.<br />
+				돼지는 송로버섯을 먹어버린다나요.<br />
+				자세히는 모릅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779884980245877141">
+				扉の開閉スイッチ、鍵がささったままになってますが、本当はやっちゃダメな行為らしいです。</a></td>
+			<td>문 개폐 스위치, 열쇠가 그대로 꽂혀있는데요, 사실은 해선 안 될 행위인 모양입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885093471076679">
+				スイッチを使うたびに鍵をさして、終わったら必ず抜くそうです。</a></td>
+			<td>스위치를 쓸 때마다 열쇠를 꽂고, 끝나면 반드시 뽑는다나 봅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885261129937178">
+				扉の開閉スイッチ、<br />
+				上のボタン(棒？)を押し込むと扉がしまります。<br />
+				下のボタンを押し込むと扉が開きます。<br />
+				連動しています。</a></td>
+			<td>문의 개폐 스위치,<br />
+				위쪽 버튼(막대?)를 누르면 문이 닫힙니다.<br />
+				아래쪽 버튼을 누르면 문이 열립니다.<br />
+				연동돼 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885337973821716">
+				閉めるボタンを押したら、それと同時に開けるボタンに手をかける、のが鉄則らしいです。<br />
+				理由は駆け込み乗車など、挟まった人にすぐ対応するためと教わりました。</a></td>
+			<td>닫힘 버튼을 누르면, 그와 동시에 열림 버튼이에 손을 올리는 게 철칙인 모양입니다.<br />
+				이유는 뛰어들어 승차하거나 하면서 끼인 사람에 바로 대응 하기 위함이라고 배웠습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885414456971446">
+				キノコを抜こうとするくだり、有名な都市伝説「耳から白い糸」を思い出しました。<br />
+				視神経の怖いやつ。</a></td>
+			<td>버섯을 뽑으려고 하는 것과 관련해, 유명한 도시전설 「귀에서 하얀 실」을 떠올렸습니다.<br />
+				시신경 나오는 무서운 얘기요.</td>
+			<td><a href="https://namu.wiki/w/%ED%94%BC%EC%96%B4%EC%8A%A4%EC%9D%98%20%ED%95%98%EC%96%80%20%EC%8B%A4"
+				>피어스의 하얀 실</a></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885474259333401">
+				吾野柔術は打撃に長けているので、総合格闘技には向いているのかもしれません。</a></td>
+			<td>아가노 유술은 타격에 뛰어나서, 종합격투기와 어울릴지도 모릅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885556861968809">
+				前にも話しましたが、<br />
+				吾野弓術もあります。<br />
+				かなり特殊な弓術です。<br />
+				その事はおいおい。</a></td>
+			<td>전에도 언급했지만<br />
+				아가노 궁술도 있습니다.<br />
+				상당히 특수한 궁술입니다.<br />
+				그에 대해선 어이 어이.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885766833041523">
+				辛くて長生きするか、<br />
+				幸せで短命か、<br />
+				難しい問題ですが、どちらにしても極端なのはどちらも嫌だ。</a></td>
+			<td>괴롭게 오래 살 것이냐,<br />
+				행복하게 단명이냐,<br />
+				어려운 문제지만, 뭐가 됐든 극단적인 건 어느 쪽이든 싫네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885826950021557">
+				第３話、アクタスに全面的に参加してもらいました。<br />
+				某戦車アニメのスタッフも関わってもらっています。<br />
+				感謝です。</a></td>
+			<td>제3화, 액터스에서 전면적으로 참가해줬습니다.<br />
+				모 전차 애니의 스태프도 참여했습니다.<br />
+				감사합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885904938893650">
+				第３話の絵コンテは、<br />
+				許琮さんです。<br />
+				「Another」「SHIROBAKO」に続いて、お付き合いいただいてます。</a></td>
+			<td>제3화의 콘티는,<br />
+				허종 씨입니다.<br />
+				「Another」「SHIROBAKO」에 이어서 어울려 주셨습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779885977001206124">
+				第2話の絵コンテと演出は、<br />
+				菅沼芙実彦さんでした。<br />
+				菅沼さんにも「Another」「SHIROBAKO」に続いて参加してもらっています。<br />
+				今回は「演出チーフ」という役職をお願いしています。<br />
+				私より間違いなく仕事をしています。</a></td>
+			<td>제2화 콘티와 연출은,<br />
+				스가누마 후미히코 씨였습니다.<br />
+				스기누마 씨에게도 「Another」「SHIROBAKO」에 이어서 참가를 부탁했습니다.<br />
+				이번엔 「연출 치프」라는 직함을 부탁드렸습니다.<br />
+				저보다 틀림없이 열심일 겁니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779886129753526515">
+				キノコを生やした時の感覚、わかります。<br />
+				私は基本的に一日中テンパってますが、ごくたまに頭からキノコ生えた様な感じになります。<br />
+				机についたまま、ボーっとしています。<br />
+				「まあ完成しないならしないでも、いいか」<br />
+				すぐ誰かに(心の)キノコを引っこ抜かれるので、すぐに戻ります。</a></td>
+			<td>버섯이 자랐을 때의 감각, 알 것 같습니다.<br />
+				저는 기본적으로 하루 종일 여유가 없는데요, 극히 드물게 머리에서 버섯이 자란 듯한 느낌이 듭니다.<br />
+				책상에 붙은 채 멍하니 있습니다.<br />
+				「뭐, 완성 안 되면 그것대로 좋지」<br />
+				금방 누가 (마음의) 버섯을 뽑아버려서, 금방 돌아옵니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779886597888254155">
+				第３話、ご視聴して下さって、本当にありがとうございました。<br />
+				懲りずに第４話も観て下さいね。</a></td>
+			<td>제3화, 시청해주셔서 정말 감사드립니다.<br />
+				질리지 않고 제4화도 봐주셨으면 합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep03">
+			<td>3화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1779886692788584724">
+				第４話、ある程度「終末トレイン」の方向性がわかる話数だと思っています。<br />
+				引き続き、よろしくお願いします。</a></td>
+			<td>제4화, 어느 정도 「종말 트레인」의 방향성을 알 수 있는 에피소드라고 생각합니다.<br />
+				계속해서 잘 부탁드립니다.</td>
+			<td></td>
+		</tr>
+		
+		<tr class="ep04 first">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782415608124154046">
+				第四話、今日もつぶやいていきます。<br />
+				お付き合いのほど、よろしくお願いします。</a></td>
+			<td>제4화, 오늘도 떠들어 봅니다.<br />
+				어울려주시는 여러분, 잘 부탁합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782415898516783117">
+				第六話、今作ってます。</a></td>
+			<td>제6화, 지금 만들고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782417799471898742">
+				静留と葉香の夜空のシーンは、何となくですが、吾野にある東郷公園のあたりをイメージしています。本当に何となく、です。</a></td>
+			<td>시즈루와 요카의 밤하늘 장면은 왠지는 몰라도, 아가노에 있는 토고 공원 부근을 이미지했습니다. 정말 별 생각 없었습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782418173272502429">
+				長い道中なので、みんな着替えています。<br />
+				洗濯はちゃんとしています。</a></td>
+			<td>긴 여정인지라 다들 옷을 갈아입었습니다.<br />
+				빨래는 제대로 하고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782418244231712847">
+				さかさ入道雲。</a></td>
+			<td>뒤집힌 적란운.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782418622469828669">
+				キノコTシャツは、東吾野でもらったものです。<br />
+				玲実のは「練馬の国のアリス」のアリスTシャツです。静留の私物です。</a></td>
+			<td>버섯 티셔츠는 아가노에서 받은 겁니다.<br />
+				레이미 옷은 「네리마 나라의 앨리스」의 앨리스 티셔츠입니다. 시즈루 물건입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782418688991506500">
+				何だか物騒なヤギ人間ですが、この世界を回っているクロヒョウ便の人たちはヤギ人間の対処法を知っているらしいです。</a></td>
+			<td>어쩐지 무시무시한 염소 인간인데요, 이 세계를 돌아다니는 흑표편 사람들은 염소 인간 대처법을 알고 있다나 봅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782419112163217886">
+				砂漠の中に生えている木は白樺です。</a></td>
+			<td>사막 속에 자라난 나무는 자작나무입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782419209437446442">
+				7Gになって良かった数少ないことのひとつに、夜空がきれいになったことが挙げられます。<br />
+				木星も海王星もリュウグウも月の裏側(デザイン的には意外とつまらない)も良く見えます。</a></td>
+			<td>7G가 되어 잘된 몇 안 되는 것 중 하나로, 밤하늘이 깨끗해진 걸 들 수 있습니다.<br />
+				목성도 해왕성도 용궁도 달 뒷면(디자인은 의외로 심심)도 잘 보입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782419509766451220">
+				電気を電車から取っていますが、直流とか交流とか気にしないで。<br />
+				そのうちコンセントも出てきます。シートの下にあります。</a></td>
+			<td>전기를 열차에서 끌어 쓰고 있는데요, 직류니 교류니 하는 건 신경 쓰지 마세요.<br />
+				조만간 콘센트도 나올 겁니다. 시트 아래에 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782419591622488439">
+				晶は澁澤龍彦のことをタツヒコと呼んでいます。たまにシブタツとも言います。</a></td>
+			<td>아키라는 시부사와 타츠히코를 타츠히코라고 부릅니다. 가끔 시부타츠라고도 합니다.</td>
+			<td><a href="https://ja.wikipedia.org/wiki/%E6%BE%81%E6%BE%A4%E9%BE%8D%E5%BD%A6"
+				>시부사와 타츠히코(日)</a></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782419872900935953">
+				ハロだらけの空。実際のハロは太陽の周りに出来ます。</a></td>
+			<td>헤일로투성이 하늘. 실제 헤일로는 태양 주위에 생깁니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782419925942120527">
+				オタネニンジンは別名高麗人参ともいいますね。</a></td>
+			<td>오타네닌진은 다른 이름으로 고려인삼이라고도 하죠.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782420011338109128">
+				7G後は、たまにですが川でサンマが獲れる様になりました。</a></td>
+			<td>7G 이후엔 가끔이지만 하천에서 꽁치가 잡히게 됐습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782420148886159593">
+				こんなグチャグチャな世界でも、川に入る時は洗剤を使いません。エチケット。</a></td>
+			<td>이런 뒤죽박죽인 세계지만, 하천에 들어갈 땐 세제를 쓰지 않습니다. 에티켓.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782420400703721715">
+				飯能駅。木になった人々。みんな楽しそうです。実際にはわかりませんが。</a></td>
+			<td>한노역. 나무가 된 사람들. 다들 즐거워 보입니다. 실제로는 알 수 없지만요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782420488385700133">
+				西武池袋線は飯能でスイッチバックをします。有名です。<br />
+				私はスイッチバックというと、山道のイメージしかありませんでした。</a></td>
+			<td>세이부 이케부쿠로선은 한노에서 스위치백을 합니다. 유명합니다.<br />
+				저는 스위치백이라고 하면 산길의 이미지밖에 없었습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782420996999536644">
+				最初は手動でのポイントの切り替え方がわかりませんでした。<br />
+				とりあえずレバーを引っ張ってレールを切り替える様にコンテに書きました。<br />
+				映画で見たことが(何回か)あったからです。</a></td>
+			<td>처음엔 수동으로 포인트를 전환하는 법을 몰랐습니다.<br />
+				일단 레버를 당겨 레일을 전환하도록 콘티를 그렸습니다.<br />
+				영화에서 본 적이 (몇 번인가) 있었거든요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421120458866818">
+				その後参考資料をいただいて、くそれを元にレバーをクルクル回す絵に変えました。<br />
+				普段は電動ですが手動でもできるんですね。</a></td>
+			<td>그 후 참고자료를 받아, 그걸 기반으로 레버를 빙글빙글 돌리는 그림으로 바꿨습니다.<br />
+				평소엔 전동이지만 수동으로도 가능하군요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421179061641586">
+				一橋学園駅のホームのそばで、ウイーンという音と共にレールが切り替わる場所があります。<br />
+				つい見入ってしまいます。</a></td>
+			<td>히토츠바시가쿠엔역 플랫폼 근처엔 윙 소리와 함께 레일이 전환되는 곳이 있습니다.<br />
+				언뜻 주시했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421255557382484">
+				玲実の聴力はとても良いです。<br />
+				目も良いです。<br />
+				視力も良いです。</a></td>
+			<td>레이미의 청력은 대단히 좋습니다.<br />
+				눈도 좋습니다.<br />
+				시력도 좋습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421339258966121">
+				ブレーキレバーをブレーキの軸の上にかけておいて、ひねってストンと落として、ブレーキをかける一連の操作、とても好きです。<br />
+				何度も運転席にはりついて動画を撮りました。<br />
+				一度やってみたい。</a></td>
+			<td>브레이크 레버를 브레이크 축 위에 걸쳐두고, 비틀어서 쾅 떨어트려 브레이크를 거는 일련의 조작, 대단히 좋아합니다.<br />
+				여러 번 운전석에 달라붙어 영상을 찍었습니다.<br />
+				한 번 해보고 싶네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421418111816159">
+				晶のキノコはエノキです。<br />
+				ずいぶん育ちました。<br />
+				キノコの通った後はベトベトしています。なかなか取れません。</a></td>
+			<td>아키라의 버섯은 팽이버섯입니다.<br />
+				상당히 자랐습니다.<br />
+				버섯이 지나간 자리는 끈적끈적합니다. 좀처럼 안 닦입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421481290698982">
+				キノコ生えるという問題を先送りにして大ごとになるシーン、既視感があるなあと思っていたら、アレでした。<br />
+				歯医者さん。</a></td>
+			<td>버섯이 자라는 문제를 나중으로 미루다 큰일이 나는 장면, 기시감이 있다 싶었는데 그거였습니다.<br />
+				치과의사.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421554099621969">
+				歯医者さんのパーティションの向こうの席で、「何でこんなになるまでほっといたんですか？」と呆れられてるのは大抵中年以降のおじさん。<br />
+				私も。<br />
+				今は定期的に行ってます。</a></td>
+			<td>치과의사의 파티션 너머 자리에서 「왜 이 지경이 되도록 놔뒀나요?」 하고 혀를 차게 만드는 건 대체로 중년 이후의 아저씨.<br />
+				저 포함.<br />
+				지금은 정기적으로 다닙니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421853245673516">
+				内臓。<br />
+				タバコを吸いすぎた感じの肺もどこかに配置してほしいとお願いしました。</a></td>
+			<td>내장.<br />
+				담배를 너무 피운 느낌의 폐도 어딘가에 배치했으면 좋겠다고 부탁했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782421939874840833">
+				撫子は吾野弓術の名手です。<br />
+				吾野弓術には打撃技もあります。</a></td>
+			<td>나데코는 아가노 궁술의 달인입니다.<br />
+				아가노 궁술에는 타격기도 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782422267164868887">
+				稲荷山公園の街のサイズはちょうど、1/6です。<br />
+				東武ワールドスクエアは1/25です。<br />
+				結構大きい。</a></td>
+			<td>이나리야마 공원의 거리 사이즈는 딱 1/6입니다.<br />
+				토부 월드 스퀘어는 1/25입니다.<br />
+				제법 큽니다.</td>
+			<td><a href="https://www.tobu.co.jp/kr/sightseeing/nikko_kinugawa/tourism/12.html"
+				>토부 월드 스퀘어</a><br />
+				세이부 철도 작품에서<br />직접 언급은 어려울 것</td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782422731092586496">
+				吾野名物、東郷煎餅。</a></td>
+			<td>아가노 명물, 토고 센베.</td>
+			<td><a href="https://aganojuku.jimdofree.com/%E5%90%8D%E7%94%A3%E5%93%81/"
+				>토고 센베(日)</a><br />
+				위의 아가노 민박<br />바로 왼쪽에 있음</td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782422831357448200">
+				晶の煎餅に紙をはさんで食べる案、<br />
+				個人的にはドラえもんの暗記パンを思い出しました。</a></td>
+			<td>아키라의 센베에 종이를 끼워 먹으라는 제안,<br />
+				개인적으론 도라에몽의 암기빵을 떠올렸습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782422988824158325">
+				1/6スケールのヘリのブレードはハリツケにピッタリ。</a></td>
+			<td>1/6 스케일 헬기의 블레이드는 책형에 딱 맞는 크기.</td>
+			<td></td>
+		</tr>
+		<tr class="ep04">
+			<td>4화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1782423094893875221">
+				今日もお付き合いくださって、本当にありがとうごさいました。<br />
+				制作状況をかんがみて、どこまで続けられるのか全くわかりませんが、無理のない程度につぶやくので、引き続きよろしくお願いします。</a></td>
+			<td>오늘도 어울려 주셔서 정말 감사드립니다.<br />
+				제작 상황을 감안해서, 어디까지 계속할 수 있을지 전혀 알 수 없지만, 무리가 없는 정도로 떠들 테니 계속해서 잘 부탁합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05 first">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784952700146528737">
+				第五話がオンエアです。<br />
+				よろしくお願いします。</a></td>
+			<td>제5화가 온에어입니다.<br />
+				잘 부탁합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784954760652849589">
+				第七話は完成しています。<br />
+				その後は、油断禁物です。</a></td>
+			<td>제7화는 완성했습니다.<br />
+				그 후로는, 방심은 금물입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784954920833327419">
+				初詣をしているのは我野神社です。<br />
+				吾野とは字が違いますが、あがの、と読みます。</a></td>
+			<td>참배하는 곳은 아가노(我野) 신사입니다.<br />
+				아가노와는 한자가 다르지만 아가노라고 읽습니다.</td>
+			<td><a href="https://www.saitama-jinjacho.or.jp/shrine/8942/">아가노 신사</a><br />구글 영문명은 Gano인지...</td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784954996410487063">
+				吾野弓術の試合はお互いに射合います。<br />
+				フェイスガードは必須です。</a></td>
+			<td>아가노 궁술 시합은 서로를 맞힙니다.<br />
+				페이스가드는 필수입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784955085925359908">
+				吾野弓術は、通常の矢を射るだけの試合(通常ルール)もありますが、加えて弓や矢で殴りつける試合(総合ルール)もあります。<br />
+				今回の試合は後者です。<br />
+				どちらにしても的ではなく相手を狙います。</a></td>
+			<td>아가노 궁술은 통상의 화살을 쏘기만 하는 시합(통상 룰)도 있지만, 그에 더해 활이나 화살로 갈기는 시합(종합 룰)도 있습니다.<br />
+				이번 시합은 후자입니다.<br />
+				어느 쪽이든 과녁이 아닌 상대방을 노립니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784955921007071456">
+				7G事件の影響は駅ごとに違います。<br />
+				吾野駅のまわりでは大人が全て動物になり、<br />
+				稲荷山公園駅のまわりでは街や人々が1/6サイズになりました。</a></td>
+			<td>7G 사건의 영향은 역마다 다릅니다.<br />
+				아가노 주위에선 성인이 모두 동물이 되고,<br />
+				이나리야마공원역 주위에선 거리나 사람들이 1/6 사이즈가 됐습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784956210497941829">
+				下等稲荷山市民の大半はずっと自転車を漕いで電気を作っています。<br />
+				重労働です。<br />
+				吾野みたいに、鉄道からも電気を持って来られるのですが、ボスが無駄に電気を使いまくるので全然足りません。</a></td>
+			<td>하등 이나리야마 시민의 태반은 내내 자전거를 밟아 전기를 만듭니다.<br />
+				중노동입니다.<br />
+				아가노처럼 철도에서도 전기를 가져올 수 있지만, 보스가 쓸데없이 전기를 허비해서 한참 모자랍니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784956539473936639">
+				晶にからんでくる子供たちは西吾野からやって来ました。<br />
+				西吾野は西武池袋線ではないという、マニアックな事でいちゃもんをつけてます。<br />
+				私もこの作品で西吾野が秩父線だと初めて知りました。</a></td>
+			<td>아키라를 귀찮게 하는 아이들은 니시아가노에서 찾아왔습니다.<br />
+				니시아가노는 세이부 이케부쿠로선이 아니라는, 마니악한 문제로 트집을 잡고 있습니다.<br />
+				저도 이 작품에서 니시아가노가 치치부선이란 걸 처음 알았습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784957152513462579">
+				ボスは西武池袋線外の場所に住んでいて、7G事件の時たまたま稲荷山公園駅のそば、というか基地のそばにいました。<br />
+				池袋線以外の住人なので、7Gの影響を受けていません。</a></td>
+			<td>보스는 세이부 이케부쿠로선 이외의 곳에 살다가, 7G 사건 때 우연히 이나리야마공원역 근처, 그보단 기지 근처에 있었습니다.<br />
+				이케부쿠로선 이외의 주민인지라 7G의 영향을 받지 않았습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784957248483271004">
+				ボスはギャルが大の大の苦手です。<br />
+				「嫌い」とか言っちゃってますが、苦手なだけです。</a></td>
+			<td>보스는 갸루가 아주 아주 거북합니다.<br />
+				「싫다」 그러지만, 거북할 뿐입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784957401260753390">
+				ミリタリー監修として二宮茂幸さんに入っていただきました。<br />
+				「荒野のコトブキ飛行隊」でも大変お世話になっています。<br />
+				もちろん<br />
+				「ガールズ&amp;パンツァー」でも。</a></td>
+			<td>밀리터리 감수로 니노미야 시게유키 씨를 모셨습니다.<br />
+				「황야의 코토부키 비행대」에서도 대단히 신세 졌습니다.<br />
+				물론<br />
+				「걸즈&amp;판처」에서도.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784957701816267161">
+				C-1の魔改造は二宮さんのアイディアです。</a></td>
+			<td>C-1 마개조는 니노미야 씨의 아이디어입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784957960118304879">
+				うにゃうにゃ手術は麻酔を使いません。<br />
+				とても不衛生な場所で行われました。<br />
+				そもそも施術した人たちが医者かどうかも怪しい。</a></td>
+			<td>음냐음냐 수술은 마취를 쓰지 않습니다.<br />
+				대단히 비위생적인 장소에서 이뤄집니다.<br />
+				애초에 시술한 사람들이 의사인지도 미심쩍네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784958554841190853">
+				入間基地には戦闘機はいないけど、たまに来る、と二宮さんから教えていただきました。<br />
+				コトブキ飛行隊の頃です。<br />
+				まだ作品があまり動いていない時だったので、聞き出した、とも言える。</a></td>
+			<td>이루마 기지엔 전투기는 없지만, 가끔씩 온다고 니노미야 씨가 알려줬습니다.<br />
+				코토부키 비행대 시절이죠.<br />
+				아직 작품이 그다지 진행되지 않았을 때라, '캐냈다'고 할 수도 있네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784958634134524112">
+				16式機動戦闘車、<br />
+				スタッフにいくら「戦闘車」だと繰り返し伝えても、みんな「戦車」と呼びます。<br />
+				戦車を少しかじってる仕事をしているので気になります。</a></td>
+			<td>16식 기동전투차,<br />
+				스태프에게 아무리 「전투차」라고 반복해서 알려줘도 다들 「전차」라고 부릅니다.<br />
+				전차에 살짝 발을 걸친 일을 하고 있는지라 신경 쓰이네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784958739277398278">
+				当初、戦闘機が玲実の足と足の間を抜けるというシーンを作る予定でしたが、1/6スケールのF4が思いのほか大きかったので、ジャンプさせる芝居に変更しました。</a></td>
+			<td>당초에 전투기가 레이미의 다리와 다리 사이를 빠져나가는 장면을 만들 예정이었지만, 1/6스케일의 F4가 생각보다 커서 점프하는 구성으로 변경했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784958831380066426">
+				兵器の音はリアル寄りに付けてもらっています。<br />
+				本当は1/6サイズだとラジコンぽい音になるのかも知れません。</a></td>
+			<td>병기 소리는 리얼에 가깝게 달았습니다.<br />
+				사실은 1/6 사이즈라면 RC카 같은 소리가 될지도 모릅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959071076131008">
+				戦闘機の人たちは皆、脱出しています。</a></td>
+			<td>전투기 사람들은 다들 탈출했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959156455354823">
+				身体能力では玲実がダントツです。<br />
+				次が静留、そして撫子、晶と続きます。</a></td>
+			<td>신체 능력으론 레이미가 최강입니다.<br />
+				다음으로 시즈루, 그리고 나데코, 아키라로 이어집니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959288429228256">
+				マルキドサド作、澁澤龍彦訳「美徳の不幸」は、対となる「悪徳の栄え」から読むべき、と聞きました。買ったけどまだ読んでいません。<br />
+				「ソドム百二十日」は高校の時に読みました。</a></td>
+			<td>사드 후작 작품, 시부사와 타츠히코 번역 「미덕의 불행」은, 대비되는 「악덕의 번영」부터 읽어야 한다고 들었습니다. 사긴 했지만 아직 안 읽었습니다.<br />
+				「소돔 120일」은 고등학교 때 읽었습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959391416172854">
+				敷居が高いと思われる澁澤龍彦作品ですが、「快楽主義の哲学」というとても読みやすい本もありますよ。</a></td>
+			<td>문턱이 높다고 여겨지는 시부사와 타츠히코 작품이지만, 「쾌락주의의 철학」이란 대단히 읽기 쉬운 책도 있답니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959458181099818">
+				晶は好きな本は、<br />
+				読書用、保存用と必ず二冊持っています。</a></td>
+			<td>아키라는 좋아하는 책은<br />
+				독서용, 보존용으로 반드시 두 권 갖고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959541207285940">
+				晶は、<br />
+				「治った」<br />
+				と言うよりは<br />
+				「修復された」<br />
+				という言い方の方が正しいと思います。<br />
+				失われた部分は完全には戻りません。</a></td>
+			<td>아키라는<br />
+				「나았다」<br />
+				고 하기보단<br />
+				「복구됐다」<br />
+				고 하는 게 올바를 겁니다.<br />
+				잃어버린 부분은 완전히는 돌아오지 않습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959744480022954">
+				作品を作る場合、特にどこかへ行ったりする作品の場合、必ず最初に右の方向に行くか左に行くのか決めます。<br />
+				この作品は原則、右に行きます。</a></td>
+			<td>작품을 만드는 경우, 특히 어딘가에 가거나 하는 작품의 경우, 반드시 처음에 오른쪽으로 갈지 왼쪽으로 갈지 정합니다.<br />
+				이 작품은 원칙적으로 오른쪽으로 갑니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959821349011557">
+				なぜ右にしたのか、理由は二つあって、<br />
+				路線図的に池袋が右にあるイメージだからというのと、<br />
+				右に進んだ方が運転席の構図が取りやすいからです。</a></td>
+			<td>왜 오른쪽으로 했느냐, 이유는 두 가지인데<br />
+				노선도에서 이케부쿠로가 오른쪽이 있는 이미지라는 것,<br />
+				오른쪽으로 나아가는 게 운전석 구도를 잡기 쉽다는 겁니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959902437564576">
+				「マッドマックス 怒りのデスロー」などは方向が明快です。<br />
+				前半が右で後半が左。<br />
+				「アラビアのロレンス」は完璧なまでに右に移動しています。</a></td>
+			<td>「매드맥스: 분노의 도로」 같은 건 방향이 명확합니다.<br />
+				전반이 오른쪽이고 후반이 왼쪽.<br />
+				「아라비아의 로렌스」는 완벽하게 오른쪽으로 이동합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784959974281765231">
+				ゲームのスクロールはほぼ右方向ですね。<br />
+				理由として時計回りだとか横文字の方向だとか諸説ありますが、本当の所はわかりません。</a></td>
+			<td>게임의 스크롤은 거의 오른쪽을 향하죠.<br />
+				이유는 시계방향이나 가로쓰기 방향 등 여러 설이 있지만, 사실은 알 수 없습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784960052996317272">
+				基本右に行くこの作品ですが、第五話のラストは、あえて逆にしています。<br />
+				ホームのとのやりとりのため、こちらの方が構図がとりやすかったからです。</a></td>
+			<td>기본적으로 오른쪽으로 가는 이 작품이지만, 제5화의 라스트는 굳이 반대로 했습니다.<br />
+				플랫폼과의 대화를 위해, 이쪽이 구도를 잡기 쉬웠기 때문입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep05">
+			<td>5화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1784960122407858285">
+				今週もご視聴、ありがとうございました。<br />
+				来週は、今までわからなかったことが、少しだけわかります。<br />
+				どうぞお楽しみに。</a></td>
+			<td>이번 주도 시청해주셔서 감사합니다.<br />
+				다음 주는 지금까지 알 수 없었던 걸 조금이나마 알게 될 겁니다.<br />
+				부디 기대하세요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06 first">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787489341872439601">
+				「終末トレインどこへいく？」<br />
+				第六話がオンエアされます。<br />
+				よろしくお願いします。</a></td>
+			<td>「종말 트레인 어디로 가나?」<br />
+				제6화가 온에어 합니다.<br />
+				잘 부탁합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787491609296425355">
+				第八話がまだ出来ていません。<br />
+				今作っています。</a></td>
+			<td>제8화가 아직 미완성입니다.<br />
+				지금 만들고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787491935785304545">
+				お詫びです。<br />
+				今までは各駅をひとつずつ描いてきました。<br />
+				ですが5話と6話のあいだで駅をかなり飛ばしています。<br />
+				5話は「稲荷山公園駅」でしたが、<br />
+				6話冒頭は「秋津駅」と「清瀬駅」の間を走行しています。</a></td>
+			<td>사과드립니다.<br />
+				지금까지는 각 역을 하나씩 그려왔습니다.<br />
+				하지만 5화와 6화 사이에서 역을 꽤 건너뛰었습니다.<br />
+				5화는 「이나리야마공원역」이었지만,<br />
+				6화 시작은 「아키츠역」과 「키요세역」 사이를 주행하고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787492063388581958">
+				最初は全ての駅を、ほんの少しでいいから見せるプランもありました。<br />
+				しかしそうなると描かなければいけない(描きたい)ことを削らなければならなくなるので、やむを得ずこういう形にしました。<br />
+				大変申し訳ありません。</a></td>
+			<td>처음엔 모든 역을, 아주 조금이라도 좋으니 보여주는 플랜도 있었습니다.<br />
+				하지만 그렇게 되면 그려야 하는(그리고 싶은) 걸 줄일 수밖에 없어서, 하는 수 없이 이런 형태가 됐습니다.<br />
+				대단히 죄송합니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787492199799898333">
+				でもいつか、全ての駅を描きたいです！</a></td>
+			<td>하지만 언젠가, 모든 역을 그리고 싶습니다!</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787492312651862207">
+				「アートマン号」<br />
+				日本語にすると、<br />
+				「自我号」とか「本質号」なんていう感じでしょうか？</a></td>
+			<td>「아트만호」<br />
+				번역하자면<br />
+				「자아호」나 「본질호」 같은 느낌일까요?</td>
+			<td><a href="https://ko.wikipedia.org/wiki/%EC%95%84%ED%8A%B8%EB%A7%8C">아트만(힌두교)</a><br />
+				<a href="https://namu.wiki/w/%EC%95%84%ED%8A%B8%EB%A7%8C">나무위키</a></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787492380717039911">
+				玲実の「アポジーだ」は、<br />
+				「アポ爺だ」のニュアンスで言っています。</a></td>
+			<td>레이미의 「아포지다」는<br />
+				「아포 영감이다」의 뉘앙스로 말하고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787492458013868174">
+				このあたりは巨大な野菜がたくさん生育しています。<br />
+				食べられません。</a></td>
+			<td>이 일대는 거대한 채소가 잔뜩 생육하고 있습니다.<br />
+				먹을 수 없습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787492694190948393">
+				静留の回想の発言、<br />
+				自分も思うふしが色々あって、<br />
+				あいたたってなります。</a></td>
+			<td>시즈루의 회상 속 발언,<br />
+				스스로도 켕기는 게 이것저것 있어서<br />
+				아차 싶습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787492777418539303">
+				発した言葉はリセットできません。<br />
+				いっぱい反省。</a></td>
+			<td>꺼낸 말은 리셋할 수 없습니다.<br />
+				잔뜩 반성.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787494236566516173">
+				ポチさんは吐いたり凶暴化したり、とある気の影響を受けています。</a></td>
+			<td>포치는 토하고 흉포화되고 하는, 어떤 기의 영향을 받고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787494325359894802">
+				静留が「清瀬のもんか？」と聞いていますが、ちょっと違います。<br />
+				スワン仙人も勘違いしていたっぽい。</a></td>
+			<td>시즈루가 「키요세 출신?」하고 묻는데, 조금 다릅니다.<br />
+				백조 도인도 착각했던 모양.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787494388186358019">
+				何度も言ってますが、吾野柔術には打撃があります。<br />
+				総合格闘技での禁じ手も結構使われています。</a></td>
+			<td>누누히 말했지만, 아가노 유술에는 타격이 있습니다.<br />
+				종합격투기에서 금지된 기술도 제법 쓰입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787494453902737630">
+				個人的には吾野柔術と吾野弓術の異種格闘技戦が見たい。</a></td>
+			<td>개인적으로는 아가노 유술과 아가노 궁술의 이종격투기전을 보고 싶네요.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787494528796307942">
+				最初のテイクはポチさんの目が真っ赤でした。<br />
+				ゾンビ化と勘違いされそうなので変更しました。</a></td>
+			<td>최초 작업본은 포치의 눈이 새빨갰습니다.<br />
+				좀비화로 오인받을 것 같아서 변경했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787494598736224423">
+				ゾンビの発する音は、<br />
+				「うごー」とか「がー」とか、<br />
+				濁点禁止で演じてもらっています。</a></td>
+			<td>좀비가 발하는 소리는<br />
+				「우고-」나 「가-」 같은<br />
+				탁음이 안 들어가게 연기를 부탁했습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787495041902248145">
+				「黒豹便のテーマ」は、<br />
+				7Gなどでぐちゃぐちゃになった世の中での心構えを歌っています。<br />
+				「らりぱり世界で正気を保つ」</a></td>
+			<td>「흑표편의 테마」는<br />
+				7G 등으로 엉망이 된 세상 속에서의 마음가짐을 노래했습니다.<br />
+				「왈랄랄루 세상에서 제정신을 지킨다」</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787495125033353416">
+				クロヒョウキャラバンが音楽を流しながら移動しているのは、熊除けみたいな理由です。</a></td>
+			<td>흑표 캐러밴이 음악을 틀고 이동하는 건, 베어벨 비슷한 이유입니다.</td>
+			<td><a href="https://choquokka.tistory.com/31">베어벨... 무쓸모(?)</a></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787495192783962558">
+				クロヒョウキャラバンの流す音楽は場所によっては逆効果です。<br />
+				変なものがいろいろ寄ってきます。</a></td>
+			<td>흑표 캐러밴이 트는 음악은 장소에 따라선 역효과입니다.<br />
+				이상한 게 이것저것 다가옵니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787495267601948685">
+				黒豹便のトラック、<br />
+				第一話よりボロボロになっています。<br />
+				何かの理由で一人減っています。</a></td>
+			<td>흑표편 트럭,<br />
+				제1화보다 너덜너덜해졌습니다.<br />
+				어떠한 이유로 한 명 줄었습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787495346408743408">
+				クロヒョウキャラバンはこの2台だけではなく、他にも存在します。<br />
+				ルートがいくつかあって、回っています。</a></td>
+			<td>흑표 캐러밴은 이 2대뿐만 아니라, 다른 데도 존재합니다.<br />
+				루트가 여럿 있어서, 돌아다니고 있습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787495685467877376">
+				黒木のぬいぐるみには名前がありませんが、<br />
+				「うさぎのゴッホ」と呼ばれています。<br />
+				エンドルフィンがドバドバなので幸せそうです。</a></td>
+			<td>쿠로키의 인형엔 이름은 없지만,<br />
+				「토끼 고흐」라고 불립니다.<br />
+				엔돌핀이 콸콸 넘쳐서 행복해 보입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787496094123106766">
+				吾野中学・吾野高校は厳密にいうと制服がありません。私服もOKです。<br />
+				静流たちの着ているのは、学校が薦める「推奨服」です。</a></td>
+			<td>아가노중학교·아가노고등학교는 엄밀히 따지면 교복이 없습니다. 사복도 OK입니다.<br />
+				시즈루네가 입고 있는 건 학교가 추천하는 「권장복」입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787496178491519454">
+				晶の着ている服は中高一貫になる前の、旧吾野中学の制服です。<br />
+				気に入ってるらしいです。</a></td>
+			<td>아키라가 입고 있는 옷은 중고등학교 통합이 되기 전, 구 아가노중학교 교복입니다.<br />
+				맘에 드는 모양입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep06">
+			<td>6화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1787496777769463858">
+				ご視聴して下さって、本当にありがとうございました。<br />
+				折り返しです。<br />
+				がんばります。<br />
+				よろしくお願いします。</a></td>
+			<td>시청해주셔서 정말 감사합니다.<br />
+				반환점입니다.<br />
+				열심히 하겠습니다.<br />
+				잘 부탁드립니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07 first">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790026467469828453">
+				第七話、オンエアです。<br />
+				よろしくお願いします。</a></td>
+			<td>제7화, 온에어입니다.<br />
+				잘 부탁드립니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790028358622830836">
+				黒木の椅子は人の骨と皮で作った、という設定です。<br />
+				多分うそだと思います。</a></td>
+			<td>쿠로키의 의자는 인간의 뼈와 가죽으로 만들었다는 설정입니다.<br />
+				아마 거짓말일 겁니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790028449878298734">
+				黒木はゾンビ全部を把握できていませんが、わかるゾンビは番号で呼んでいます。</a></td>
+			<td>쿠로키는 좀비를 전부 파악하진 못했지만, 아는 좀비는 번호로 부릅니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790028953396093206">
+				武蔵野うどん。<br />
+				うまい。<br />
+				初めて食べた時は強いコシにびっくりしました。</a></td>
+			<td>무사시노 우동.<br />
+				맛있죠.<br />
+				처음 먹었을 땐 너무 쫄깃해서 깜짝 놀랐습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790029414614381031">
+				ハウスオブザデッド、難しいです。<br />
+				もっとイージーなモードがあればいいのにと、どれたけ思ったことか。</a></td>
+			<td>하우스 오브 더 데드, 어렵습니다.<br />
+				좀 더 쉬운 모드가 있었으면 싶었던 적이 얼마나 많았던지.</td>
+			<td><a href="https://ko.wikipedia.org/wiki/%ED%95%98%EC%9A%B0%EC%8A%A4_%EC%98%A4%EB%B8%8C_%EB%8D%94_%EB%8D%B0%EB%93%9C_(%EB%B9%84%EB%94%94%EC%98%A4_%EA%B2%8C%EC%9E%84)">하우스 오브 더 데드</a></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790029566267830744">
+				ハウスオブザデッド、制作の人のプレイをそのまま使用しています。<br />
+				わたしもやりましたが、下手すぎて採用されませんでした。</a></td>
+			<td>하우스 오브 더 데드, 제작자의 플레이를 그대로 사용했습니다.<br />
+				저도 해봤지만, 너무 못해서 채용할 수 없었습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790030416159633512">
+				晶はいろいろな文学を、そらんじています。<br />
+				もちろん気に入った部分だけです。</a></td>
+			<td>아키라는 다양한 문학을 외우고 있습니다.<br />
+				물론 맘에 드는 부분만입니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790030538343891198">
+				元ネタのイギリス文学を読んで、准男爵という身分を初めて知りました。何とか夫人の旦那さんは貴族ではなく平民なんですね。</a></td>
+			<td>원작인 영국 문학을 보고, 준남작이라는 신분을 처음 알았습니다. 어느 부인의 남편은 귀족이 아닌 평민이었네요.</td>
+			<td><a href="https://ko.wikipedia.org/wiki/%EC%B1%84%ED%84%B8%EB%A6%AC_%EB%B6%80%EC%9D%B8%EC%9D%98_%EC%97%B0%EC%9D%B8">채털리 부인의 연인</td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790030734360555869">
+				元ネタのイギリス文学、コニーは悪くないと思います。<br />
+				悪いのは旦那の方だ。</a></td>
+			<td>원작인 영국 문학, 코니는 잘못하지 않다고 생각합니다.<br />
+				잘못한 건 남편 쪽이죠.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790031591013515572">
+				地方のいろいろな「春歌」「艶歌」を調べました。<br />
+				よりディープな方向に歌詞を作るのはそれほど難しくはないのですが、なかなか面白さにつながりませんでした。<br />
+				で、出来たのがこれです。</a></td>
+			<td>지방의 다양한 「춘가」「엔카」를 알아봤습니다.<br />
+				보다 딥한 방향으로 가사를 만드는 건 그렇게 어렵진 않았지만, 좀처럼 재미있는 쪽으로 이어지진 않았습니다.<br />
+				그래서, 완성된 게 이겁니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790032198474608918">
+				ゾンビは武蔵藤沢の人たちです。<br />
+				黒木がゾンビに遭遇したのは100円ショップです。<br />
+				ゾンビの定番のショッピングモールではありません。</a></td>
+			<td>좀비는 무사시후지사와 사람들입니다.<br />
+				쿠로키가 좀비를 조우한 건 100엔숍입니다.<br />
+				좀비의 정석인 쇼핑몰이 아닙니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790032256452448536">
+				スワン仙人の地図には、清瀬あたりにゾンビっぽい絵が書かれていましたが、スワン仙人の勘違いです。<br />
+				実際の清瀬は別なことになっています。</a></td>
+			<td>백조 도인의 지도엔 키요세 부근에 좀비 같은 그림이 그려져 있었지만, 백조 도인의 착각입니다.<br />
+				실제 키요세는 다른 일이 벌어졌습니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790033016623911233">
+				ご視聴、ありがとうございました。<br />
+				第八話もよろしくお願いします。</a></td>
+			<td>시청해주셔서 감사합니다.<br />
+				제8화도 잘 부탁드립니다.</td>
+			<td></td>
+		</tr>
+		<tr class="ep07">
+			<td>7화</td>
+			<td><a href="https://twitter.com/tsuki_akari/status/1790033116490252776">
+				第八話は「練馬の国のアリス」にまつわるお話です。</a></td>
+			<td>제8화는 「네리마 나라의 앨리스」에 관한 이야기입니다.</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+</body>
+</html>
