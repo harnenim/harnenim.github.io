@@ -141,19 +141,34 @@ img.overlay {
 		font-size: 0.83vw;
 	}
 }
+
+h1, h2, h3, p, .overlay { opacity: 0; }
+body.show-translate h1,
+body.show-translate h2,
+body.show-translate h3,
+body.show-translate p,
+body.show-overlay .overlay {
+	opacity: 1;
+}
 </style>
-<style id="styleForTranslate"></style>
-<style id="styleForOverlay"  >.overlay { opacity: 0; }</style>
 <script>
 function showOrHideTranslate() {
-	document.getElementById("styleForTranslate").innerHTML = (document.getElementById("cbShowTranslate").checked ? "" : "h1, h2, h3, p { opacity: 0; }");
+	if (document.getElementById("cbShowTranslate").checked) {
+		document.body.classList.add   ("show-translate");
+	} else {
+		document.body.classList.remove("show-translate");
+	}
 }
 function showOrHideOverlay  () {
-	document.getElementById("styleForOverlay"  ).innerHTML = (document.getElementById("cbShowOverlay"  ).checked ? "" : ".overlay { opacity: 0; }");
+	if (document.getElementById("cbShowOverlay").checked) {
+		document.body.classList.add   ("show-overlay");
+	} else {
+		document.body.classList.remove("show-overlay");
+	}
 }
 </script>
 </head>
-<body>
+<body class="show-translate">
 	<div style="position: fixed; top: 0; right: 0; width: 140px; z-index: 1;
 			background: #fff;
 			border: 1px solid #888; border-width: 0 0 1px 1px;

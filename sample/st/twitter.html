@@ -66,26 +66,35 @@ select {
 @media (max-width: 1300px) {
 	#header { left: 0; }
 }
+
+#tbody > tr { display: none; }
+body.all  #tbody > tr,
+body.ep01 #tbody > tr.ep01,
+body.ep02 #tbody > tr.ep02,
+body.ep03 #tbody > tr.ep03,
+body.ep04 #tbody > tr.ep04,
+body.ep05 #tbody > tr.ep05,
+body.ep06 #tbody > tr.ep06,
+body.ep07 #tbody > tr.ep07,
+body.ep08 #tbody > tr.ep08,
+body.ep09 #tbody > tr.ep09,
+body.ep10 #tbody > tr.ep10,
+body.ep11 #tbody > tr.ep11,
+body.ep12 #tbody > tr.ep12 {
+	display: table-row;
+};
 </style>
-<style id="styleForEpisode"></style>
 <script>
 function selectEpisode(value) {
-	var css = "#tbody > tr { display: table-row; }";
-	if (value) {
-		css = "#tbody > tr { display: none; }\n"
-		    + "#tbody > tr." + value + " { display: table-row; }";
-	}
-	document.getElementById("styleForEpisode").innerHTML = css;
+	document.body.className = value;
 	history.replaceState({}, null, window.location.pathname + "?ep=" + value);
 }
 function onload() {
-	if (location.search && location.search.startsWith("?ep=")) {
-		selectEpisode(document.getElementById("selectEpisode").value = location.search.substring(4));
-	}
+	selectEpisode(document.getElementById("selectEpisode").value = ((location.search && location.search.startsWith("?ep=")) ? location.search.substring(4) : "all"));
 }
 </script>
 </head>
-<body onload="onload();">
+<body onload="onload();" class="all">
 <table id="header">
 	<colgroup>
 		<col style="width: 60px;" />
@@ -97,7 +106,7 @@ function onload() {
 		<tr>
 			<th>
 				<select id="selectEpisode" onchange="selectEpisode(this.value)">
-					<option value="">전체</option>
+					<option value="all">전체</option>
 					<option value="ep01">1화</option>
 					<option value="ep02">2화</option>
 					<option value="ep03">3화</option>
@@ -2058,7 +2067,7 @@ function onload() {
 			<td><a href="https://x.com/tsuki_akari/status/1790030538343891198">
 				元ネタのイギリス文学を読んで、准男爵という身分を初めて知りました。何とか夫人の旦那さんは貴族ではなく平民なんですね。</a></td>
 			<td>원작인 영국 문학을 보고, 준남작이라는 신분을 처음 알았습니다. 어느 부인의 남편은 귀족이 아닌 평민이었네요.</td>
-			<td><a href="https://ko.wikipedia.org/wiki/%EC%B1%84%ED%84%B8%EB%A6%AC_%EB%B6%80%EC%9D%B8%EC%9D%98_%EC%97%B0%EC%9D%B8">채털리 부인의 연인</td>
+			<td><a href="https://ko.wikipedia.org/wiki/%EC%B1%84%ED%84%B8%EB%A6%AC_%EB%B6%80%EC%9D%B8%EC%9D%98_%EC%97%B0%EC%9D%B8">채털리 부인의 연인</a></td>
 		</tr>
 		<tr class="ep07">
 			<td>7화</td>
