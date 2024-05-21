@@ -1,0 +1,9 @@
+jQuery(function($) {
+    // カテゴリを移動させる
+    var $category_nav = $(".category_nav");
+    var $content_area = $category_nav.find(".content_area");
+    var $active = $content_area.find("a.active");
+    // 移動させる幅
+    var left = $active.position().left - ($(document).width()/2) + ($active.width());
+    $category_nav.scrollLeft(left);
+});

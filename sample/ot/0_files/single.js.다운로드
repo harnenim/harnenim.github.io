@@ -1,0 +1,14 @@
+jQuery(function($) {
+    $('.slider-nav').slick({
+        dots: false,
+        arrows: false,
+        autoplay: false,
+        // centerMode: true,
+        centerPadding: '20px',
+        slidesToShow: 4,
+		slidesToScroll: 4,
+		draggable: true,
+		swipe: true,
+		adaptiveHeight: true
+    });
+});

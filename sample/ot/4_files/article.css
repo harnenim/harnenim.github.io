@@ -1,0 +1,1763 @@
+.text-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rb-sp-menu-styles .category-menu-wrapper {
+  overflow: auto;
+  -webkit-transform: translateZ(0px);
+  transform: translateZ(0px);
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+  background-color: #000;
+  margin: 0;
+  padding: 6px 0 0 0;
+}
+.rb-sp-menu-styles .header-category-menu {
+  background-color: transparent;
+  display: table;
+  border-bottom: 3px solid #000;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-top {
+  border-bottom-color: #efeae3;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-top .rb-top {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-new {
+  border-bottom-color: #5bd5be;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-new .new {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-music {
+  border-bottom-color: #ef357f;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-music .music {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-classic {
+  border-bottom-color: #ff7f7f;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-classic .classic {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-drama {
+  border-bottom-color: #f6b654;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-drama .drama {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-game {
+  border-bottom-color: #70beef;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-game .game {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-event {
+  border-bottom-color: #d8a5ed;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-event .event {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-interview {
+  border-bottom-color: #3f96b8;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-interview .interview {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-art {
+  border-bottom-color: #79d589;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-art .art {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-report {
+  border-bottom-color: #75559e;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-report .report {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-movie {
+  border-bottom-color: #ced827;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-movie .movie {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-feature {
+  border-bottom-color: #fcdb7c;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-feature .feature {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-cinema {
+  border-bottom-color: #668fea;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-cinema .cinema {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-sports {
+  border-bottom-color: #d95d44;
+}
+.rb-sp-menu-styles .header-category-menu.header-category-menu--cd-sports .sports {
+  padding-top: 15px;
+}
+.rb-sp-menu-styles .header-category-menu li {
+  display: table-cell !important;
+  float: none;
+  width: auto;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: bottom;
+}
+.rb-sp-menu-styles .header-category-menu li a {
+  display: block;
+  padding: 8px 10px 6px 10px;
+  height: auto;
+  color: #FFF;
+  font-size: 13px;
+  border-radius: 6px 6px 0 0;
+  border: 0 !important;
+}
+.rb-sp-menu-styles .header-category-menu li a.rb-top {
+  background: #efeae3;
+  color: #000;
+}
+.rb-sp-menu-styles .header-category-menu li a.all {
+  background: #5bd5be;
+}
+.rb-sp-menu-styles .header-category-menu li a.new {
+  background: #5bd5be;
+}
+.rb-sp-menu-styles .header-category-menu li a.art {
+  background: #79d589;
+}
+.rb-sp-menu-styles .header-category-menu li a.classic {
+  background: #ff7f7f;
+}
+.rb-sp-menu-styles .header-category-menu li a.drama {
+  background: #f6b654;
+}
+.rb-sp-menu-styles .header-category-menu li a.event {
+  background: #d8a5ed;
+}
+.rb-sp-menu-styles .header-category-menu li a.game {
+  background: #70beef;
+}
+.rb-sp-menu-styles .header-category-menu li a.movie {
+  background: #ced827;
+}
+.rb-sp-menu-styles .header-category-menu li a.music {
+  background: #ef357f;
+}
+.rb-sp-menu-styles .header-category-menu li a.short-story {
+  background: #ff9545;
+}
+.rb-sp-menu-styles .header-category-menu li a.spicer {
+  background: #7f7cf2;
+}
+.rb-sp-menu-styles .header-category-menu li a.feature {
+  background: #fcdb7c;
+}
+.rb-sp-menu-styles .header-category-menu li a.interview {
+  background: #3f96b8;
+}
+.rb-sp-menu-styles .header-category-menu li a.report {
+  background: #75559e;
+}
+.rb-sp-menu-styles .header-category-menu li a.cinema {
+  background: #668fea;
+}
+.rb-sp-menu-styles .header-category-menu li a.sports {
+  background: #d95d44;
+}
+.rb-sp-menu-styles .header-category-menu li .icon {
+  display: none;
+}
+.rb-sp-menu-styles .header-category-menu li .rb-label {
+  display: block;
+}
+.body-article .article-detail {
+  background: #fff;
+  margin-top: 0;
+}
+.body-article .article-padding {
+  padding: 20px 15px;
+}
+.body-article .article-title {
+  color: #363636;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 2px;
+}
+.body-article .author {
+  font-size: 10px;
+  color: #acacac;
+  text-align: right;
+  margin: 0 0 3px;
+}
+.body-article .article-info {
+  margin-bottom: 10px;
+}
+.body-article .rb-article-info .rb-card__icon.pull-left {
+  width: 76%;
+}
+.body-article .label-l {
+  height: auto;
+  min-height: 20px;
+  text-align: left;
+  white-space: normal;
+  margin-bottom: 4px;
+}
+.body-article .genre {
+  display: inline-block;
+  font-size: 10px;
+  color: #acacac;
+  margin-left: 0;
+}
+.body-article .time {
+  margin-top: 3px;
+}
+.body-article .main-img {
+  width: 100%;
+  height: auto;
+  margin: 0 0 10px;
+}
+.body-article .img-wrapper {
+  text-align: center;
+}
+.body-article .img-wrapper img {
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 10px;
+}
+.body-article .img-wrapper.imgsize100 img {
+  width: 100%;
+}
+.body-article .img-wrapper.imgsize80 img {
+  width: 60%;
+}
+.body-article .img-wrapper.imgsize60 img {
+  width: 40%;
+}
+.body-article .img-exp {
+  display: block;
+  color: #acacac !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  margin: 3px 0 12px;
+}
+.body-article .btn.btn-view-more {
+  display: block;
+  width: 160px;
+  height: 26px;
+  line-height: 24px;
+  color: #fff;
+  font-size: 11px;
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.body-article .btn.btn-view-more .icon-zoom {
+  width: 13px;
+  height: 13px;
+  margin: 0 4px -2px 0;
+}
+.body-article hr {
+  border-top: 1px solid #dadada;
+  margin: 30px -15px 25px;
+}
+.body-article .publisher-banner {
+  width: auto;
+  height: 20px;
+  margin-top: 15px;
+}
+.body-article .publisher-banner img {
+  width: auto;
+  height: 100%;
+}
+.body-article .publisher-no-banner {
+  font-size: 13px;
+  font-style: italic;
+  color: #575757;
+  margin: 15px 0 30px;
+}
+.body-article .iframe-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 75% 0 0 0;
+  margin-bottom: 10px;
+}
+.body-article .iframe-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.body-article .template {
+  overflow: hidden;
+  /* (SP) Windows または、特殊で設定したブラウザ以外の基本(Safari)のチケット文字列SVG画像設定 start */
+  /* (SP) Windows または、特殊で設定したブラウザ以外の基本(Safari)のチケット文字列SVG画像設定 end */
+}
+.body-article .template h1,
+.body-article .template h2,
+.body-article .template h3,
+.body-article .template h4,
+.body-article .template h5,
+.body-article .template h6 {
+  color: #363636;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.4;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #aaa;
+  margin: 30px 0 15px;
+  clear: both;
+  /* 見出し用チケットSVG画像(PC) */
+  /* 見出し用チケットSVG画像(Windows用SP) */
+  /* 見出し用チケットSVG画像(Windows用PC) */
+}
+.body-article .template h1 .t_h_sp_svg,
+.body-article .template h2 .t_h_sp_svg,
+.body-article .template h3 .t_h_sp_svg,
+.body-article .template h4 .t_h_sp_svg,
+.body-article .template h5 .t_h_sp_svg,
+.body-article .template h6 .t_h_sp_svg {
+  /* 見出し用チケットSVG画像(SP) */
+  display: inline-block;
+  vertical-align: text-bottom;
+  margin: auto 2px 1px 1px;
+  height: 17px;
+  width: 65px;
+}
+.body-article .template h1 .t_h_svg,
+.body-article .template h2 .t_h_svg,
+.body-article .template h3 .t_h_svg,
+.body-article .template h4 .t_h_svg,
+.body-article .template h5 .t_h_svg,
+.body-article .template h6 .t_h_svg {
+  display: none;
+}
+.body-article .template h1 .t_h_ie_sp_svg,
+.body-article .template h2 .t_h_ie_sp_svg,
+.body-article .template h3 .t_h_ie_sp_svg,
+.body-article .template h4 .t_h_ie_sp_svg,
+.body-article .template h5 .t_h_ie_sp_svg,
+.body-article .template h6 .t_h_ie_sp_svg {
+  display: none;
+}
+.body-article .template h1 .t_h_ie_svg,
+.body-article .template h2 .t_h_ie_svg,
+.body-article .template h3 .t_h_ie_svg,
+.body-article .template h4 .t_h_ie_svg,
+.body-article .template h5 .t_h_ie_svg,
+.body-article .template h6 .t_h_ie_svg {
+  display: none;
+}
+.body-article .template div {
+  color: #363636;
+  font-size: 14px;
+}
+.body-article .template p {
+  color: #363636;
+  font-size: 14px;
+  line-height: 1.8;
+  margin-bottom: 15px;
+}
+.body-article .template div,
+.body-article .template p {
+  /* 記事本文用チケットSVG画像(PC) */
+  /* 記事本文用チケットSVG画像(Windows用SP) */
+  /* 記事本文用チケットSVG画像(Windows用PC) */
+}
+.body-article .template div .t_c_sp_svg,
+.body-article .template p .t_c_sp_svg {
+  /* 記事本文用チケットSVG画像(SP) */
+  display: inline-block;
+  vertical-align: text-bottom;
+  margin: auto 1px;
+  height: 14px;
+  width: 52px;
+  padding-bottom: 1px;
+}
+.body-article .template div .t_c_svg,
+.body-article .template p .t_c_svg {
+  display: none;
+}
+.body-article .template div .t_c_ie_sp_svg,
+.body-article .template p .t_c_ie_sp_svg {
+  display: none;
+}
+.body-article .template div .t_c_ie_svg,
+.body-article .template p .t_c_ie_svg {
+  display: none;
+}
+.body-article .template .rb-btn-chicket {
+  /* チケットリンク用チケットSVG画像(PC) */
+  /* チケットリンク用チケットSVG画像(Windows用SP) */
+  /* チケットリンク用チケットSVG画像(Windows用PC) */
+}
+.body-article .template .rb-btn-chicket .t_l_sp_svg {
+  /* チケットリンク用チケットSVG画像(SP) */
+  display: inline-block;
+  vertical-align: text-bottom;
+  margin: auto 1px 1px 1px;
+  height: 10px;
+  width: 38px;
+}
+.body-article .template .rb-btn-chicket .t_l_svg {
+  display: none;
+}
+.body-article .template .rb-btn-chicket .t_l_ie_sp_svg {
+  display: none;
+}
+.body-article .template .rb-btn-chicket .t_l_ie_svg {
+  display: none;
+}
+.body-article .template a {
+  color: #006cff;
+}
+.body-article .template ul,
+.body-article .template ol {
+  padding-left: 20px;
+}
+.body-article .template blockquote {
+  padding: 10px;
+}
+.body-article .secondary-title {
+  height: 30px;
+  line-height: 30px;
+  color: #363636;
+  font-size: 12px;
+  padding: 0 15px;
+  background: #f0f0f0;
+  border-top: 1px solid #cfcfcf;
+  border-bottom: 1px solid #cfcfcf;
+  margin: 0;
+}
+.body-article .contents-padding {
+  padding: 15px;
+}
+.body-article .other-images {
+  margin-bottom: 15px;
+}
+.body-article .other-images li {
+  width: 23%;
+  padding: 0;
+  vertical-align: top;
+}
+.body-article .other-images a {
+  position: relative;
+  display: block;
+}
+.body-article .other-images a:hover:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+.body-article .other-images .thumb {
+  width: 100%;
+  height: 50px;
+  background-color: #F6F6F6;
+  overflow: hidden;
+}
+.body-article .other-images img {
+  width: 100%;
+  vertical-align: top;
+}
+.body-article .other-images-detail li {
+  margin-bottom: 16px;
+}
+.body-article .other-images-detail .thumb {
+  width: 100%;
+  height: 90px;
+  background-color: #F6F6F6;
+  overflow: hidden;
+}
+.body-article .other-images-detail img {
+  width: 100%;
+  height: auto;
+}
+.body-article .other-images-detail a {
+  position: relative;
+  display: block;
+}
+.body-article .other-images-detail a:hover:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+.body-article .rb-icon-text-area {
+  margin-bottom: 5px;
+  padding-top: 10px;
+}
+.body-article .sns-share-area {
+  padding: 0 15px 20px;
+}
+.body-article .sns-share-area .time {
+  margin-bottom: 10px;
+}
+.body-article .sns-share {
+  margin: 0 auto;
+}
+.body-article .sns-share li {
+  float: left;
+  width: 20%;
+  padding: 0;
+}
+.body-article .sns-share.with-hot li {
+  width: 20%;
+}
+.body-article .sns-share.with-hot li.hot {
+  width: 40%;
+}
+.body-article .sns-share.with-hot li.rb-hot {
+  width: 37%;
+  margin-right: 3%;
+}
+.body-article .sns-share .btn-share {
+  width: 100%;
+}
+.body-article .sns-share .btn-hot {
+  width: 100%;
+}
+.body-article .sns-share--footer-fixed {
+  -moz-transition: bottom 0.2s ease-in-out;
+  -o-transition: bottom 0.2s ease-in-out;
+  -ms-transition: bottom 0.2s ease-in-out;
+  webkit-transition: bottom 0.2s ease-in-out;
+  transition: bottom 0.2s ease-in-out;
+  position: fixed;
+  left: 0;
+  bottom: -80px;
+  z-index: 100;
+  padding-right: 80px;
+  width: 100%;
+}
+.body-article .sns-share--footer-fixed li {
+  width: 25%;
+  text-align: center;
+}
+.body-article .sns-share--footer-fixed li .btn-share {
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 1000px;
+}
+.body-article .sns-share--footer-fixed li .btn-share .icon {
+  margin-top: 0;
+}
+.body-article .dropbox-area {
+  padding-bottom: 30px;
+}
+.body-article .dropbox-area .dropbox-dropin-btn {
+  vertical-align: top;
+}
+.body-article .article-page .btn-sns.rss {
+  width: 100%;
+  line-height: 38px;
+  margin: 10px auto 20px;
+  display: block;
+}
+.body-article .article-page .btn-sns.rss .icon-rss {
+  margin: 0 0 -2px 0;
+}
+.body-article .prev-next-area {
+  text-align: center;
+  margin: 15px 0 10px;
+}
+.body-article .prev-next-area .btn {
+  display: inline-block;
+  width: 90px;
+  height: 30px;
+  line-height: 28px;
+  font-size: 11px;
+}
+.body-article .prev-next-area .btn .icon-arrow {
+  position: static;
+  width: 6px;
+  height: 10px;
+}
+.body-article .article-side-share .youtube {
+  padding: 0;
+}
+.body-article .youtube {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+}
+.body-article .youtube iframe:not(#twitter-widgetoon-0) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+.body-article .spotify iframe {
+  width: 100%;
+}
+/* 143 行目あたりの基本設定をもとに各ブラウザ、OSで margin などの設定を変更している */
+/* (SP) Windows 以外の Chrome のチケット文字列SVG画像設定 start */
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
+  .body-article .template h1 .t_h_sp_svg,
+  .body-article .template h2 .t_h_sp_svg,
+  .body-article .template h3 .t_h_sp_svg,
+  .body-article .template h4 .t_h_sp_svg,
+  .body-article .template h5 .t_h_sp_svg,
+  .body-article .template h6 .t_h_sp_svg {
+    margin: auto 2px auto 1px;
+  }
+  .body-article .template div .t_c_sp_svg,
+  .body-article .template p .t_c_sp_svg {
+    margin: auto 1px 0 1px;
+  }
+  .body-article .template .rb-btn-chicket .t_l_sp_svg {
+    margin: auto 1px;
+  }
+}
+/* (SP) Windows 以外の Chrome のチケット文字列SVG画像設定 end */
+/* (SP) Windows 以外の Firefox のチケット文字列SVG画像設定 start */
+@-moz-document url-prefix() {
+  .body-article .template h1 .t_h_sp_svg,
+  .body-article .template h2 .t_h_sp_svg,
+  .body-article .template h3 .t_h_sp_svg,
+  .body-article .template h4 .t_h_sp_svg,
+  .body-article .template h5 .t_h_sp_svg,
+  .body-article .template h6 .t_h_sp_svg {
+    margin: auto 2px 1px 1px;
+  }
+  .body-article .template div .t_c_sp_svg,
+  .body-article .template p .t_c_sp_svg {
+    margin: auto 1px 0 1px;
+  }
+  .body-article .template .rb-btn-chicket .t_l_sp_svg {
+    margin: auto 1px 1px 1px;
+  }
+}
+/* (SP) Windows 以外の Firefox のチケット文字列SVG画像設定 end */
+/* (SP) Android9未満の Chrome アプリのチケット文字列SVG画像設定 start */
+.an-b-c .template h1 .t_h_sp_svg,
+.an-b-c .template h2 .t_h_sp_svg,
+.an-b-c .template h3 .t_h_sp_svg,
+.an-b-c .template h4 .t_h_sp_svg,
+.an-b-c .template h5 .t_h_sp_svg,
+.an-b-c .template h6 .t_h_sp_svg {
+  margin: auto 2px 2px 1px;
+}
+.an-b-c .template div .t_c_sp_svg,
+.an-b-c .template p .t_c_sp_svg {
+  margin: auto 1px auto 1px;
+}
+.an-b-c .template .rb-btn-chicket .t_l_sp_svg {
+  margin: auto 1px 1px 1px;
+}
+/* (SP) Android9未満の Chrome アプリのチケット文字列SVG画像設定 end */
+/* (SP) Android9以上の Chrome アプリのチケット文字列SVG画像設定 start */
+.an-b-c-9 .template h1 .t_h_sp_svg,
+.an-b-c-9 .template h2 .t_h_sp_svg,
+.an-b-c-9 .template h3 .t_h_sp_svg,
+.an-b-c-9 .template h4 .t_h_sp_svg,
+.an-b-c-9 .template h5 .t_h_sp_svg,
+.an-b-c-9 .template h6 .t_h_sp_svg {
+  margin: auto 2px 2px 1px;
+  height: 18px;
+}
+.an-b-c-9 .template div .t_c_sp_svg,
+.an-b-c-9 .template p .t_c_sp_svg {
+  margin: auto 1px 1px 1px;
+}
+.an-b-c-9 .template .rb-btn-chicket .t_l_sp_svg {
+  margin: auto 1px 1px 1px;
+}
+/* (SP) Android9以上の Chrome アプリのチケット文字列SVG画像設定 start */
+/* (SP) Androidのブラウザアプリのチケット文字列SVG画像設定 start */
+.an-b .template h1 .t_h_sp_svg,
+.an-b .template h2 .t_h_sp_svg,
+.an-b .template h3 .t_h_sp_svg,
+.an-b .template h4 .t_h_sp_svg,
+.an-b .template h5 .t_h_sp_svg,
+.an-b .template h6 .t_h_sp_svg {
+  margin: auto 2px 3px 1px;
+}
+/* (SP) Androidのブラウザアプリのチケット文字列SVG画像設定 end */
+/* (SP) Windows の IE のチケット文字列SVG画像設定 start */
+.ie-b .template h1 .t_h_sp_svg,
+.ie-b .template h2 .t_h_sp_svg,
+.ie-b .template h3 .t_h_sp_svg,
+.ie-b .template h4 .t_h_sp_svg,
+.ie-b .template h5 .t_h_sp_svg,
+.ie-b .template h6 .t_h_sp_svg {
+  display: none;
+}
+.ie-b .template h1 .t_h_ie_sp_svg,
+.ie-b .template h2 .t_h_ie_sp_svg,
+.ie-b .template h3 .t_h_ie_sp_svg,
+.ie-b .template h4 .t_h_ie_sp_svg,
+.ie-b .template h5 .t_h_ie_sp_svg,
+.ie-b .template h6 .t_h_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 2px 2px auto 1px;
+  height: 17px;
+  width: 65px;
+}
+.ie-b .template div .t_c_sp_svg,
+.ie-b .template p .t_c_sp_svg {
+  display: none;
+}
+.ie-b .template div .t_c_ie_sp_svg,
+.ie-b .template p .t_c_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 1px 1px auto 1px;
+  height: 14px;
+  width: 52px;
+  padding-top: 1px;
+}
+.ie-b .template .rb-btn-chicket .t_l_sp_svg {
+  display: none;
+}
+.ie-b .template .rb-btn-chicket .t_l_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 1px 1px auto 1px;
+  height: 10px;
+  width: 38px;
+}
+/* (SP) Windows の IE のチケット文字列SVG画像設定 end */
+/* (SP) Windows の Chrome のチケット文字列SVG画像設定 start */
+.ch-b .template h1 .t_h_sp_svg,
+.ch-b .template h2 .t_h_sp_svg,
+.ch-b .template h3 .t_h_sp_svg,
+.ch-b .template h4 .t_h_sp_svg,
+.ch-b .template h5 .t_h_sp_svg,
+.ch-b .template h6 .t_h_sp_svg {
+  display: none;
+}
+.ch-b .template h1 .t_h_ie_sp_svg,
+.ch-b .template h2 .t_h_ie_sp_svg,
+.ch-b .template h3 .t_h_ie_sp_svg,
+.ch-b .template h4 .t_h_ie_sp_svg,
+.ch-b .template h5 .t_h_ie_sp_svg,
+.ch-b .template h6 .t_h_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 2px 2px auto 1px;
+  height: 17px;
+  width: 65px;
+}
+.ch-b .template div .t_c_sp_svg,
+.ch-b .template p .t_c_sp_svg {
+  display: none;
+}
+.ch-b .template div .t_c_ie_sp_svg,
+.ch-b .template p .t_c_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 1px 1px auto 1px;
+  height: 13px;
+  width: 52px;
+  padding-top: 1px;
+}
+.ch-b .template .rb-btn-chicket .t_l_sp_svg {
+  display: none;
+}
+.ch-b .template .rb-btn-chicket .t_l_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 2px 1px auto 1px;
+  height: 10px;
+  width: 38px;
+}
+/* (SP) Windows の Chrome のチケット文字列SVG画像設定 end */
+/* (SP) Windows の Edge のチケット文字列SVG画像設定 start */
+.ed-b .template h1 .t_h_sp_svg,
+.ed-b .template h2 .t_h_sp_svg,
+.ed-b .template h3 .t_h_sp_svg,
+.ed-b .template h4 .t_h_sp_svg,
+.ed-b .template h5 .t_h_sp_svg,
+.ed-b .template h6 .t_h_sp_svg {
+  display: none;
+}
+.ed-b .template h1 .t_h_ie_sp_svg,
+.ed-b .template h2 .t_h_ie_sp_svg,
+.ed-b .template h3 .t_h_ie_sp_svg,
+.ed-b .template h4 .t_h_ie_sp_svg,
+.ed-b .template h5 .t_h_ie_sp_svg,
+.ed-b .template h6 .t_h_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 2px 2px auto 1px;
+  height: 17px;
+  width: 65px;
+}
+.ed-b .template div .t_c_sp_svg,
+.ed-b .template p .t_c_sp_svg {
+  display: none;
+}
+.ed-b .template div .t_c_ie_sp_svg,
+.ed-b .template p .t_c_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 1px 1px auto 1px;
+  height: 13px;
+  width: 52px;
+  padding-top: 1px;
+}
+.ed-b .template .rb-btn-chicket .t_l_sp_svg {
+  display: none;
+}
+.ed-b .template .rb-btn-chicket .t_l_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 1px 1px auto 1px;
+  height: 10px;
+  width: 38px;
+}
+/* (SP) Windows の Edge のチケット文字列SVG画像設定 end */
+/* (SP) Windows の Firefox のチケット文字列SVG画像設定 start */
+.fi-b .template h1 .t_h_sp_svg,
+.fi-b .template h2 .t_h_sp_svg,
+.fi-b .template h3 .t_h_sp_svg,
+.fi-b .template h4 .t_h_sp_svg,
+.fi-b .template h5 .t_h_sp_svg,
+.fi-b .template h6 .t_h_sp_svg {
+  display: none;
+}
+.fi-b .template h1 .t_h_ie_sp_svg,
+.fi-b .template h2 .t_h_ie_sp_svg,
+.fi-b .template h3 .t_h_ie_sp_svg,
+.fi-b .template h4 .t_h_ie_sp_svg,
+.fi-b .template h5 .t_h_ie_sp_svg,
+.fi-b .template h6 .t_h_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 2px 2px auto 1px;
+  height: 17px;
+  width: 65px;
+}
+.fi-b .template div .t_c_sp_svg,
+.fi-b .template p .t_c_sp_svg {
+  display: none;
+}
+.fi-b .template div .t_c_ie_sp_svg,
+.fi-b .template p .t_c_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 2px 1px auto 1px;
+  height: 13px;
+  width: 52px;
+  padding-top: 1px;
+}
+.fi-b .template .rb-btn-chicket .t_l_sp_svg {
+  display: none;
+}
+.fi-b .template .rb-btn-chicket .t_l_ie_sp_svg {
+  display: inline-block;
+  vertical-align: text-top;
+  margin: 1px 1px auto 1px;
+  height: 10px;
+  width: 38px;
+}
+/* (SP) Windows の Firefox のチケット文字列SVG画像設定 end */
+@media (max-width: 640px) {
+  body.site-body-scrolled .sns-share--footer-fixed {
+    bottom: 40px !important;
+  }
+  body.site-body-scrolled.site-body-scrolled-searchbox-show .sns-share--footer-fixed {
+    bottom: 20px !important;
+  }
+}
+.twitter-main-area .title {
+  text-align: center;
+  color: #fff;
+  background: #1B95E0;
+  padding: 10px;
+}
+.twitter-main-area .follow-twitter-button {
+  display: block;
+  border-bottom: 1px solid #DDDDDD;
+  padding: 7px 0 5px;
+  text-align: center;
+  margin-bottom: 0;
+}
+@media (min-width: 640px) {
+  .twitter-main-area .follow-twitter-button {
+    width: 49.3%;
+    border: 1px solid #DDDDDD;
+    padding: 10px 10px 10px;
+    margin-bottom: 10px;
+  }
+  .twitter-main-area .follow-twitter-button.left {
+    float: left;
+  }
+  .twitter-main-area .follow-twitter-button.right {
+    float: right;
+  }
+}
+.twitter-main-area .category {
+  font-weight: bold;
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+@media (min-width: 640px) {
+  .twitter-main-area .category {
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+}
+.facebook-main-area {
+  border: 1px solid;
+  margin-top: 30px;
+  padding: 15px 0 0;
+  text-align: center;
+  position: relative;
+  z-index: 3;
+}
+@media (max-width: 639px) {
+  .facebook-main-area .fb_iframe_widget {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+  }
+}
+.facebook-main-area .title {
+  font-weight: bold;
+}
+@media (min-width: 640px) {
+  .facebook-main-area .title {
+    font-size: 16px;
+  }
+}
+.facebook-main-area .title .red {
+  color: red;
+}
+.facebook-main-area .foot {
+  color: #fff;
+  background: #000;
+  padding: 15px;
+  margin-top: 15px;
+}
+.facebook-main-area .foot .logo {
+  width: 85px;
+  margin-top: -10px;
+}
+.sns-main-area {
+  padding: 0 15px;
+}
+@media (min-width: 640px) {
+  .sns-main-area {
+    padding: 0;
+  }
+}
+@media (min-width: 640px) {
+  .body-article {
+    background: #fff;
+  }
+  .body-article .grid {
+    box-shadow: none;
+  }
+  .body-article .article-padding {
+    padding: 30px 0;
+  }
+  .body-article .article-title {
+    font-size: 28px;
+    margin: 0 0 10px;
+  }
+  .body-article .author {
+    font-size: 12px;
+    margin: 0 0 10px;
+  }
+  .body-article .genre {
+    font-size: 12px;
+    margin-left: 10px;
+  }
+  .body-article .time {
+    font-size: 12px;
+  }
+  .body-article .time .icon-time {
+    margin-bottom: -1px;
+  }
+  .body-article .publisher-banner {
+    width: auto;
+    height: 30px;
+    margin-top: 15px;
+  }
+  .body-article .img-exp {
+    font-size: 14px!important;
+    line-height: 1.4!important;
+    margin: 0px 0 12px;
+  }
+  .body-article .btn-view-more {
+    display: block;
+    width: 230px;
+    height: 44px;
+    line-height: 40px;
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+  .body-article .btn-view-more .icon-zoom {
+    width: 16px;
+    height: 16px;
+    margin: 0 8px -3px 0;
+  }
+  .body-article .template {
+    /* apps/web_user/public_html/less/page/article/pc.less 143 行目あたりのSPの基本設定をもとにPCサイズの設定を変更している */
+    /* (PC) Windows または、特殊で設定したブラウザ以外の基本(Safari)のチケット文字列SVG画像設定 start */
+    /* (PC) Windows または、特殊で設定したブラウザ以外の基本(Safari)のチケット文字列SVG画像設定 end */
+  }
+  .body-article .template h1,
+  .body-article .template h2,
+  .body-article .template h3,
+  .body-article .template h4,
+  .body-article .template h5,
+  .body-article .template h6 {
+    font-size: 20px;
+    padding-bottom: 0px;
+    margin: 0 0 30px;
+    /* 見出し用チケットSVG画像(SP) */
+    /* 見出し用チケットSVG画像(Windows用SP) */
+    /* 見出し用チケットSVG画像(Windows用PC) */
+  }
+  .body-article .template h1 .t_h_sp_svg,
+  .body-article .template h2 .t_h_sp_svg,
+  .body-article .template h3 .t_h_sp_svg,
+  .body-article .template h4 .t_h_sp_svg,
+  .body-article .template h5 .t_h_sp_svg,
+  .body-article .template h6 .t_h_sp_svg {
+    display: none;
+  }
+  .body-article .template h1 .t_h_svg,
+  .body-article .template h2 .t_h_svg,
+  .body-article .template h3 .t_h_svg,
+  .body-article .template h4 .t_h_svg,
+  .body-article .template h5 .t_h_svg,
+  .body-article .template h6 .t_h_svg {
+    /* 見出し用チケットSVG画像(PC) */
+    display: inline-block;
+    vertical-align: text-bottom;
+    margin: auto 2px 1px 2px;
+    width: 78px;
+    height: 19px;
+  }
+  .body-article .template h1 .t_h_ie_sp_svg,
+  .body-article .template h2 .t_h_ie_sp_svg,
+  .body-article .template h3 .t_h_ie_sp_svg,
+  .body-article .template h4 .t_h_ie_sp_svg,
+  .body-article .template h5 .t_h_ie_sp_svg,
+  .body-article .template h6 .t_h_ie_sp_svg {
+    display: none;
+  }
+  .body-article .template h1 .t_h_ie_svg,
+  .body-article .template h2 .t_h_ie_svg,
+  .body-article .template h3 .t_h_ie_svg,
+  .body-article .template h4 .t_h_ie_svg,
+  .body-article .template h5 .t_h_ie_svg,
+  .body-article .template h6 .t_h_ie_svg {
+    display: none;
+  }
+  .body-article .template div {
+    font-size: 16px;
+  }
+  .body-article .template p {
+    font-size: 16px;
+    margin-bottom: 30px;
+  }
+  .body-article .template p.youtube-exp {
+    display: block;
+    color: #acacac !important;
+    font-size: 14px!important;
+    line-height: 1.4!important;
+    margin: 10px 0 16px;
+    text-align: center;
+  }
+  .body-article .template div,
+  .body-article .template p {
+    /* 記事本文用チケットSVG画像(SP) */
+    /* 記事本文用チケットSVG画像(Windows用SP) */
+    /* 記事本文用チケットSVG画像(Windows用PC) */
+  }
+  .body-article .template div .t_c_sp_svg,
+  .body-article .template p .t_c_sp_svg {
+    display: none;
+  }
+  .body-article .template div .t_c_svg,
+  .body-article .template p .t_c_svg {
+    /* 記事本文用チケットSVG画像(PC) */
+    display: inline-block;
+    vertical-align: text-bottom;
+    width: 58px;
+    height: 14px;
+    margin: auto 2px 2px 1px;
+  }
+  .body-article .template div .t_c_ie_sp_svg,
+  .body-article .template p .t_c_ie_sp_svg {
+    display: none;
+  }
+  .body-article .template div .t_c_ie_svg,
+  .body-article .template p .t_c_ie_svg {
+    display: none;
+  }
+  .body-article .template .rb-btn-chicket {
+    /* チケットリンク用チケットSVG画像(SP) */
+    /* チケットリンク用チケットSVG画像(Windows用SP) */
+    /* チケットリンク用チケットSVG画像(Windows用PC) */
+  }
+  .body-article .template .rb-btn-chicket .t_l_sp_svg {
+    display: none;
+  }
+  .body-article .template .rb-btn-chicket .t_l_svg {
+    /* チケットリンク用チケットSVG画像(PC) */
+    display: inline-block;
+    vertical-align: text-bottom;
+    margin: auto 1px 1px 1px;
+    height: 16px;
+    width: 58px;
+    padding-bottom: 1px;
+  }
+  .body-article .template .rb-btn-chicket .t_l_ie_sp_svg {
+    display: none;
+  }
+  .body-article .template .rb-btn-chicket .t_l_ie_svg {
+    display: none;
+  }
+  .body-article .template blockquote p {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 0;
+  }
+  .body-article .secondary-title {
+    height: 40px;
+    line-height: 40px;
+    font-size: 16px;
+    padding: 0 5px;
+  }
+  .body-article .contents-padding {
+    padding: 20px 0;
+  }
+  .body-article .other-images {
+    margin-bottom: 20px;
+  }
+  .body-article .other-images .thumb {
+    width: 100%;
+    height: 117px;
+  }
+  .body-article .rb-wrap-article-header {
+    margin-bottom: 55px;
+  }
+  .body-article .rb-sns-share-area--header {
+    float: right;
+    padding: 0;
+  }
+  .body-article .rb-sns-share-area--header .sns-share li {
+    vertical-align: top;
+  }
+  .body-article .rb-sns-share-area--header.rb-sns-share-area .sns-share {
+    display: inline-block;
+    text-align: right;
+    width: 310px;
+  }
+  .body-article .rb-sns-share-area--header.rb-sns-share-area .sns-share li {
+    width: 50%;
+    vertical-align: top;
+  }
+  .body-article .rb-icon-text-area {
+    float: left;
+    padding-top: 30px;
+    width: 360px;
+  }
+  .body-article .sns-share li {
+    width: 25%;
+  }
+  .body-article .sns-share.with-hot li {
+    width: 28%;
+  }
+  .body-article .sns-share.with-hot li.hot {
+    width: 44%;
+  }
+  .body-article .sns-share.with-hot li.rb-hot {
+    width: 32%;
+    margin-right: 2%;
+  }
+  .body-article .dropbox-area {
+    padding-bottom: 20px;
+  }
+  .body-article .article-page .btn-sns.rss {
+    width: 260px;
+    margin: 20px auto 10px;
+  }
+  .body-article .template2 .img-wrapper.main-image {
+    float: right;
+    width: 50%;
+    margin-left: 20px;
+    margin-bottom: 0;
+  }
+  .body-article .template2 .youtube {
+    clear: both;
+  }
+  .body-article .template2 .spotify {
+    clear: both;
+  }
+  .body-article .prev-next-area .btn {
+    display: inline-block;
+    width: 150px;
+    height: 35px;
+    line-height: 33px;
+    font-size: 14px;
+    border-radius: 2px;
+  }
+  .body-article .prev-next-area .btn.btn-back {
+    width: 200px;
+  }
+  .body-article .prev-next-area .btn .icon-arrow {
+    position: absolute;
+    top: 9px;
+    width: 7px;
+    height: 12px;
+  }
+  .body-article .prev-next-area .btn.btn-prev .icon-arrow {
+    left: 10px;
+    right: auto;
+  }
+  .body-article .prev-next-area .btn.btn-next .icon-arrow {
+    right: 10px;
+    left: auto;
+  }
+  .body-article .other-images-detail {
+    margin-bottom: 25px;
+  }
+  .body-article .other-images-detail .thumb {
+    height: 110px;
+  }
+  .body-article .btn-area {
+    margin-bottom: 50px;
+  }
+  .article-side-share {
+    position: absolute;
+    display: block;
+    top: 32px;
+    left: -170px;
+    width: 150px;
+    text-align: center;
+    z-index: 200;
+  }
+  .article-side-share .article-side-wrap {
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    padding: 20px 10px;
+  }
+  .article-side-share li:not(:last-child) {
+    margin-bottom: 15px;
+  }
+  .article-side-share .cover {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .article-side-share .share-count {
+    position: relative;
+    display: inline-block;
+    background: #fff;
+    border: 1px solid #9197a3;
+    border-radius: 2px;
+    color: #4e5665;
+    font-family: helvetica, arial, "hiragino kaku gothic pro", meiryo, "ms pgothic", sans-serif;
+    height: 34px;
+    margin: 0 auto 8px;
+    min-width: 60px;
+    font-size: 13px;
+    padding: 8px 5px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .article-side-share .share-count:after {
+    content: '';
+    position: absolute;
+    display: block;
+    bottom: -10px;
+    height: 7px;
+    left: 50%;
+    margin-left: -22px;
+    width: 0;
+    border-top-color: #fff;
+    border-color: #9197a3 transparent transparent;
+    border-right: 5px solid transparent;
+    border-style: solid;
+    border-width: 5px;
+  }
+  .article-side-share .share-count:before {
+    content: '';
+    position: absolute;
+    display: block;
+    bottom: -8px;
+    height: 7px;
+    left: 50%;
+    margin-left: -22px;
+    width: 0;
+    z-index: 1;
+    border-top-color: #fff;
+    border-color: #fff transparent transparent;
+    border-right: 5px solid transparent;
+    border-style: solid;
+    border-width: 5px;
+  }
+}
+/* 58 行目あたりの基本設定をもとに各ブラウザ、OSで margin などの設定を変更している */
+/* (PC) Windows 以外の Chrome のチケット文字列SVG画像設定 start */
+@media screen and (min-width: 640px) and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
+  .body-article .template h1 .t_h_svg,
+  .body-article .template h2 .t_h_svg,
+  .body-article .template h3 .t_h_svg,
+  .body-article .template h4 .t_h_svg,
+  .body-article .template h5 .t_h_svg,
+  .body-article .template h6 .t_h_svg {
+    margin: auto 2px;
+  }
+  .body-article .template div .t_c_svg,
+  .body-article .template p .t_c_svg {
+    margin: auto 2px 1px 1px;
+  }
+  .body-article .template .rb-btn-chicket .t_l_svg {
+    margin: auto 1px;
+  }
+}
+/* (PC) Windows 以外の Chrome のチケット文字列SVG画像設定 end */
+/* (PC) Windows 以外の Firefox のチケット文字列SVG画像設定 start */
+@media (min-width: 640px) {
+  @-moz-document url-prefix() {
+    .body-article .template h1 .t_h_svg,
+    .body-article .template h2 .t_h_svg,
+    .body-article .template h3 .t_h_svg,
+    .body-article .template h4 .t_h_svg,
+    .body-article .template h5 .t_h_svg,
+    .body-article .template h6 .t_h_svg {
+      margin: auto 2px 1px 2px;
+    }
+    .body-article .template div .t_c_svg,
+    .body-article .template p .t_c_svg {
+      margin: auto 2px 1px 1px;
+    }
+    .body-article .template .rb-btn-chicket .t_l_svg {
+      margin: auto 1px;
+    }
+  }
+}
+/* (PC) Windows 以外の Firefox のチケット文字列SVG画像設定 end */
+@media (min-width: 640px) {
+  /* (PC) Windows の IE のチケット文字列SVG画像設定 start */
+  .ie-b .template h1 .t_h_svg,
+  .ie-b .template h2 .t_h_svg,
+  .ie-b .template h3 .t_h_svg,
+  .ie-b .template h4 .t_h_svg,
+  .ie-b .template h5 .t_h_svg,
+  .ie-b .template h6 .t_h_svg {
+    display: none;
+  }
+  .ie-b .template h1 .t_h_ie_svg,
+  .ie-b .template h2 .t_h_ie_svg,
+  .ie-b .template h3 .t_h_ie_svg,
+  .ie-b .template h4 .t_h_ie_svg,
+  .ie-b .template h5 .t_h_ie_svg,
+  .ie-b .template h6 .t_h_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 2px 2px auto 2px;
+    width: 78px;
+    height: 19px;
+  }
+  .ie-b .template div .t_c_svg,
+  .ie-b .template p .t_c_svg {
+    display: none;
+  }
+  .ie-b .template div .t_c_ie_svg,
+  .ie-b .template p .t_c_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    width: 58px;
+    height: 14px;
+    margin: 3px 2px auto 1px;
+  }
+  .ie-b .template .rb-btn-chicket .t_l_svg {
+    display: none;
+  }
+  .ie-b .template .rb-btn-chicket .t_l_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 1px 1px auto 1px;
+    height: 16px;
+    width: 58px;
+    padding-top: 1px;
+  }
+  /* (PC) Windows の IE のチケット文字列SVG画像設定 end */
+  /* (PC) Windows の Chrome のチケット文字列SVG画像設定 start */
+  .ch-b .template h1 .t_h_svg,
+  .ch-b .template h2 .t_h_svg,
+  .ch-b .template h3 .t_h_svg,
+  .ch-b .template h4 .t_h_svg,
+  .ch-b .template h5 .t_h_svg,
+  .ch-b .template h6 .t_h_svg {
+    display: none;
+  }
+  .ch-b .template h1 .t_h_ie_svg,
+  .ch-b .template h2 .t_h_ie_svg,
+  .ch-b .template h3 .t_h_ie_svg,
+  .ch-b .template h4 .t_h_ie_svg,
+  .ch-b .template h5 .t_h_ie_svg,
+  .ch-b .template h6 .t_h_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 3px 2px auto 2px;
+    width: 78px;
+    height: 19px;
+  }
+  .ch-b .template div .t_c_svg,
+  .ch-b .template p .t_c_svg {
+    display: none;
+  }
+  .ch-b .template div .t_c_ie_svg,
+  .ch-b .template p .t_c_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    width: 58px;
+    height: 13px;
+    margin: 3px 2px auto 1px;
+  }
+  .ch-b .template .rb-btn-chicket .t_l_svg {
+    display: none;
+  }
+  .ch-b .template .rb-btn-chicket .t_l_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 1px 1px auto 1px;
+    height: 16px;
+    width: 58px;
+    padding-top: 1px;
+  }
+  /* (PC) Windows の Chrome のチケット文字列SVG画像設定 end */
+  /* (PC) Windows の Edge のチケット文字列SVG画像設定 start */
+  .ed-b .template h1 .t_h_svg,
+  .ed-b .template h2 .t_h_svg,
+  .ed-b .template h3 .t_h_svg,
+  .ed-b .template h4 .t_h_svg,
+  .ed-b .template h5 .t_h_svg,
+  .ed-b .template h6 .t_h_svg {
+    display: none;
+  }
+  .ed-b .template h1 .t_h_ie_svg,
+  .ed-b .template h2 .t_h_ie_svg,
+  .ed-b .template h3 .t_h_ie_svg,
+  .ed-b .template h4 .t_h_ie_svg,
+  .ed-b .template h5 .t_h_ie_svg,
+  .ed-b .template h6 .t_h_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 3px 2px auto 2px;
+    width: 78px;
+    height: 19px;
+  }
+  .ed-b .template div .t_c_svg,
+  .ed-b .template p .t_c_svg {
+    display: none;
+  }
+  .ed-b .template div .t_c_ie_svg,
+  .ed-b .template p .t_c_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    width: 58px;
+    height: 13px;
+    margin: 3px 2px auto 1px;
+  }
+  .ed-b .template .rb-btn-chicket .t_l_svg {
+    display: none;
+  }
+  .ed-b .template .rb-btn-chicket .t_l_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 1px 1px auto 2px;
+    height: 16px;
+    width: 58px;
+    padding-top: 1px;
+  }
+  /* (PC) Windows の Edge のチケット文字列SVG画像設定 end */
+  /* (PC) Windows の Firefox のチケット文字列SVG画像設定 start */
+  .fi-b .template h1 .t_h_svg,
+  .fi-b .template h2 .t_h_svg,
+  .fi-b .template h3 .t_h_svg,
+  .fi-b .template h4 .t_h_svg,
+  .fi-b .template h5 .t_h_svg,
+  .fi-b .template h6 .t_h_svg {
+    display: none;
+  }
+  .fi-b .template h1 .t_h_ie_svg,
+  .fi-b .template h2 .t_h_ie_svg,
+  .fi-b .template h3 .t_h_ie_svg,
+  .fi-b .template h4 .t_h_ie_svg,
+  .fi-b .template h5 .t_h_ie_svg,
+  .fi-b .template h6 .t_h_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 3px 2px auto 2px;
+    width: 78px;
+    height: 19px;
+  }
+  .fi-b .template div .t_c_svg,
+  .fi-b .template p .t_c_svg {
+    display: none;
+  }
+  .fi-b .template div .t_c_ie_svg,
+  .fi-b .template p .t_c_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    width: 58px;
+    height: 13px;
+  }
+  .fi-b .template div .t_c_ie_svg {
+    margin: 4px 2px 1px 1px;
+  }
+  .fi-b .template p .t_c_ie_svg {
+    margin: 4px 2px auto 1px;
+  }
+  .fi-b .template .rb-btn-chicket .t_l_svg {
+    display: none;
+  }
+  .fi-b .template .rb-btn-chicket .t_l_ie_svg {
+    display: inline-block;
+    vertical-align: text-top;
+    margin: 1px 1px auto 1px;
+    height: 16px;
+    width: 58px;
+    padding-top: 1px;
+  }
+  /* (PC) Windows の Firefox のチケット文字列SVG画像設定 end */
+}
+@media (max-width: 960px) {
+  .body-article .rb-icon-text-area {
+    width: 290px;
+  }
+}
+@media (max-width: 640px) {
+  .body-article .rb-icon-text-area {
+    width: auto;
+  }
+}
+.btn-hot.side {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 10px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  -moz-background-clip: padding;
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.btn-hot.side .comment-img {
+  width: 100%;
+  margin-bottom: 10px;
+}
+.btn-hot.side .balloon-wrapper-side {
+  position: relative;
+}
+.btn-hot.side .balloon-wrapper-side:before {
+  border-top: 7px solid #e60012;
+  border-left: 4px dashed transparent;
+  border-right: 4px dashed transparent;
+  display: inline-block;
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  margin-left: -4px;
+}
+.btn-hot.side .balloon-wrapper-side .show-sm {
+  display: block;
+}
+.btn-hot.side .counter-balloon-side {
+  display: block;
+  height: 27px;
+  line-height: 25px;
+  font-size: 14px;
+  margin: 0px auto 10px;
+  padding: 0 5px;
+  text-align: center;
+  min-width: 75px;
+  max-width: 100px;
+  background-color: #e60012;
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.btn-hot.side .btn-inner-side {
+  display: block;
+  width: 74px;
+  height: 28px;
+  font-size: 14px;
+  line-height: 26px;
+  background: #444444;
+  background: -moz-linear-gradient(top, #444444 0%, #262626 100%);
+  background: -webkit-gradient(left top, left bottom, color-stop(0%, #444444), color-stop(100%, #262626));
+  background: -webkit-linear-gradient(top, #444444 0%, #262626 100%);
+  background: -o-linear-gradient(top, #444444 0%, #262626 100%);
+  background: -ms-linear-gradient(top, #444444 0%, #262626 100%);
+  background: linear-gradient(to bottom, #444444 0%, #262626 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#444444', endColorstr='#262626', GradientType=0);
+  border: 1px solid #444;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  margin: 0 auto;
+}
+.btn-hot.side .icon-spice {
+  width: 7px;
+  height: 16px;
+  margin-bottom: -2px;
+}
+.dv-hot-spice.x-hot-spice-button.disabled {
+  opacity: 0.65;
+}
+.bg-hot {
+  background: #444444;
+  background: -moz-linear-gradient(top, #444444 0%, #262626 100%);
+  background: -webkit-gradient(left top, left bottom, color-stop(0%, #444444), color-stop(100%, #262626));
+  background: -webkit-linear-gradient(top, #444444 0%, #262626 100%);
+  background: -o-linear-gradient(top, #444444 0%, #262626 100%);
+  background: -ms-linear-gradient(top, #444444 0%, #262626 100%);
+  background: linear-gradient(to bottom, #444444 0%, #262626 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#444444', endColorstr='#262626', GradientType=0);
+  border: 1px solid #444;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  height: 19px;
+  font-size: 11px;
+  line-height: 1.5;
+  display: block;
+}
+#article-template-feature {
+  background: #FFF;
+  padding: 10px;
+}
+#article-template-feature h1,
+#article-template-feature h2,
+#article-template-feature h3,
+#article-template-feature h4,
+#article-template-feature h5,
+#article-template-feature h6 {
+  color: #363636;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.4;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #aaa;
+  margin: 30px 0 15px;
+  clear: both;
+}
+#article-template-feature p {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.42857143;
+  margin-bottom: 5px;
+}
+#article-template-feature a {
+  color: #006cff;
+}
+#article-template-feature ul,
+#article-template-feature ol {
+  padding-left: 20px;
+}
+#article-template-feature blockquote {
+  padding: 10px;
+}
+@media (min-width: 640px) {
+  #article-template-feature h1,
+  #article-template-feature h2,
+  #article-template-feature h3,
+  #article-template-feature h4,
+  #article-template-feature h5,
+  #article-template-feature h6 {
+    font-size: 20px;
+    padding-bottom: 0px;
+    margin: 0px 0 30px;
+  }
+  #article-template-feature blockquote p {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 0;
+  }
+}
+#article-template {
+  background: #FFF;
+  padding: 10px;
+}
+#article-template h1,
+#article-template h2,
+#article-template h3,
+#article-template h4,
+#article-template h5,
+#article-template h6 {
+  color: #363636;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.4;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #aaa;
+  margin: 30px 0 15px;
+  clear: both;
+}
+#article-template p {
+  color: #363636;
+  font-size: 14px;
+  line-height: 1.8;
+  margin-bottom: 15px;
+}
+#article-template a {
+  color: #006cff;
+}
+#article-template ul,
+#article-template ol {
+  padding-left: 20px;
+}
+#article-template blockquote {
+  padding: 10px;
+}
+@media (min-width: 640px) {
+  #article-template h1,
+  #article-template h2,
+  #article-template h3,
+  #article-template h4,
+  #article-template h5,
+  #article-template h6 {
+    font-size: 20px;
+    padding-bottom: 0px;
+    margin: 0px 0 30px;
+  }
+  #article-template p {
+    font-size: 16px;
+    margin-bottom: 30px;
+  }
+  #article-template blockquote p {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 0;
+  }
+}

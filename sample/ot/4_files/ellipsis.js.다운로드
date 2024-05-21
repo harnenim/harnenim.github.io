@@ -1,0 +1,14 @@
+
+(function(){
+
+	function rbEllipsis() {
+		$('.rb-js-ellipsis:not(":hidden")').truncate({
+		    multiline: true
+		}).removeClass('rb-js-ellipsis');
+	}
+
+	rbEllipsis();
+	$('.rb-js-ellipsis').on('stateChange', rbEllipsis);
+
+	$(window).resize(rbEllipsis);
+})();
