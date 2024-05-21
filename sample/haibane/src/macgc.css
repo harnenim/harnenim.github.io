@@ -1,0 +1,11 @@
+@charset "UTF-8";
+
+td {  font-size: 9pt}
+.normal {  font-size: 9pt}
+.list { font-size: 9pt}
+.aboutBody { font-size:9pt; line-height: 1.5em }
+.TitleCopy {  font-size: 6pt; line-height: 100%}
+.newBG {  background-color: #F7EFFF}
+a {  text-decoration: none}
+.wideLH {  line-height: 1.5em}
+.LargeText {  font-size: 16pt}

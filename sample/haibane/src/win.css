@@ -1,0 +1,12 @@
+@charset "UTF-8";
+
+td {  font-size: 10pt}
+.normal {  font-size: 10pt}
+.list { font-size: 9pt}
+.aboutBody { font-size:9pt; line-height: 1.5em }
+.aboutMokuji { font-size:10pt; font-weight:Bold;}
+.TitleCopy {  font-size: 6pt; line-height: 100%}
+.newBG {  background-color: #F7EFFF}
+a {  text-decoration: none}
+.wideLH {  line-height: 1.5em}
+.LargeText {  font-size: 16pt}
