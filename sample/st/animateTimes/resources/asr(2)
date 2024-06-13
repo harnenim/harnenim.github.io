@@ -1,0 +1,23 @@
+var $vrSGs; if(!$vrSGs) $vrSGs = { uid: '', execFlushed: false, execPool: [], exec: function(func) { this.execPool.push(func); if(this.execFlushed) this.execFlush(); }, execFlush: function() { for(var i = 0, len = this.execPool.length; i < len; i++) { this.execPool[i](this.uid); } this.execPool = []; this.execFlushed = true; }, includedScripts: {}, includeScript: function(url, async) { this.includedScripts[url] = true; var s = document.createElement('script'); s.type = 'text/javascript'; if(async) s.async = true; s.src = url; var d = document.getElementsByTagName('script')[0]; d.parentNode.insertBefore(s, d); }, includeScriptOnce: function(url, async) { if(this.includedScripts[url]) return; this.includeScript(url, async); }, getMetaMap: function(doc) { if(!doc) doc = document; var map = {}; var tags = doc.getElementsByTagName('meta'); for (var i = 0, len = tags.length; i < len; i++) { var tag = tags[i]; var k = tag.name ? tag.name : tag.getAttribute("property"); var v = tag.content; if(k && v) map[k.toLowerCase()] = v; } return map;  }, getCookieMap: function() { var c = document.cookie; var map = {}; if(!c) return map; c = c.split('; '); for(var i = 0; i < c.length; i++) { var kv = c[i].split('='); if(kv.length < 2 || !kv[1] || kv[1] == 'undefined') continue; map[kv[0]] = decodeURIComponent(kv[1]); } return map; }, setCookie: function(key, value, expireDays, domain, path) { var c = key + '=' + encodeURIComponent(value); if(!path) path = '/'; if(!expireDays) expireDays = 1000; c += '; path=' + path; c += '; max-age=' + expireDays * 3600 * 24; if(domain) c += '; domain=' + domain; document.cookie = c; } }; function vr_sgs_user_id(id){ var lib = $vrSGs; var uidName = '_vr_sgs'; var uid = id; var uid2 = localStorage.getItem(uidName); if(uid2) { uid = uid2; } localStorage.setItem(uidName, uid); lib.uid = uid; if(uid2 && uid2 != id) lib.uid1 = id; lib.execFlush(); } $vrSGs.includeScriptOnce('https://sgs-api.interactive-circle.jp/sgs/api/id', true);
+$vrSGs.exec(function(uid){
+	var doc = null;
+	try { doc = top.document; } catch(e) {}
+	if(!doc) doc = document;
+	try {
+		var muid = 'NggaTJqluteF25-eLWKVAmWh55SoFsQM98094daUfEceGB-SKLhbOAOeaCfXSPr21yYMug7K7AU';
+		if(!muid) return;
+muid += '@3';
+		var metas = $vrSGs.getMetaMap(doc);
+		var src = 'https://sgs-api.interactive-circle.jp/sgs/api/pv/microad';
+		src += '?uid=' + encodeURIComponent(uid);
+		src += '&muid=' + encodeURIComponent(muid);
+		if(metas['keywords']) src += '&pkw=' + encodeURIComponent(metas['keywords']);
+		if(metas['description']) src += '&pd=' + encodeURIComponent(metas['description']);
+		src += '&url=' + encodeURIComponent(doc.URL);
+		if(doc.referrer) src += '&ref=' + encodeURIComponent(doc.referrer);
+		if(doc.title) src += '&pt=' + encodeURIComponent(doc.title);
+		// src += '&p=' + location.hostname;
+		src += '&cb=' + new Date().getTime();
+		new Image(1, 1).src = src;
+	} catch(e) {}
+});

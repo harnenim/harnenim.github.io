@@ -1,0 +1,306 @@
+function timer() {
+    var isBannerLoaded = setInterval(function () {
+        //console.log("loading...");
+        if (
+            document.getElementsByClassName("f")[0] != undefined &&
+            document.getElementsByClassName("f")[0].style.width != "" &&
+            document.getElementsByClassName("f")[0].style.height != ""
+        ) {
+			clearInterval(isBannerLoaded);
+			runScriptForSmallCoupon();
+        }
+    }, 100);
+
+    function runScriptForSmallCoupon() {
+        var setStartTime = function () {
+            //console.log("small");
+            //Get start date as milliseconds
+            var startDate = new Date("2024/05/05 00:00:00").getTime();
+
+            //Get todays date and time based of UTC
+            var JSTfromUTC =
+                new Date().getTime() +
+                new Date().getTimezoneOffset() * 60 * 1000 +
+                32400000;
+            var currentDate = new Date(JSTfromUTC).getTime();
+
+            //Find the distance between now an the count down date as global variable
+            distance = startDate - currentDate;
+
+            return distance;
+        };
+
+        var setEndTime = function () {
+            //Get End Date as milliseconds
+            var endDate = new Date("2024/05/05 23:59:59").getTime();
+
+            //Get todays date and time based of UTC
+            var JSTfromUTC =
+                new Date().getTime() +
+                new Date().getTimezoneOffset() * 60 * 1000 +
+                32400000;
+            var currentDate = new Date(JSTfromUTC).getTime();
+
+            //Find the distance between now an the count down date as global variable
+            distance = endDate - currentDate;
+
+            return distance;
+        };
+
+        if (setStartTime() < 0 && setEndTime() > 0) {
+            // console.log("STARTED");
+            var style = function () {
+                couponflag = document.getElementsByClassName("f")[0];
+
+                //create style tag in head tag
+                create_style = document.createElement("style");
+                create_style.type = "text/css";
+                document.getElementsByTagName("head")[0].appendChild(create_style);
+                style_code = "";
+
+                //create div tag for timer days under class f
+                create_ele_d = document.createElement("div");
+                create_ele_d.id = "timerDays";
+                couponflag.appendChild(create_ele_d);
+                new_ele_d = document.getElementById("timerDays");
+            };
+
+            //For size 300x250
+            if (
+                document.getElementsByClassName("f")[0].style.width == "300px" &&
+                document.getElementsByClassName("f")[0].style.height == "40px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 12px; color: black; bottom: 12px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "55px";
+            }
+
+            //For size 300x600
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "300px" &&
+                document.getElementsByClassName("f")[0].style.height == "54px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 13px; color: black; bottom: 14px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "55px";
+            }
+
+            //For size 336x280
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "336px" &&
+                document.getElementsByClassName("f")[0].style.height == "48px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 15px; color: black; bottom: 12px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "60px";
+            }
+
+            //For size 728x90
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "130px" &&
+                document.getElementsByClassName("f")[0].style.height == "90px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 9px; color: black; bottom: 12px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "auto";
+            }
+
+            //For size 320x50
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "105px" &&
+                document.getElementsByClassName("f")[0].style.height == "50px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 8px; color: black; bottom: 10px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "auto";
+            }
+
+            //For size 160x600
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "160px" &&
+                document.getElementsByClassName("f")[0].style.height == "56px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 10px; color: black; bottom: 10px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "auto";
+            }
+
+            //For size 970x90
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "130px" &&
+                document.getElementsByClassName("f")[0].style.height == "90px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 15px; color: black; bottom: 20px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "auto";
+            }
+
+            //For size 200x200
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "200px" &&
+                document.getElementsByClassName("f")[0].style.height == "32px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 8px; color: black; bottom: 8px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "38px";
+            }
+
+            //For size 320x100
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "100px" &&
+                document.getElementsByClassName("f")[0].style.height == "100px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 8px; color: black; bottom: 12px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "auto";
+            }
+
+            //For size 468x60
+            else if (
+                document.getElementsByClassName("f")[0].style.width == "120px" &&
+                document.getElementsByClassName("f")[0].style.height == "60px"
+            ) {
+                style();
+                style_code +=
+                    "div #timerDays {position: relative; z-index: 100; opacity:1 ;font-size: 9px; color: black; bottom: 12px; font-family:Nanum Gothic; font-weight: bold;}";
+                create_style.innerHTML = style_code;
+
+                //Adjust position for the string
+                new_ele_d.style.left = "auto";
+            }
+
+            if (
+                document.getElementsByClassName("f")[0].style.width == "105px" ||
+                document.getElementsByClassName("f")[0].style.width == "100px" ||
+                document.getElementsByClassName("f")[0].style.width == "120px" ||
+                document.getElementsByClassName("f")[0].style.width == "130px" ||
+                document.getElementsByClassName("f")[0].style.width == "200px"
+            ) {
+                var dynamicTimer = function () {
+                    setEndTime();
+                    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor(
+                        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+                    );
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    new_ele_d.innerHTML =
+                        decodeURIComponent("종료까지 ") +
+                        days +
+                        decodeURIComponent("일 ") +
+                        hours +
+                        decodeURIComponent("시") +
+                        minutes +
+                        decodeURIComponent("분") +
+                        seconds +
+                        decodeURIComponent("초");
+                };
+
+                if (
+                    document.getElementsByClassName(
+                        "d coupon zContainer alignClickable"
+                    )[0] &&
+                    document.getElementById("timerDays")
+                ) {
+                    var timer = setInterval(dynamicTimer, 1000);
+                }
+            } else {
+                var dynamicTimer = function () {
+                    setEndTime();
+                    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor(
+                        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+                    );
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    new_ele_d.innerHTML =
+                        decodeURIComponent("종료까지 ") +
+                        days +
+                        decodeURIComponent("일 ") +
+                        hours +
+                        decodeURIComponent("시 ") +
+                        minutes +
+                        decodeURIComponent("분 ") +
+                        seconds +
+                        decodeURIComponent("초");
+                };
+
+                if (
+                    document.getElementsByClassName(
+                        "d coupon zContainer alignClickable"
+                    )[0] &&
+                    document.getElementById("timerDays")
+                ) {
+                    var timer = setInterval(dynamicTimer, 1000);
+                }
+            }
+
+            if (
+                document.getElementsByClassName(
+                    "d coupon zContainer alignClickable"
+                )[0] &&
+                document.getElementById("timerDays")
+            ) {
+                var stopTimer = setTimeout(function () {
+                    clearInterval(timer);
+                    new_ele_d.innerHTML = "";
+                }, 20000);
+            } else if (
+                document.getElementsByClassName(
+                    "d coupon zContainer alignClickable"
+                )[0] &&
+                !document.getElementById("timerDays")
+            ) {
+                // console.log("removed");
+                clearInterval(timer);
+                document
+                    .getElementsByClassName("f")[0]
+                    .parentNode.parentNode.parentNode.removeChild(
+                        document.getElementsByClassName("f")[0].parentNode.parentNode
+                    );
+            }
+        }
+    }
+}
+
+if (new Date('2024-05-05T00:00:00') <= new Date() && new Date('2024-05-05T23:59:59') >= new Date()) {
+    timer();
+}
