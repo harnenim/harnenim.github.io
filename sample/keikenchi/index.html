@@ -216,6 +216,16 @@ function init() {
 		}
 	}
 }
+
+function resetRadios() {
+	var inputs = document.getElementsByTagName("input");
+	for (var i = 0; i < inputs.length; i++) {
+		var input = inputs[i];
+		if (input.type == "radio" && input.value == "0") {
+			input.click();
+		}
+	}
+}
 </script>
 <style type="text/css">
 * {
@@ -250,17 +260,24 @@ th, td {
 	height: 50%;
 	user-select: none;
 }
-#linkToParent {
+#linkToParent,
+#linkToReset {
 	display: block;
 	position: fixed;
 	border: 1px solid #000;
-	border-width: 0 1px 1px 0;
 	padding: 4px;
 	background: #fff;
 	top: 0;
-	left: 0;
 	color: #000;
 	text-decoration: none;
+}
+#linkToParent {
+	border-width: 0 1px 1px 0;
+	left: 0;
+}
+#linkToReset {
+	border-width: 0 0 1px 1px;
+	right: 0;
 }
 #table_head {
 	width: 100%;
@@ -620,6 +637,7 @@ td[rowspan]:not(:first-child) {
 </g>
 </svg>
 <a href="../" id="linkToParent">이전으로</a>
+<a href="javascript:resetRadios();" id="linkToReset">초기화</a>
 <div id="table_head_scroll">
 	<table id="table_head">
 		<colgroup>
