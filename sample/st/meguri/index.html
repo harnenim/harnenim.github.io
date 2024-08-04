@@ -28,6 +28,10 @@ function getCookie(name) {
 	}
 	return "";
 }
+
+var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+var isFirst = true;
+
 $(function() {
 	var checkMap = getCookie("checkMap");
 	if (checkMap) {
@@ -92,20 +96,25 @@ $(function() {
 		var overlay = $("#overlay").show();
 		$("#image").attr("src", $(this).attr("src"));
 		
-		if (document.documentElement.requestFullscreen) {
-			document.documentElement.requestFullscreen();
-		} else if (document.documentElement.webkiRequestFullscreen) {
-			document.documentElement.webkiRequestFullscreen();
-		}
-		if (screen.orientation.lock) {
-			screen.orientation.lock("landscape-primary").then(function() {
+		if (!isMobile || isFirst) {
+			if (document.documentElement.requestFullscreen) {
+				document.documentElement.requestFullscreen();
+			} else if (document.documentElement.webkiRequestFullscreen) {
+				document.documentElement.webkiRequestFullscreen();
+			}
+			if (screen.orientation.lock) {
+				screen.orientation.lock("landscape-primary").then(function() {
+					resizeOverlay();
+				}).catch(function(error) {
+					//alert(error);
+					resizeOverlay();
+				});
+			} else {
 				resizeOverlay();
-			}).catch(function(error) {
-				//alert(error);
-				resizeOverlay();
-			});
-		} else {
-			resizeOverlay();
+			}
+			if (isMobile) {
+				isFirst = false;
+			}
 		}
 	});
 	function resizeOverlay() {
