@@ -96,28 +96,30 @@ $(function() {
 		var overlay = $("#overlay").show();
 		$("#image").attr("src", $(this).attr("src"));
 		
-		if (!isMobile || isFirst) {
-			if (document.documentElement.requestFullscreen) {
-				document.documentElement.requestFullscreen();
-			} else if (document.documentElement.webkiRequestFullscreen) {
-				document.documentElement.webkiRequestFullscreen();
-			}
-			if (screen.orientation.lock) {
-				screen.orientation.lock("landscape-primary").then(function() {
-					resizeOverlay();
-				}).catch(function(error) {
-					//alert(error);
-					resizeOverlay();
-				});
-			} else {
+		if (document.documentElement.requestFullscreen) {
+			document.documentElement.requestFullscreen();
+		} else if (document.documentElement.webkiRequestFullscreen) {
+			document.documentElement.webkiRequestFullscreen();
+		}
+		if (screen.orientation.lock) {
+			screen.orientation.lock("landscape-primary").then(function() {
 				resizeOverlay();
-			}
-			if (isMobile) {
-				isFirst = false;
-			}
+			}).catch(function(error) {
+				//alert(error);
+				resizeOverlay();
+			});
+		} else {
+			resizeOverlay();
 		}
 	});
 	function resizeOverlay() {
+		if (isMobile) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				return;
+			}
+		}
 		var overlay = $("#overlay");
 		var css = {};
 		var w = overlay.width();
