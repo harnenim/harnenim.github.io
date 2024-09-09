@@ -1,0 +1,345 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>종트 성지순례</title>
+<script src="../../../keikenchi/jquery-3.7.1.min.js"></script>
+<script>
+$(function() {
+	$("#btnPlay").on("click", function() {
+		var btn = $(this);
+		if (btn.text() == "▶") {
+			play();
+		} else {
+			pause();
+		}
+	});
+	
+	var lines = $("#list").html().split("\n");
+	var cols = [];
+	for (var i = 0; i < lines.length; i++) {
+		var line = lines[i].trim();
+		if (line.length == 0) continue;
+		
+		var vals = line.split("\t");
+		if (cols.length == 0) {
+			for (var j = 0; j < vals.length; j++) {
+				cols.push(vals[j].split("."));
+			}
+			
+		} else {
+			var item = {};
+			for (var j = 0; j < vals.length; j++) {
+				var val = vals[j];
+				if (val) {
+					var col = cols[j];
+					var subItem = item;
+					for (var k = 0; k < col.length - 1; k++) {
+						if (!subItem[col[k]]) {
+							subItem[col[k]] = {};
+						}
+						subItem = subItem[col[k]];
+					}
+					subItem[col[col.length - 1]] = val;
+				}
+			}
+			list.push(item);
+		}
+	}
+	
+	var css = { width: (Math.floor(10000 / list.length) / 100) + "%" };
+	var playBar = $("#playBar").empty();
+	for (var i = 0; i < list.length; i++) {
+		playBar.append($("<a>").css(css).attr({ href: "javascript: show("+i+")" }));
+	}
+	show(0);
+});
+
+var list = [];
+var now = 0;
+var playing = false;
+function play(index = now+1) {
+	playing = true;
+	$("#btnPlay").text("||");
+	show(index);
+}
+function pause() {
+	playing = false;
+	$("#btnPlay").text("▶");
+}
+function bg(pic) {
+	console.log(pic);
+	if (pic[0] == "#") {
+		return pic;
+	}
+	return 'url("' + pic + '")';
+}
+function show(index) {
+	var item = list[index];
+	if (!item) {
+		pause();
+		now = -1;
+		return;
+	}
+	
+	var div = $("<div>");
+	var video = null;
+	if (item.pic) {
+		div.css({ background: bg(item.pic), backgroundSize: "cover" });
+		if (item.cap) {
+			var cap = $("<div>").addClass("cap").css({ background: bg(item.cap.pic), backgroundSize: "cover" });
+			if (item.cap.top ) cap.css({ top : item.cap.top  });
+			if (item.cap.left) cap.css({ left: item.cap.left });
+			if (item.cap.text) {
+				cap.append($("<div>").addClass("text").html(item.cap.text));
+			}
+			div.append(cap);
+		}
+		if (item.map) {
+			var map = $("<div>").addClass("map").css({ background: bg(item.map.pic), backgroundSize: "cover" });
+			if (item.map.top ) map.css({ top : item.map.top  });
+			if (item.map.left) map.css({ left: item.map.left });
+			div.append(map);
+		}
+		if (item.text) {
+			div.append($("<div>").addClass("text").html(item.text));
+		}
+	} else if (item.video) {
+		div.append(video = $("<video>").attr({ src: item.video }));
+	}
+	
+	var toRemove = $("#view > *");
+	var toNormal = $("#playBar > a.on:not(:eq("+index+"))");
+	setTimeout(function() {
+		toRemove.remove();
+		toNormal.removeClass("on");
+		if (video) {
+			video[0].play();
+		}
+	}, 300);
+	
+	$("#view").append(div);
+	setTimeout(function() {
+		div.addClass("on");
+		$("#playBar > a:eq("+index+")").addClass("on");
+	}, 1);
+	now = index;
+	
+	if (playing && item.sec) {
+		setTimeout(function() {
+			if (playing) {
+				show(index + 1);
+			}
+		}, item.sec * 1000);
+	}
+}
+</script>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+html, body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: #fff;
+}
+body {
+	padding: 10px;
+}
+#view {
+	position: relative;
+	width: 100%;
+	max-width: 1920px;
+	margin: 0 auto;
+	height: 0;
+	padding-bottom: 56.25%;
+/*
+	padding-bottom: 1080px;
+*/
+	outline: 1px solid #888;
+	overflow: hidden;
+}
+#view * {
+	position: absolute;
+}
+#view video { width: 100%; }
+#view > div {
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	transition: 0.3s;
+}
+#view > div.on {
+	opacity: 1;
+}
+#view > div > .cap,
+#view > div > .map {
+	top: calc(70% + 4px);
+	height: 30%;
+	border: 4px solid #fff;
+}
+#view > div > .cap {
+	left: calc(70% + 4px);
+	width: 30%;
+}
+#view > div > .map {
+	left: -4px;
+	width: 20%;
+}
+#view > div > .text {
+    width: 100%;
+    bottom: 5%;
+    font-size: 3vw;
+    text-align: center;
+	color: #fff;
+	font-weight: bold;
+	text-shadow: -2px -2px #000
+	           , -2px  2px #000
+	           ,  2px  2px #000
+	           ,  2px -2px #000
+	           , -1px -1px 4px #000
+	           , -1px  2px 4px #000
+	           ,  2px  2px 4px #000
+	           ,  2px -1px 4px #000;
+}
+#view > div > .cap > .text {
+	position: unset;
+	margin: 0 auto;
+	width: 90px;
+	text-align: center;
+	background: rgba(0,0,0,0.6);
+	color: #fff;
+}
+
+#control {
+	width: 100%;
+	height: 20px;
+}
+#control * {
+	height: 20px;
+}
+#control > * {
+	display: block;
+	float: left;
+}
+#btnPlay {
+	width: 20px;
+	line-height: 16px;
+}
+#playBar {
+	width: calc(100% - 20px);
+}
+#playBar > a {
+	display: block;
+	float: left;
+	width: 0.5%;
+}
+#playBar > a:hover {
+	background: #888;
+}
+#playBar > a.on {
+	background: #000;
+}
+
+#list {
+	display: none;
+}
+</style>
+</head>
+<body>
+	<div id="view"></div>
+	<div id="control">
+		<button type="button" id="btnPlay">▶</button>
+		<div id="playBar"></div>
+	</div>
+	<p id="list">
+sec	pic	cap.pic	cap.text	cap.top	cap.left	map.pic	map.top	map.left	text	video
+1	#000								
+5	img/1/p_1_001.jpg								
+5	img/1/p_1_002.jpg								
+3										img/1/p_1_003.mkv
+3	img/1/p_1_004.jpg								오츠카역 ?!
+5	img/1/p_1_005.jpg								이케부쿠로역보단 오츠카역이 토요코인이랑 가깝죠.
+5	img/1/p_1_006.jpg								선샤인시티까지 도보 거리도 비슷하고<br />캐리어 끌고 다니기엔 작은 역이 낫고요
+3	img/1/p_1_007.jpg								메지로역
+3	img/1/p_1_008.jpg								첫날엔 이케부쿠로역 개찰구를 통과하지 않았습니다.
+3	img/1/p_1_009.jpg								첫날엔 이케부쿠로역 개찰구를 통과하지 않았습니다.
+5	img/1/p_1_010.jpg	img/1/c_1_010.jpg	EP11 00:51			img/1/m_1_010.jpg			이쪽으로 온 이유는 꽃의 다리 때문이었는데
+3	img/1/c_1_010.jpg					img/1/m_1_010.jpg			폰 화면이 생각보다 어둡네요...
+3	img/1/p_1_011.jpg					img/1/m_1_012.jpg			이케부쿠로역을 향해 걷습니다.
+4	img/1/p_1_012.jpg	img/1/c_1_012.jpg	EP01 00:00			img/1/m_1_012.jpg			작품의 첫 장면
+1	img/1/c_1_012.jpg								
+3	img/1/t_1_012.jpg								
+4	img/1/p_1_013.jpg	img/1/c_1_013.jpg	EP01 00:34			img/1/m_1_013.jpg			세이부 그룹 다이야게이트
+1	img/1/c_1_013.jpg								
+3	img/1/t_1_013.jpg								
+4	img/1/p_1_014.jpg	img/1/c_1_014.jpg	EP01 00:36			img/1/m_1_014.jpg			
+1	img/1/c_1_014.jpg								
+3	img/1/t_1_014.jpg								
+4	img/1/p_1_015.jpg	img/1/c_1_015.jpg	EP01 00:33			img/1/m_1_015.jpg			세이부 이케부쿠로역 남쪽 출구
+1	img/1/c_1_015.jpg								
+3	img/1/t_1_015.jpg								
+4	img/1/p_1_016.jpg	img/1/c_1_016.jpg	EP01 00:20			img/1/m_1_016.jpg			남쪽에서 바라본 세이부 백화점
+1	img/1/c_1_016.jpg								
+3	img/1/t_1_016.jpg								
+4	img/1/p_1_017.jpg								이쯤에서 그랜드 시네마선샤인으로 이동
+4	img/1/p_1_018.jpg	img/1/c_1_018.jpg	EP12 18:53			img/1/m_1_018.jpg			가는 길에 보이는, 작품 막바지의 장면
+1	img/1/c_1_018.jpg								
+3	img/1/t_1_018.jpg								
+4	img/1/p_1_019.jpg					img/1/m_1_019.jpg			이어서 시네 리브르로 이동
+4	img/1/p_1_020.jpg								중간에 이케후쿠로는 사람이 너무 많네요
+4	img/1/p_1_021.jpg								처음 가본 시네 리브르는 길을 좀 헤맸습니다.
+3	img/1/p_1_022.jpg					img/1/m_1_022.jpg			보고 나오니 이미 문을 닫은 AZLM TOBU
+3	img/1/p_1_023.jpg					img/1/m_1_023.jpg			이케후쿠로 볼 시간에 들를 걸 그랬나...
+4	img/1/p_1_024.jpg	img/1/c_1_024.jpg	EP11 00:51			img/1/m_1_024.jpg			다시 꽃의 다리로 갔습니다
+1	img/1/c_1_024.jpg								밤에는 화면이 잘 보이네요
+3	img/1/t_1_024.jpg								밤에는 화면이 잘 보이네요
+3	img/1/p_1_025.jpg	img/1/c_1_025.jpg				img/1/m_1_025.jpg			다이야덱은 뭐랄까
+3	img/1/p_1_026.jpg	img/1/c_1_026.jpg				img/1/m_1_026.jpg			작품에선 옥상처럼 등장하는데
+3	img/1/p_1_027.jpg	img/1/c_1_027.jpg				img/1/m_1_027.jpg			실제로는 2층이라
+3	img/1/p_1_028.jpg	img/1/c_1_028.jpg				img/1/m_1_028.jpg			구도가 썩 좋진 않죠
+4	img/1/p_1_029.jpg								(영상) 준쿠도는? 산세이도는?
+4	img/1/p_1_030.jpg	img/1/c_1_030.jpg				img/1/m_1_030.jpg			다이야덱에서 보이는 산세이도 간판
+3	img/1/p_1_031.jpg					img/1/m_1_031.jpg			산세이도
+3	img/1/p_1_032.jpg					img/1/m_1_032.jpg			준쿠도
+4	img/1/p_1_033.jpg	img/1/c_1_033.jpg	EP11 14:05			img/1/m_1_033.jpg			그 사이에서 쿠로키의 등장 신
+1	img/1/c_1_033.jpg								
+3	img/1/t_1_033.jpg								
+4	img/1/p_1_034.jpg	img/1/c_1_034.jpg				img/1/m_1_034.jpg			
+1	img/1/c_1_034.jpg								
+3	img/1/t_1_034.jpg								
+4	img/1/p_1_035.jpg	img/1/c_1_035.jpg							사실 지인 부탁으로 책을 사려고 했는데
+1	img/1/c_1_035.jpg								산세이도엔 재고가 없고
+3	img/1/t_1_035.jpg								산세이도엔 재고가 없고
+4	img/1/p_1_036.jpg	img/1/c_1_036.jpg							준쿠도엔 마지막 하나였네요
+1	img/1/c_1_036.jpg								
+3	img/1/t_1_036.jpg								
+3	img/1/p_1_037.jpg	img/1/c_1_037.jpg							좀비떼1
+3	img/1/p_1_038.jpg	img/1/c_1_038.jpg							좀비떼2
+1	img/1/c_1_038.jpg								
+3	img/1/t_1_038.jpg								
+3	img/1/p_1_039.jpg	img/1/c_1_039.jpg							버튼1
+3	img/1/p_1_040.jpg	img/1/c_1_040.jpg							버튼2
+1	img/1/c_1_040.jpg								
+3	img/1/t_1_040.jpg								
+4	img/1/p_1_041.jpg								(지도) 저녁 먹으려고 헤매다 알게 된 아니메 도쿄 스테이션<br />마지막 날에 갔습니다
+4	img/1/p_1_042.jpg								(신문기사) 저녁을 먹고 조시가야 영원으로
+1	img/1/p_1_043.jpg								(폰사진) 저녁을 먹고 조시가야 영원으로
+3	img/1/p_1_044.jpg								(사진만) 저녁을 먹고 조시가야 영원으로
+3	img/1/p_1_045.jpg								한밤중의 공동묘지(?)
+3	img/1/p_1_046.jpg								
+4	img/1/p_1_047.jpg					img/1/m_1_047.jpg			여기가 존 만지로가 맞으려나요?
+4	img/1/p_1_048.jpg					img/1/m_1_048.jpg			일단 이쪽은 1종 15호네요
+3	img/1/p_1_049.jpg					img/1/m_1_049.jpg			첫날 일정은 이 정도로 마무리하고<br />도덴을 타고 오츠카로 돌아갑니다
+3	img/1/p_1_050.jpg					img/1/m_1_050.jpg			첫날 일정은 이 정도로 마무리하고<br />도덴을 타고 오츠카로 돌아갑니다
+15	img/1/p_1_051.jpg								블로그에 올렸던 걸 재편집해서 올리는 영상입니다.<br />마저 다 올리려면 시일이 좀 걸릴 것 같네요.
+</p>
+</body>
+</html>
