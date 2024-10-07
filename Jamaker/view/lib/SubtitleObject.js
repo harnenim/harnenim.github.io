@@ -383,6 +383,9 @@ Typing.prototype.typeKeyboard = function(c) {
 						if (c == 'ㅍ') { this.typing = String.fromCharCode(this.typing.charCodeAt() + 6); return; } // ㄿ
 						if (c == 'ㅎ') { this.typing = String.fromCharCode(this.typing.charCodeAt() + 7); return; } // ㅀ
 						break;
+					case 17: // '갑' - '가':
+						if (c == 'ㅅ') { this.typing = String.fromCharCode(this.typing.charCodeAt() + 1); return; } // ㅄ
+						break;
 				}
 			}
 		}
@@ -780,6 +783,7 @@ Subtitle.Ass = function(start, end, style, text) {
 Subtitle.Ass.cols = [ "Layer", "Start", "End", "Style", "Name", "MarginL", "MarginR", "MarginV", "Effect", "Text" ];
 
 Subtitle.Ass.int2Time = function(time) {
+	time = Math.round(time);
 	var h = Math.floor(time / 360000);
 	var m = Math.floor(time / 6000) % 60;
 	var s = Math.floor(time / 100) % 60;
@@ -938,12 +942,49 @@ Subtitle.Ass.prototype.fromAttr = function(attrs) {
 		if (last.fn != attr.fn) text += "{\\fn" + attr.fn + "}";
 
 		if (last.fc != attr.fc) text += "{\\c" + Subtitle.Ass.colorFromAttr(attr.fc) + "}";
-
-		text += attr.text;
+		
+		if (attr.furigana) {
+			text += "[" + attr.text + "|" + attr.furigana.text + "]";
+		} else {
+			text += attr.text;
+		}
 		last = attr;
 	}
+	
+	var lines = text.split("\n");
+	for (var i = 0; i < lines.length; i++) {
+		var line = lines[i];
+		var newLine = "";
+		var rubyLine = "";
+		var pos = 0;
+		var rStart = line.indexOf("[", pos);
+		while (rStart >= 0) {
+			var fStart = line.indexOf("|", rStart);
+			if (fStart < 0) {
+				rubyLine += line.substring(pos, rStart);
+				pos = rStart;
+				continue;
+			}
+			var rEnd = line.indexOf("]", fStart);
+			if (rEnd < 0) {
+				rubyLine += line.substring(pos, fStart);
+				pos = fStart;
+				continue;
+			}
+			var front = line.substring(0, rStart);
+			var ruby  = line.substring(rStart + 1, fStart);
+			var furi  = line.substring(fStart + 1, rEnd);
+			var end   = line.substring(rEnd + 1);
+			newLine += "{\\fscy50\\bord0\\1a&HFF&}" + front + "{\\1a\\bord\\fscx50}" + furi + "{\\fscx\\bord0\\1a&HFF&}" + end + "{\\1a\\bord\\fscy}\\N";
+			rubyLine += line.substring(pos, rStart) + ruby;
+			rStart = line.indexOf("[", (pos = rEnd + 1));
+		}
+		rubyLine += line.substring(pos);
+		newLine += rubyLine;
+		lines[i] = newLine;
+	}
 
-	this.text = text.split("}{").join("").split("\n").join("\\N");
+	this.text = lines.join("\\N").split("}{").join("");
 	return this;
 }
 
@@ -975,9 +1016,9 @@ Subtitle.AssFile = function() {
 	this.body = [];
 }
 Subtitle.AssFile.prototype.toTxt = function() {
-	var result = this.header.split("\n").join("\r\n");
+	var result = this.header.split("\r\n").join("\n");
 	for (var i = 0; i < this.body.length; i++) {
-		result += this.body[i].toTxt() + "\r\n";
+		result += this.body[i].toTxt() + "\n";
 	}
 	return result;
 }
@@ -1052,12 +1093,12 @@ Subtitle.Smi = function(start, syncType, text) {
 }
 
 Subtitle.Smi.prototype.toTxt = function() {
-	return "<Sync Start=" + this.start + "><P Class=KRCC" + (this.syncType == Subtitle.SyncType.inner ? "\t" : (this.syncType == Subtitle.SyncType.frame ? " " : "")) + ">\r\n" + this.text;
+	return "<Sync Start=" + this.start + "><P Class=KRCC" + (this.syncType == Subtitle.SyncType.inner ? "\t" : (this.syncType == Subtitle.SyncType.frame ? " " : "")) + ">\n" + this.text;
 }
 Subtitle.Smi.smi2txt = function(smis) {
 	var result = "";
 	for (var i = 0; i < smis.length; i++) {
-		result += smis[i].toTxt() + "\r\n";
+		result += smis[i].toTxt() + "\n";
 	}
 	return result;
 }
@@ -1348,12 +1389,17 @@ Subtitle.Smi.SetStyle = function(attr, status) {
 	attr.fade = (status.fade.length > 0) ? status.fade[status.fade.length - 1] : 0;
 	attr.typing = (status.typing.length > 0) ? status.typing[status.typing.length - 1] : null;
 }
+Subtitle.Smi.SetFurigana = function(attr, furigana) {
+	attr.furigana = furigana ? furigana : null;
+}
 Subtitle.Smi.toAttr = function(text) {
 	var index = 0;
 	var pos = 0;
 	var status = new Subtitle.Smi.Status();
 	var last = new Subtitle.Attr();
 	var result = [last];
+	var ruby = null;
+	var furigana = null;
 	
 	while ((pos = text.indexOf('<', index)) >= 0) {
 		// 태그명
@@ -1377,6 +1423,7 @@ Subtitle.Smi.toAttr = function(text) {
 		} else {
 			if (tagName[0] == ('/')) { // 종료 태그
 				attrPos = text.indexOf('>', attrPos) + 1;
+				
 			} else {
 				var mode = 0;
 				var attrNameStart = attrPos, attrValueStart = 0;
@@ -1512,6 +1559,21 @@ Subtitle.Smi.toAttr = function(text) {
 						result.push((last = new Subtitle.Attr()));
 					Subtitle.Smi.SetStyle(last, status.setFont(null));
 					break;
+				case "RUBY":
+					last.text += $("<a>").html(text.substring(index, pos).split("\n").join("")).text();
+					if (last.text.length > 0)
+						result.push((last = new Subtitle.Attr()));
+					break;
+				case "RT":
+					if (ruby) {
+						Subtitle.Smi.SetFurigana(ruby, furigana);
+						furigana = null;
+						last = ruby;
+					}
+					break;
+				case "RP":
+					if (furigana) last = furigana;
+					break;
 				default:
 					break;
 			}
@@ -1541,6 +1603,23 @@ Subtitle.Smi.toAttr = function(text) {
 						result.push((last = new Subtitle.Attr()));
 					Subtitle.Smi.SetStyle(last, status.setFont(attrs));
 					break;
+				case "RUBY":
+					last.text += $("<a>").html(text.substring(index, pos).split("\n").join("")).text();
+					if (last.text.length > 0)
+						result.push((last = new Subtitle.Attr()));
+					ruby = last;
+					break;
+				case "RT":
+					last.text += $("<a>").html(text.substring(index, pos).split("\n").join("")).text();
+					if (last.text.length > 0)
+						last = new Subtitle.Attr();
+					furigana = last;
+					break;
+				case "RP":
+					last.text += $("<a>").html(text.substring(index, pos).split("\n").join("")).text();
+					if (last.text.length > 0)
+						last = new Subtitle.Attr(); // 정크 데이터
+					break;
 				case "BR":
 					last.text += $("<a>").html(text.substring(index, pos).split("\n").join("")).text() + "\n";
 					break;
@@ -1560,6 +1639,10 @@ Subtitle.Smi.prototype.toAttr = function() {
 	return Subtitle.Smi.toAttr(this.text);
 }
 Subtitle.Smi.prototype.fromAttr = function(attrs) {
+	this.text = Subtitle.Smi.fromAttr(attrs).split("\n").join("<br>");
+	return this;
+}
+Subtitle.Smi.fromAttr = function(attrs) {
 	var text = "";
 	var lastAttrs = [];
 	
@@ -1567,27 +1650,26 @@ Subtitle.Smi.prototype.fromAttr = function(attrs) {
 	for (var i = 0; i < attrs.length; i++) {
 		var attr = attrs[i];
 		
-		if (!last.b && attr.b) text += "<B>";
-		else if (last.b && !attr.b) text += "</B>";
-		
-		if (!last.i && attr.i) text += "<I>";
-		else if (last.i && !attr.i) text += "</I>";
-		
-		if (!last.u && attr.u) text += "<U>";
-		else if (last.u && !attr.u) text += "</U>";
-		
-		if ( last.fs   != attr.fs
-		 ||  last.fn   != attr.fn
-		 ||  last.fc   != attr.fc
-		 ||  last.fade != attr.fade
-		 || (last.typing == null && attr.typing != null)
-		 || (last.typing != null && attr.typing == null)
-		) {
-			// 기존에 속성이 있었을 때만 닫는 태그
+		if (last.furigana || attr.furigana) {
+			// <RUBY> 태그 적용 시 무조건 태그 닫고 열기
+			
+			if (last.b) text += "</B>";
+			if (last.i) text += "</I>";
+			if (last.u) text += "</U>";
+			
+			// 기존에 속성이 있었을 때 닫는 태그
 			if (last.fs > 0 || !last.fn == ("") || !last.fc == ("") || last.fade > 0 || last.typing != null)
 				text += "</FONT>";
 			
-			// 신규 속성이 있을 때만 여는 태그
+			if (attr.furigana) {
+				text += "<RUBY>";
+			}
+			
+			if (attr.b) text += "<B>";
+			if (attr.i) text += "<I>";
+			if (attr.u) text += "<U>";
+			
+			// 신규 속성이 있을 때 여는 태그
 			if (attr.fs > 0 || !attr.fn == ("") || !attr.fc == ("") || attr.fade > 0 || attr.typing != null) {
 				text += "<FONT";
 				if (attr.fs   >  0 ) text += " size=\"" + attr.fs + "\"";
@@ -1597,14 +1679,52 @@ Subtitle.Smi.prototype.fromAttr = function(attrs) {
 				if (attr.typing != null) text += " typing=\"" + Typing.Mode.toString(attr.typing.mode) + "(" + attr.typing.start + "," + attr.typing.end + ") " + Typing.Cursor.toString(attr.typing.cursor) + "\"";
 				text += ">";
 			}
+			
+			if (attr.furigana) {
+				text += "<RT><RP>(</RP>" + Subtitle.Smi.fromAttr([attr.furigana]) + "<RP>)</RP></RT></RUBY>";
+			}
+			
+			last = new Subtitle.Attr();
+			
+		} else {
+			if (!last.b && attr.b) text += "<B>";
+			else if (last.b && !attr.b) text += "</B>";
+			
+			if (!last.i && attr.i) text += "<I>";
+			else if (last.i && !attr.i) text += "</I>";
+			
+			if (!last.u && attr.u) text += "<U>";
+			else if (last.u && !attr.u) text += "</U>";
+			
+			if ( last.fs   != attr.fs
+					||  last.fn   != attr.fn
+					||  last.fc   != attr.fc
+					||  last.fade != attr.fade
+					|| (last.typing == null && attr.typing != null)
+					|| (last.typing != null && attr.typing == null)
+			) {
+				// 기존에 속성이 있었을 때만 닫는 태그
+				if (last.fs > 0 || !last.fn == ("") || !last.fc == ("") || last.fade > 0 || last.typing != null)
+					text += "</FONT>";
+				
+				// 신규 속성이 있을 때만 여는 태그
+				if (attr.fs > 0 || !attr.fn == ("") || !attr.fc == ("") || attr.fade > 0 || attr.typing != null) {
+					text += "<FONT";
+					if (attr.fs   >  0 ) text += " size=\"" + attr.fs + "\"";
+					if (attr.fn   != "") text += " face=\"" + attr.fn + "\"";
+					if (attr.fc   != "") text += " color=\""+ Subtitle.Smi.colorFromAttr(attr.fc) + "\"";
+					if (attr.fade != 0 ) text += " fade=\"" + (attr.fade > 0 ? "in" : "out") + "\"";
+					if (attr.typing != null) text += " typing=\"" + Typing.Mode.toString(attr.typing.mode) + "(" + attr.typing.start + "," + attr.typing.end + ") " + Typing.Cursor.toString(attr.typing.cursor) + "\"";
+					text += ">";
+				}
+			}
 		}
 		
 		text += $("<a>").text(attr.text).html();
 		last = attr;
 	}
 	
-	this.text = text.split("\n").join("<br>");
-	return this;
+	return text;
 }
 
 Subtitle.Smi.prototype.toSync = function() {
@@ -1820,9 +1940,9 @@ Subtitle.SmiFile = function() {
 	this.body = [];
 }
 Subtitle.SmiFile.prototype.toTxt = function() {
-	return this.header.split("\n").join("\r\n")
+	return this.header.split("\r\n").join("\n")
 	     + Subtitle.Smi.smi2txt(this.body)
-	     + this.footer.split("\n").join("\r\n");
+	     + this.footer.split("\r\n").join("\n");
 }
 Subtitle.SmiFile.prototype.fromTxt = function(txt) {
 	txt = txt.split("\r\n").join("\n");
@@ -1978,7 +2098,7 @@ Subtitle.Srt.prototype.toTxt = function() {
 Subtitle.Srt.srt2txt = function(srts) {
 	var result = "";
 	for (var i = 0; i < srts.length; i++) {
-		result += srts[i].toTxt() + "\r\n";
+		result += srts[i].toTxt() + "\n";
 	}
 	return result;
 }
