@@ -11,8 +11,9 @@
 	overflow: hidden;
 	line-height: 20px;
 	white-space: nowrap;
+	text-align: center;
 }
-html, body, img {
+html, body {
 	width: 100%;
 	height: 100%;
 }
@@ -23,14 +24,17 @@ span {
 	display: inline-block;
 }
 #preview, #tag {
-	width: 860px;
+	width: 800px;
 	height: 100px;
+	margin: 0 auto;
 	border: 1px solid #000;
 }
 #preview {
-	text-align: center;
 	font-size: 20px;
 	line-height: 28px;
+}
+#tag, #tag * {
+	text-align: left;
 }
 </style>
 <script>
@@ -49,7 +53,11 @@ function init() {
 	$(".hide").each(function() {
 		var item = $(this);
 		item.data({ to: { width: 0 }});
-		item.css({ width: item.width() });
+		var width = item.data("width");
+		if (width == null) {
+			item.data({ width: width = item.width() });
+		}
+		item.css({ width: width });
 	});
 	$(".to").each(function() {
 		var item = $(this);
@@ -57,6 +65,7 @@ function init() {
 	});
 };
 function next() {
+	$("#comment span").hide();
 	if (++step > 5) {
 		step = 0;
 		init();
@@ -67,6 +76,7 @@ function next() {
 		console.log(item.data("to"));
 		item.css(item.data("to"));
 	});
+	$("#comment span.when-"+step).show();
 }
 $(function() {
 	init();
@@ -77,8 +87,8 @@ $(function() {
 <body>
 <div id="preview">
 <span>7G 사건이 일어나고</span>
+<div class="to after-3" data-from='{"transform":"scaleY(1)","margin":0}' data-to='{"transform":"scaleY(0.5)","margin":"-6px 0 -4px"}'>
 <div class="to after-1" data-from='{"height":0}' data-to='{"height":"20px"}'>
-<div class="to after-3" data-from='{"transform":"scaleY(1)"}' data-to='{"transform":"scaleY(0.5)"}'>
 <span class="to after-5" data-from='{"opacity":1}' data-to='{"opacity":0}'>우선&nbsp;</span><span class="hide after-2">곰(</span><span class="to after-4" data-from='{"transform":"scaleY(1)","font-size":"20px"}' data-to='{"transform":"scaleY(2)","font-size":"10px"}'>메이테츠</span><span class="hide after-2">)</span><span class="to after-5" data-from='{"opacity":1}' data-to='{"opacity":0}'>이 쓰러졌지</span>
 </div>
 </div>
@@ -88,12 +98,19 @@ $(function() {
 <span>7G 사건이 일어나고\N</span>
 <span class="show after-1" style="clear: both;">
 <span class="show after-3">{\fscy50</span><span class="show after-5">\bord0\1a&HFF&</span><span class="show after-3">}</span><span>우선</span> 
-<span class="hide after-2">곰(</span><span class="show after-4">{</span><span class="show after-5">\1a\bord</span><span class="show after-4">\fscx50}</span><span>메이테츠</span><span class="show after-4">{\fscx</span><span class="show after-5">\bord0\1a&HFF&</span><span class="show after-4">}</span><span class="hide after-2">)</span><span>이</span> 
-<span>쓰러졌지</span><span class="show after-3">{</span><span class="show after-5">\1a\bord</span><span class="show after-3">\fscy}</span>\N<br />
+<span class="hide after-2">곰(</span><span class="show after-4">{</span><span class="show after-5">\1a</span><span class="show after-4">\fscx50}</span><span>메이테츠</span><span class="show after-4">{\fscx</span><span class="show after-5">\1a&HFF&</span><span class="show after-4">}</span><span class="hide after-2">)</span><span>이</span> 
+<span>쓰러졌지</span><span class="show after-3">{</span><span class="show after-5">\1a</span><span class="show after-3">\fscy}</span>\N<br />
 </span>
 <span style="clear: both;"><span>우선 곰</span><span class="hide after-2">(메이테츠)</span><span>이 쓰러졌지</span></span>
 </div>
-
+<div id="comment">
+<span class="when-1">한 줄 복붙</span>
+<span class="when-2">괄호 삭제</span>
+<span class="when-3">높이 50%</span>
+<span class="when-4">후리가나 부분만 폭 50%</span>
+<span class="when-5">나머지 투명 처리</span>
+<br />
+</div>
 <button type="button" onclick="next();">다음</button>
 </body>
 </html>
