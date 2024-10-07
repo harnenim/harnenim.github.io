@@ -36,6 +36,8 @@ span {
 #tag, #tag * {
 	text-align: left;
 }
+#comment { height: 28px; }
+#comment span { display: none; }
 </style>
 <script>
 var step = 0;
@@ -85,6 +87,7 @@ $(function() {
 </script>
 </head>
 <body>
+<br />ASS 자막에서 \pos 태그를 사용하지 않고, 폰트에 구애받지 않는 후리가나 표현<br /><br /> 
 <div id="preview">
 <span>7G 사건이 일어나고</span>
 <div class="to after-3" data-from='{"transform":"scaleY(1)","margin":0}' data-to='{"transform":"scaleY(0.5)","margin":"-6px 0 -4px"}'>
@@ -103,14 +106,15 @@ $(function() {
 </span>
 <span style="clear: both;"><span>우선 곰</span><span class="hide after-2">(메이테츠)</span><span>이 쓰러졌지</span></span>
 </div>
+<br />
 <div id="comment">
 <span class="when-1">한 줄 복붙</span>
 <span class="when-2">괄호 삭제</span>
 <span class="when-3">높이 50%</span>
 <span class="when-4">후리가나 부분만 폭 50%</span>
 <span class="when-5">나머지 투명 처리</span>
-<br />
 </div>
+<br />
 <button type="button" onclick="next();">다음</button>
 </body>
 </html>
