@@ -954,34 +954,61 @@ Subtitle.Ass.prototype.fromAttr = function(attrs) {
 	var lines = text.split("\n");
 	for (var i = 0; i < lines.length; i++) {
 		var line = lines[i];
-		var newLine = "";
-		var rubyLine = "";
+		var rubyList = [];
+
 		var pos = 0;
-		var rStart = line.indexOf("[", pos);
-		while (rStart >= 0) {
+		var rStart = 0;
+		do {
+			rStart = line.indexOf("[", pos);
+			if (rStart < 0) {
+				break;
+			}
 			var fStart = line.indexOf("|", rStart);
 			if (fStart < 0) {
-				rubyLine += line.substring(pos, rStart);
-				pos = rStart;
+				pos = rStart + 1;
 				continue;
 			}
 			var rEnd = line.indexOf("]", fStart);
 			if (rEnd < 0) {
-				rubyLine += line.substring(pos, fStart);
-				pos = fStart;
+				pos = fStart + 1;
 				continue;
 			}
-			var front = line.substring(0, rStart);
-			var ruby  = line.substring(rStart + 1, fStart);
-			var furi  = line.substring(fStart + 1, rEnd);
-			var end   = line.substring(rEnd + 1);
-			newLine += "{\\fscy50\\bord0\\1a&HFF&}" + front + "{\\1a\\bord\\fscx50}" + furi + "{\\fscx\\bord0\\1a&HFF&}" + end + "{\\1a\\bord\\fscy}\\N";
-			rubyLine += line.substring(pos, rStart) + ruby;
-			rStart = line.indexOf("[", (pos = rEnd + 1));
+			pos = rEnd + 1;
+			rubyList.push([rStart, fStart, rEnd]);
+		} while (true);
+
+		if (rubyList.length) {
+			var newLine = "";
+			for (var j = 0; j < rubyList.length; j++) {
+				newLine += "{\\fscy50\\bord0\\1a&HFF&}";
+				var pos = 0;
+				for (var k = 0; k < j; k++) {
+					newLine += line.substring(pos, rubyList[k][0]);
+					newLine += line.substring(rubyList[k][0] + 1, rubyList[k][1]);
+					pos = rubyList[k][2] + 1;
+				}
+				newLine += line.substring(pos, rubyList[j][0]);
+				newLine += "{\\1a\\bord\\fscx50}" + line.substring(rubyList[j][1] + 1, rubyList[j][2]) + "{\\fscx\\bord0\\1a&HFF&}";
+				pos = rubyList[j][2] + 1;
+				for (var k = j + 1; k < rubyList.length; k++) {
+					newLine += line.substring(pos, rubyList[k][0]);
+					newLine += line.substring(rubyList[k][0] + 1, rubyList[k][1]);
+					pos = rubyList[k][2] + 1;
+				}
+				newLine += line.substring(pos);
+				newLine += "{\\1a\\bord\\fscy}\\N";
+			}
+			{
+				var pos = 0;
+				for (var k = 0; k < rubyList.length; k++) {
+					newLine += line.substring(pos, rubyList[k][0]);
+					newLine += line.substring(rubyList[k][0] + 1, rubyList[k][1]);
+					pos = rubyList[k][2] + 1;
+				}
+				newLine += line.substring(pos);
+			}
+			lines[i] = newLine;
 		}
-		rubyLine += line.substring(pos);
-		newLine += rubyLine;
-		lines[i] = newLine;
 	}
 
 	this.text = lines.join("\\N").split("}{").join("");
