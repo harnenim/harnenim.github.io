@@ -1,0 +1,118 @@
+	var iframe = $("#xticket").contents();
+	
+	var style = $("<style>");
+	style.html(""
+		+ "    	.list_content ul li span:first-child { width: 30px; }\n"
+		+ "    	.list_content ul li span.team    { width: 400px !important; white-space: nowrap; text-overflow: ellipsis; }\n"
+		+ "    	.list_content ul li span.booking { width:  76px !important; }\n"
+		+ "    	.list_content ul li span.place   { width: 140px !important; }\n"
+		+ "    	.list_content ul li span.num     { width:  40px !important; }\n"
+		+ "    	.list_content ul li span.date    { width:  50px !important; }\n"
+		+ "    	.list_content ul li span.time    { width:  70px !important; }\n"
+		+ "    	.list_content ul li span.result,\n"
+		+ "    	.list_content ul li span.hidden  { display: none; }\n"
+		+ "    	.list_content ul li.cancel { display: none; }\n"
+		+ "    	.list_content ul li.cancel a span { text-decoration: line-through; }\n"
+		+ "    	.list_content ul li.th span.asc:after  { display: inline; content: '^'; }\n"
+		+ "    	.list_content ul li.th span.desc:after { display: inline; content: 'v'; }\n"
+	);
+	iframe.find("head").append(style);
+	
+	var ul = iframe.find("#reserve_list_content");
+	var lis = ul.find("li");
+	var th = null;
+	var codeTeams = [];
+	var toFoundCount = 0;
+	
+	lis.each(function() {
+		var li = $(this);
+		var data = {};
+		
+		if (li.hasClass("th")) {
+			th = li;
+			data.index = -1;
+			data.subject  = "";
+			data.booking  = "";
+			data.place    = "";
+			data.datetime = "";
+			li.find("span:eq(0)"  ).on("click", function() { reSort("index"   , "reserve_list_index"); }).css({ cursor: "pointer" });
+			li.find("span.team"   ).on("click", function() { reSort("title"   , "team"              ); }).css({ cursor: "pointer" });
+			li.find("span.booking").on("click", function() { reSort("booking" , "booking"           ); }).css({ cursor: "pointer" });
+			li.find("span.place"  ).on("click", function() { reSort("place"   , "place"             ); }).css({ cursor: "pointer" });
+			li.find("span.date"   ).on("click", function() { reSort("datetime", "time"              ); }).css({ cursor: "pointer" });
+			li.find("span.time"   ).on("click", function() { reSort("datetime", "time"              ); }).css({ cursor: "pointer" });
+			
+		} else {
+			data.index   = Number(li.find("span.reserve_list_index").text());
+			data.team    = li.find("span.team"   ).text();
+			data.code    = data.team.substring(1, 4);
+			data.title   = data.team.substring(5);
+			data.booking = li.find("span.booking").text();
+			data.place   = li.find("span.place"  ).text();
+			data.num     = li.find("span.num"    ).text();
+			data.date    = li.find("span.date"   ).text();
+			data.time    = li.find("span.time"   ).text();
+			data.datetime = data.date + "_" + data.time;
+			
+			if (!li.hasClass("cancel")) {
+				codeTeams[data.code] = li.find("span.team");
+				toFoundCount++;
+			}
+		}
+		
+		li.data(data);
+	});
+	
+	var sortStatus = "";
+	function reSort(key, column) {
+		var lis = [];
+		ul.find("li:not(:eq(0))").each(function() { lis.push($(this)); });
+		
+		if (key == sortStatus || ("-" + key == sortStatus)) {
+			lis.reverse();
+			if (sortStatus[0] == "-") {
+				sortStatus = key;
+				th.find("span." + column).removeClass("desc").addClass("asc");
+			} else {
+				sortStatus = "-" + key;
+				th.find("span." + column).removeClass("asc").addClass("desc");
+			}
+			
+		} else {
+			lis.sort(function(a, b) {
+				var aValue = a.data(key);
+				var bValue = b.data(key);
+				if (aValue < bValue) {
+					return -1;
+				} else if (aValue > bValue) {
+					return 1;
+				} else {
+					return 0;
+				}
+			});
+			sortStatus = key;
+			th.find("span.asc" ).removeClass("asc" );
+			th.find("span.desc").removeClass("desc");
+			th.find("span." + column).addClass("asc");
+		}
+		
+		for (var i = 0; i < lis.length; i++) {
+			var li = lis[i];
+			li.find("a").attr("href", "javascript:ticketingReserveDetail(" + i + ");");
+			ul.append(li);
+		}
+	}
+	
+	var findTitle = setInterval(function() {
+		var title = iframe.find(".reserve_title").text();
+		if (title) {
+			var code = title.substring(1, 4);
+			if (codeTeams[code]) {
+				codeTeams[code].text(title);
+				codeTeams[code] = null;
+				if (--toFoundCount <= 0) {
+					clearInterval(findTitle);
+				}
+			}
+		}
+	}, 100);
