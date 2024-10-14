@@ -2,7 +2,7 @@
 	<meta charset="utf-8">
 	<title>BIAF 스케줄 짜기</title>
 
-	<script src="/sample/keikenchi/jquery-3.7.1.min.js"></script>
+	<script src="../keikenchi/jquery-3.7.1.min.js"></script>
 
 	<script>
 var schedules = {
@@ -10,7 +10,7 @@ var schedules = {
 };
 function init(schedule) {
 	var thead = $("#thead");
-	var tbody = $("#tbody");
+	var tbody = $("#tbody").empty();
 
 	for (var k = 0; k < schedule.places.length; k++) {
 		thead.append($("<div>").addClass("place").addClass("place"+k).text(schedule.places[k]));
@@ -81,6 +81,7 @@ function init(schedule) {
 	}
 }
 
+var name = "이름 없음";
 $(function() {
 	var y = null;
 	{
@@ -91,7 +92,13 @@ $(function() {
 			for (var i = 0; i < searches.length; i++) {
 				var param = searches[i].split("=");
 				switch (param[0]) {
-					case "y": y = param[1]; break;
+					case "y": {
+						if (!isFinite(y = param[1])) {
+							schedules.parsed = JSON.parse(y);
+							y = "parsed";
+						}
+						break;
+					}
 					case "step1": list.step1 = param[1].split(","); break;
 					case "step2": list.step2 = param[1].split(","); break;
 					case "step3": list.step3 = param[1].split(","); break;
@@ -104,9 +111,14 @@ $(function() {
 			var json = localStorage.getItem("scheduleJson");
 			if (json) {
 				localStorage.removeItem("scheduleJson");
-				json = JSON.parse(json);
-				schedules.parsed = json;
+				localStorage.setItem("scheduleParsed", json);
+				schedules.parsed = JSON.parse(json);
 				y = "parsed";
+			}
+		} else if (y == "parsed") {
+			var json = localStorage.getItem("scheduleParsed");
+			if (json) {
+				schedules.parsed = JSON.parse(json);
 			}
 		}
 		
@@ -133,12 +145,22 @@ $(function() {
 		}
 	});
 	
+	function getStatus() {
+		var step1 = []; $(".item.step1").each(function() { step1.push($(this).data("code")); });
+		var step2 = []; $(".item.step2").each(function() { step2.push($(this).data("code")); });
+		var step3 = []; $(".item.step3").each(function() { step3.push($(this).data("code")); });
+		return {
+				y: y
+			,	step1: step1
+			,	step2: step2
+			,	step3: step3
+		}
+	}
 	$("#btnUrl").on("click", function() {
 		if (isFinite(y)) {
-			var step1 = []; $(".item.step1").each(function() { step1.push($(this).data("code")); });
-			var step2 = []; $(".item.step2").each(function() { step2.push($(this).data("code")); });
-			var step3 = []; $(".item.step3").each(function() { step3.push($(this).data("code")); });
-			var url = location.href.split("?")[0] + "?" + ["y="+y, "step1=" + (step1.join(",")), "step2=" + (step2.join(",")), "step3=" + (step3.join(","))].join("&");
+			var status = getStatus();
+			var params = ["y=" + y, "step1=" + (status.step1.join(",")), "step2=" + (status.step2.join(",")), "step3=" + (status.step3.join(","))];
+			var url = location.href.split("?")[0] + "?" + params.join("&");
 			if (navigator.clipboard) {
 				navigator.clipboard.writeText(url);
 				alert("URL을 복사했습니다.\n" + url);
@@ -150,7 +172,68 @@ $(function() {
 			alert("연도가 선택되지 않았습니다.");
 		}
 	});
+	
+	var savedList = [];
+	var $savedList = $("#savedList");
+	function refreshList() {
+		$savedList.empty();
+		var list = localStorage.getItem("savedList");
+		if (list) {
+			savedList = JSON.parse(list);
+			for (var i = 0; i < savedList.length; i++) {
+				var item = savedList[i];
+				$savedList.append($("<a>").attr({ href: "javascript:loadPlan('" + item + "')" }).text(item));
+			}
+		} else {
+			$savedList.append($("<a>").attr({ href: "#" }).text("저장된 내역이 없습니다."));
+		}
+	}
+	refreshList();
+	
+	$("#btnList").on("click", function() {
+		$savedList.toggle();
+	});
+	
+	$("#btnSave").on("click", function() {
+		var input = prompt("이름을 입력하세요.", name);
+		if (!input) {
+			alert("이름을 입력하세요.");
+			return;
+		}
+		if (input.indexOf("'") >= 0 || input.indexOf('"') >= 0) {
+			alert("따옴표는 쓰실 수 없습니다.");
+			return;
+		}
+		if (savedList.indexOf(input) >= 0) {
+			if (!confirm("이미 있습니다. 덮어 쓰시겠습니까?")) {
+				return;
+			}
+		} else {
+			savedList.push(input);
+			savedList.sort();
+		}
+		localStorage.setItem("saved_" + (name = input), JSON.stringify(getStatus()));
+		localStorage.setItem("savedList", JSON.stringify(savedList));
+		refreshList();
+	});
 });
+function loadPlan(item) {
+	var saved = localStorage.getItem("saved_" + item);
+	if (!saved) {
+		alert("불러오기 오류");
+		return;
+	}
+	saved = JSON.parse(saved);
+	
+	init(schedules[saved.y]);
+	
+	for (var i = 1; i <= 3; i++) {
+		var step = "step" + i;
+		for (var j = 0; j < saved[step].length; j++) {
+			$("#item_" + saved[step][j]).addClass(step);
+		}
+	}
+}
 	</script>
 	<style>
 html, body {
@@ -228,11 +311,40 @@ div.item div.add {
 .step2 { background: #fa6; } div.item.step2:hover { background: #ea6; }
 .step3 { background: #fda; } div.item.step3:hover { background: #eca; }
 
-#thead span { padding: 0 4px; }
-#thead .step1 { right: 150px; }
-#thead .step2 { right: 100px; }
-#thead .step3 { right:  50px; }
-#btnUrl { right: 0; height: 30px; }
+#thead span { padding: 0 4px; border: 1px solid #aaa; }
+#thead .step1 { left:   0px; }
+#thead .step2 { left:  50px; }
+#thead .step3 { left: 100px; }
+#thead button { height: 30px; padding: 0 4px; }
+#btnUrl { right: 0; }
+#btnSave { right: 100px; }
+#btnList { right: 150px; }
+#savedList {
+	display: none;
+	position: absolute;
+	top: 29px;
+	right: calc(50% - 500px);
+	width: 300px;
+	border: 1px solid #000;
+	border-radius: 10px 0 10px 10px;
+	background: #fff;
+}
+#savedList a {
+	display: block;
+	margin: 8px;
+	padding: 8px;
+	border: 1px solid #aaa;
+	border-radius: 8px;
+	user-select: none;
+	cursor: pointer;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	text-decoration: none;
+	color: #000;
+}
+#savedList a:hover {
+	background: #ffe;
+}
     </style>
 </head>
 <body>
@@ -241,6 +353,9 @@ div.item div.add {
 		<span class="step2">관람</span>
 		<span class="step3">대안</span>
 		<button type="button" id="btnUrl">공유</button>
+		<button type="button" id="btnSave">저장</button>
+		<button type="button" id="btnList">저장목록</button>
 	</div>
 	<div id="tbody"></div>
+	<div id="savedList"></div>
 </body></html>
