@@ -1,0 +1,1444 @@
+<html><head>
+	<meta charset="utf-8">
+	<title>BIAF 스케줄 파서</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+	<script src="/script/common/jquery-3.7.1.min.js"></script>
+
+	<script>
+$(function() {
+	$("#btnParse").on("click", function() {
+		var places = [];
+		var dates = [];
+		var lists = {};
+		
+		var tmp = $("<div>").html($("#input").val());
+		tmp.find(".screenCalendar").each(function() {
+			var calendar = $(this);
+			var date = calendar.find("h4").text().substring(10,12);
+			dates.push(date);
+			for (var i = 0; i < places.length; i++) {
+				lists[places[i]][date] = [];
+			}
+			
+			calendar.find("tbody tr").each(function() {
+				var tr = $(this);
+				var place = tr.find("th:eq(0)").text();
+				if (places.indexOf(place) < 0) {
+					places.push(place);
+					lists[place] = {};
+					lists[place][date] = [];
+				}
+				tr.find("td").each(function(index) {
+					var div = $(this).find("div:eq(0)");
+					if (div.length) {
+						var item = {};
+						item.date  = date;
+						item.place = place;
+						item.index = index + 1;
+						item.code  = div.html().substring(0, 3);
+						item.begin = div.find("em:eq(0)").text();
+						item.title = div.find("dt").text();
+						item.time  = div.find("dd em").text();
+						item.nums = [];
+						div.find("span.num").each(function() {
+							item.nums.push($(this).text());
+						});
+						div.find("dl").remove();
+						item.end = div.find("span:eq(0)").text();
+						var hoverArea = div.find(".hoverArea");
+						if (hoverArea.length) {
+							item.subtitles = [];
+							hoverArea.find("ul li").each(function() {
+								item.subtitles.push($(this).text());
+							});
+						}
+						lists[place][date][index] = item;
+					}
+				});
+			});
+		});
+		tmp.remove();
+		
+		var result = {
+				places: places
+			,	dates: dates
+			,	lists: lists
+		};
+		$("#outputJson").val(JSON.stringify(result));
+	
+		var line = "극장/회차";
+		for (var k = 0; k < places.length; k++) {
+			line += "\t" + places[k];
+		}
+		var lines = [line];
+		
+		for (var i = 0; i < dates.length; i++) {
+			var date = dates[i];
+			
+			var max = 0;
+			for (var k = 0; k < places.length; k++) {
+				var length = lists[places[k]][date].length;
+				if (length > max) {
+					max = length;
+				}
+			}
+	
+			for (var j = 0; j < max; j++) {
+				line = date + "일 " + (j+1) + "회차";
+				for (var k = 0; k < places.length; k++) {
+					line += "\t";
+					var item = lists[places[k]][date][j];
+					if (item) {
+						line += '"' + item.code + " " + item.begin + "\n"
+							+ item.title + "\n"
+							+ item.time + " " + item.nums.join(" ") + " ~" + item.end + '"';
+					}
+				}
+				lines.push(line);
+			}
+		}
+		$("#outputExcel").val(lines.join("\n"));
+	});
+});
+
+function toSchedule() {
+	var json = $("#outputJson").val();
+	localStorage.setItem("scheduleJson", json);
+	location.href = "schedule.html";
+	return false;
+}
+	</script>
+	<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+textarea {
+	position: fixed;
+	width: 50%;
+	height: calc(50% - 10px);
+	top: calc(50% + 10px);
+	resize: none;
+}
+#input {
+	width: 100%;
+	top: 0;
+}
+#outputJson {
+	height: calc(50% - 30px);
+}
+#outputExcel {
+	left: 50%;
+}
+#btnParse {
+	position: absolute;
+	width: 100%;
+	height: 20px;
+	top: calc(50% - 10px);
+}
+#btnSubmit {
+	position: absolute;
+	width: 50%;
+	height: 20px;
+	bottom: 0;
+}
+    </style>
+</head>
+<body>
+<textarea id="input">&lt;div class="screenCalendar">
+			&lt;div>
+				&lt;h4>2024년 10월 25일(금)&lt;/h4>
+			&lt;/div>
+			&lt;div class="rollTable">&lt;div>
+				&lt;table>
+					&lt;thead>
+						&lt;tr>
+							&lt;th scope="col">극장/회차&lt;/th>
+							&lt;th scope="col">1회차&lt;/th>
+							&lt;th scope="col">2회차&lt;/th>
+							&lt;th scope="col">3회차&lt;/th>
+							&lt;th scope="col">4회차&lt;/th>
+							&lt;th scope="col">5회차&lt;/th>
+						&lt;/tr>
+					&lt;/thead>
+					&lt;tbody>
+						&lt;tr>
+							&lt;th scope="row">KM&lt;/th>
+							&lt;td>&lt;/td>
+							&lt;td>&lt;/td>
+							&lt;td>&lt;/td>
+							&lt;td>
+								&lt;div>101&lt;em>18:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=20&amp;idx=265&amp;m_idx=2614&amp;formtype=view">개막식 + 연의 편지&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>60+97min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>20:37&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB3&lt;/th>
+							&lt;td>
+								&lt;div>102&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=271">학생&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>89min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>11:59&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>가여운 남자&lt;/li>
+											&lt;li>썰물&lt;/li>
+											&lt;li>에코&lt;/li>
+											&lt;li>제미니&lt;/li>
+											&lt;li>원더풀라이프&lt;/li>
+											&lt;li>퍼버트짐밥&lt;/li>
+											&lt;li>스위프트&lt;/li>
+											&lt;li>찰리는 뱀파이어&lt;/li>
+											&lt;li>나의 소년시대&lt;/li>
+											&lt;li>수상한 풀&lt;/li>
+											&lt;li>사우스윈도우&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>103&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=287">한국 단편 B&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>14:51&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>방랑자 욥&lt;/li>
+											&lt;li>크리스마스 이브&lt;/li>
+											&lt;li>서클&lt;/li>
+											&lt;li>기억은 먹구름&lt;/li>
+											&lt;li>홀로&lt;/li>
+											&lt;li>일루전&lt;/li>
+											&lt;li>뜬구름&lt;/li>
+											&lt;li>맥거핀&lt;/li>
+											&lt;li>포자러브&lt;/li>
+											&lt;li>귀신보는 아이 김리나&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>104&lt;em>16:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=286">한국 단편 A&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>17:21&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>아네모네&lt;/li>
+											&lt;li>체리파이&lt;/li>
+											&lt;li>고달픈 여름&lt;/li>
+											&lt;li>식사&lt;/li>
+											&lt;li>미행 : 짝사랑에 대한 짧은 감상&lt;/li>
+											&lt;li>미싱 메신저&lt;/li>
+											&lt;li>파라노이드 키드&lt;/li>
+											&lt;li>비행몽&lt;/li>
+											&lt;li>에스&lt;/li>
+											&lt;li>옷장 속 사람들&lt;/li>
+											&lt;li>이 세계는 콜라이고 우린 그걸 흔들고 있어&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>105&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2622&amp;formtype=view">연의 편지&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>97min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:07&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB4&lt;/th>
+							&lt;td>
+								&lt;div>106&lt;em>11:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2625&amp;formtype=view">정원의 보트&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>75min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:15&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>107&lt;em>13:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=284&amp;m_idx=2637&amp;formtype=view">마크로스 제로 (프리미엄 리마스터판)&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>158min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:38&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>108&lt;em>16:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=284&amp;m_idx=2638&amp;formtype=view">극장판 마크로스Δ 격정의 왈큐레&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>120min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:30&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>109&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=284&amp;m_idx=2639&amp;formtype=view">극장판 마크로스Δ 절대 LIVE!!!!!! + 극장단편 마크로스F ~시간의 미궁~&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>124min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:34&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB5&lt;/th>
+							&lt;td>
+								&lt;div>110&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2632&amp;formtype=view">폭풍우&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>102min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:12&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>111&lt;em>14:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2626&amp;formtype=view">달팽이의 회고록&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>94min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:34&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>112&lt;em>17:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2631&amp;formtype=view">락 바텀&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>87min&lt;/em>&lt;span class="num col19">19&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:27&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>113&lt;em>20:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2630&amp;formtype=view">트라페지움&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>94min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:34&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB7&lt;/th>
+							&lt;td>
+								&lt;div>114&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=274">단편 A&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>98min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:08&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>[S] 무한동력&lt;/li>
+											&lt;li>서클&lt;/li>
+											&lt;li>괴물의 왕국&lt;/li>
+											&lt;li>롱디스턴스&lt;/li>
+											&lt;li>물결소녀&lt;/li>
+											&lt;li>시대의 경계선&lt;/li>
+											&lt;li>옷장 속 사람들&lt;/li>
+											&lt;li>양들의 멜로디&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>115&lt;em>13:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=275">단편 B&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>99min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>14:39&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>인연의 끈&lt;/li>
+											&lt;li>익스트림 쇼트&lt;/li>
+											&lt;li>별똥별&lt;/li>
+											&lt;li>굶주린 자들의 귀환&lt;/li>
+											&lt;li>그들의 안식처&lt;/li>
+											&lt;li>미저러블 미라클&lt;/li>
+											&lt;li>파라노이드 키드&lt;/li>
+											&lt;li>테니스, 오렌지&lt;/li>
+											&lt;li>소녀와 단지&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>116&lt;em>15:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=276">단편 C&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>97min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>17:07&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>비주얼 컷&lt;/li>
+											&lt;li>앙떼오르&lt;/li>
+											&lt;li>비커밍 에어&lt;/li>
+											&lt;li>글래스하우스&lt;/li>
+											&lt;li>일루전&lt;/li>
+											&lt;li>엘리펀트&lt;/li>
+											&lt;li>따개비&lt;/li>
+											&lt;li>쓰레기의 노래&lt;/li>
+											&lt;li>겨울의 담비&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>117&lt;em>18:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=277">단편 D&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>96min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>19:36&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>기억은 먹구름&lt;/li>
+											&lt;li>플라워쇼&lt;/li>
+											&lt;li>사랑의 흔적&lt;/li>
+											&lt;li>틴에이지 블랙아웃&lt;/li>
+											&lt;li>플레잉 갓&lt;/li>
+											&lt;li>프로그레스 마이닝&lt;/li>
+											&lt;li>해변에서 돌아온 일행&lt;/li>
+											&lt;li>환상의 노루&lt;/li>
+											&lt;li>비건 마요&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>118&lt;em>20:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=278">단편 E&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>95min&lt;/em>&lt;span class="num col19">19&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>22:05&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>아쿠아틱&lt;/li>
+											&lt;li>비스트 인사이드&lt;/li>
+											&lt;li>뷰티풀맨&lt;/li>
+											&lt;li>나는 이르핀에서 죽었다&lt;/li>
+											&lt;li>까미뉴&lt;/li>
+											&lt;li>슈퍼실리&lt;/li>
+											&lt;li>체인지 휠&lt;/li>
+											&lt;li>완더 투 원더&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CH&lt;/th>
+							&lt;td>
+								&lt;div>119&lt;em>10:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=26&amp;idx=294&amp;m_idx=2616&amp;formtype=view">래브라도 경장&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>41min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>10:41&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>120&lt;em>11:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=26&amp;idx=294&amp;m_idx=2615&amp;formtype=view">베이비버스 키키묘묘구조대&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>43min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:13&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+							&lt;td>&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+					&lt;/tbody>
+				&lt;/table>
+			&lt;/div>&lt;/div>
+		&lt;/div>
+
+
+
+
+&lt;div class="screenCalendar">
+			&lt;div>
+				&lt;h4>2024년 10월 26일(토)&lt;/h4>
+			&lt;/div>
+			&lt;div class="rollTable">&lt;div>
+				&lt;table>
+					&lt;thead>
+						&lt;tr>
+							&lt;th scope="col">극장/회차&lt;/th>
+							&lt;th scope="col">1회차&lt;/th>
+							&lt;th scope="col">2회차&lt;/th>
+							&lt;th scope="col">3회차&lt;/th>
+							&lt;th scope="col">4회차&lt;/th>
+						&lt;/tr>
+					&lt;/thead>
+					&lt;tbody>
+						&lt;tr>
+							&lt;th scope="row">KM&lt;/th>
+							&lt;td>
+								&lt;div>201&lt;em>11:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=196&amp;idx=281&amp;m_idx=2636&amp;formtype=view">걸즈 밴드 크라이&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>73min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:13&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>202&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2622&amp;formtype=view">연의 편지&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>97min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:07&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>203&lt;em>17:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=196&amp;idx=281&amp;m_idx=2634&amp;formtype=view">기빗올 : 우리들의 썸머&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>95min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:35&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>204&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2623&amp;formtype=view">후레루.&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>107min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:17&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB3&lt;/th>
+							&lt;td>
+								&lt;div>205&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=196&amp;idx=281&amp;m_idx=2635&amp;formtype=view">4K 슈퍼스케일드 선샤인 걸+고스트 메신저&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>83min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;span class="num colSG">SG&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>11:53&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>206&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=290">캐나다 단편선 + 스페셜 토크 : 다정한 캐나다&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>87+60min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:57&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>OIAF22 시그널 필름&lt;/li>
+											&lt;li>수영장의 게&lt;/li>
+											&lt;li>마이나르스키 데스 플러밋&lt;/li>
+											&lt;li>메니스 : 비밀의 섬&lt;/li>
+											&lt;li>헤르조그의 치킨&lt;/li>
+											&lt;li>터빈&lt;/li>
+											&lt;li>에로디움 덩크&lt;/li>
+											&lt;li>소나무 그림자&lt;/li>
+											&lt;li>고슴도치의 집&lt;/li>
+											&lt;li>리빙 드림&lt;/li>
+											&lt;li>플라잉 세일러&lt;/li>
+											&lt;li>블라인드 바이샤&lt;/li>
+											&lt;li>OIAF23 시그널 필름&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>207&lt;em>17:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2627&amp;formtype=view">사일렉스 앤 더 시티&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>82min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:22&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>208&lt;em>20:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=273">TV&amp;커미션드&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>75min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:15&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>시선의 너머&lt;/li>
+											&lt;li>더 보이스 &lt;/li>
+											&lt;li>민들레 아이&lt;/li>
+											&lt;li>거즐 블러드&lt;/li>
+											&lt;li>모그의 크리스마스&lt;/li>
+											&lt;li>마이웨이&lt;/li>
+											&lt;li>첫사랑의 향기&lt;/li>
+											&lt;li>울려라! 유포니엄 3&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB4&lt;/th>
+							&lt;td>
+								&lt;div>209&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=287">한국 단편 B&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>11:51&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>방랑자 욥&lt;/li>
+											&lt;li>크리스마스 이브&lt;/li>
+											&lt;li>서클&lt;/li>
+											&lt;li>기억은 먹구름&lt;/li>
+											&lt;li>홀로&lt;/li>
+											&lt;li>일루전&lt;/li>
+											&lt;li>뜬구름&lt;/li>
+											&lt;li>맥거핀&lt;/li>
+											&lt;li>포자러브&lt;/li>
+											&lt;li>귀신보는 아이 김리나&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>210&lt;em>14:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=286">한국 단편 A&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:21&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>아네모네&lt;/li>
+											&lt;li>체리파이&lt;/li>
+											&lt;li>고달픈 여름&lt;/li>
+											&lt;li>식사&lt;/li>
+											&lt;li>미행 : 짝사랑에 대한 짧은 감상&lt;/li>
+											&lt;li>미싱 메신저&lt;/li>
+											&lt;li>파라노이드 키드&lt;/li>
+											&lt;li>비행몽&lt;/li>
+											&lt;li>에스&lt;/li>
+											&lt;li>옷장 속 사람들&lt;/li>
+											&lt;li>이 세계는 콜라이고 우린 그걸 흔들고 있어&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>211&lt;em>17:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2628&amp;formtype=view">아가미&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>104min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:44&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>212&lt;em>20:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2631&amp;formtype=view">락 바텀&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>87min&lt;/em>&lt;span class="num col19">19&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:27&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB5&lt;/th>
+							&lt;td>
+								&lt;div>213&lt;em>11:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2624&amp;formtype=view">내 이름은 케리아&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>87min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:27&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>214&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2625&amp;formtype=view">정원의 보트&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>75min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>14:45&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>215&lt;em>16:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2629&amp;formtype=view">인투 더 원더우즈&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>17:51&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>216&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2633&amp;formtype=view">그리드맨 유니버스&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>117min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:27&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB7&lt;/th>
+							&lt;td>
+								&lt;div>217&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=276">단편 C&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>97min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:07&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>비주얼 컷&lt;/li>
+											&lt;li>앙떼오르&lt;/li>
+											&lt;li>비커밍 에어&lt;/li>
+											&lt;li>글래스하우스&lt;/li>
+											&lt;li>일루전&lt;/li>
+											&lt;li>엘리펀트&lt;/li>
+											&lt;li>따개비&lt;/li>
+											&lt;li>쓰레기의 노래&lt;/li>
+											&lt;li>겨울의 담비&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>218&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=277">단편 D&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>96min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:06&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>기억은 먹구름&lt;/li>
+											&lt;li>플라워쇼&lt;/li>
+											&lt;li>사랑의 흔적&lt;/li>
+											&lt;li>틴에이지 블랙아웃&lt;/li>
+											&lt;li>플레잉 갓&lt;/li>
+											&lt;li>프로그레스 마이닝&lt;/li>
+											&lt;li>해변에서 돌아온 일행&lt;/li>
+											&lt;li>환상의 노루&lt;/li>
+											&lt;li>비건 마요&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>219&lt;em>16:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=278">단편 E&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>95min&lt;/em>&lt;span class="num col19">19&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:05&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>아쿠아틱&lt;/li>
+											&lt;li>비스트 인사이드&lt;/li>
+											&lt;li>뷰티풀맨&lt;/li>
+											&lt;li>나는 이르핀에서 죽었다&lt;/li>
+											&lt;li>까미뉴&lt;/li>
+											&lt;li>슈퍼실리&lt;/li>
+											&lt;li>체인지 휠&lt;/li>
+											&lt;li>완더 투 원더&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>220&lt;em>20:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=274">단편 A&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>98min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:38&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>[S] 무한동력&lt;/li>
+											&lt;li>서클&lt;/li>
+											&lt;li>괴물의 왕국&lt;/li>
+											&lt;li>롱디스턴스&lt;/li>
+											&lt;li>물결소녀&lt;/li>
+											&lt;li>시대의 경계선&lt;/li>
+											&lt;li>옷장 속 사람들&lt;/li>
+											&lt;li>양들의 멜로디&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CH&lt;/th>
+							&lt;td>
+								&lt;div>221&lt;em>11:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=284&amp;m_idx=2638&amp;formtype=view">극장판 마크로스Δ 격정의 왈큐레&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>120min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>13:00&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>222&lt;em>15:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=284&amp;m_idx=2639&amp;formtype=view">극장판 마크로스Δ 절대 LIVE!!!!!! + 극장단편 마크로스F ~시간의 미궁~&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>124min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>17:04&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+							&lt;td>
+								&lt;div>223&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=278&amp;idx=285&amp;m_idx=2640&amp;formtype=view">작품소개 + 아키라&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>124+20min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;span class="num colFC">FC&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:54&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+					&lt;/tbody>
+				&lt;/table>
+			&lt;/div>&lt;/div>
+		&lt;/div>
+
+
+
+
+&lt;div class="screenCalendar">
+			&lt;div>
+				&lt;h4>2024년 10월 27일(일)&lt;/h4>
+			&lt;/div>
+			&lt;div class="rollTable">&lt;div>
+				&lt;table>
+					&lt;thead>
+						&lt;tr>
+							&lt;th scope="col">극장/회차&lt;/th>
+							&lt;th scope="col">1회차&lt;/th>
+							&lt;th scope="col">2회차&lt;/th>
+							&lt;th scope="col">3회차&lt;/th>
+							&lt;th scope="col">4회차&lt;/th>
+						&lt;/tr>
+					&lt;/thead>
+					&lt;tbody>
+						&lt;tr>
+							&lt;th scope="row">KM&lt;/th>
+							&lt;td>
+								&lt;div>301&lt;em>11:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=292">워크 인 프로그레스 : 아홉산 숲: 기생혼&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>60min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:00&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>302&lt;em>13:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2623&amp;formtype=view">후레루.&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>107min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>14:47&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>303&lt;em>16:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2633&amp;formtype=view">그리드맨 유니버스&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>117min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:27&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>304&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=291">트라페지움 + 스페셜 토크 : 꿈을 꾸는 아이들&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>94+60min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>22:04&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB3&lt;/th>
+							&lt;td>
+								&lt;div>305&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=286">한국 단편 A&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>11:51&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>아네모네&lt;/li>
+											&lt;li>체리파이&lt;/li>
+											&lt;li>고달픈 여름&lt;/li>
+											&lt;li>식사&lt;/li>
+											&lt;li>미행 : 짝사랑에 대한 짧은 감상&lt;/li>
+											&lt;li>미싱 메신저&lt;/li>
+											&lt;li>파라노이드 키드&lt;/li>
+											&lt;li>비행몽&lt;/li>
+											&lt;li>에스&lt;/li>
+											&lt;li>옷장 속 사람들&lt;/li>
+											&lt;li>이 세계는 콜라이고 우린 그걸 흔들고 있어&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>306&lt;em>14:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=287">한국 단편 B&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:21&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>방랑자 욥&lt;/li>
+											&lt;li>크리스마스 이브&lt;/li>
+											&lt;li>서클&lt;/li>
+											&lt;li>기억은 먹구름&lt;/li>
+											&lt;li>홀로&lt;/li>
+											&lt;li>일루전&lt;/li>
+											&lt;li>뜬구름&lt;/li>
+											&lt;li>맥거핀&lt;/li>
+											&lt;li>포자러브&lt;/li>
+											&lt;li>귀신보는 아이 김리나&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>307&lt;em>17:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=271">학생&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>89min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:29&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>가여운 남자&lt;/li>
+											&lt;li>썰물&lt;/li>
+											&lt;li>에코&lt;/li>
+											&lt;li>제미니&lt;/li>
+											&lt;li>원더풀라이프&lt;/li>
+											&lt;li>퍼버트짐밥&lt;/li>
+											&lt;li>스위프트&lt;/li>
+											&lt;li>찰리는 뱀파이어&lt;/li>
+											&lt;li>나의 소년시대&lt;/li>
+											&lt;li>수상한 풀&lt;/li>
+											&lt;li>사우스윈도우&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>308&lt;em>20:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=196&amp;idx=281&amp;m_idx=2635&amp;formtype=view">4K 슈퍼스케일드 선샤인 걸+고스트 메신저&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>83min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:23&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB4&lt;/th>
+							&lt;td>
+								&lt;div>309&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2628&amp;formtype=view">아가미&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>104min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:14&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>310&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=196&amp;idx=281&amp;m_idx=2634&amp;formtype=view">기빗올 : 우리들의 썸머&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>95min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:05&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>311&lt;em>16:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2624&amp;formtype=view">내 이름은 케리아&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>87min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>17:27&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>312&lt;em>18:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=284&amp;m_idx=2637&amp;formtype=view">마크로스 제로 (프리미엄 리마스터판)&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>158min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:08&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB5&lt;/th>
+							&lt;td>
+								&lt;div>313&lt;em>11:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2629&amp;formtype=view">인투 더 원더우즈&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>81min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:21&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>314&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2627&amp;formtype=view">사일렉스 앤 더 시티&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>82min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>14:52&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>315&lt;em>16:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2632&amp;formtype=view">폭풍우&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>102min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:12&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>316&lt;em>19:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2626&amp;formtype=view">달팽이의 회고록&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>94min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>20:34&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB7&lt;/th>
+							&lt;td>
+								&lt;div>317&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=278">단편 E&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>95min&lt;/em>&lt;span class="num col19">19&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:05&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>아쿠아틱&lt;/li>
+											&lt;li>비스트 인사이드&lt;/li>
+											&lt;li>뷰티풀맨&lt;/li>
+											&lt;li>나는 이르핀에서 죽었다&lt;/li>
+											&lt;li>까미뉴&lt;/li>
+											&lt;li>슈퍼실리&lt;/li>
+											&lt;li>체인지 휠&lt;/li>
+											&lt;li>완더 투 원더&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>318&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=275">단편 B&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>99min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:09&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>인연의 끈&lt;/li>
+											&lt;li>익스트림 쇼트&lt;/li>
+											&lt;li>별똥별&lt;/li>
+											&lt;li>굶주린 자들의 귀환&lt;/li>
+											&lt;li>그들의 안식처&lt;/li>
+											&lt;li>미저러블 미라클&lt;/li>
+											&lt;li>파라노이드 키드&lt;/li>
+											&lt;li>테니스, 오렌지&lt;/li>
+											&lt;li>소녀와 단지&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>319&lt;em>16:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=276">단편 C&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>97min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:07&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>비주얼 컷&lt;/li>
+											&lt;li>앙떼오르&lt;/li>
+											&lt;li>비커밍 에어&lt;/li>
+											&lt;li>글래스하우스&lt;/li>
+											&lt;li>일루전&lt;/li>
+											&lt;li>엘리펀트&lt;/li>
+											&lt;li>따개비&lt;/li>
+											&lt;li>쓰레기의 노래&lt;/li>
+											&lt;li>겨울의 담비&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>320&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=274">단편 A&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>98min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:08&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>[S] 무한동력&lt;/li>
+											&lt;li>서클&lt;/li>
+											&lt;li>괴물의 왕국&lt;/li>
+											&lt;li>롱디스턴스&lt;/li>
+											&lt;li>물결소녀&lt;/li>
+											&lt;li>시대의 경계선&lt;/li>
+											&lt;li>옷장 속 사람들&lt;/li>
+											&lt;li>양들의 멜로디&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CH&lt;/th>
+							&lt;td>
+								&lt;div>321&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=285&amp;m_idx=2644&amp;formtype=view">왕립우주군-오네아미스의 날개&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>119min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:29&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>322&lt;em>13:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=285&amp;m_idx=2642&amp;formtype=view">기동전사 건담 역습의 샤아&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>120min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:30&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>323&lt;em>16:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=285&amp;m_idx=2643&amp;formtype=view">기동전사 건담 F91&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>120min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:30&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>324&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=285&amp;m_idx=2641&amp;formtype=view">작품소개 + 공각기동대&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>83+20min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;span class="num colN">N&lt;/span>&lt;span class="num colFC">FC&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>21:13&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+					&lt;/tbody>
+				&lt;/table>
+			&lt;/div>&lt;/div>
+		&lt;/div>
+
+
+
+
+&lt;div class="screenCalendar">
+			&lt;div>
+				&lt;h4>2024년 10월 28일(월)&lt;/h4>
+			&lt;/div>
+			&lt;div class="rollTable">&lt;div>
+				&lt;table>
+					&lt;thead>
+						&lt;tr>
+							&lt;th scope="col">극장/회차&lt;/th>
+							&lt;th scope="col">1회차&lt;/th>
+							&lt;th scope="col">2회차&lt;/th>
+							&lt;th scope="col">3회차&lt;/th>
+							&lt;th scope="col">4회차&lt;/th>
+						&lt;/tr>
+					&lt;/thead>
+					&lt;tbody>
+						&lt;tr>
+							&lt;th scope="row">KM&lt;/th>
+							&lt;td>
+								&lt;div>401&lt;em>11:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=293">윈도 호스 + 스페셜 토크 : ‘나’를 찾아가는 여행&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>85+60min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>13:25&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>402&lt;em>14:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=276&amp;idx=287">캐나다 단편선&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>87min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;span class="num colGv">GV&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>15:57&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>OIAF22 시그널 필름&lt;/li>
+											&lt;li>수영장의 게&lt;/li>
+											&lt;li>마이나르스키 데스 플러밋&lt;/li>
+											&lt;li>메니스 : 비밀의 섬&lt;/li>
+											&lt;li>헤르조그의 치킨&lt;/li>
+											&lt;li>터빈&lt;/li>
+											&lt;li>에로디움 덩크&lt;/li>
+											&lt;li>소나무 그림자&lt;/li>
+											&lt;li>고슴도치의 집&lt;/li>
+											&lt;li>리빙 드림&lt;/li>
+											&lt;li>플라잉 세일러&lt;/li>
+											&lt;li>블라인드 바이샤&lt;/li>
+											&lt;li>OIAF23 시그널 필름&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB3&lt;/th>
+							&lt;td>
+								&lt;div>403&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=275">단편 B&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>99min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:09&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>인연의 끈&lt;/li>
+											&lt;li>익스트림 쇼트&lt;/li>
+											&lt;li>별똥별&lt;/li>
+											&lt;li>굶주린 자들의 귀환&lt;/li>
+											&lt;li>그들의 안식처&lt;/li>
+											&lt;li>미저러블 미라클&lt;/li>
+											&lt;li>파라노이드 키드&lt;/li>
+											&lt;li>테니스, 오렌지&lt;/li>
+											&lt;li>소녀와 단지&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>404&lt;em>13:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=277">단편 D&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>96min&lt;/em>&lt;span class="num col15">15&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>14:36&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>기억은 먹구름&lt;/li>
+											&lt;li>플라워쇼&lt;/li>
+											&lt;li>사랑의 흔적&lt;/li>
+											&lt;li>틴에이지 블랙아웃&lt;/li>
+											&lt;li>플레잉 갓&lt;/li>
+											&lt;li>프로그레스 마이닝&lt;/li>
+											&lt;li>해변에서 돌아온 일행&lt;/li>
+											&lt;li>환상의 노루&lt;/li>
+											&lt;li>비건 마요&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>405&lt;em>17:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=24&amp;idx=273">TV&amp;커미션드&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>75min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>18:15&lt;/span>
+									&lt;div class="hoverArea">
+										&lt;ul>
+											&lt;li>시선의 너머&lt;/li>
+											&lt;li>더 보이스 &lt;/li>
+											&lt;li>민들레 아이&lt;/li>
+											&lt;li>거즐 블러드&lt;/li>
+											&lt;li>모그의 크리스마스&lt;/li>
+											&lt;li>마이웨이&lt;/li>
+											&lt;li>첫사랑의 향기&lt;/li>
+											&lt;li>울려라! 유포니엄 3&lt;/li>
+										&lt;/ul>
+									&lt;/div>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>406&lt;em>19:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="javascript:alert('발표 후 공개예정')">장편 수상작1&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>-&lt;/em>-&lt;/dd>
+									&lt;/dl>
+									&lt;span>-&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CH&lt;/th>
+							&lt;td>
+								&lt;div>407&lt;em>10:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=26&amp;idx=294&amp;m_idx=2617&amp;formtype=view">핑크퐁과 호기: 새 친구 니니모&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>35min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>10:35&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>408&lt;em>11:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=26&amp;idx=294&amp;m_idx=2619&amp;formtype=view">핑크퐁 시네마 콘서트 3: 진저브레드맨을 잡아라&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>65min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:35&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+					&lt;/tbody>
+				&lt;/table>
+			&lt;/div>&lt;/div>
+		&lt;/div>
+
+
+
+
+&lt;div class="screenCalendar">
+			&lt;div>
+				&lt;h4>2024년 10월 29일(화)&lt;/h4>
+			&lt;/div>
+			&lt;div class="rollTable">&lt;div>
+				&lt;table>
+					&lt;thead>
+						&lt;tr>
+							&lt;th scope="col">극장/회차&lt;/th>
+							&lt;th scope="col">1회차&lt;/th>
+							&lt;th scope="col">2회차&lt;/th>
+						&lt;/tr>
+					&lt;/thead>
+					&lt;tbody>
+						&lt;tr>
+							&lt;th scope="row">KM&lt;/th>
+							&lt;td>
+								&lt;div>501&lt;em>10:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=26&amp;idx=294&amp;m_idx=2618&amp;formtype=view">핑크퐁 원더스타 특별편: 호기와 도둑자동차&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>43min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>10:43&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>502&lt;em>11:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=26&amp;idx=294&amp;m_idx=2620&amp;formtype=view">핑크퐁 오싹오싹 명작동화&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>48min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:18&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CB3&lt;/th>
+							&lt;td>
+								&lt;div>503&lt;em>10:30&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=23&amp;idx=268&amp;m_idx=2628&amp;formtype=view">아가미&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>104min&lt;/em>&lt;span class="num col12">12&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>12:14&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>
+								&lt;div>504&lt;em>13:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="javascript:alert('발표 후 공개예정')">장편 수상작2&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>-&lt;/em>-&lt;/dd>
+									&lt;/dl>
+									&lt;span>-&lt;/span>
+								&lt;/div>
+							&lt;/td>
+						&lt;/tr>
+						&lt;tr>
+							&lt;th scope="row">CH&lt;/th>
+							&lt;td>
+								&lt;div>505&lt;em>10:00&lt;/em>
+									&lt;dl>
+										&lt;dt>&lt;a href="/kr/sub.html?pid=26&amp;idx=294&amp;m_idx=2621&amp;formtype=view">용감한 돌고래 벨루와 바닷속 친구들&lt;/a>&lt;/dt>
+										&lt;dd>&lt;em>82min&lt;/em>&lt;span class="num colG">G&lt;/span>&lt;span class="num colK">K&lt;/span>&lt;/dd>
+									&lt;/dl>
+									&lt;span>11:22&lt;/span>
+								&lt;/div>
+							&lt;/td>
+							&lt;td>&lt;/td>
+						&lt;/tr>
+					&lt;/tbody>
+				&lt;/table>
+			&lt;/div>&lt;/div>
+		&lt;/div></textarea>
+<button id="btnParse">▼</button>
+<form onsubmit="return toSchedule();">
+	<textarea id="outputJson"></textarea>
+	<button type="submit" id="btnSubmit">적용</button>
+</form>
+<textarea id="outputExcel"></textarea>
+</body></html>

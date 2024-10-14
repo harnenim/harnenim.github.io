@@ -1,0 +1,248 @@
+<html><head>
+	<meta charset="utf-8">
+	<title>BIAF 스케줄 짜기</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+	<script src="/script/common/jquery-3.7.1.min.js"></script>
+
+	<script>
+var schedules = {
+		"2024": {"places":["KM","CB3","CB4","CB5","CB7","CH"],"dates":["25","26","27","28","29"],"lists":{"KM":{"25":[null,null,null,{"date":"25","place":"KM","index":4,"code":"101","begin":"18:00","title":"개막식 + 연의 편지","time":"60+97min","nums":["G"],"end":"20:37"}],"26":[{"date":"26","place":"KM","index":1,"code":"201","begin":"11:00","title":"걸즈 밴드 크라이","time":"73min","nums":["G","N"],"end":"12:13"},{"date":"26","place":"KM","index":2,"code":"202","begin":"13:30","title":"연의 편지","time":"97min","nums":["G","GV"],"end":"15:07"},{"date":"26","place":"KM","index":3,"code":"203","begin":"17:00","title":"기빗올 : 우리들의 썸머","time":"95min","nums":["G","N"],"end":"18:35"},{"date":"26","place":"KM","index":4,"code":"204","begin":"19:30","title":"후레루.","time":"107min","nums":["G","GV"],"end":"21:17"}],"27":[{"date":"27","place":"KM","index":1,"code":"301","begin":"11:00","title":"워크 인 프로그레스 : 아홉산 숲: 기생혼","time":"60min","nums":["G"],"end":"12:00"},{"date":"27","place":"KM","index":2,"code":"302","begin":"13:00","title":"후레루.","time":"107min","nums":["G","GV"],"end":"14:47"},{"date":"27","place":"KM","index":3,"code":"303","begin":"16:30","title":"그리드맨 유니버스","time":"117min","nums":["G"],"end":"18:27"},{"date":"27","place":"KM","index":4,"code":"304","begin":"19:30","title":"트라페지움 + 스페셜 토크 : 꿈을 꾸는 아이들","time":"94+60min","nums":["G"],"end":"22:04"}],"28":[{"date":"28","place":"KM","index":1,"code":"401","begin":"11:00","title":"윈도 호스 + 스페셜 토크 : ‘나’를 찾아가는 여행","time":"85+60min","nums":["G"],"end":"13:25"},{"date":"28","place":"KM","index":2,"code":"402","begin":"14:30","title":"캐나다 단편선","time":"87min","nums":["15","GV"],"end":"15:57","subtitles":["OIAF22 시그널 필름","수영장의 게","마이나르스키 데스 플러밋","메니스 : 비밀의 섬","헤르조그의 치킨","터빈","에로디움 덩크","소나무 그림자","고슴도치의 집","리빙 드림","플라잉 세일러","블라인드 바이샤","OIAF23 시그널 필름"]}],"29":[{"date":"29","place":"KM","index":1,"code":"501","begin":"10:00","title":"핑크퐁 원더스타 특별편: 호기와 도둑자동차","time":"43min","nums":["G","K"],"end":"10:43"},{"date":"29","place":"KM","index":2,"code":"502","begin":"11:30","title":"핑크퐁 오싹오싹 명작동화","time":"48min","nums":["G","K"],"end":"12:18"}]},"CB3":{"25":[{"date":"25","place":"CB3","index":1,"code":"102","begin":"10:30","title":"학생","time":"89min","nums":["12"],"end":"11:59","subtitles":["가여운 남자","썰물","에코","제미니","원더풀라이프","퍼버트짐밥","스위프트","찰리는 뱀파이어","나의 소년시대","수상한 풀","사우스윈도우"]},{"date":"25","place":"CB3","index":2,"code":"103","begin":"13:30","title":"한국 단편 B","time":"81min","nums":["15"],"end":"14:51","subtitles":["방랑자 욥","크리스마스 이브","서클","기억은 먹구름","홀로","일루전","뜬구름","맥거핀","포자러브","귀신보는 아이 김리나"]},{"date":"25","place":"CB3","index":3,"code":"104","begin":"16:00","title":"한국 단편 A","time":"81min","nums":["G"],"end":"17:21","subtitles":["아네모네","체리파이","고달픈 여름","식사","미행 : 짝사랑에 대한 짧은 감상","미싱 메신저","파라노이드 키드","비행몽","에스","옷장 속 사람들","이 세계는 콜라이고 우린 그걸 흔들고 있어"]},{"date":"25","place":"CB3","index":4,"code":"105","begin":"19:30","title":"연의 편지","time":"97min","nums":["G"],"end":"21:07"}],"26":[{"date":"26","place":"CB3","index":1,"code":"205","begin":"10:30","title":"4K 슈퍼스케일드 선샤인 걸+고스트 메신저","time":"83min","nums":["12","K","SG"],"end":"11:53"},{"date":"26","place":"CB3","index":2,"code":"206","begin":"13:30","title":"캐나다 단편선 + 스페셜 토크 : 다정한 캐나다","time":"87+60min","nums":["15"],"end":"15:57","subtitles":["OIAF22 시그널 필름","수영장의 게","마이나르스키 데스 플러밋","메니스 : 비밀의 섬","헤르조그의 치킨","터빈","에로디움 덩크","소나무 그림자","고슴도치의 집","리빙 드림","플라잉 세일러","블라인드 바이샤","OIAF23 시그널 필름"]},{"date":"26","place":"CB3","index":3,"code":"207","begin":"17:00","title":"사일렉스 앤 더 시티","time":"82min","nums":["15"],"end":"18:22"},{"date":"26","place":"CB3","index":4,"code":"208","begin":"20:00","title":"TV&커미션드","time":"75min","nums":["G","GV"],"end":"21:15","subtitles":["시선의 너머","더 보이스 ","민들레 아이","거즐 블러드","모그의 크리스마스","마이웨이","첫사랑의 향기","울려라! 유포니엄 3"]}],"27":[{"date":"27","place":"CB3","index":1,"code":"305","begin":"10:30","title":"한국 단편 A","time":"81min","nums":["G","GV"],"end":"11:51","subtitles":["아네모네","체리파이","고달픈 여름","식사","미행 : 짝사랑에 대한 짧은 감상","미싱 메신저","파라노이드 키드","비행몽","에스","옷장 속 사람들","이 세계는 콜라이고 우린 그걸 흔들고 있어"]},{"date":"27","place":"CB3","index":2,"code":"306","begin":"14:00","title":"한국 단편 B","time":"81min","nums":["15","GV"],"end":"15:21","subtitles":["방랑자 욥","크리스마스 이브","서클","기억은 먹구름","홀로","일루전","뜬구름","맥거핀","포자러브","귀신보는 아이 김리나"]},{"date":"27","place":"CB3","index":3,"code":"307","begin":"17:00","title":"학생","time":"89min","nums":["12","GV"],"end":"18:29","subtitles":["가여운 남자","썰물","에코","제미니","원더풀라이프","퍼버트짐밥","스위프트","찰리는 뱀파이어","나의 소년시대","수상한 풀","사우스윈도우"]},{"date":"27","place":"CB3","index":4,"code":"308","begin":"20:00","title":"4K 슈퍼스케일드 선샤인 걸+고스트 메신저","time":"83min","nums":["12","K","GV"],"end":"21:23"}],"28":[{"date":"28","place":"CB3","index":1,"code":"403","begin":"10:30","title":"단편 B","time":"99min","nums":["G"],"end":"12:09","subtitles":["인연의 끈","익스트림 쇼트","별똥별","굶주린 자들의 귀환","그들의 안식처","미저러블 미라클","파라노이드 키드","테니스, 오렌지","소녀와 단지"]},{"date":"28","place":"CB3","index":2,"code":"404","begin":"13:00","title":"단편 D","time":"96min","nums":["15"],"end":"14:36","subtitles":["기억은 먹구름","플라워쇼","사랑의 흔적","틴에이지 블랙아웃","플레잉 갓","프로그레스 마이닝","해변에서 돌아온 일행","환상의 노루","비건 마요"]},{"date":"28","place":"CB3","index":3,"code":"405","begin":"17:00","title":"TV&커미션드","time":"75min","nums":["G"],"end":"18:15","subtitles":["시선의 너머","더 보이스 ","민들레 아이","거즐 블러드","모그의 크리스마스","마이웨이","첫사랑의 향기","울려라! 유포니엄 3"]},{"date":"28","place":"CB3","index":4,"code":"406","begin":"19:30","title":"장편 수상작1","time":"-","nums":[],"end":"-"}],"29":[{"date":"29","place":"CB3","index":1,"code":"503","begin":"10:30","title":"아가미","time":"104min","nums":["12"],"end":"12:14"},{"date":"29","place":"CB3","index":2,"code":"504","begin":"13:00","title":"장편 수상작2","time":"-","nums":[],"end":"-"}]},"CB4":{"25":[{"date":"25","place":"CB4","index":1,"code":"106","begin":"11:00","title":"정원의 보트","time":"75min","nums":["G"],"end":"12:15"},{"date":"25","place":"CB4","index":2,"code":"107","begin":"13:00","title":"마크로스 제로 (프리미엄 리마스터판)","time":"158min","nums":["12","N"],"end":"15:38"},{"date":"25","place":"CB4","index":3,"code":"108","begin":"16:30","title":"극장판 마크로스Δ 격정의 왈큐레","time":"120min","nums":["12","N"],"end":"18:30"},{"date":"25","place":"CB4","index":4,"code":"109","begin":"19:30","title":"극장판 마크로스Δ 절대 LIVE!!!!!! + 극장단편 마크로스F ~시간의 미궁~","time":"124min","nums":["12","N"],"end":"21:34"}],"26":[{"date":"26","place":"CB4","index":1,"code":"209","begin":"10:30","title":"한국 단편 B","time":"81min","nums":["15","GV"],"end":"11:51","subtitles":["방랑자 욥","크리스마스 이브","서클","기억은 먹구름","홀로","일루전","뜬구름","맥거핀","포자러브","귀신보는 아이 김리나"]},{"date":"26","place":"CB4","index":2,"code":"210","begin":"14:00","title":"한국 단편 A","time":"81min","nums":["G","GV"],"end":"15:21","subtitles":["아네모네","체리파이","고달픈 여름","식사","미행 : 짝사랑에 대한 짧은 감상","미싱 메신저","파라노이드 키드","비행몽","에스","옷장 속 사람들","이 세계는 콜라이고 우린 그걸 흔들고 있어"]},{"date":"26","place":"CB4","index":3,"code":"211","begin":"17:00","title":"아가미","time":"104min","nums":["12","GV"],"end":"18:44"},{"date":"26","place":"CB4","index":4,"code":"212","begin":"20:00","title":"락 바텀","time":"87min","nums":["19"],"end":"21:27"}],"27":[{"date":"27","place":"CB4","index":1,"code":"309","begin":"10:30","title":"아가미","time":"104min","nums":["12"],"end":"12:14"},{"date":"27","place":"CB4","index":2,"code":"310","begin":"13:30","title":"기빗올 : 우리들의 썸머","time":"95min","nums":["G","N"],"end":"15:05"},{"date":"27","place":"CB4","index":3,"code":"311","begin":"16:00","title":"내 이름은 케리아","time":"87min","nums":["G"],"end":"17:27"},{"date":"27","place":"CB4","index":4,"code":"312","begin":"18:30","title":"마크로스 제로 (프리미엄 리마스터판)","time":"158min","nums":["12","N"],"end":"21:08"}],"28":[],"29":[]},"CB5":{"25":[{"date":"25","place":"CB5","index":1,"code":"110","begin":"10:30","title":"폭풍우","time":"102min","nums":["G"],"end":"12:12"},{"date":"25","place":"CB5","index":2,"code":"111","begin":"14:00","title":"달팽이의 회고록","time":"94min","nums":["15"],"end":"15:34"},{"date":"25","place":"CB5","index":3,"code":"112","begin":"17:00","title":"락 바텀","time":"87min","nums":["19"],"end":"18:27"},{"date":"25","place":"CB5","index":4,"code":"113","begin":"20:00","title":"트라페지움","time":"94min","nums":["G"],"end":"21:34"}],"26":[{"date":"26","place":"CB5","index":1,"code":"213","begin":"11:00","title":"내 이름은 케리아","time":"87min","nums":["G"],"end":"12:27"},{"date":"26","place":"CB5","index":2,"code":"214","begin":"13:30","title":"정원의 보트","time":"75min","nums":["G"],"end":"14:45"},{"date":"26","place":"CB5","index":3,"code":"215","begin":"16:30","title":"인투 더 원더우즈","time":"81min","nums":["G"],"end":"17:51"},{"date":"26","place":"CB5","index":4,"code":"216","begin":"19:30","title":"그리드맨 유니버스","time":"117min","nums":["G"],"end":"21:27"}],"27":[{"date":"27","place":"CB5","index":1,"code":"313","begin":"11:00","title":"인투 더 원더우즈","time":"81min","nums":["G"],"end":"12:21"},{"date":"27","place":"CB5","index":2,"code":"314","begin":"13:30","title":"사일렉스 앤 더 시티","time":"82min","nums":["15"],"end":"14:52"},{"date":"27","place":"CB5","index":3,"code":"315","begin":"16:30","title":"폭풍우","time":"102min","nums":["G"],"end":"18:12"},{"date":"27","place":"CB5","index":4,"code":"316","begin":"19:00","title":"달팽이의 회고록","time":"94min","nums":["15"],"end":"20:34"}],"28":[],"29":[]},"CB7":{"25":[{"date":"25","place":"CB7","index":1,"code":"114","begin":"10:30","title":"단편 A","time":"98min","nums":["G"],"end":"12:08","subtitles":["[S] 무한동력","서클","괴물의 왕국","롱디스턴스","물결소녀","시대의 경계선","옷장 속 사람들","양들의 멜로디"]},{"date":"25","place":"CB7","index":2,"code":"115","begin":"13:00","title":"단편 B","time":"99min","nums":["G"],"end":"14:39","subtitles":["인연의 끈","익스트림 쇼트","별똥별","굶주린 자들의 귀환","그들의 안식처","미저러블 미라클","파라노이드 키드","테니스, 오렌지","소녀와 단지"]},{"date":"25","place":"CB7","index":3,"code":"116","begin":"15:30","title":"단편 C","time":"97min","nums":["12"],"end":"17:07","subtitles":["비주얼 컷","앙떼오르","비커밍 에어","글래스하우스","일루전","엘리펀트","따개비","쓰레기의 노래","겨울의 담비"]},{"date":"25","place":"CB7","index":4,"code":"117","begin":"18:00","title":"단편 D","time":"96min","nums":["15"],"end":"19:36","subtitles":["기억은 먹구름","플라워쇼","사랑의 흔적","틴에이지 블랙아웃","플레잉 갓","프로그레스 마이닝","해변에서 돌아온 일행","환상의 노루","비건 마요"]},{"date":"25","place":"CB7","index":5,"code":"118","begin":"20:30","title":"단편 E","time":"95min","nums":["19"],"end":"22:05","subtitles":["아쿠아틱","비스트 인사이드","뷰티풀맨","나는 이르핀에서 죽었다","까미뉴","슈퍼실리","체인지 휠","완더 투 원더"]}],"26":[{"date":"26","place":"CB7","index":1,"code":"217","begin":"10:30","title":"단편 C","time":"97min","nums":["12"],"end":"12:07","subtitles":["비주얼 컷","앙떼오르","비커밍 에어","글래스하우스","일루전","엘리펀트","따개비","쓰레기의 노래","겨울의 담비"]},{"date":"26","place":"CB7","index":2,"code":"218","begin":"13:30","title":"단편 D","time":"96min","nums":["15","GV"],"end":"15:06","subtitles":["기억은 먹구름","플라워쇼","사랑의 흔적","틴에이지 블랙아웃","플레잉 갓","프로그레스 마이닝","해변에서 돌아온 일행","환상의 노루","비건 마요"]},{"date":"26","place":"CB7","index":3,"code":"219","begin":"16:30","title":"단편 E","time":"95min","nums":["19","GV"],"end":"18:05","subtitles":["아쿠아틱","비스트 인사이드","뷰티풀맨","나는 이르핀에서 죽었다","까미뉴","슈퍼실리","체인지 휠","완더 투 원더"]},{"date":"26","place":"CB7","index":4,"code":"220","begin":"20:00","title":"단편 A","time":"98min","nums":["G","GV"],"end":"21:38","subtitles":["[S] 무한동력","서클","괴물의 왕국","롱디스턴스","물결소녀","시대의 경계선","옷장 속 사람들","양들의 멜로디"]}],"27":[{"date":"27","place":"CB7","index":1,"code":"317","begin":"10:30","title":"단편 E","time":"95min","nums":["19"],"end":"12:05","subtitles":["아쿠아틱","비스트 인사이드","뷰티풀맨","나는 이르핀에서 죽었다","까미뉴","슈퍼실리","체인지 휠","완더 투 원더"]},{"date":"27","place":"CB7","index":2,"code":"318","begin":"13:30","title":"단편 B","time":"99min","nums":["G","GV"],"end":"15:09","subtitles":["인연의 끈","익스트림 쇼트","별똥별","굶주린 자들의 귀환","그들의 안식처","미저러블 미라클","파라노이드 키드","테니스, 오렌지","소녀와 단지"]},{"date":"27","place":"CB7","index":3,"code":"319","begin":"16:30","title":"단편 C","time":"97min","nums":["12","GV"],"end":"18:07","subtitles":["비주얼 컷","앙떼오르","비커밍 에어","글래스하우스","일루전","엘리펀트","따개비","쓰레기의 노래","겨울의 담비"]},{"date":"27","place":"CB7","index":4,"code":"320","begin":"19:30","title":"단편 A","time":"98min","nums":["G","GV"],"end":"21:08","subtitles":["[S] 무한동력","서클","괴물의 왕국","롱디스턴스","물결소녀","시대의 경계선","옷장 속 사람들","양들의 멜로디"]}],"28":[],"29":[]},"CH":{"25":[{"date":"25","place":"CH","index":1,"code":"119","begin":"10:00","title":"래브라도 경장","time":"41min","nums":["G","K"],"end":"10:41"},{"date":"25","place":"CH","index":2,"code":"120","begin":"11:30","title":"베이비버스 키키묘묘구조대","time":"43min","nums":["G","K"],"end":"12:13"}],"26":[{"date":"26","place":"CH","index":1,"code":"221","begin":"11:00","title":"극장판 마크로스Δ 격정의 왈큐레","time":"120min","nums":["12","N","GV"],"end":"13:00"},{"date":"26","place":"CH","index":2,"code":"222","begin":"15:00","title":"극장판 마크로스Δ 절대 LIVE!!!!!! + 극장단편 마크로스F ~시간의 미궁~","time":"124min","nums":["12","N","GV"],"end":"17:04"},null,{"date":"26","place":"CH","index":4,"code":"223","begin":"19:30","title":"작품소개 + 아키라","time":"124+20min","nums":["15","N","FC"],"end":"21:54"}],"27":[{"date":"27","place":"CH","index":1,"code":"321","begin":"10:30","title":"왕립우주군-오네아미스의 날개","time":"119min","nums":["15","N"],"end":"12:29"},{"date":"27","place":"CH","index":2,"code":"322","begin":"13:30","title":"기동전사 건담 역습의 샤아","time":"120min","nums":["12","N"],"end":"15:30"},{"date":"27","place":"CH","index":3,"code":"323","begin":"16:30","title":"기동전사 건담 F91","time":"120min","nums":["12","N"],"end":"18:30"},{"date":"27","place":"CH","index":4,"code":"324","begin":"19:30","title":"작품소개 + 공각기동대","time":"83+20min","nums":["15","N","FC"],"end":"21:13"}],"28":[{"date":"28","place":"CH","index":1,"code":"407","begin":"10:00","title":"핑크퐁과 호기: 새 친구 니니모","time":"35min","nums":["G","K"],"end":"10:35"},{"date":"28","place":"CH","index":2,"code":"408","begin":"11:30","title":"핑크퐁 시네마 콘서트 3: 진저브레드맨을 잡아라","time":"65min","nums":["G","K"],"end":"12:35"}],"29":[{"date":"29","place":"CH","index":1,"code":"505","begin":"10:00","title":"용감한 돌고래 벨루와 바닷속 친구들","time":"82min","nums":["G","K"],"end":"11:22"}]}}}
+};
+function init(schedule) {
+	var thead = $("#thead");
+	var tbody = $("#tbody");
+
+	for (var k = 0; k < schedule.places.length; k++) {
+		thead.append($("<div>").addClass("place").addClass("place"+k).text(schedule.places[k]));
+	}
+	
+	for (var i = 0; i < schedule.dates.length; i++) {
+		if (i > 0) {
+			tbody.append($("<hr>").css({ top: (i*800) + "px" }));
+		}
+		
+		var date = schedule.dates[i];
+		var div = $("<div>").addClass("date").css({ top: i*800 + "px" }).text(date);
+		tbody.append(div);
+		
+		var max = 0;
+		for (var k = 0; k < schedule.places.length; k++) {
+			var length = schedule.lists[schedule.places[k]][date].length;
+			if (length > max) {
+				max = length;
+			}
+		}
+
+		for (var j = 0; j < max; j++) {
+			line = date + "일 " + (j+1) + "회차";
+			for (var k = 0; k < schedule.places.length; k++) {
+				line += "\t";
+				var item = schedule.lists[schedule.places[k]][date][j];
+				if (item) {
+					var begin = item.begin.split(":");
+					begin = (Number(begin[0])-9.5)*60 + Number(begin[1]);
+					
+					var times = item.time.split("min")[0].split("+");
+					var time = 0;
+					for (var t = 0; t < times.length; t++) {
+						time += (times[t] = Number(times[t]));
+					}
+					
+					var withGV = false;
+					for (var n = 0; n < item.nums.length; n++) {
+						if (item.nums[n] == "GV"
+						 || item.nums[n] == "SG") {
+							withGV = true;
+							var gv = Math.floor(time / 3); // 러닝타임의 1/3로 가정
+							times.push(gv);
+							time += gv;
+							break;
+						}
+					}
+					
+					div = $("<div>").addClass("item").attr({ id: "item_" + item.code }).data(item).addClass("place" + k);
+					div.append([item.code, item.begin].join(" ")).append("<br />")
+						.append(item.title).append("<br />")
+						.append([item.time, "("+item.nums.join(") (")+")", "~" + item.end].join(" "));
+					div.css({ top: (i*800 + begin) + "px", height: time + "px" });
+					if (withGV) {
+						div.addClass("gv");
+					}
+					
+					begin = times[0];
+					for (var t = 1; t < times.length; t++) {
+						div.append($("<div>").addClass("add").css({ top: begin + "px", height: times[t] + "px" }));
+					}
+					
+					tbody.append(div);
+				}
+			}
+		}
+	}
+}
+
+$(function() {
+	var y = null;
+	{
+		var list = { step1: [], step2: [], step3: [] };
+		
+		if (location.search) {
+			var searches = location.search.substring(1).split("&");
+			for (var i = 0; i < searches.length; i++) {
+				var param = searches[i].split("=");
+				switch (param[0]) {
+					case "y": y = param[1]; break;
+					case "step1": list.step1 = param[1].split(","); break;
+					case "step2": list.step2 = param[1].split(","); break;
+					case "step3": list.step3 = param[1].split(","); break;
+				}
+			}
+		}
+		
+		if (y == null) {
+			// schedule_parser.html 에서 보내준 값
+			var json = localStorage.getItem("scheduleJson");
+			if (json) {
+				localStorage.removeItem("scheduleJson");
+				json = JSON.parse(json);
+				schedules.parsed = json;
+				y = "parsed";
+			}
+		}
+		
+		init(schedules[y ? y : (y = "2024")]);
+		
+		for (var i = 1; i <= 3; i++) {
+			var step = "step" + i;
+			for (var j = 0; j < list[step].length; j++) {
+				$("#item_" + list[step][j]).addClass(step);
+			}
+		}
+	}
+	
+	$(document).on("click", "div.item", function() {
+		var item = $(this);
+		if (item.hasClass("step1")) {
+			item.removeClass("step1").addClass("step2");
+		} else if (item.hasClass("step2")) {
+			item.removeClass("step2").addClass("step3");
+		} else if (item.hasClass("step3")) {
+			item.removeClass("step3");
+		} else {
+			item.addClass("step1");
+		}
+	});
+	
+	$("#btnUrl").on("click", function() {
+		if (isFinite(y)) {
+			var step1 = []; $(".item.step1").each(function() { step1.push($(this).data("code")); });
+			var step2 = []; $(".item.step2").each(function() { step2.push($(this).data("code")); });
+			var step3 = []; $(".item.step3").each(function() { step3.push($(this).data("code")); });
+			var url = location.href.split("?")[0] + "?" + ["y="+y, "step1=" + (step1.join(",")), "step2=" + (step2.join(",")), "step3=" + (step3.join(","))].join("&");
+			if (navigator.clipboard) {
+				navigator.clipboard.writeText(url);
+				alert("URL을 복사했습니다.\n" + url);
+			} else {
+				alert("클립보드를 열 수 없습니다.\n" + url);
+				console.log(url);
+			}
+		} else {
+			alert("연도가 선택되지 않았습니다.");
+		}
+	});
+});
+	</script>
+	<style>
+html, body {
+	width: 100%;
+	height: 100%;
+}
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+#thead, #tbody {
+	position: relative;
+	width: 1300px;
+}
+#thead {
+	margin: 0 auto;
+	line-height: 30px;
+	height: 80px;
+	border-bottom: 3px double #aaa;
+}
+#tbody {
+	margin: 0 auto;
+	height: calc(100% - 80px);
+	overflow-y: scroll;
+}
+#thead > *,
+#tbody > * { position: absolute; }
+div.place {
+	text-align: center;
+	top: 50px;
+	width: 200px;
+}
+hr {
+	border-top: 3px double #aaa;
+	width: 100%;
+}
+div.date {
+	width: 50px;
+	line-height: 800px;
+	text-align: center;
+	user-select: none;
+	border-right: 1px dotted #aaa;
+}
+div.item {
+	border: 1px solid #aaa;
+	width: 200px;
+	padding: 2px;
+	user-select: none;
+	cursor: pointer;
+	overflow: hidden;
+}
+div.item:hover {
+	overflow: visible;
+	border-bottom-color: #ddd;
+	background: #ffe;
+}
+div.item.gv {
+	border-bottom-style: dotted;
+}
+div.item div.add {
+	position: absolute;
+	left: 0;
+	border-top: 1px dotted #aaa;
+	width: 100%;
+	background: rgba(127,127,127,0.1);
+}
+.place0 { left: calc(0 * 200px + 50px); }
+.place1 { left: calc(1 * 200px + 50px); }
+.place2 { left: calc(2 * 200px + 50px); }
+.place3 { left: calc(3 * 200px + 50px); }
+.place4 { left: calc(4 * 200px + 50px); }
+.place5 { left: calc(5 * 200px + 50px); }
+.step1 { background: #ffd; } div.item.step1:hover { background: #eec; }
+.step2 { background: #fa6; } div.item.step2:hover { background: #ea6; }
+.step3 { background: #fda; } div.item.step3:hover { background: #eca; }
+
+#thead span { padding: 0 4px; }
+#thead .step1 { right: 150px; }
+#thead .step2 { right: 100px; }
+#thead .step3 { right:  50px; }
+#btnUrl { right: 0; height: 30px; }
+    </style>
+</head>
+<body>
+	<div id="thead">
+		<span class="step1">관심</span>
+		<span class="step2">관람</span>
+		<span class="step3">대안</span>
+		<button type="button" id="btnUrl">공유</button>
+	</div>
+	<div id="tbody"></div>
+</body></html>
