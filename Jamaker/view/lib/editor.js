@@ -105,12 +105,99 @@ function init(jsonSetting) {
 	try {
 		setting = JSON.parse(jsonSetting);
 		
-		checkVersion(setting.version);
-		setting.version = DEFAULT_SETTING.version;
+		var notified = checkVersion(setting.version);
 		
 		// C#에서 보내준 세팅값 오류로 빠진 게 있으면 채워주기
 		if (typeof setting == "object" && !Array.isArray(setting)) {
-			if (setDefault(setting, DEFAULT_SETTING)) {
+			var count = setDefault(setting, DEFAULT_SETTING);
+			if (setting.version != DEFAULT_SETTING.version) {
+				setting.version = DEFAULT_SETTING.version;
+				count++;
+				
+				if (notified.menu) {
+					// 메뉴 기본값이 바뀌었을 경우
+					
+					for (var di = 0; di < DEFAULT_SETTING.menu.length; di++) {
+						var exist0 = false;
+						
+						var dMenu = DEFAULT_SETTING.menu[di];
+						var dMenu0 = dMenu[0];
+						var dMenu0name = dMenu0.split("(&")[0];
+						
+						for (var si = 0; si < setting.menu.length; si++) {
+							var sMenu = setting.menu[si];
+							var sMenu0 = sMenu[0];
+							var sMenu0name = sMenu0.split("(&")[0];
+							
+							if (sMenu0name == dMenu0name) {
+								// 이름이 같은 메뉴를 찾았을 경우
+								exist0 = true;
+								
+								if (sMenu0.indexOf("(&") < 0 && dMenu0.indexOf("(&") > 0) {
+									// 단축키가 추가된 경우
+									sMenu[0] = dMenu0;
+									count++;
+								}
+								
+								for (var dj = 1; dj < dMenu.length; dj++) {
+									var exist1 = false;
+									
+									var dMenu1 = dMenu[dj];
+									var dMenu1name = dMenu1.split("|")[0].split("(&")[0];
+									
+									for (var sj = 1; sj < sMenu.length; sj++) {
+										var sMenu1 = sMenu[sj];
+										var sMenu1name = sMenu1.split("|")[0].split("(&")[0];
+										
+										if (sMenu1name == dMenu1name) {
+											// 이름이 같은 메뉴를 찾았을 경우
+											exist1 = true;
+											var updated = false;
+											
+											var sLen = sMenu1.indexOf("|");
+											var dLen = dMenu1.indexOf("|");
+											var sMenuName = sMenu1.substring(0, sLen);
+											var dMenuName = dMenu1.substring(0, dLen);
+											if (sMenuName.indexOf("(&") < 0 && dMenuName.indexOf("(&") > 0) {
+												// 단축키가 추가된 경우
+												sMenuName = dMenuName;
+												updated = true;
+											}
+											
+											var sMenuFunc = sMenu1.substring(sLen + 1);
+											var dMenuFunc = dMenu1.substring(dLen + 1);
+											if (sMenuFunc != dMenuFunc) {
+												// 기능이 바뀐 경우
+												sMenuFunc = dMenuFunc + " /* " + DEFAULT_SETTING.version + " 이전: " + sMenuFunc.split("*/").join("*​/") + " */";
+												updated = true;
+											}
+											if (updated) {
+												sMenu[sj] = sMenuName + "|" + sMenuFunc;
+												count++;
+											}
+											
+											break;
+										}
+									}
+									if (!exist1) {
+										// 이름이 같은 메뉴를 못 찾았을 경우 - 메뉴 추가
+										sMenu.push(dMenu1);
+										count++;
+									}
+								}
+								
+								break;
+							}
+						}
+						if (!exist0) {
+							// 이름이 같은 메뉴를 못 찾았을 경우 - 메뉴 추가
+							setting.menu.push(dMenu);
+							count++;
+						}
+					}
+				}
+			}
+			if (count) {
 				saveSetting();
 			}
 		} else {
@@ -119,6 +206,7 @@ function init(jsonSetting) {
 		}
 		
 	} catch (e) {
+		console.log(e);
 		setting = deepCopyObj(DEFAULT_SETTING);
 		saveSetting();
 	}
@@ -498,12 +586,25 @@ function saveFile(asNew) {
 	
 	if (currentTab.area.find(".sync.error,.sync.equal").length) {
 		confirm("싱크 오류가 있습니다.\n저장하시겠습니까?", function() {
-			binder.save(text, path);
+			saveFileFinally(text, path);
 		});
+	} else {
+		saveFileFinally(text, path);
+	}
+}
+function saveFileFinally(text, path) {
+	if (setting.saveWithNormalize) {
+		// Normalize 등 작업 후 저장
+		var smi = new Subtitle.SmiFile();
+		var input = smi.fromTxt(text).body;
+		Subtitle.Smi.normalize(input, true);
+		smi.body = input;
+		binder.save(smi.toTxt().trim(), path);
 	} else {
 		binder.save(text, path);
 	}
 }
+
 // 저장 후 C# 쪽에서 호출
 function afterSaveFile(path) {
 	tabs[tab].afterSave(path);
@@ -542,10 +643,27 @@ function openNewTab(text, path, forVideo) {
 		return;
 	}
 	
-	// SRT 파일 불러왔을 경우 SMI로 변환
-	if (path && path.substring(path.length - 4).toUpperCase() == ".SRT") {
-		path = path.substring(0, path.length - 4) + ".smi";
-		text = srt2smi(text);
+	if (path) {
+		if (path.substring(path.length - 4).toUpperCase() == ".SRT") {
+			// SRT 파일 불러왔을 경우 SMI로 변환
+			path = path.substring(0, path.length - 4) + ".smi";
+			text = srt2smi(text);
+		} else {
+			// SMI 파일 역Normalize
+			if (setting.saveWithNormalize) {
+				text = new Subtitle.SmiFile().fromTxt(text).antiNormalize().toTxt().trim();
+			} else {
+				var parts = text.split("-->");
+				for (var i = 0; i < parts.length; i++) {
+					var part = parts[i];
+					var start = part.indexOf("<!--");
+					if (start >= 0) {
+						parts[i] = part.substring(0, start) + part.substring(start).split(/<SYNC/gi).join("<​SYNC");
+					}
+				}
+				text = parts.join("-->");
+			}
+		}
 	}
 
 	var title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";

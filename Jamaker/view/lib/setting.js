@@ -4,17 +4,22 @@ var checkVersion;
 		if (!version) version = "";
 
 		var notify = [];
+		var notified = {};
 		if (version < lastNotifyForCommand) {
 			notify.push("단축키");
+			notified.command = true;
 		}
 		if (version < lastNotifyForAutoComplete) {
 			notify.push("자동완성");
+			notified.autoComplete = true;
 		}
 		if (version < lastNotifyForStyle) {
 			notify.push("스타일");
+			notified.style = true;
 		}
 		if (version < lastNotifyForMenu) {
 			notify.push("메뉴");
+			notified.menu = true;
 		}
 		if (notify.length) {
 			/* 창 초기화 전에 동작하지 않도록 의도적으로 timeout
@@ -27,15 +32,16 @@ var checkVersion;
 				alert(notify.join(", ") + " 기본값이 변경되었습니다.\n설정에서 검토하시기 바랍니다.");
 			}, 1);
 		}
+		return notified;
 	}
-	var lastNotifyForCommand = "2023.04.07.v2";
+	var lastNotifyForCommand = "2024.11.01.v1";
 	var lastNotifyForAutoComplete = "";
 	var lastNotifyForStyle = "2023.04.06.v1";
-	var lastNotifyForMenu = "2023.08.28.v1";
+	var lastNotifyForMenu = "2024.11.01.v1";
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.01.14.v1"
+{	version: "2024.11.01.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -63,7 +69,7 @@ var DEFAULT_SETTING =
 		,	"니코동 효과(&N)|openAddon('Nico');"
 		,	"ASS 자막으로 변환(&A)|openAddon('ToAss');"
 		,	"재생 속도 조절|openAddon('Speed');"
-		,	"맞춤법 검사기|extSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", \"text1\");"
+		,	"맞춤법 검사기|extSubmit(\"post\", \"https://nara-speller.co.kr/speller/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
 		]
 	,	[	"도움말(&H)"
@@ -72,6 +78,7 @@ var DEFAULT_SETTING =
 		,	"싱크 표현에 대하여|openHelp('aboutSync')"
 		,	"특수 태그에 대하여|openHelp('aboutTag')"
 		,	"화면 싱크 매니저 도움말|openHelp('SyncManager')"
+		,	"업데이트 확인|openHelp('update')"
 		]
 	]
 ,	window:
@@ -167,6 +174,8 @@ var DEFAULT_SETTING =
 			   + '}\nvar result = blocks.join("");\n'
 			   + '\n'
 			   + 'editor.setText(prev + result + next, [text.selection[0], text.selection[0] + result.length]);'
+		,	'7': '/* Zero-width */\neditor.inputText("​")'
+		,	'8': '/* ㄱ한자1 */\neditor.inputText("　")'
 		,	'9': '/* 색상태그 시작 */\n' + 'editor.inputText("<font color=\\"#aaaaaa\\">")'
 		,	'0': '/* 색상태그 종료 */\n' + 'editor.inputText("</font>")'
 		,	'D': '/* 줄 삭제 */\n' + 'editor.deleteLine();'
@@ -177,7 +186,7 @@ var DEFAULT_SETTING =
 		{	't': '/* 일괄 싱크 입력 */\n' + 'editor.reSyncPrompt();'
 		,	'1': '/* 맞춤법 검사기 */\n'
 			   + 'var text = editor.getText();\n'
-			   + 'extSubmit("post", "http://speller.cs.pusan.ac.kr/results", "text1");'
+			+ 'extSubmit("post", "https://nara-speller.co.kr/speller/results", "text1");'
 		,	'2': '/* 국어사전 */\n'
 			   + 'var text = editor.getText();\n'
 			   + 'extSubmit("get", "https://ko.dict.naver.com/%23/search", "query");'
@@ -215,6 +224,7 @@ var DEFAULT_SETTING =
 		]]
 	,	"190": ['>', ['>>>|…']]
 	}
+,	saveWithNormalize: false
 ,	replace:
 	[ { from: "...", to: "…", use: false }
 	
@@ -296,6 +306,7 @@ var DEFAULT_SETTING =
 		,	width: 1280
 		,	height: 200
 		}
+	,	useAlign: false
 	,	css : "background: #fff;\n"
 			+ "color: #fff;\n"
 			+ "font-size: 39.4px;\n"
