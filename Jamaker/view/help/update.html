@@ -12,7 +12,7 @@ windowName = "help";
 $(function() {
 	$("#version").text(opener.setting.version);
 
-	$.ajax({url : "../../updates.json"
+	$.ajax({url : "https://harnenim.github.io/Jamaker/updates.json"
 		,	success: function(updates) {
 				var isLatest = true;
 				var log = [];
