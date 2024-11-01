@@ -1,4 +1,6 @@
-	var iframe = $("#xticket").contents();
+	var xticket = $("#xticket");
+	var iframe = xticket.contents();
+	var xw = xticket[0].contentWindow;
 	
 	var style = $("<style>");
 	style.html(""
@@ -58,6 +60,12 @@
 				codeTeams[data.code] = li.find("span.team");
 				toFoundCount++;
 			}
+			
+			xw.Xticket.api.call(xw.Api.GetReserveDetail, { reserveId: data.booking }, function ($xml) {
+				var title = $xml.find("titleKr").text();
+				li.find("span.team").text(title);
+				data.title = title.substring(6);
+			});
 		}
 		
 		li.data(data);
@@ -102,17 +110,3 @@
 			ul.append(li);
 		}
 	}
-	
-	var findTitle = setInterval(function() {
-		var title = iframe.find(".reserve_title").text();
-		if (title) {
-			var code = title.substring(1, 4);
-			if (codeTeams[code]) {
-				codeTeams[code].text(title);
-				codeTeams[code] = null;
-				if (--toFoundCount <= 0) {
-					clearInterval(findTitle);
-				}
-			}
-		}
-	}, 100);
