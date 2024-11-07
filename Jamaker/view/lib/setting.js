@@ -41,7 +41,7 @@ var checkVersion;
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.11.01.v1"
+{	version: "2024.11.07.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -186,7 +186,7 @@ var DEFAULT_SETTING =
 		{	't': '/* 일괄 싱크 입력 */\n' + 'editor.reSyncPrompt();'
 		,	'1': '/* 맞춤법 검사기 */\n'
 			   + 'var text = editor.getText();\n'
-			+ 'extSubmit("post", "https://nara-speller.co.kr/speller/results", "text1");'
+			   + 'extSubmit("post", "https://nara-speller.co.kr/speller/results", "text1");'
 		,	'2': '/* 국어사전 */\n'
 			   + 'var text = editor.getText();\n'
 			   + 'extSubmit("get", "https://ko.dict.naver.com/%23/search", "query");'
