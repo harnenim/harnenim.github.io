@@ -1,0 +1,722 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>test</title>
+<script src="keikenchi/jquery-3.7.1.min.js"></script>
+<script>
+var inputLines = [""];
+var previewLines = [$("<span>").append($("<br />"))];
+var forTag = true;
+
+$(function() {
+	var editor = $("#editor");
+	var preview = editor.find("div");
+	var input = editor.find("textarea");
+	
+	preview.empty().append(previewLines[0]);
+	
+	input.on("input propertychange", function() {
+		updatePreview();
+	}).on("scroll", function() {
+		preview.css({
+			marginTop : -input.scrollTop ()
+		,	marginLeft: -input.scrollLeft()
+		});
+	});
+	
+	var updating = false;
+	var needToUpdate = false;
+	
+	function updatePreview() {
+		if (updating) {
+			// 이미 렌더링 중이면 대기열 활성화
+			var needToUpdate = true;
+			return;
+		}
+
+		var thread = function() {
+			var lines = input.val().split("\n");
+			var changeBegin = 0; changeEnd = Math.min(lines.length, inputLines.length);
+			
+			var i;
+			for (i = 0; i < changeEnd; i++) {
+				if (inputLines[i] != lines[i]) {
+					break;
+				}
+			}
+			changeBegin = i;
+			
+			var add = lines.length - inputLines.length;
+			for (i = inputLines.length - 1; i > (add > 0 ? changeBegin : changeBegin - add); i--) {
+				if (inputLines[i] != lines[i + add]) {
+					break;
+				}
+			}
+			changeEnd = i + 1;
+			
+			for (i = changeBegin; i < changeEnd; i++) {
+				previewLines[i].remove();
+			}
+			
+			inputLines = lines;
+			previewLines.splice(changeBegin, changeEnd - changeBegin);
+			
+			var lastLine = (changeBegin > 0) ? previewLines[changeBegin - 1] : null;
+			for (i = changeBegin; i < changeEnd + add; i++) {
+				var previewLine = $("<span>");
+				
+				var text = lines[i];
+				
+				if (forTag) {
+					/*
+					 * 상태값
+					 * 텍스트: null
+					 * 태그?!: /
+					 * 태그명: <
+					 * 태그내: >
+					 * 속성명: a
+					 * 속성값: =, ', "
+					 */
+					var state = null;
+					var pos = 0;
+					var html = "";
+					
+					for (var pos = 0; pos < text.length; pos++) {
+						var c = text[pos];
+						switch (state) {
+							case '/': { // 태그?!
+								state = '<';
+								if (c == '/') { // 종료 태그 시작일 경우
+									html += "/<span class='tag'>";
+									break;
+								}
+								// 종료 태그 아닐 경우 아래로 이어서 진행
+								html += "<span class='tag'>";
+							}
+							case '<': { // 태그명
+								switch (c) {
+									case '>': { // 태그 종료
+										html += "</span>&gt;";
+										state = null;
+										break;
+									}
+									case ' ': { // 태그명 끝
+										html += '&nbsp;';
+										state = '>';
+										break;
+									}
+									case '\t': {
+										html += '&#09;';
+										state = '>';
+										break;
+									}
+									default: {
+										html += c;
+										break;
+									}
+								}
+								break;
+							}
+							case '>': { // 태그 내
+								switch (c) {
+									case '>': { // 태그 종료
+										html += "</span>&gt;";
+										state = null;
+										break;
+									}
+									case ' ': {
+										html += '&nbsp;';
+										break;
+									}
+									case '\t': {
+										html += '&#09;';
+										break;
+									}
+									default: { // 속성명 시작
+										html += "<span class='attr'>" + c;
+										state = 'a';
+										break;
+									}
+								}
+								break;
+							}
+							case 'a': { // 속성명
+								switch (c) {
+									case '>': { // 태그 종료
+										html += "</span></span>&gt;";
+										state = null;
+										break;
+									}
+									case '=': { // 속성값 시작
+										html += "</span>=<span class='value'>";
+										state = '=';
+										break;
+									}
+									case ' ': { // 속성 종료
+										html += "</span>&nbsp;";
+										state = '>';
+										break;
+									}
+									case '\t': {
+										html += "</span>&#09;";
+										state = '>';
+										break;
+									}
+									default: {
+										html += c;
+									}
+								}
+								break;
+							}
+							case '=': { // 속성값
+								switch (c) {
+									case '>': { // 태그 종료
+										html += "</span></span>&gt;";
+										state = null;
+										break;
+									}
+									case '"': { // 속성값 따옴표 시작
+										html += c;
+										state = '"';
+										break;
+									}
+									case "'": { // 속성값 따옴표 시작
+										html += c;
+										state = "'";
+										break;
+									}
+									case ' ': { // 속성 종료
+										html += "</span>&nbsp;";
+										state = '>';
+										break;
+									}
+									case '\t': {
+										html += "</span>&#09;";
+										state = '>';
+										break;
+									}
+									default: {
+										html += c;
+									}
+								}
+								break;
+							}
+							case '"': {
+								switch (c) {
+									case '"': {
+										html += "\"</span>";
+										state = '>';
+										break;
+									}
+									case ' ': {
+										html += "&nbsp;";
+										break;
+									}
+									case '\t': {
+										html += "&#09;";
+										break;
+									}
+									default: {
+										html += c;
+									}
+								}
+								break;
+							}
+							case "'": {
+								switch (c) {
+									case "'": {
+										html += "'</span>";
+										state = '>';
+										break;
+									}
+									case ' ': {
+										html += "&nbsp;";
+										break;
+									}
+									case '\t': {
+										html += "&#09;";
+										break;
+									}
+									default: {
+										html += c;
+									}
+								}
+								break;
+							}
+							default: { // 텍스트
+								switch (c) {
+									case '<': { // 태그 시작
+										html += "&lt;";
+										state = '/';
+										break;
+									}
+									case '&': {
+										html += "&amp;";
+										break;
+									}
+									case ' ': {
+										html += '&nbsp;';
+										break;
+									}
+									case '\t': {
+										html += '&#09;';
+										break;
+									}
+									default: {
+										html += c;
+									}
+								}
+							}
+						}
+					}
+					html += "<br />";
+					previewLine.html(html ? html : "");
+					
+				} else {
+					if (text.startsWith("<Sync ")) {
+						previewLine.addClass("sync");
+					}
+					previewLine.text(text).append("<br>");
+				}
+				
+				previewLines.splice(i, 0, previewLine);
+				if (lastLine) {
+					lastLine.after(previewLine);
+				} else {
+					preview.prepend(previewLine);
+				}
+				lastLine = previewLine;
+			}
+			
+			setTimeout(function() {
+				if (needToUpdate) {
+					// 렌더링 대기열 있으면 재실행
+					updatePreview();
+				}
+			}, 100);
+		}
+		setTimeout(thread, 1);
+	}
+	updatePreview();
+});
+</script>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+html, body {
+	width: 100%;
+	height: 100%;
+}
+#editor {
+	position: relative;
+	border: 1px solid #aaa;
+	width: 100%;
+	max-width: 800px;
+	height: 100%;
+	overflow: hidden;
+}
+#editor > * {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	margin: 0;
+	padding: 2px 4px;
+}
+#editor * {
+	font-family: '나눔고딕코딩';
+	font-size: 14px;
+	line-height: 18px;
+	white-space: pre;
+}
+#editor textarea {
+	background: transparent;
+	color: transparent;
+	caret-color: #000;
+	overflow: scroll;
+	resize: none;
+}
+#editor > div .tag   { color: #22863a; }
+#editor > div .attr  { color: #005cc5; }
+#editor > div .value { color: #032f62; }
+#editor > div .sync  { color: #aaaaaa; }
+</style>
+</head>
+<body>
+	<div id="editor">
+		<div></div>
+		<textarea spellcheck="false">&lt;SAMI>
+&lt;HEAD>
+&lt;TITLE>제목&lt;/TITLE>
+&lt;STYLE TYPE="text/css">
+&lt;!--
+P { margin-left:8pt; margin-right:8pt; margin-bottom:2pt; margin-top:2pt;
+    text-align:center; font-size:14pt; font-family:맑은 고딕, 굴림, arial, sans-serif;
+    font-weight:normal; color:white;
+    background-color:black; }
+.KRCC { Name:한국어; lang:ko-KR; SAMIType:CC; }
+-->
+&lt;/STYLE>
+&lt;!--
+개인적인 코멘트를 넣을 곳
+-->
+&lt;/HEAD>
+&lt;BODY>
+&lt;Sync Start=1000>&lt;P Class=KRCC>
+&lt;!-- End=2000
+&lt;​font color="#9abcde" fade="in"​>1234&lt;​/font​>
+&lt;​font color="#ffdd88" fade="in"​>5678&lt;​/font​>
+-->
+&lt;FONT color="#030304">1234&lt;/FONT>&lt;FONT color="#050402">5678&lt;/FONT>
+&lt;Sync Start=1042>&lt;P Class=KRCC	>
+&lt;FONT color="#090B0D">1234&lt;/FONT>&lt;FONT color="#0F0D08">5678&lt;/FONT>
+&lt;Sync Start=1083>&lt;P Class=KRCC	>
+&lt;FONT color="#101317">1234&lt;/FONT>&lt;FONT color="#1A170E">5678&lt;/FONT>
+&lt;Sync Start=1125>&lt;P Class=KRCC	>
+&lt;FONT color="#161B20">1234&lt;/FONT>&lt;FONT color="#252013">5678&lt;/FONT>
+&lt;Sync Start=1167>&lt;P Class=KRCC	>
+&lt;FONT color="#1C2329">1234&lt;/FONT>&lt;FONT color="#2F2919">5678&lt;/FONT>
+&lt;Sync Start=1208>&lt;P Class=KRCC	>
+&lt;FONT color="#232B32">1234&lt;/FONT>&lt;FONT color="#3A321F">5678&lt;/FONT>
+&lt;Sync Start=1250>&lt;P Class=KRCC	>
+&lt;FONT color="#29323C">1234&lt;/FONT>&lt;FONT color="#453B24">5678&lt;/FONT>
+&lt;Sync Start=1292>&lt;P Class=KRCC	>
+&lt;FONT color="#303A45">1234&lt;/FONT>&lt;FONT color="#4F452A">5678&lt;/FONT>
+&lt;Sync Start=1333>&lt;P Class=KRCC	>
+&lt;FONT color="#36424E">1234&lt;/FONT>&lt;FONT color="#5A4E30">5678&lt;/FONT>
+&lt;Sync Start=1375>&lt;P Class=KRCC	>
+&lt;FONT color="#3C4A57">1234&lt;/FONT>&lt;FONT color="#645735">5678&lt;/FONT>
+&lt;Sync Start=1417>&lt;P Class=KRCC	>
+&lt;FONT color="#435261">1234&lt;/FONT>&lt;FONT color="#6F603B">5678&lt;/FONT>
+&lt;Sync Start=1458>&lt;P Class=KRCC	>
+&lt;FONT color="#495A6A">1234&lt;/FONT>&lt;FONT color="#7A6941">5678&lt;/FONT>
+&lt;Sync Start=1500>&lt;P Class=KRCC	>
+&lt;FONT color="#506173">1234&lt;/FONT>&lt;FONT color="#847346">5678&lt;/FONT>
+&lt;Sync Start=1542>&lt;P Class=KRCC	>
+&lt;FONT color="#56697C">1234&lt;/FONT>&lt;FONT color="#8F7C4C">5678&lt;/FONT>
+&lt;Sync Start=1583>&lt;P Class=KRCC	>
+&lt;FONT color="#5D7186">1234&lt;/FONT>&lt;FONT color="#9A8552">5678&lt;/FONT>
+&lt;Sync Start=1625>&lt;P Class=KRCC	>
+&lt;FONT color="#63798F">1234&lt;/FONT>&lt;FONT color="#A48E57">5678&lt;/FONT>
+&lt;Sync Start=1667>&lt;P Class=KRCC	>
+&lt;FONT color="#698198">1234&lt;/FONT>&lt;FONT color="#AF975D">5678&lt;/FONT>
+&lt;Sync Start=1708>&lt;P Class=KRCC	>
+&lt;FONT color="#7089A1">1234&lt;/FONT>&lt;FONT color="#B9A163">5678&lt;/FONT>
+&lt;Sync Start=1750>&lt;P Class=KRCC	>
+&lt;FONT color="#7690AB">1234&lt;/FONT>&lt;FONT color="#C4AA68">5678&lt;/FONT>
+&lt;Sync Start=1792>&lt;P Class=KRCC	>
+&lt;FONT color="#7D98B4">1234&lt;/FONT>&lt;FONT color="#CFB36E">5678&lt;/FONT>
+&lt;Sync Start=1833>&lt;P Class=KRCC	>
+&lt;FONT color="#83A0BD">1234&lt;/FONT>&lt;FONT color="#D9BC74">5678&lt;/FONT>
+&lt;Sync Start=1875>&lt;P Class=KRCC	>
+&lt;FONT color="#89A8C6">1234&lt;/FONT>&lt;FONT color="#E4C579">5678&lt;/FONT>
+&lt;Sync Start=1917>&lt;P Class=KRCC	>
+&lt;FONT color="#90B0D0">1234&lt;/FONT>&lt;FONT color="#EFCF7F">5678&lt;/FONT>
+&lt;Sync Start=1958>&lt;P Class=KRCC	>
+&lt;FONT color="#96B8D9">1234&lt;/FONT>&lt;FONT color="#F9D885">5678&lt;/FONT>
+&lt;Sync Start=2000>&lt;P Class=KRCC>
+&lt;!-- End=3000
+&lt;​font color="#9abcde" fade="#fdb975"​>1234&lt;​/font​>
+&lt;​font color="#ffdd88" fade="#3388ff"​>5678&lt;​/font​>
+-->
+&lt;FONT color="#9CBBDB">1234&lt;/FONT>&lt;FONT color="#FADB8A">5678&lt;/FONT>
+&lt;Sync Start=2042>&lt;P Class=KRCC	>
+&lt;FONT color="#A0BBD7">1234&lt;/FONT>&lt;FONT color="#F2D78F">5678&lt;/FONT>
+&lt;Sync Start=2083>&lt;P Class=KRCC	>
+&lt;FONT color="#A4BBD3">1234&lt;/FONT>&lt;FONT color="#E9D494">5678&lt;/FONT>
+&lt;Sync Start=2125>&lt;P Class=KRCC	>
+&lt;FONT color="#A8BBCE">1234&lt;/FONT>&lt;FONT color="#E1D099">5678&lt;/FONT>
+&lt;Sync Start=2167>&lt;P Class=KRCC	>
+&lt;FONT color="#ACBBCA">1234&lt;/FONT>&lt;FONT color="#D8CD9E">5678&lt;/FONT>
+&lt;Sync Start=2208>&lt;P Class=KRCC	>
+&lt;FONT color="#B0BBC5">1234&lt;/FONT>&lt;FONT color="#D0C9A3">5678&lt;/FONT>
+&lt;Sync Start=2250>&lt;P Class=KRCC	>
+&lt;FONT color="#B4BBC1">1234&lt;/FONT>&lt;FONT color="#C7C5A8">5678&lt;/FONT>
+&lt;Sync Start=2292>&lt;P Class=KRCC	>
+&lt;FONT color="#B8BBBD">1234&lt;/FONT>&lt;FONT color="#BFC2AD">5678&lt;/FONT>
+&lt;Sync Start=2333>&lt;P Class=KRCC	>
+&lt;FONT color="#BDBAB8">1234&lt;/FONT>&lt;FONT color="#B6BEB2">5678&lt;/FONT>
+&lt;Sync Start=2375>&lt;P Class=KRCC	>
+&lt;FONT color="#C1BAB4">1234&lt;/FONT>&lt;FONT color="#AEBBB7">5678&lt;/FONT>
+&lt;Sync Start=2417>&lt;P Class=KRCC	>
+&lt;FONT color="#C5BAB0">1234&lt;/FONT>&lt;FONT color="#A5B7BC">5678&lt;/FONT>
+&lt;Sync Start=2458>&lt;P Class=KRCC	>
+&lt;FONT color="#C9BAAB">1234&lt;/FONT>&lt;FONT color="#9DB4C1">5678&lt;/FONT>
+&lt;Sync Start=2500>&lt;P Class=KRCC	>
+&lt;FONT color="#CDBAA7">1234&lt;/FONT>&lt;FONT color="#94B0C5">5678&lt;/FONT>
+&lt;Sync Start=2542>&lt;P Class=KRCC	>
+&lt;FONT color="#D1BAA2">1234&lt;/FONT>&lt;FONT color="#8CADCA">5678&lt;/FONT>
+&lt;Sync Start=2583>&lt;P Class=KRCC	>
+&lt;FONT color="#D5BA9E">1234&lt;/FONT>&lt;FONT color="#83A9CF">5678&lt;/FONT>
+&lt;Sync Start=2625>&lt;P Class=KRCC	>
+&lt;FONT color="#D9BA9A">1234&lt;/FONT>&lt;FONT color="#7BA6D4">5678&lt;/FONT>
+&lt;Sync Start=2667>&lt;P Class=KRCC	>
+&lt;FONT color="#DEB995">1234&lt;/FONT>&lt;FONT color="#72A2D9">5678&lt;/FONT>
+&lt;Sync Start=2708>&lt;P Class=KRCC	>
+&lt;FONT color="#E2B991">1234&lt;/FONT>&lt;FONT color="#6A9FDE">5678&lt;/FONT>
+&lt;Sync Start=2750>&lt;P Class=KRCC	>
+&lt;FONT color="#E6B98D">1234&lt;/FONT>&lt;FONT color="#619BE3">5678&lt;/FONT>
+&lt;Sync Start=2792>&lt;P Class=KRCC	>
+&lt;FONT color="#EAB988">1234&lt;/FONT>&lt;FONT color="#5997E8">5678&lt;/FONT>
+&lt;Sync Start=2833>&lt;P Class=KRCC	>
+&lt;FONT color="#EEB984">1234&lt;/FONT>&lt;FONT color="#5094ED">5678&lt;/FONT>
+&lt;Sync Start=2875>&lt;P Class=KRCC	>
+&lt;FONT color="#F2B97F">1234&lt;/FONT>&lt;FONT color="#4890F2">5678&lt;/FONT>
+&lt;Sync Start=2917>&lt;P Class=KRCC	>
+&lt;FONT color="#F6B97B">1234&lt;/FONT>&lt;FONT color="#3F8DF7">5678&lt;/FONT>
+&lt;Sync Start=2958>&lt;P Class=KRCC	>
+&lt;FONT color="#FAB977">1234&lt;/FONT>&lt;FONT color="#3789FC">5678&lt;/FONT>
+&lt;Sync Start=3000>&lt;P Class=KRCC>
+&lt;!-- End=4000
+&lt;​font color="#fdb975" fade="out"​>1234&lt;​/font​>
+&lt;​font color="#3388ff" fade="out"​>5678&lt;​/font​>
+-->
+&lt;FONT color="#F7B572">1234&lt;/FONT>&lt;FONT color="#3185F9">5678&lt;/FONT>
+&lt;Sync Start=3042>&lt;P Class=KRCC	>
+&lt;FONT color="#EDAD6D">1234&lt;/FONT>&lt;FONT color="#2F7FEF">5678&lt;/FONT>
+&lt;Sync Start=3083>&lt;P Class=KRCC	>
+&lt;FONT color="#E2A568">1234&lt;/FONT>&lt;FONT color="#2D79E4">5678&lt;/FONT>
+&lt;Sync Start=3125>&lt;P Class=KRCC	>
+&lt;FONT color="#D89E63">1234&lt;/FONT>&lt;FONT color="#2B74D9">5678&lt;/FONT>
+&lt;Sync Start=3167>&lt;P Class=KRCC	>
+&lt;FONT color="#CD965F">1234&lt;/FONT>&lt;FONT color="#296ECF">5678&lt;/FONT>
+&lt;Sync Start=3208>&lt;P Class=KRCC	>
+&lt;FONT color="#C38E5A">1234&lt;/FONT>&lt;FONT color="#2768C4">5678&lt;/FONT>
+&lt;Sync Start=3250>&lt;P Class=KRCC	>
+&lt;FONT color="#B88655">1234&lt;/FONT>&lt;FONT color="#2563B9">5678&lt;/FONT>
+&lt;Sync Start=3292>&lt;P Class=KRCC	>
+&lt;FONT color="#AD7F50">1234&lt;/FONT>&lt;FONT color="#235DAF">5678&lt;/FONT>
+&lt;Sync Start=3333>&lt;P Class=KRCC	>
+&lt;FONT color="#A3774B">1234&lt;/FONT>&lt;FONT color="#2057A4">5678&lt;/FONT>
+&lt;Sync Start=3375>&lt;P Class=KRCC	>
+&lt;FONT color="#986F46">1234&lt;/FONT>&lt;FONT color="#1E529A">5678&lt;/FONT>
+&lt;Sync Start=3417>&lt;P Class=KRCC	>
+&lt;FONT color="#8E6841">1234&lt;/FONT>&lt;FONT color="#1C4C8F">5678&lt;/FONT>
+&lt;Sync Start=3458>&lt;P Class=KRCC	>
+&lt;FONT color="#83603C">1234&lt;/FONT>&lt;FONT color="#1A4684">5678&lt;/FONT>
+&lt;Sync Start=3500>&lt;P Class=KRCC	>
+&lt;FONT color="#795838">1234&lt;/FONT>&lt;FONT color="#18417A">5678&lt;/FONT>
+&lt;Sync Start=3542>&lt;P Class=KRCC	>
+&lt;FONT color="#6E5033">1234&lt;/FONT>&lt;FONT color="#163B6F">5678&lt;/FONT>
+&lt;Sync Start=3583>&lt;P Class=KRCC	>
+&lt;FONT color="#64492E">1234&lt;/FONT>&lt;FONT color="#143564">5678&lt;/FONT>
+&lt;Sync Start=3625>&lt;P Class=KRCC	>
+&lt;FONT color="#594129">1234&lt;/FONT>&lt;FONT color="#12305A">5678&lt;/FONT>
+&lt;Sync Start=3667>&lt;P Class=KRCC	>
+&lt;FONT color="#4F3924">1234&lt;/FONT>&lt;FONT color="#0F2A4F">5678&lt;/FONT>
+&lt;Sync Start=3708>&lt;P Class=KRCC	>
+&lt;FONT color="#44321F">1234&lt;/FONT>&lt;FONT color="#0D2445">5678&lt;/FONT>
+&lt;Sync Start=3750>&lt;P Class=KRCC	>
+&lt;FONT color="#392A1A">1234&lt;/FONT>&lt;FONT color="#0B1F3A">5678&lt;/FONT>
+&lt;Sync Start=3792>&lt;P Class=KRCC	>
+&lt;FONT color="#2F2215">1234&lt;/FONT>&lt;FONT color="#09192F">5678&lt;/FONT>
+&lt;Sync Start=3833>&lt;P Class=KRCC	>
+&lt;FONT color="#241A11">1234&lt;/FONT>&lt;FONT color="#071325">5678&lt;/FONT>
+&lt;Sync Start=3875>&lt;P Class=KRCC	>
+&lt;FONT color="#1A130C">1234&lt;/FONT>&lt;FONT color="#050E1A">5678&lt;/FONT>
+&lt;Sync Start=3917>&lt;P Class=KRCC	>
+&lt;FONT color="#0F0B07">1234&lt;/FONT>&lt;FONT color="#03080F">5678&lt;/FONT>
+&lt;Sync Start=3958>&lt;P Class=KRCC	>
+&lt;FONT color="#050302">1234&lt;/FONT>&lt;FONT color="#010205">5678&lt;/FONT>
+&lt;Sync Start=4000>&lt;P Class=KRCC>
+&amp;nbsp;
+&lt;Sync Start=5000>&lt;P Class=KRCC>
+&lt;!-- End=7000
+&lt;​font typing='keyboard'​>테스트텍스트&lt;​/font​>
+-->
+&lt;U> &lt;/U>  　　　　　​
+&lt;Sync Start=5143>&lt;P Class=KRCC	>
+&lt;U>ㅌ&lt;/U>   　　　　​
+&lt;Sync Start=5286>&lt;P Class=KRCC	>
+&lt;U>테&lt;/U>   　　　　​
+&lt;Sync Start=5429>&lt;P Class=KRCC	>
+&lt;U>텟&lt;/U>   　　　　​
+&lt;Sync Start=5571>&lt;P Class=KRCC	>
+테&lt;U>스&lt;/U>   　　　​
+&lt;Sync Start=5714>&lt;P Class=KRCC	>
+테&lt;U>슽&lt;/U>   　　　​
+&lt;Sync Start=5857>&lt;P Class=KRCC	>
+테스&lt;U>트&lt;/U>   　　​
+&lt;Sync Start=6000>&lt;P Class=KRCC	>
+테스&lt;U>틑&lt;/U>   　　​
+&lt;Sync Start=6143>&lt;P Class=KRCC	>
+테스트&lt;U>테&lt;/U>   　​
+&lt;Sync Start=6286>&lt;P Class=KRCC	>
+테스트&lt;U>텍&lt;/U>   　​
+&lt;Sync Start=6429>&lt;P Class=KRCC	>
+테스트&lt;U>텏&lt;/U>   　​
+&lt;Sync Start=6571>&lt;P Class=KRCC	>
+테스트텍&lt;U>스&lt;/U>   ​
+&lt;Sync Start=6714>&lt;P Class=KRCC	>
+테스트텍&lt;U>슽&lt;/U>   ​
+&lt;Sync Start=6857>&lt;P Class=KRCC	>
+테스트텍스&lt;U>트&lt;/U>​
+&lt;Sync Start=7000>&lt;P Class=KRCC>
+&amp;nbsp;
+&lt;Sync Start=500000>&lt;P Class=KRCC>
+&lt;!-- End=645212
+&lt;​Sync Start=589368​>&lt;​P Class=KRCC​>
+노래하지 마!
+&lt;​Sync Start=590777​>&lt;​P Class=KRCC​>
+&amp;nbsp;
+&lt;​Sync Start=597997​>&lt;​P Class=KRCC​>
+현혹되지 마라&lt;​br​>룬으로 느껴라!
+&lt;​Sync Start=600437​>&lt;​P Class=KRCC​>
+&amp;nbsp;
+&lt;​Sync Start=620892​>&lt;​P Class=KRCC​>
+프레이야
+&lt;​Sync Start=621974​>&lt;​P Class=KRCC ​>
+&amp;nbsp;
+&lt;​Sync Start=623620​>&lt;​P Class=KRCC​>
+괜찮아? 미라미라
+&lt;​Sync Start=625292​>&lt;​P Class=KRCC​>
+혼자 설 수 있겠어?
+&lt;​Sync Start=626854​>&lt;​P Class=KRCC ​>
+&amp;nbsp;
+&lt;​Sync Start=628340​>&lt;​P Class=KRCC​>
+당연하지
+&lt;​Sync Start=629444​>&lt;​P Class=KRCC​>
+&amp;nbsp;
+-->
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>
+&lt;Sync Start=579908>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff"> 서로 눈이 맞고 사랑을 하고 &lt;/font>&lt;/i>​
+&lt;Sync Start=582972>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">     정신없이 뒤쫓아가고     &lt;/font>&lt;/i>​
+&lt;Sync Start=585940>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;i>&lt;font color="#ff88ff">그래도 더 자세히 알고 싶어서&lt;/font>&lt;/i>
+&lt;Sync Start=588316>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">         활활 불타올라         &lt;/font>&lt;/i>​
+&lt;Sync Start=589368>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>​          노래하지 마!          ​&lt;br>​&lt;i>&lt;font color="#ff88ff">         활활 불타올라         &lt;/font>&lt;/i>​
+&lt;Sync Start=590777>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">         활활 불타올라         &lt;/font>&lt;/i>​
+&lt;Sync Start=590924>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>
+&lt;Sync Start=591892>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">    원할수록 의문이 늘고    &lt;/font>&lt;/i>​
+&lt;Sync Start=594806>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">    생각할수록 열이 올라    &lt;/font>&lt;/i>​
+&lt;Sync Start=597806>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">   그래서 더 뛰어드는 거야   &lt;/font>&lt;/i>​
+&lt;Sync Start=597997>&lt;P Class=KRCC>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ&lt;br>​         현혹되지 마라         ​&lt;br>​         룬으로 느껴라!         ​&lt;br>​&lt;i>&lt;font color="#ff88ff">   그래서 더 뛰어드는 거야   &lt;/font>&lt;/i>​
+&lt;Sync Start=600000>&lt;P Class=KRCC>
+&lt;b>　&lt;/b>&lt;br>​         현혹되지 마라         ​&lt;br>​         룬으로 느껴라!         ​&lt;br>​&lt;i>&lt;font color="#ff88ff">   그래서 더 뛰어드는 거야   &lt;/font>&lt;/i>​
+&lt;Sync Start=600311>&lt;P Class=KRCC>
+​      현혹되지 마라      ​&lt;br>​      룬으로 느껴라!      ​&lt;br>​&lt;i>&lt;font color="#ff88ff">     미지의 세계로 ah     &lt;/font>&lt;/i>​
+&lt;Sync Start=600437>&lt;P Class=KRCC>
+&lt;b>　&lt;/b>&lt;br>&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">     미지의 세계로 ah     &lt;/font>&lt;/i>​
+&lt;Sync Start=604624>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">사랑이나 꿈 같은 건&lt;/font>&lt;/i>
+&lt;Sync Start=607525>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">누구나 믿지만&lt;/font>&lt;/i>
+&lt;Sync Start=610525>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">거기 거기 공략 안 하면 재미없지&lt;/font>&lt;/i>
+&lt;Sync Start=616317>&lt;P Class=KRCC>
+&amp;nbsp;
+&lt;Sync Start=616973>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">아슬아슬 사랑&lt;/font>&lt;/i>
+&lt;Sync Start=619262>&lt;P Class=KRCC>
+&lt;b>　&lt;/b>&lt;br>&lt;i>&lt;font color="#ff88ff">위태로운 보더라인&lt;/font>&lt;/i>
+&lt;Sync Start=620892>&lt;P Class=KRCC>
+​      프레이야      ​&lt;br>&lt;i>&lt;font color="#ff88ff">위태로운 보더라인&lt;/font>&lt;/i>
+&lt;Sync Start=621974>&lt;P Class=KRCC >
+&lt;b>　&lt;/b>&lt;br>&lt;i>&lt;font color="#ff88ff">위태로운 보더라인&lt;/font>&lt;/i>
+&lt;Sync Start=622310>&lt;P Class=KRCC>
+&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">    난이도 G라도    &lt;/font>&lt;/i>​
+&lt;Sync Start=623620>&lt;P Class=KRCC>
+​ 괜찮아? 미라미라 ​&lt;br>​&lt;i>&lt;font color="#ff88ff">    난이도 G라도    &lt;/font>&lt;/i>​
+&lt;Sync Start=624454>&lt;P Class=KRCC>
+​ 괜찮아? 미라미라 ​&lt;br>&lt;i>&lt;font color="#ff88ff">모든 걸 부숴주겠어&lt;/font>&lt;/i>
+&lt;Sync Start=625292>&lt;P Class=KRCC>
+​혼자 설 수 있겠어?​&lt;br>&lt;i>&lt;font color="#ff88ff">모든 걸 부숴주겠어&lt;/font>&lt;/i>
+&lt;Sync Start=626854>&lt;P Class=KRCC >
+&lt;b>　&lt;/b>&lt;br>&lt;i>&lt;font color="#ff88ff">모든 걸 부숴주겠어&lt;/font>&lt;/i>
+&lt;Sync Start=628340>&lt;P Class=KRCC>
+​       당연하지       ​&lt;br>&lt;i>&lt;font color="#ff88ff">모든 걸 부숴주겠어&lt;/font>&lt;/i>
+&lt;Sync Start=628966>&lt;P Class=KRCC>
+​       당연하지       ​&lt;br>​&lt;i>&lt;font color="#ff88ff">   빙글빙글 날며   &lt;/font>&lt;/i>​
+&lt;Sync Start=629444>&lt;P Class=KRCC>
+&lt;b>　&lt;/b>&lt;br>​&lt;i>&lt;font color="#ff88ff">   빙글빙글 날며   &lt;/font>&lt;/i>​
+&lt;Sync Start=631182>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">한층 더 G로&lt;/font>&lt;/i>
+&lt;Sync Start=634183>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">의식이 녹아드네&lt;/font>&lt;/i>
+&lt;Sync Start=636399>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">몸은 제어불능&lt;/font>&lt;/i>
+&lt;Sync Start=640118>&lt;P Class=KRCC>
+&lt;i>&lt;font color="#ff88ff">가버리겠어&lt;/font>&lt;/i>
+&lt;Sync Start=643750>&lt;P Class=KRCC>
+&amp;nbsp;
+&lt;Sync Start=645212>&lt;P Class=KRCC>
+산개해서 각자 쫓아라!
+&lt;Sync Start=647353>&lt;P Class=KRCC>
+유적의 폴드 에너지가&lt;br>급속히 활성화
+&lt;Sync Start=650396>&lt;P Class=KRCC>
+발퀴레의 폴드파에&lt;br>감응하는 것 같습니다
+&lt;Sync Start=653044>&lt;P Class=KRCC >
+&amp;nbsp;
+&lt;/BODY>
+&lt;/SAMI>
+&lt;!-- Hold=-1|삽입곡1
+&lt;​Sync Start=579908​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>서로 눈이 맞고 사랑을 하고&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=582972​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>정신없이 뒤쫓아가고&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=585940​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>그래도 더 자세히 알고 싶어서&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=588316​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>활활 불타올라&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=590924​>&lt;​P Class=KRCC​>
+&amp;nbsp;
+&lt;​Sync Start=591892​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>원할수록 의문이 늘고&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=594806​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>생각할수록 열이 올라&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=597806​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>그래서 더 뛰어드는 거야&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=600311​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>미지의 세계로 ah&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=604624​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>사랑이나 꿈 같은 건&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=607525​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>누구나 믿지만&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=610525​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>거기 거기 공략 안 하면 재미없지&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=616317​>&lt;​P Class=KRCC​>
+&amp;nbsp;
+&lt;​Sync Start=616973​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>아슬아슬 사랑&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=619262​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>위태로운 보더라인&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=622310​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>난이도 G라도&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=624454​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>모든 걸 부숴주겠어&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=628966​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>빙글빙글 날며&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=631182​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>한층 더 G로&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=634183​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>의식이 녹아드네&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=636399​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>몸은 제어불능&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=640118​>&lt;​P Class=KRCC​>
+&lt;​i​>&lt;​font color="#ff88ff"​>가버리겠어&lt;​/font​>&lt;​/i​>
+&lt;​Sync Start=643750​>&lt;​P Class=KRCC​>
+&amp;nbsp;
+-->
+&lt;!-- Hold=1|새 홀드
+&lt;​Sync Start=500000​>&lt;​P Class=KRCC​>
+ㅐ먖돼ㅑ농랴ㅐㄷ잳먀ㅑㅑㅑㅑ
+&lt;​Sync Start=600000​>&lt;​P Class=KRCC​>
+&amp;nbsp;
+--></textarea>
+	</div>
+</body>
+</html>
