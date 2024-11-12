@@ -7,6 +7,7 @@
 <script>
 var inputLines = [""];
 var previewLines = [$("<span>").append($("<br />"))];
+var forTag = true;
 
 $(function() {
 	var editor = $("#editor");
@@ -67,7 +68,7 @@ $(function() {
 				
 				var text = lines[i];
 				
-				if (false) {
+				if (forTag) {
 					/*
 					 * 상태값
 					 * 텍스트: null
