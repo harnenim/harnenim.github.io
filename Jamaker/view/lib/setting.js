@@ -34,14 +34,14 @@ var checkVersion;
 		}
 		return notified;
 	}
-	var lastNotifyForCommand = "2024.11.01.v1";
+	var lastNotifyForCommand = "2024.11.11.v1";
 	var lastNotifyForAutoComplete = "";
 	var lastNotifyForStyle = "2023.04.06.v1";
-	var lastNotifyForMenu = "2024.11.01.v1";
+	var lastNotifyForMenu = "2024.11.18.v1";
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.11.07.v1"
+{	version: "2024.11.19.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -50,12 +50,13 @@ var DEFAULT_SETTING =
 		,	"현재 동영상의 자막 열기|openFileForVideo()"
 		,	"저장(&S)|saveFile()"
 		,	"다른 이름으로 저장(&A)...|saveFile(true)"
+		,	"내보내기(&E)...|saveFile(true, true)"
 		]
 	,	[	"편집(&E)"
 		,	"찾기/바꾸기(&F)|SmiEditor.Finder.open()"
 		,	"색상코드 입력(&C)|binder.runColorPicker()"
-		,	"특수태그 정규화|tabs.length && tabs[tab].normalize()"
-		,	"싱크 채우기|tabs.length && tabs[tab].fillSync()"
+		,	"특수태그 정규화|SmiEditor.selected && SmiEditor.selected.normalize()"
+		,	"싱크 채우기|SmiEditor.selected && SmiEditor.selected.fillSync()"
 		,	"미리보기창 실행|SmiEditor.Viewer.open()"
 		,	"설정(&S)|openSetting()"
 		]
@@ -64,7 +65,7 @@ var DEFAULT_SETTING =
 		,	"겹치는 대사 결합(&C)|openAddon('Combine');"
 		,	"겹치는 대사 분리(&D)|openAddon('Devide');"
 		,	"싱크 유지 텍스트 대체(&F)|openAddon('Fusion');"
-		,	"노래방 자막(&K)|openAddon('Karaoke');"
+		,	"노래방 자막(&K)|openAddon('Karaoke', 'karaoke');"
 		,	"흔들기 효과(&S)|openAddon('Shake');"
 		,	"니코동 효과(&N)|openAddon('Nico');"
 		,	"ASS 자막으로 변환(&A)|openAddon('ToAss');"
@@ -75,6 +76,7 @@ var DEFAULT_SETTING =
 	,	[	"도움말(&H)"
 		,	"프로그램 정보|openHelp('info')"
 		,	"기본 단축키|openHelp('key')"
+		,	"홀드에 대하여|openHelp('hold')"
 		,	"싱크 표현에 대하여|openHelp('aboutSync')"
 		,	"특수 태그에 대하여|openHelp('aboutTag')"
 		,	"화면 싱크 매니저 도움말|openHelp('SyncManager')"
@@ -190,6 +192,7 @@ var DEFAULT_SETTING =
 		,	'2': '/* 국어사전 */\n'
 			   + 'var text = editor.getText();\n'
 			   + 'extSubmit("get", "https://ko.dict.naver.com/%23/search", "query");'
+		,	'N': '/* 홀드 추가 */\n' + 'tabs.length && tabs[tab].addHold();'
 		,	'Q': '/* 재생 위치 찾기 */\n' + 'editor.findSync();'
 		}
 	,	withCtrlAlts:
@@ -257,6 +260,7 @@ var DEFAULT_SETTING =
 	]
 ,	tempSave: 300
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
+,	useHighlight: false // 하이라이트도 기본값 꺼둠
 ,	css	:	".sync     { border-color: #000; }\n"
 		+	".sync.error { background: #f88; }\n"
 		+	".sync.equal { background: #8f8; }\n"
@@ -264,18 +268,24 @@ var DEFAULT_SETTING =
 		+	".tab.not-saved { background: #f86; } /* 저장 안 됐을 때 표시 */\n"
 		+	"\n"
 		+	"/* 다크테마 예제 * /\n"
+		+	"body, .th.selected, .th:hover,\n"
+		+	".hold-selector > .selector.selected,\n"
+		+	".hold-selector > .selector:hover,\n"
+		+	".hold-selector > .selector button:hover,\n"
+		+	".hold > .col-sync { background: #0f0f0f; }\n"
+		+	".th.selected { border-bottom-color: #0f0f0f; }\n"
+		+	"#tabSelector, .hold-selector { background: #333; }\n"
+		+	".th, .hold-selector > .selector { background: #222; }\n"
+		+	"*, .hold * { color: #fff; caret-color: #fff; }\n"
+		+	"input, textarea, .highlight-textarea > div { background: #000; }\n"
+		+	"button { background: #222; }\n"
+		+	".tab > .input { border-color: #666; }\n"
 		+	".sync     { border-color: #fff; }\n"
 		+	".sync.error { background: #088; }\n"
 		+	".sync.equal { background: #808; }\n"
 		+	".sync.range { color     : #888; }\n"
-		+	"* { color: #fff; }\n"
-		+	"body, .th.selected, .th:hover, .tab > .col-sync { background: #0f0f0f; }\n"
-		+	".th.selected { border-bottom-color: #0f0f0f; }\n"
-		+	"#tabSelector { background: #333; }\n"
-		+	".th { background: #222; }\n"
-		+	"input, textarea { background: #000; }\n"
-		+	"button { background: #222; }\n"
-		+	".tab > .input { border-color: #666; }\n"
+		+	".highlight-textarea > div .attr  { color: #034f82; }\n"
+		+	".highlight-textarea > div .value { color: #005cc5; }\n"
 		+	"/* */\n"
 ,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"
