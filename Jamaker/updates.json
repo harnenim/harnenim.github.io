@@ -1,4 +1,4 @@
-[ { "version": "2024.11.19.v1"
+[ { "version": "2024.11.19.v2"
   , "comment": [
       "홀드 기능 추가"
     , "태그 하이라이트 기능 추가"
@@ -23,6 +23,12 @@
 	, "view/viewer.html"
 	, "Jamaker.exe"
 	, "Jamaker.pdb"
+	, "MergeUpdates.exe"
+	, "MergeUpdates.pdb"
+	, "SamiReplacer.exe"
+	, "SamiReplacer.pdb"
+	, "TextReplacer.exe"
+	, "TextReplacer.pdb"
     ]
   }
 , { "version": "2024.11.12.v1"

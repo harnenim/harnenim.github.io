@@ -355,15 +355,7 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 		logs = normalized.logs;
 	} else {
 		if (this.holds.length > 1) {
-			/*
-			normalized = {
-					origin: JSON.parse(JSON.stringify(main.body))
-				,	result: main.body
-				,	logs: []
-			};
-			*/
 			originBody = JSON.parse(JSON.stringify(main.body));
-			logs = [];
 		}
 	}
 	
@@ -455,10 +447,10 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 				}
 				var added = mainBegin + combined.body.length - mainEnd;
 				
-				
+				var combinedLog = null;
 				if (logIndexes.length) {
 					// 기존 정규화 로그와 겹칠 때
-					var combinedLog = logs[logIndexes[0]];
+					combinedLog = logs[logIndexes[0]];
 					if (logIndexes.length > 1) {
 						// 겹치는 게 여러 개면 하나로 통합
 						for (var i = 1; i < logIndexes.length; i++) {
@@ -484,7 +476,7 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 					
 				} else {
 					// 신규 정규화 로그
-					var log = {
+					combinedLog = {
 							from: [mainBegin, mainEnd]
 						,	to  : [mainBegin, mainBegin + combined.body.length]
 						,	start: combined.body[0].start
@@ -502,10 +494,11 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 					if (lastLog) {
 						// 있을 경우 그걸 기준으로 원래 위치 잡아주기
 						var lastAdded = lastLog.to[1] - lastLog.from[1];
-						log.from[0] = log.from[0] - lastAdded;
-						log.from[1] = log.from[1] - lastAdded;
+						combinedLog.from[0] = combinedLog.from[0] - lastAdded;
+						combinedLog.from[1] = combinedLog.from[1] - lastAdded;
 					}
-					logs.splice(i, 0, log);
+					logs.splice(i, 0, combinedLog);
+					logIndexes = [i];
 				}
 				
 				// 뒤쪽에 해당하는 로그가 있었으면 위치 잡아주기
@@ -521,6 +514,50 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 		}
 		
 		if (withComment) {
+			if (withCombine) {
+				// 홀드 결합 있을 경우 주석처리 재계산
+				logs = [];
+				var oi = 0;
+				var ni = 0;
+
+				while ((oi < originBody.length) && (ni < main.body.length)) {
+					if ((originBody[oi].start == main.body[ni].start)
+					 && (originBody[oi].text  == main.body[ni].text )) {
+						oi++;
+						ni++;
+						continue;
+					}
+
+					// 변환결과가 원본과 동일하지 않은 범위 찾기
+					var newLog = {
+							from: [oi]
+						,	to  : [ni]
+						,	start: main.body[ni].start
+					};
+					while ((oi < originBody.length) && (ni < main.body.length)) {
+						if (originBody[oi].start < main.body[ni].start) {
+							oi++;
+							continue;
+						}
+						if (originBody[oi].start > main.body[ni].start) {
+							ni++;
+							continue;
+						}
+						if (originBody[oi].text != main.body[ni].text) {
+							oi++;
+							ni++;
+							continue;
+						}
+						// 싱크-내용 모두 동일한 곳 찾음
+						newLog.from[1] = oi;
+						newLog.to  [1] = ni;
+						newLog.end = main.body[ni].start;
+						logs.push(newLog);
+						break;
+					}
+				}
+			}
+
 			var origin = new Subtitle.SmiFile();
 			for (var i = 0; i < logs.length; i++) {
 				var log = logs[i];

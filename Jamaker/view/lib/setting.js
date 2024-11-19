@@ -41,7 +41,7 @@ var checkVersion;
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.11.19.v1"
+{	version: "2024.11.19.v2"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -76,7 +76,7 @@ var DEFAULT_SETTING =
 	,	[	"도움말(&H)"
 		,	"프로그램 정보|openHelp('info')"
 		,	"기본 단축키|openHelp('key')"
-		,	"홀드에 대하여|openHelp('hold')"
+		,	"홀드에 대하여|openHelp('aboutHold')"
 		,	"싱크 표현에 대하여|openHelp('aboutSync')"
 		,	"특수 태그에 대하여|openHelp('aboutTag')"
 		,	"화면 싱크 매니저 도움말|openHelp('SyncManager')"
