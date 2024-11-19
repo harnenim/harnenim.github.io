@@ -17,6 +17,7 @@
 	, "view/lib/setting.js"
 	, "view/lib/SmiEditor.css"
 	, "view/lib/SmiEditor.js"
+	, "view/lib/SmiEditor.highlight.js"
 	, "view/lib/SubtitleObject.js"
 	, "view/editor.html"
 	, "view/setting.html"
