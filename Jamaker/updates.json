@@ -1,4 +1,13 @@
-[ { "version": "2024.11.19.v2"
+[ { "version": "2024.11.21.v2"
+  , "comment": [
+      "홀드 결합 속도 개선 등"
+    ]
+  , "files": [
+      "view/lib/Combine.js"
+	, "view/lib/editor.js"
+    ]
+  }
+, { "version": "2024.11.19.v2"
   , "comment": [
       "홀드 기능 추가"
     , "태그 하이라이트 기능 추가"
