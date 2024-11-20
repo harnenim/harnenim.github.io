@@ -5,6 +5,7 @@
   , "files": [
       "view/lib/Combine.js"
 	, "view/lib/editor.js"
+	, "view/lib/setting.js"
     ]
   }
 , { "version": "2024.11.19.v2"
