@@ -227,7 +227,7 @@ var DEFAULT_SETTING =
 		]]
 	,	"190": ['>', ['>>>|…']]
 	}
-,	saveWithNormalize: false
+,	saveWithNormalize: true
 ,	replace:
 	[ { from: "...", to: "…", use: false }
 	
@@ -260,7 +260,7 @@ var DEFAULT_SETTING =
 	]
 ,	tempSave: 300
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
-,	useHighlight: false // 하이라이트도 기본값 꺼둠
+,	useHighlight: true // 웹 샘플은 켜둠
 ,	css	:	".sync     { border-color: #000; }\n"
 		+	".sync.error { background: #f88; }\n"
 		+	".sync.equal { background: #8f8; }\n"
