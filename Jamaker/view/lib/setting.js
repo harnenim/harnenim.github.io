@@ -37,11 +37,11 @@ var checkVersion;
 	var lastNotifyForCommand = "2024.11.11.v1";
 	var lastNotifyForAutoComplete = "";
 	var lastNotifyForStyle = "2023.04.06.v1";
-	var lastNotifyForMenu = "2024.11.18.v1";
+	var lastNotifyForMenu = "2024.11.19.v2";
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.11.21.v1"
+{	version: "2024.11.21.v2"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -260,7 +260,7 @@ var DEFAULT_SETTING =
 	]
 ,	tempSave: 300
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
-,	useHighlight: true // 웹 샘플은 켜둠
+,	useHighlight: true
 ,	css	:	".sync     { border-color: #000; }\n"
 		+	".sync.error { background: #f88; }\n"
 		+	".sync.equal { background: #8f8; }\n"
@@ -286,7 +286,8 @@ var DEFAULT_SETTING =
 		+	".sync.range { color     : #888; }\n"
 		+	".highlight-textarea > div .attr  { color: #034f82; }\n"
 		+	".highlight-textarea > div .value { color: #005cc5; }\n"
-		+	"/* */\n"
+		+	".highlight-textarea.nonactive > textarea { background: #000; color: #fff; }\n"
+		+	"/* */"
 ,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"
 		+	"<TITLE>제목</TITLE>\n"

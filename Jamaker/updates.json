@@ -1,4 +1,18 @@
-[ { "version": "2024.11.21.v1"
+[ { "version": "2024.11.21.v2"
+  , "comment": [
+      "특수태그 자동치환 설정 끈 상태에서 홀드 저장/불러오기 오류 수정"
+    , "홀드 겹칠 때 UI 개선 등"
+    ]
+  , "files": [
+      "view/lib/Combine.js"
+	, "view/lib/editor.js"
+	, "view/lib/setting.js"
+	, "view/lib/SmiEditor.js"
+	, "view/lib/SmiEditor.css"
+	, "view/setting.html"
+    ]
+  }
+, { "version": "2024.11.21.v1"
   , "comment": [
       "홀드 결합 속도 개선 등"
     ]
