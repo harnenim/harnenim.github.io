@@ -18,7 +18,7 @@ StDev.prototype.replace = function(index, value) {
 	while (index < 0) {
 		index += this.values.length;
 	}
-	index %= values.length;
+	index %= this.values.length;
 
 	var pow = value * value;
 	this.sum += value - this.values[index];
@@ -26,12 +26,13 @@ StDev.prototype.replace = function(index, value) {
 	this.values[index] = value;
 	this.pows[index] = pow;
 }
-StDev.prototype.calc = function() {
+StDev.prototype.calc = function () {
 	this.avg = this.sum / this.values.length;
-	return this.value = Math.sqrt((this.pSum / this.values.length) - (this.avg * this.avg));
+	this.value = Math.sqrt((this.pSum / this.values.length) - (this.avg * this.avg));
+	return this;
 }
-StDev.calc = function(values) {
-	return new StDev(values).calc();
+StDev.from = function (values) {
+	return  new StDev(values).calc();
 }
 
 MathFunc = {};

@@ -7,18 +7,6 @@ SyncShift.CHECK_RANGE = 500;
 SyncShift.MAX_POINT = 0.1;
 SyncShift.WITH_KEYFRAME = false;
 
-function StDev(values) {
-	this.sum = 0;
-	this.pSum = 0;
-	for (var i = 0; i < values.length; i++) {
-		var value = values[i];
-		this.sum += value;
-		this.pSum += value * value;
-	}
-	this.avg = this.sum / values.length;
-	this.value = Math.sqrt((this.pSum / values.length) - (this.avg * this.avg));
-}
-
 SyncShift.GetShiftsForRanges = function(origin, target, ranges, progress) {
     progress.Set(0);
 	var shifts = [];
@@ -50,14 +38,14 @@ SyncShift.GetShiftsForRange = function(origin, target, range, progress) {
 				for (var i = 0; i < SyncShift.CHECK_RANGE; i++) {
 					ratios.push(Math.log10((origin[start + i] + 0.000001) / (target[start + shift + add + i] + 0.000001)));
 				}
-				var point = new StDev(ratios);
+				var point = StDev.from(ratios);
 				if (point.value < minPoint.value) {
 					// 오차가 기존값보다 작음
 					console.log("오차가 기존값보다 작음(+)");
 					point.add = add;
 					minPoint = point;
 					console.log(point);
-					if (point == 0.0) {
+					if (point.value == 0.0) {
 						console.log("완전히 일치: 정답 찾음");
 						// 완전히 일치: 정답 찾음
 						break;
@@ -85,14 +73,14 @@ SyncShift.GetShiftsForRange = function(origin, target, range, progress) {
 	            	var ratio = Math.log10((origin[start + shift + i] + 0.000001) / (target[start + shift - add + i] + 0.000001));
             		ratios.push(ratio);
 	            }
-				var point = new StDev(ratios);
+				var point = StDev.from(ratios);
 				if (point.value < minPoint.value) {
 					// 오차가 기존값보다 작음
 					console.log("오차가 기존값보다 작음(-)");
 					point.add = -add;
 					minPoint = point;
 					console.log(point);
-					if (point == 0.0) {
+					if (point.value == 0.0) {
 						// 완전히 일치: 정답 찾음
 						console.log("완전히 일치: 정답 찾음");
 						break;

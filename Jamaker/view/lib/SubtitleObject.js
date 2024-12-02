@@ -791,8 +791,12 @@ Subtitle.Ass.int2Time = function(time) {
 	var ds= Math.floor(time % 100);
 	return h + ":" + intPadding(m) + ":" + intPadding(s) + "." + intPadding(ds);
 }
-function intPadding(value) {
-	return (value < 10 ? "0" : "") + value;
+function intPadding(value, length = 2) {
+	value = "" + value;
+	while (value.length < length) {
+		value = "0" + value;
+	}
+	return value;
 }
 Subtitle.Ass.time2Int = function(time) {
 	var vs = time.split(':');
@@ -1926,8 +1930,9 @@ Subtitle.Smi.normalize = function(smis, withComment=false) {
 				}
 				smis.splice(i + j, 0, new Subtitle.Smi((start * (frames - j) + end * j) / frames, Subtitle.SyncType.inner).fromAttr(attrs));
 			}
+			smi.comment = "<!-- End=" + end + "\n" + origin.split("<").join("<​").split(">").join("​>") + "\n-->";
 			if (withComment) {
-				smi.text = "<!-- End=" + end + "\n" + origin.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smi.text;
+				smi.text = smi.comment + "\n" + smi.text;
 			}
 			result.logs.push({
 					from: [i - added, i - added + 1]
@@ -2256,6 +2261,7 @@ Subtitle.SmiFile.prototype.antiNormalize = function () {
 				var hold = new Subtitle.SmiFile();
 				hold.body = this.body.splice(removeStart, removeEnd - removeStart);
 				hold.body[0].text = afterComment;
+				hold.antiNormalize();
 				hold.next = this.body[removeStart];
 				
 				hold.name = comment = comment.substring(5);
@@ -2321,11 +2327,11 @@ Subtitle.Srt.prototype.fromSync = function(sync) {
 }
 
 Subtitle.Srt.int2Time = function(time) {
-	var h = Math.floor(time / 360000);
-	var m = Math.floor(time / 6000) % 60;
-	var s = Math.floor(time / 100) % 60;
+	var h = Math.floor(time / 3600000);
+	var m = Math.floor(time / 60000) % 60;
+	var s = Math.floor(time / 1000) % 60;
 	var ms= Math.floor(time % 1000);
-	return intPadding(h) + ":" + intPadding(m) + ":" + intPadding(s) + "," + intPadding(ms);
+	return intPadding(h) + ":" + intPadding(m) + ":" + intPadding(s) + "," + intPadding(ms, 3);
 }
 
 Subtitle.SrtFile = function(txt) {
