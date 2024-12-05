@@ -2208,7 +2208,7 @@ Subtitle.SmiFile.prototype.fromSync = function(syncs) {
 Subtitle.SmiFile.prototype.antiNormalize = function () {
 	var result = [this];
 	
-	for (i = 0; i < this.body.length; i++) {
+	for (var i = 0; i < this.body.length; i++) {
 		var smi = this.body[i];
 		var afterComment = null;
 		
@@ -2281,6 +2281,7 @@ Subtitle.SmiFile.prototype.antiNormalize = function () {
 			} else {
 				this.body[i].text = comment;
 				this.body.splice(removeStart, removeEnd - removeStart);
+				i--;
 			}
 			
 		} catch (e) {

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>미리보기</title>
-<script src="lib/jquery-3.2.1.min.js"></script>
-<script src="lib/SmiEditor.js?241121v2"></script>
-<script src="lib/SubtitleObject.js?241119"></script>
+<script src="lib/jquery-3.2.1.min.js?241205"></script>
+<script src="lib/SmiEditor.js?241205"></script>
+<script src="lib/SubtitleObject.js?241205"></script>
 <script>
 var SmiEditor = {};
 
@@ -144,8 +144,11 @@ function refreshTime(receiveTime, withoutTitle) {
 		showText[hold] = showLines.join("<br>");
 		
 		// 정규화 자동 적용
-		if (nextSyncLine && setting.saveWithNormalize) {
-			var toNormalize = new Subtitle.SmiFile().fromTxt(lines[hold][indexes[hold]][LINE.TEXT] + "\n" + showText[hold] + "\n" + nextSyncLine[LINE.TEXT]);
+		if ((showLines.length < 16) // 싱크 안 찍은 줄에 fade 같은 게 들어가면 연산량 과도해질 수 있음
+		 && nextSyncLine
+		 && setting.saveWithNormalize
+		) {
+			var toNormalize = new Subtitle.SmiFile(lines[hold][indexes[hold]][LINE.TEXT] + "\n" + showText[hold] + "\n" + nextSyncLine[LINE.TEXT]);
 			Subtitle.Smi.normalize(toNormalize.body);
 			if (toNormalize.body.length > 2) {
 				normalizedLines[hold] = toNormalize.body.slice(0, toNormalize.body.length - 1);

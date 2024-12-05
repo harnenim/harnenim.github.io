@@ -2,16 +2,16 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Jamaker 샘플</title>
+<title>Jamaker ?�플</title>
 <!--
 
-C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 샘플 페이지입니다.
-개발 도중에는 이 페이지를 주로 이용합니다.
+C# 껍데기�? 거치지 ?�고 ?�브?�우?�?�서 ?�아가?�록 만든 ?�플 ?�이지?�니??
+개발 ?�중?�는 ???�이지�?주로 ?�용?�니??
 
-몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
+몇몇 ?�축?�는 ?�반 ?�브?�우?�?�선 ?�작?��? ?�을 ???�습?�다.
 
 -->
-<script src="view/lib/jquery-3.2.1.min.js"></script>
+<script src="view/lib/jquery-3.2.1.min.js?241205"></script>
 <script>
 var Frame = function(url, name, options, onload) {
 	var frame = this.frame = Frame.preset.clone().data("obj", this);
@@ -63,7 +63,7 @@ var Frame = function(url, name, options, onload) {
 			subIframe = this;
 			/*
 			subIframe.contentWindow.onload = function() {
-				console.log("이게 안 잡히나...?");
+				console.log("?�게 ???�히??..?");
 				$(subIframe.contentDocument).on("mousedown", function() {
 					Frame.refreshOrder(self);
 				});
@@ -348,7 +348,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 <div class="frame resizable">
 	<div class="fr">
 		<div class="fhead">
-			<h3>타이틀</h3>
+			<h3>?�?��?</h3>
 			<button type="button">×</button>
 		</div>
 		<iframe></iframe>

@@ -1,17 +1,17 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<title>수정사항 반영하기</title>
-	<script src="lib/jquery-3.2.1.min.js"></script>
-<!-- 	<script src="lib/popup.js"></script> -->
-<!-- 	<script src="lib/AutoCompleteTextarea.js"></script> -->
-	<script src="lib/History.js"></script>
-	<script src="lib/SmiEditor.js?241121v2"></script>
-	<script src="lib/SubtitleObject.js?241119"></script>
-<!-- 	<script src="lib/editor.js"></script> -->
-	<script src="lib/webview.js"></script>
-	<link rel="stylesheet" type="text/css" href="lib/webview.css" />
+	<script src="lib/jquery-3.2.1.min.js?241205"></script>
+<!-- 	<script src="lib/popup.js?241205"></script> -->
+<!-- 	<script src="lib/AutoCompleteTextarea.js?241205"></script> -->
+	<script src="lib/History.js?241205"></script>
+	<script src="lib/SmiEditor.js?241205"></script>
+	<script src="lib/SubtitleObject.js?241205"></script>
+<!-- 	<script src="lib/editor.js?241205"></script> -->
+	<script src="lib/webview.js?241205"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css?241205" />
 	<script>
 var FL = 1000000 / 23976;
 var DPI = 1;
@@ -572,7 +572,7 @@ $(function() {
 
 var addon = null;
 function openSyncManager() {
-	addon = window.open("addon/SyncManager.html", "addon", "scrollbars=no,location=no"
+	addon = window.open("addon/SyncManager.html?241205", "addon", "scrollbars=no,location=no"
 			+ ",top="    + (window.screenTop   + 20)
 			+ ",left="   + (window.screenLeft  + 20)
 			+ ",width="  + (window.outerWidth  - 60)

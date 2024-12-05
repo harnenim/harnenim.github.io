@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>ASS 자막으로 변환</title>
-	<script src="../lib/jquery-3.2.1.min.js"></script>
-	<script src="../lib/popup.js"></script>
-	<script src="../lib/SubtitleObject.js?241119"></script>
-	<script src="../lib/SmiEditor.js?241121v2"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css" />
+	<script src="../lib/jquery-3.2.1.min.js?241205"></script>
+	<script src="../lib/popup.js?241205"></script>
+	<script src="../lib/SubtitleObject.js?241205"></script>
+	<script src="../lib/SmiEditor.js?241205"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?241205" />
 	<script>
 windowName = "addon";
 
@@ -31,7 +31,7 @@ $(function() {
 	$("#input").val(linesToText(editor.lines.slice(start, end)));
 	
 	$("#btnExport").on("click", function() {
-		var input  = new Subtitle.SmiFile().fromTxt($("#input").val());
+		var input  = new Subtitle.SmiFile($("#input").val());
 		{	// 프레임 단위 싱크 역보정... 필요한가?
 			if (opener && opener.SmiEditor && opener.SmiEditor.sync && opener.SmiEditor.sync.frame) {
 				var FL = opener.FL;
@@ -41,7 +41,7 @@ $(function() {
 				}
 			}
 		}
-		var ass = new Subtitle.AssFile().fromSync(input.toSync());
+		var ass = new Subtitle.AssFile(input.toSync());
 		/*
 		{	// 팟플레이어 겹치는 싱크 보정
 			var syncMap = {};
