@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>AssSyncManager ?�플</title>
+<title>AssSyncManager 샘플</title>
 <link rel="stylesheet" type="text/css" href="bridge/WebForm.css?241205" />
 <script src="view/lib/jquery-3.2.1.min.js?241205"></script>
 <script src="bridge/WinAPI.js?241205"></script>
@@ -43,7 +43,7 @@ var main = new WebForm();
 		
 		main.mainView.src = "view/AssSyncManager.html?241205";
 		main.mainView.onload = function() {
-			// 브라?��? ?�플?�선 url 변???�요
+			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;
 			main.mainView.contentWindow.open = function(url, name, options) {
 				if (url.substring(0, 4) != "http") {
