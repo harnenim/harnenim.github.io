@@ -1,4 +1,4 @@
-// TODO: 자동으로 구해지도록?
+﻿// TODO: 자동으로 구해지도록?
 var LH = 20; // LineHeight
 var SB = 16; // ScrollBarWidth
 
@@ -1894,7 +1894,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?241205", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2053,7 +2053,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?241205", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(function() {
@@ -2099,7 +2099,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html";
+			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?241205";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(function() { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2112,7 +2112,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?241205", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(function() {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
