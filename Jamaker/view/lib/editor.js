@@ -99,7 +99,7 @@ var Tab = function(text, path) {
 	
 	var tab = this;
 	this.holdSelector.on("click", ".selector", function() {
-		tab.selectHold(SmiEditor.selected = $(this).data("hold"));
+		tab.selectHold($(this).data("hold"));
 		
 	}).on("dblclick", ".hold-name", function(e) {
 		e.stopPropagation();
@@ -319,6 +319,8 @@ Tab.prototype.selectHold = function(hold) {
 	} else {
 		index = this.holds.indexOf(hold);
 	}
+	SmiEditor.selected = hold;
+
 	this.holdSelector.find(".selector").removeClass("selected");
 	this.holdArea.find(".hold").hide();
 	hold.selector.addClass("selected");
@@ -528,9 +530,10 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 
 					// 변환결과가 원본과 동일하지 않은 범위 찾기
 					var newLog = {
-							from: [oi]
-						,	to  : [ni]
+							from: [oi, originBody.length]
+						,	to  : [ni, main.body.length]
 						,	start: main.body[ni].start
+						,	end: 999999999
 					};
 					while ((oi < originBody.length) && (ni < main.body.length)) {
 						if (originBody[oi].start < main.body[ni].start) {
@@ -550,9 +553,9 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 						newLog.from[1] = oi;
 						newLog.to  [1] = ni;
 						newLog.end = main.body[ni].start;
-						logs.push(newLog);
 						break;
 					}
+					logs.push(newLog);
 				}
 				// 메인 홀드에 없는 내용만 남음
 				if (ni < main.body.length) {
@@ -1066,7 +1069,7 @@ function setPlayerDlls(dlls) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?241205.2", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?241207", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -1092,7 +1095,7 @@ function getAppendStyle() {
 }
 
 function openHelp(name) {
-	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?241205.2";
+	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?241207";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)

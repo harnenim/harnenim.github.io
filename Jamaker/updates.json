@@ -1,4 +1,20 @@
-[ { "version": "2024.12.05.v2"
+[ { "version": "2024.12.07"
+  , "comment": [
+      "홀드 저장 버그 개선"
+    , "홀드 선택 단축키 버그 수정"
+    , "싱크 조절 프로그램 계산 범위 로직 수정"
+    , "SMI 태그 파서 재개발"
+    ]
+  , "files": [
+      "view/lib/editor.js"
+    , "view/lib/SmiEditor.highlight.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/AutoSyncShift.html"
+    , "AutoSyncShift.exe"
+    , "AutoSyncShift.pdb"
+    ]
+  }
+, { "version": "2024.12.05.v2"
   , "comment": [
       "겹치는 싱크 결합 줄바꿈 처리 개선"
     , "내보내기 시 저장된 것으로 표시되지 않도록 수정"
