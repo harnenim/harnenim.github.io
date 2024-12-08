@@ -1791,6 +1791,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 	}
 	
 	if (direction > 0) {
+		// 오른쪽으로 이동
 		var remained = true;
 		var added = false;
 		for (var i = 0; i < direction; i++) {
@@ -1825,10 +1826,20 @@ SmiEditor.prototype.moveToSide = function(direction) {
 				}
 			}
 		}
+		if (!remained) {
+			// 오른쪽에 추가했던 공백을 다 없앴어도 원본에 공백 있을 수 있음
+			for (var i = 0; i < textLines.length; i++) {
+				var textLine = textLines[i];
+				if (textLine.endsWith(" ") || textLine.endsWith("　")) {
+					textLines[i] = textLine + "​";
+				}
+			}
+		}
 		var br = (remained ? "​" : "") + ("<br>" + ((remained || added) ? "\n" : "")) + (added ? "​" : "");
 		textLines = ((added ? "​" : "") + textLines.join(br) + (remained ? "​" : "")).split("\n");
 		
 	} else {
+		// 왼쪽으로 이동
 		var remained = true;
 		var added = false;
 		for (var i = 0; i < -direction; i++) {
@@ -1863,6 +1874,15 @@ SmiEditor.prototype.moveToSide = function(direction) {
 				}
 			}
 		}
+		if (!remained) {
+			// 왼쪽에 추가했던 공백을 다 없앴어도 원본에 공백 있을 수 있음
+			for (var i = 0; i < textLines.length; i++) {
+				var textLine = textLines[i];
+				if (textLine.startsWith(" ") || textLine.startsWith("　")) {
+					textLines[i] = "​" + textLine;
+				}
+			}
+		}
 		var br = (added ? "​" : "") + ("<br>" + ((remained || added) ? "\n" : "")) + (remained ? "​" : "");
 		textLines = ((remained ? "​" : "") + textLines.join(br) + (added ? "​" : "")).split("\n");
 	}
@@ -1894,7 +1914,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?241207", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?241208", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2053,7 +2073,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?241207", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?241208", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(function() {
@@ -2099,7 +2119,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?241207";
+			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?241208";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(function() { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2112,7 +2132,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?241207", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?241208", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(function() {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

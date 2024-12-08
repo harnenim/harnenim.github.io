@@ -1,4 +1,12 @@
-[ { "version": "2024.12.07"
+[ { "version": "2024.12.08"
+  , "comment": [
+      "대사 좌우 이동 방식 개선"
+    ]
+  , "files": [
+      "view/lib/SmiEditor.js"
+    ]
+  }
+, { "version": "2024.12.07"
   , "comment": [
       "홀드 저장 버그 개선"
     , "홀드 선택 단축키 버그 수정"
