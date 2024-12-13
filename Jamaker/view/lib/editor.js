@@ -43,58 +43,9 @@ var Tab = function(text, path) {
 	this.lastHold = 1;
 	this.path = path;
 	
-	var texts = text.split("\r\n").join("\n").split("\n<!-- Hold=");
-	var holdInfos = [{ text: texts[0] }];
-	for (var i = 1; i < texts.length; i++) {
-		var hold = texts[i];
-		var begin = hold.indexOf("\n");
-		var end = hold.indexOf("-->");
-		if (begin < 0 || end < 0) {
-			holdInfos[0].text += "\n<!-- Hold=" + hold;
-			continue;
-		}
-		// Hold 내용물 뒤에 뭐가 더 붙어있을 경우
-		if (end < hold.length - 3) {
-			holdInfos[0].text += hold.substring(end);
-		}
-		var name = hold.substring(0, begin).trim();
-		var pos = 1;
-		var index = name.indexOf("|");
-		if (index) {
-			try {
-				pos = Number(name.substring(0, index));
-			} catch (e) {
-				console.log(e);
-			}
-			name = name.substring(index + 1);
-		}
-		holdInfos.push({
-				pos: pos
-			,	name: name
-			,	text: hold.substring(begin, end).trim().split("<​").join("<").split("​>").join(">")
-		});
-	}
-	
-	// SMI 파일 역정규화
-	var normalized = new Subtitle.SmiFile(holdInfos[0].text).antiNormalize();
-	normalized[0].pos = 0;
-	normalized[0].name = "메인";
-	holdInfos = normalized.concat(holdInfos.slice(1));
-	holdInfos[0].text = holdInfos[0].toTxt().trim();
-	for (var i = 1; i < normalized.length; i++) {
-		// 내포된 홀드는 종료싱크가 빠졌을 수 있음
-		var hold = holdInfos[i];
-		if (hold.next && hold.body[hold.body.length - 1].text.split("&nbsp;").join("").trim().length > 0) {
-			hold.body.push(new Subtitle.Smi(hold.next.start, hold.next.syncType, "&nbsp;"));
-		}
-		holdInfos[i].text = hold.toTxt().trim();
-	}
-	for (var i = normalized.length; i < holdInfos.length; i++) {
-		holdInfos[i].text = new Subtitle.SmiFile(holdInfos[i].text).antiNormalize()[0].toTxt().trim();
-	}
-	
-	for (var i = 0; i < holdInfos.length; i++) {
-		this.addHold(holdInfos[i], i == 0, i == 0);
+	var holds = Subtitle.SmiFile.textToHolds(text);
+	for (var i = 0; i < holds.length; i++) {
+		this.addHold(holds[i], i == 0, i == 0);
 	}
 	
 	var tab = this;
@@ -405,232 +356,7 @@ Tab.prototype.replaceBeforeSave = function() {
 	}
 }
 Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
-	var result = [];
-	var logs = [];
-	var originBody = [];
-	
-	var main = new Subtitle.SmiFile(this.holds[0].text);
-	withCombine = withCombine && this.holds.length > 1;
-	
-	// 정규화 등 작업
-	if (setting.saveWithNormalize) {
-		var normalized = Subtitle.Smi.normalize(main.body, withComment && !withCombine);
-		originBody = normalized.origin;
-		logs = normalized.logs;
-	} else {
-		if (this.holds.length > 1) {
-			originBody = main.body.slice(0, main.body.length);
-		}
-	}
-	
-	if (withCombine) {
-		// 시작 시간 순으로 저장
-		var holds = this.holds.slice(1);
-		holds.sort(function(a, b) {
-			return a.start - b.start;
-		});
-		for (var hi = 0; hi < holds.length; hi++) {
-			var hold = holds[hi];
-			result[hold.resultIndex = (hi + 1)] = "<!-- Hold=" + hold.pos + "|" + hold.name + "\n" + hold.text.split("<").join("<​").split(">").join("​>") + "\n-->";
-		}
-		
-		// 메인에 가까운 걸 먼저 작업해야 함
-		// 단, 아래쪽부터 쌓아야 함
-		holds = this.holds.slice(0);
-		holds.sort(function(a, b) {
-			var aPos = a.viewPos;
-			var bPos = b.viewPos;
-			if (aPos < 0) {
-				if (bPos > 0) {
-					return -1;
-				}
-			} else {
-				if (bPos < 0) {
-					return 1;
-				}
-			}
-			if (aPos < 0) aPos = -aPos;
-			if (bPos < 0) bPos = -bPos;
-			if (aPos < bPos) return -1;
-			if (aPos > bPos) return 1;
-			return 0;
-		});
-		
-		var holdSmis = [];
-		for (var hi = 1; hi < holds.length; hi++) {
-			var hold = holds[hi];
-			var smi = holdSmis[hi] = new Subtitle.SmiFile(hold.text);
-			smi.header = smi.footer = "";
-			if (setting.saveWithNormalize) {
-				Subtitle.Smi.normalize(smi.body, false);
-			}
-			
-			if (smi.body.length == 0) {
-				continue;
-			}
-			
-			var start = smi.body[0].start;
-			var end = smi.body[smi.body.length - 1].start;
-			
-			// 메인에서 홀드와 겹치는 영역 찾기
-			var mainBegin = 0;
-			for (var i = 0; i < main.body.length; i++) {
-				if (main.body[i].start >= start) {
-					break;
-				}
-				mainBegin = i;
-			}
-			if (mainBegin == main.body.length) {
-				// 홀드 전체가 메인보다 뒤에 있음
-				main.body = main.body.concat(smi.body);
-				continue;
-			}
-			if (main.body[mainBegin].text.split("&nbsp;").join("").trim().length == 0) {
-				mainBegin++;
-			}
-			
-			var mainEnd = mainBegin;
-			for (; mainEnd < main.body.length; mainEnd++) {
-				if (main.body[mainEnd].start > end) {
-					break;
-				}
-			}
-			if (mainEnd == 0) {
-				// 홀드 전체가 메인보다 앞에 있음
-				main.body = smi.body.concat(main.body);
-				continue;
-			}
-			
-			// 홀드 결합
-			var sliced = new Subtitle.SmiFile();
-			sliced.body = main.body.slice(mainBegin, mainEnd);
-			
-			var slicedText = sliced.toTxt().trim();
-			var combineText = smi.toTxt().trim();
-			var combined = new Subtitle.SmiFile(((hold.pos < 0) ? Combine.combine(slicedText, combineText) : Combine.combine(combineText, slicedText)).join("\n"));
-			// 원칙상 normalized.result를 다뤄야 맞을 것 같지만...
-			end = (mainEnd < main.body.length) ? main.body[mainEnd].start : 999999999;
-			main.body = main.body.slice(0, mainBegin).concat(combined.body).concat(main.body.slice(mainEnd));
-		}
-		
-		if (withComment) {
-			if (withCombine) {
-				// 홀드 결합 있을 경우 주석처리 재계산
-				logs = [];
-				var oi = 0;
-				var ni = 0;
-
-				while ((oi < originBody.length) && (ni < main.body.length)) {
-					if ((originBody[oi].start == main.body[ni].start)
-					 && (originBody[oi].text  == main.body[ni].text )) {
-						oi++;
-						ni++;
-						continue;
-					}
-
-					// 변환결과가 원본과 동일하지 않은 범위 찾기
-					var newLog = {
-							from: [oi, originBody.length]
-						,	to  : [ni, main.body.length]
-						,	start: main.body[ni].start
-						,	end: 999999999
-					};
-					while ((oi < originBody.length) && (ni < main.body.length)) {
-						if (originBody[oi].start < main.body[ni].start) {
-							oi++;
-							continue;
-						}
-						if (originBody[oi].start > main.body[ni].start) {
-							ni++;
-							continue;
-						}
-						if (originBody[oi].text != main.body[ni].text) {
-							oi++;
-							ni++;
-							continue;
-						}
-						// 싱크-내용 모두 동일한 곳 찾음
-						newLog.from[1] = oi;
-						newLog.to  [1] = ni;
-						newLog.end = main.body[ni].start;
-						break;
-					}
-					logs.push(newLog);
-				}
-				// 메인 홀드에 없는 내용만 남음
-				if (ni < main.body.length) {
-					var newLog = {
-							from: [oi, oi]
-						,	to  : [ni, main.body.length]
-						,	start: main.body[ni].start
-					};
-					logs.push(newLog);
-				}
-			}
-
-			var origin = new Subtitle.SmiFile();
-			for (var i = 0; i < logs.length; i++) {
-				var log = logs[i];
-				if (!log.end) {
-					if (log.from[1] < originBody.length - 1) {
-						log.end = originBody[log.from[1]].start;
-					} else  {
-						log.end = 999999999;
-					}
-				}
-				origin.body = originBody.slice(log.from[0], log.from[1]);
-				var comment = origin.toTxt().trim();
-				
-				// 메인 홀드 내용이 없으면 다른 홀드가 통째로 들어왔는지 확인
-				if (comment.length == 0) {
-					var start = log.to[0];
-					for (var hi = 1; hi < holds.length; hi++) {
-						var smi = holdSmis[hi];
-						var isEqual = true;
-						for (var j = 0; j < smi.body.length; j++) {
-							if (smi.body[j].start != main.body[start+j].start) {
-								isEqual = false;
-								break;
-							}
-							if (smi.body[j].text != main.body[start+j].text) {
-								if (j == smi.body.length - 1) {
-									// 마지막 싱크일 경우 공백이면 통과시키기
-									if (smi.body[j].text.split("&nbsp;").join("").trim().length == 0) {
-										continue;
-									}
-								}
-								isEqual = false;
-								break;
-							}
-						}
-						if (isEqual) {
-							var hold = holds[hi];
-							comment = "Hold=" + hold.pos + "|" + hold.name;
-							result[hold.resultIndex] = "";
-
-							if (withComment) {
-								for (var j = 0; j < smi.body.length; j++) {
-									var sync = smi.body[j];
-									if (sync.comment) {
-										main.body[start + j].text = sync.comment + "\n" + sync.text;
-									}
-								}
-							}
-							break;
-						}
-					}
-				}
-				main.body[log.to[0]].text = "<!-- End=" + log.end + "\n" + (comment.split("<").join("<​").split(">").join("​>")) + "\n-->\n" + main.body[log.to[0]].text;
-			}
-		}
-	}
-	result[0] = main.toTxt();
-	for (var i = 1; i < result.length; i++) {
-		if (result[i].length == 0) {
-			result.splice(i--, 1);
-		}
-	}
-	return withComment ? result.join("\n") : result[0];
+	return Subtitle.SmiFile.holdsToText(this.holds, setting.saveWithNormalize, withCombine, withComment);
 }
 Tab.prototype.onChangeSaved = function(hold) {
 	if (this.isSaved()) {
@@ -671,7 +397,7 @@ SmiEditor.prototype.onChangeSaved = function(saved) {
 	currentTab.onChangeSaved(this);
 };
 SmiEditor.prototype.updateTimeRange = function() {
-	var start = 999999999;
+	var start = 999999998;
 	var end = 0;
 	for (var i = 0; i < this.lines.length; i++) {
 		var line = this.lines[i];
@@ -684,8 +410,7 @@ SmiEditor.prototype.updateTimeRange = function() {
 		this.start = start;
 		this.end   = (start == end) ? 999999999 : end;
 	} else {
-		this.start = 0;
-		this.end = 1;
+		this.end = 999999999;
 	}
 }
 
@@ -869,7 +594,7 @@ function init(jsonSetting) {
 			inputWeight[0].setSelectionRange(cursor, cursor);
 		}
 	});
-	var inputUnit = $("#inputUnit").bind("input propertychange", function() {
+	var inputUnit = $("#inputUnit").on("input propertychange", function() {
 		var unit = inputUnit.val();
 		if (isFinite(unit)) {
 			SmiEditor.sync.unit = Number(unit);
@@ -895,6 +620,10 @@ function init(jsonSetting) {
 		autoFindSync = $(this).prop("checked");
 		if (tabs.length == 0) return;
 		tabs[tab].holds[tabs[tab].hold].input.focus();
+	});
+	var checkTrustKeyframe = $("#checkTrustKeyframe").on("click", function() {
+		SmiEditor.trustKeyFrame = $(this).prop("checked");
+		if (tabs.length == 0) return;
 	});
 	
 	var btnNewTab = $("#btnNewTab").on("click", function() {
@@ -995,13 +724,41 @@ function setSetting(setting) {
 		}
 	}
 	
-	var needToUpdate = (setting.useHighlight != SmiEditor.useHighlight);
 	SmiEditor.setSetting(setting, getAppendStyle());
-	if (needToUpdate) {
-		for (var i = 0; i < tabs.length; i++) {
-			for (var j = 0; j < tabs[i].holds.length; j++) {
-				tabs[i].holds[j].updateHighlight();
+	{
+		function afterLoadHighlight() {
+			SmiEditor.refreshHighlight();
+			for (var i = 0; i < tabs.length; i++) {
+				for (var j = 0; j < tabs[i].holds.length; j++) {
+					var hold = tabs[i].holds[j];
+					hold.highlightLines = [];
+					hold.hview.empty();
+					hold.updateHighlight();
+				}
 			}
+		}
+		if (setting.useHighlight == false) {
+			setting.highlight = { parser: "", style: eclipse };
+			delete(setting.useHighlight);
+		} else if (setting.useHighlight) {
+			delete(setting.useHighlight);
+		}
+		if (setting.highlight.parser && setting.highlight.style) {
+			$.ajax({url: "lib/highlight/parser/" + setting.highlight.parser + ".js"
+				,	dataType: "text"
+				,	success: function(parser) {
+						eval(parser);
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?241213"
+							,	dataType: "text"
+							,	success: function(style) {
+									SmiEditor.highlightCss = style;
+									afterLoadHighlight();
+								}
+						});
+					}
+			});
+		} else {
+			afterLoadHighlight();
 		}
 	}
 	
@@ -1014,6 +771,11 @@ function setSetting(setting) {
 	// 가중치 등
 	$("#inputWeight").val(setting.sync.weight);
 	$("#inputUnit"  ).val(setting.sync.unit  );
+	if (setting.sync.frame) {
+		$(".for-frame-sync").show();
+	} else {
+		$(".for-frame-sync").hide();
+	}
 	var dll = setting.player.control.dll;
 	if (dll) {
 		var playerSetting = setting.player.control[dll];
@@ -1063,13 +825,17 @@ function setDpiBy(width) {
 }
 
 var playerDlls = [];
+var highlights = [];
 // C# 쪽에서 호출
 function setPlayerDlls(dlls) {
 	playerDlls = dlls.split("\n");
 }
+function setHighlights(list) {
+	highlights = list.split("\n");
+}
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?241208", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?241213", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -1095,7 +861,7 @@ function getAppendStyle() {
 }
 
 function openHelp(name) {
-	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?241208";
+	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?241213";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1307,6 +1073,34 @@ function confirmLoadVideo(path) {
 			binder.loadVideoFile(path);
 		});
 	}, 1);
+}
+
+// C# 쪽에서 호출
+function setVideo(path) {
+	if (SmiEditor.video.path != path) {
+		SmiEditor.video.path = path;
+		SmiEditor.video.fs = [];
+		SmiEditor.video.kfs = [];
+		$("#forFrameSync").addClass("disabled");
+		$("#checkTrustKeyframe").attr({ disabled: true });
+		binder.requestFrames(path);
+	}
+}
+// C# 쪽에서 호출
+function setFrames(fs, kfs) {
+	fs = fs.split(",");
+	for (var i = 0; i < fs.length; i++) {
+		fs[i] = Number(fs[i]);
+	}
+	kfs = kfs.split(",");
+	for (var i = 0; i < kfs.length; i++) {
+		kfs[i] = Number(kfs[i]);
+	}
+	console.log(kfs.length + " / " + fs.length);
+	SmiEditor.video.fs = fs;
+	SmiEditor.video.kfs = kfs;
+	$("#forFrameSync").removeClass("disabled");
+	$("#checkTrustKeyframe").attr({ disabled: false });
 }
 
 // 종료 전 C# 쪽에서 호출

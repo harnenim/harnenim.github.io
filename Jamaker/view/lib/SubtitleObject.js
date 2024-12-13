@@ -587,9 +587,9 @@ Subtitle.Width =
 			if (!font) font = this.DEFAULT_FONT;
 			if (!this.div) {
 				$("body").append(this.div = $("<div>").css({
-					position: "absolute"
-						,	top: -1000
-						,	whiteSpace: "pre"
+						position: "absolute"
+					,	top: -1000
+					,	whiteSpace: "pre"
 				}));
 			}
 			this.div.css(font).text(input);
@@ -2382,16 +2382,17 @@ Subtitle.SmiFile = function(txt) {
 	this.footer = "";
 	this.body = [];
 	if (txt) {
-		this.fromTxt(txt);
+		this.fromTxt(this.text = txt);
 	}
 }
 Subtitle.SmiFile.prototype.toTxt = function() {
-	return this.header.split("\r\n").join("\n")
+	return this.text
+	     = this.header.split("\r\n").join("\n")
 	     + Subtitle.Smi.smi2txt(this.body)
 	     + this.footer.split("\r\n").join("\n");
 }
 Subtitle.SmiFile.prototype.fromTxt = function(txt) {
-	txt = txt.split("\r\n").join("\n");
+	txt = (this.text = txt).split("\r\n").join("\n");
 	this.header = "";
 	this.footer = "";
 	this.body = [];

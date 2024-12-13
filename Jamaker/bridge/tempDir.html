@@ -12,10 +12,9 @@ function newEl(html) {
 
 var keys = localStorage.getItem("tmpKeys").split(":");
 document.addEventListener("DOMContentLoaded", function () {
-	document.body.replaceChildren();
 	for (var i = 0; i < keys.length; i++) {
 		var key = keys[i];
-		document.body.append(newEl("<a href='javascript:loadTmp(\""+key+"\")'>" + key + "</a>"));
+		document.body.append(newEl("<a href='javascript:loadTmp(\""+key.split("\\").join("\\\\")+"\")'>" + key + "</a>"));
 	}
 });
 function loadTmp(key) {
@@ -24,6 +23,17 @@ function loadTmp(key) {
 	console.log(text);
 	if (opener) {
 		opener.editor.script("openFile", [key.substring(18), text, false]);
+	}
+}
+function clearTmp() {
+	if (confirm("비우시겠습니까?")) {
+		var keys = localStorage.getItem("tmpKeys").split(":");
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			localStorage.removeItem(key);
+		}
+		localStorage.removeItem("tmpKeys");
+		location.reload();
 	}
 }
 </script>
@@ -41,6 +51,6 @@ a:hover {
 </style>
 </head>
 <body>
-	
+	<a href="javascript:clearTmp()">임시 저장 파일 비우기</a>
 </body>
 </html>

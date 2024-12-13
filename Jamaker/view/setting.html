@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?241208"></script>
-<script src="lib/popup.js?241208"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?241208" />
+<script src="lib/jquery-3.2.1.min.js?241213"></script>
+<script src="lib/popup.js?241213"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?241213" />
 <script>
 windowName = "setting";
 
@@ -622,23 +622,47 @@ $(function() {
 	
 	{	// 스타일
 		saved.style = { status: true, name: "스타일 설정" };
-	
+
 		(refreshFuncs["style"] = function(setting) {
 			refresh($("#style"), setting);
 			setSaved("style", setting == opener.setting);
 		})(setting);
+
+        var selectParser = $("select[name=highlight_parser]");
+        var selectStyle  = $("select[name=highlight_style]" );
+        if (opener.highlights) {
+            for (var i = 0; i < opener.highlights.length; i++) {
+                var item = opener.highlights[i].trim();
+                if (item.length) {
+	                item = item.split(":");
+	                var value = item[0].trim();
+	                var name = (item.length > 1) ? item[1].trim() : value;
+	                selectStyle.append($("<option>").val(value).text(name));
+                }
+            }
+           	selectParser.find("option[value='" + setting.highlight.parser + "']").prop("selected", true);
+           	selectStyle .find("option[value='" + setting.highlight.style  + "']").prop("selected", true);
+        }
+        selectParser.on("change", function() {
+        	if (selectParser.val()) {
+        		selectStyle.show();
+        	} else {
+        		selectStyle.hide();
+        	}
+        }).change();
 		
 		$("#style").on("input propertychange", function() {
 			setSaved("style", false);
 		});
 	
 		submitFuncs["style"] = function() {
-			setting.useTab          = $("input[name=useTab]").prop("checked");
-			setting.useHighlight    = $("input[name=useHighlight]").prop("checked");
-			setting.viewer.useAlign = $("input[name=viewer_useAlign]").prop("checked");
-			setting.css             = $("textarea[name=css]"       ).val();
-			setting.viewer.css      = $("textarea[name=viewer_css]").val();
-			setting.newFile         = $("textarea[name=newFile]"   ).val();
+			setting.useTab           = $("input[name=useTab]").prop("checked");
+			setting.highlight.parser = $("select[name=highlight_parser]").val();
+			setting.highlight.style  = $("select[name=highlight_style]").val();
+			setting.viewer.useAlign  = $("input[name=viewer_useAlign]").prop("checked");
+			setting.css              = $("textarea[name=css]"       ).val();
+			setting.viewer.css       = $("textarea[name=viewer_css]").val();
+			setting.newFile          = $("textarea[name=newFile]"   ).val();
 			setSaved("style", true);
 			opener.setSetting(setting);
 			opener.saveSetting();
@@ -657,7 +681,7 @@ $(function() {
 				var dll = opener.playerDlls[i].split(":");
 				select.append($("<option>").val(dll[0].trim()).text(dll[1].trim()));
 			}
-			select.find("option[value=" + select.data("value") + "]").prop("selected", true);
+			select.find("option[value='" + select.data("value") + "']").prop("selected", true);
 		}
 		select.on("change", function() {
 			var dll = select.val();
@@ -1240,7 +1264,7 @@ fieldset ol button,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?241208")</h4>
+					<h4>openAddon("~~.html?241213")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1294,8 +1318,22 @@ fieldset ol button,
 	</form>
 	
 	<form id="style">
+		<label>문법 하이라이트:
+			<select name="highlight_parser">
+				<option value="">사용 안 함</option>
+				<option value="SyncOnly">싱크만 구분</option>
+				<option value="withoutSync">싱크 제외</option>
+				<option value="full">전체</option>
+			</select>
+		</label>
+		<span>
+			<select name="highlight_style"></select>
+		</span>
+		<br />
+		※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.
+		<br />
+		<br />
 		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
-		<label><input type="checkbox" name="useHighlight" /> 문법 하이라이트 사용 (파일이 커질 경우 성능 문제가 발생할 수 있습니다.)</label><br />
 		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기 줄표로 시작할 경우 왼쪽 정렬</label><br />
 		<label>새 문서
 			<textarea name="newFile" spellcheck="false" style="height: 400px;"></textarea>

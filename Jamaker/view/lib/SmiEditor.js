@@ -32,7 +32,7 @@ var SmiEditor = function(text) {
 //	this.area.append(this.input = $("<textarea class='input' spellcheck='false'>"));
 	{	// 문법 하이라이트 기능 지원용
 		this.hArea = $("<div class='input highlight-textarea" + (SmiEditor.useHighlight ? "" : " nonactive") + "'>");
-		this.hArea.append(this.hview = $("<div>"));
+		this.hArea.append(this.hview = $("<div class='hljs'>"));
 		this.hArea.append(this.input = $("<textarea spellcheck='false'>"));
 		this.area.append(this.hArea);
 	}
@@ -103,7 +103,7 @@ SmiEditor.setSetting = function(setting, appendStyle) {
 	if (setting.sync) {
 		SmiEditor.sync = setting.sync;
 	}
-	SmiEditor.useHighlight = setting.useHighlight;
+	SmiEditor.useHighlight = setting.highlight.parser;
 	
 	{	// AutoComplete
 		for (var key in SmiEditor.autoComplete) {
@@ -208,11 +208,55 @@ SmiEditor.PlayerAPI = {
 	,	moveTo     : function(time) { binder.moveTo(time); }
 	,	move       : function(move) { binder.moveTo(time + move); }
 };
-SmiEditor.getSyncTime = function(sync) {
+SmiEditor.trustKeyFrame = false;
+SmiEditor.video = {
+		path: null
+	,	fs: []
+	,	kfs: []
+}
+SmiEditor.findSync = function(sync, fs=[], from=0, to=-1) {
+	if (fs.length == 0) return null;
+	if (to < 0) to = fs.length;
+	if (from + 1 == to) {
+		var dist0 = sync - fs[from];
+		var dist1 = fs[to] - sync;
+		if (dist0 <= dist1) {
+			return fs[from];
+		} else {
+			return fs[to];
+		}
+	}
+	var mid = from + Math.floor((to - from) / 2);
+	if (fs[mid] < sync) {
+		return SmiEditor.findSync(sync, fs, mid, to);
+	} else {
+		return SmiEditor.findSync(sync, fs, from, mid);
+	}
+}
+SmiEditor.getSyncTime = function(sync, forKeyFrame=false) {
 	if (!sync) sync = (time + SmiEditor.sync.weight);
-	// 프레임 단위 싱크 보정
-	if (SmiEditor.sync.frame) {
-		sync = Math.max(1, Math.floor(Math.floor((sync / FL) + 0.5) * FL));
+	if (SmiEditor.sync.frame) { // 프레임 단위 싱크 보정
+		var adjustSync = null;
+		if (forKeyFrame && SmiEditor.video.kfs.length > 2) { // 키프레임 싱크
+			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.kfs);
+			var dist = Math.abs(adjustSync - sync);
+			if (dist > 200) { // 200ms 넘어가면 키프레임에 맞춘 게 아니라고 간주
+				adjustSync = null;
+			}
+		}
+		if (adjustSync == null && SmiEditor.video.fs.length > 2) { // 프레임 싱크
+			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.fs);
+			var dist = Math.abs(adjustSync - sync);
+			if (dist > 200) { // 200ms 넘어가면 프레임 정보가 잘못된 걸로 간주
+				adjustSync = null;
+			}
+		}
+		if (adjustSync) { // 보정 완료
+			sync = adjustSync;
+		} else { // FPS 기반 보정
+			sync = Math.floor(Math.floor((sync / FL) + 0.5) * FL);
+		}
+		sync = Math.max(1, sync);
 	}
 	return sync;
 }
@@ -882,8 +926,8 @@ SmiEditor.prototype.insertSync = function(forFrame) {
 	// 커서가 위치한 줄
 	var cursor = this.input[0].selectionEnd;
 	var lineNo = this.input.val().substring(0, cursor).split("\n").length - 1;
-
-	var sync = SmiEditor.getSyncTime();
+	
+	var sync = SmiEditor.getSyncTime(null, forFrame);
 	
 	var lineSync = this.lines[lineNo][LINE.SYNC];
 	if (lineSync) {
@@ -1521,19 +1565,20 @@ SmiEditor.prototype.updateHighlight = function () {
 	};
 	setTimeout(thread, 1);
 }
-$(function() {
+SmiEditor.highlightCss = ".hljs-sync: { color: #3F5FBF; }";
+SmiEditor.highlightText = function(text, state=null) {
+	var previewLine = $("<span>");
+	if (text.toUpperCase().startsWith("<SYNC ")) {
+		previewLine.addClass("hljs-sync");
+	}
+	return previewLine.text(text);
+}
+SmiEditor.refreshHighlight = function() {
 	var style = $("#style_highlight");
 	if (style.length == 0) {
 		$("head").append(style = $("<style>").attr({ id: "style_highlight" }));
 	}
-	style.html(".highlight-textarea > div .sync  { color: #3F5FBF; }");
-});
-SmiEditor.highlightText = function(text, state=null) {
-	var previewLine = $("<span>");
-	if (text.toUpperCase().startsWith("<SYNC ")) {
-		previewLine.addClass("sync");
-	}
-	return previewLine.text(text);
+	style.html(SmiEditor.highlightCss);
 }
 SmiEditor.prototype.moveLine = function(toNext) {
 	if (this.syncUpdating) return;
@@ -1640,6 +1685,8 @@ SmiEditor.prototype.moveSync = function(toForward) {
 	this.history.log();
 }
 SmiEditor.prototype.afterMoveSync = function(range) {
+	this.updateHighlight();
+	
 	if (this.syncUpdating) {
 		// 이미 렌더링 중이면 대기열 활성화
 		this.needToUpdateSync = true;
@@ -1914,7 +1961,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?241208", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?241213", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2073,7 +2120,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?241208", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?241213", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(function() {
@@ -2119,7 +2166,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?241208";
+			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?241213";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(function() { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2132,7 +2179,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?241208", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?241213", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(function() {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -2320,3 +2367,7 @@ SmiEditor.fillSync = function (text) {
 	smi.body = input;
 	return smi.toTxt().trim();
 };
+
+$(function() {
+	SmiEditor.refreshHighlight();
+});
