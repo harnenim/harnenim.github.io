@@ -160,6 +160,9 @@ Tab.prototype.updateHoldSelector = function() {
 	var timers = [];
 	for (var i = 0; i < this.holds.length; i++) {
 		var hold = this.holds[i];
+		if (i > 0) {
+			hold.selector.find(".hold-name span").text(i + "." + hold.name);
+		}
 		timers.push({ time: hold.start, holds: [{ index: i, type: BEGIN }] });
 		timers.push({ time: hold.end  , holds: [{ index: i, type: END   }] });
 	}
@@ -748,7 +751,7 @@ function setSetting(setting) {
 				,	dataType: "text"
 				,	success: function(parser) {
 						eval(parser);
-						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?241213"
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?241217"
 							,	dataType: "text"
 							,	success: function(style) {
 									SmiEditor.highlightCss = style;
@@ -835,7 +838,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?241213", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?241217", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -861,7 +864,7 @@ function getAppendStyle() {
 }
 
 function openHelp(name) {
-	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?241213";
+	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?241217";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)

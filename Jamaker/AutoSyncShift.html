@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>Auto Sync Shift 샘플</title>
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?241213" />
-<script src="view/lib/jquery-3.2.1.min.js?241213"></script>
-<script src="bridge/WinAPI.js?241213"></script>
-<script src="bridge/Binder.js?241213"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?241217" />
+<script src="view/lib/jquery-3.2.1.min.js?241217"></script>
+<script src="bridge/WinAPI.js?241217"></script>
+<script src="bridge/Binder.js?241217"></script>
 <script>
 Binder.prototype.exitAfterSaveSetting = function(setting) {
 	this._.exitAfterSaveSetting(setting);
@@ -30,9 +30,9 @@ Binder.prototype.save = function(result, operation) {
 	this._.save(result, operation);
 }
 </script>
-<script src="bridge/WebForm.js?241213"></script>
-<script src="ffmpeg/SyncShift.js?241213"></script>
-<script src="ffmpeg/VideoInfo.js?241213"></script>
+<script src="bridge/WebForm.js?241217"></script>
+<script src="ffmpeg/SyncShift.js?241217"></script>
+<script src="ffmpeg/VideoInfo.js?241217"></script>
 <script>
 var main = new WebForm();
 {	// main
@@ -46,7 +46,7 @@ var main = new WebForm();
 			main.settingJson = settingJson;
 		}
 		
-		main.mainView.src = "view/AutoSyncShift.html?241213";
+		main.mainView.src = "view/AutoSyncShift.html?241217";
 		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;

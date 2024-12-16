@@ -1,4 +1,18 @@
-[ { "version": "2024.12.13"
+[ { "version": "2024.12.17"
+  , "comment": [
+      "문법 하이라이트 방식 변경에 따른 부가기능 버그 수정"
+    , "싱크 조절기 버그 수정 및 보완"
+    , "홀드 번호 표시"
+    ]
+  , "files": [
+      "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/AutoSyncShift.html"
+    , "view/MergeUpdates.html"
+    ]
+  }
+, { "version": "2024.12.13"
   , "comment": [
       "키프레임 활용 기능 추가"
     , "싱크 조절 프로그램 키프레임 반영 기능 추가"
