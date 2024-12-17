@@ -1,0 +1,34 @@
+
+var input = [
+	"7 2 1 4 5 1 3 3"
+,	"4 1000 1000 1000 1000"
+,	"0"
+].join("\n");
+
+var lines = input.split("\n");
+
+for (var i = 0; i < lines.length; i++) {
+	var items = lines[i].split(" ");
+	if (items[0] == 0) break;
+	
+	var rects = [];
+	var max = 0;
+	
+	for (var j = 0; j < items.length; j++) {
+		var iHeight = Number(items[j]);
+		
+		while (rects.length && (rects[rects.length - 1].height > iHeight)) {
+			rects.pop();
+		}
+		for (var k = 0; k < rects.length; k++) {
+			var rect = rects[k];
+			max = Math.max(max, (++rect.width) * rect.height);
+		}
+		if (rects.length == 0 || (rects[rects.length - 1].height < iHeight)) {
+			var rect = { width: 1, height: iHeight };
+			max = Math.max(max, rect.width * rect.height);
+			rects.push(rect);
+		}
+	}
+	console.log(max);
+}
