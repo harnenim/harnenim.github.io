@@ -1,4 +1,34 @@
-[ { "version": "2024.12.17"
+[ { "version": "2024.12.18"
+  , "comment": [
+      "홀드 결합 과정 보완"
+    , "DPI에 따른 드래그 영역 등 버그 수정"
+    ]
+  , "files": [
+      "view/addon/Combine.html"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/setting.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/lib/webview.js"
+    , "view/SamiReplacer.html"
+    , "view/viewer.html"
+    , "AutoSyncShift.exe"
+    , "AutoSyncShift.exe.config"
+    , "AutoSyncShift.pdb"
+    , "Jamaker.exe"
+    , "Jamaker.pdb"
+    , "MergeUpdates.exe"
+    , "MergeUpdates.exe.config"
+    , "MergeUpdates.pdb"
+    , "SamiReplacer.exe"
+    , "SamiReplacer.exe.config"
+    , "SamiReplacer.pdb"
+    , "TextReplacer.exe"
+    , "TextReplacer.exe.config"
+    , "TextReplacer.pdb"
+    ]
+  }
+, { "version": "2024.12.17"
   , "comment": [
       "문법 하이라이트 방식 변경에 따른 부가기능 버그 수정"
     , "싱크 조절기 버그 수정 및 보완"

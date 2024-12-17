@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>MergeUpdater 샘플</title>
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?241217" />
-<script src="view/lib/jquery-3.2.1.min.js?241217"></script>
-<script src="bridge/WinAPI.js?241217"></script>
-<script src="bridge/Binder.js?241217"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?241218" />
+<script src="view/lib/jquery-3.2.1.min.js?241218"></script>
+<script src="bridge/WinAPI.js?241218"></script>
+<script src="bridge/Binder.js?241218"></script>
 <script>
 Binder.prototype.dropFileToArea = function(index) {
 	this._.dropFileToArea(index);
@@ -15,14 +15,14 @@ Binder.prototype.save = function(dir, suggestedName, text) {
 	this._.save(dir, suggestedName, text);
 }
 </script>
-<script src="bridge/WebForm.js?241217"></script>
+<script src="bridge/WebForm.js?241218"></script>
 <script>
 var main = new WebForm();
 {	// main
 	main.run = function() {
 		this.initializeComponent();
 		
-		main.mainView.src = "view/MergeUpdates.html?241217";
+		main.mainView.src = "view/MergeUpdates.html?241218";
 		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;
