@@ -13,7 +13,8 @@
     , "AutoSyncShift.pdb"
     , "Jamaker.exe"
     , "Jamaker.pdb"
-  ]
+    ]
+  }
 , { "version": "2024.12.18"
   , "comment": [
       "홀드 결합 과정 보완"
