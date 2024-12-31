@@ -1,0 +1,101 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>무비 로그</title>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css" />
+<script src="view/lib/jquery-3.7.1.min.js"></script>
+<script src="bridge/WinAPI.js"></script>
+<script src="bridge/WebForm.js"></script>
+<script>
+var main = new WebForm();
+{	// main
+	main.run = function() {
+		this.initializeComponent();
+		
+		main.mainView.src = "view/MovieLog.html";
+		main.mainView.onload = function() {
+			// 브라우저 샘플에선 url 변형 필요
+			main.frame = main.mainView.contentWindow;
+			main.frame._open_ = main.frame.open;
+			main.frame.open = function(url, name, options) {
+				if (url.substring(0, 4) != "http") {
+					url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
+				}
+				return main.windows[name] = window_open(url, name, options, main.frame);
+			}
+			
+			if(!main.frame.chrome.webview) {
+				main.frame.chrome.webview = {};
+			}
+			main.frame.chrome.webview.postMessage = function(data) {
+				main.messageReceived(data);
+			}
+		};
+	}
+	
+	main.super_messageReceived = function(data) {
+		switch (data.func) {
+			case "Alert"   : this.alert  (data.name, data.msg); break;
+			case "Confirm" : this.confirm(data.name, data.msg); break;
+			case "Prompt"  : this.prompt (data.name, data.msg); break;
+			default: return false;
+		}
+		return true;
+	}
+	main.messageReceived = function(data) {
+		if (this.super_messageReceived(data)) {
+			return;
+		}
+		switch (data.func) {
+			case "InitAfterLoad"   : this.InitAfterLoad   (); break;
+			case "BeforeExit"      : this.BeforeExit      (); break;
+			/*
+			case "LoadPlaceLists"  : this.LoadPlaceLists  (); break;
+			case "RefreshList"     : this.RefreshList     (data.where, data.order); break;
+			case "RefreshStat"     : this.RefreshStat     (); break;
+			case "ShowList"        : this.ShowList        (data.year, data.group); break;
+			case "LoadCalendar"    : this.LoadCalendar    (); break;
+			case "EditWatch"       : this.EditWatch       (data.data); break;
+			case "DeleteWatch"     : this.DeleteWatch     (data.key); break;
+			case "SearchMovieLocal": this.SearchMovieLocal(data.query, data.after); break;
+			case "SearchMovie"     : this.SearchMovie     (data.query, data.after); break;
+			case "RefreshMovieList": this.RefreshMovieList(data.where, data.order); break;
+			*/
+		}
+	}
+
+	main.InitAfterLoad = function() {
+		main.super_initAfterLoad();
+		main.frame.init();
+		main.frame.loadDB("../sqlite.db");
+	};
+	
+	main.BeforeExit = function(e) {
+		this.mainView.contentWindow.beforeExit();
+	}
+}
+$(function() {
+	main.run();
+	window.addEventListener("beforeunload", function(e) {
+		main.beforeExit(e);
+		return false;
+	});
+});
+</script>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+html, body {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	overflow: hidden;
+}
+</style>
+</head>
+<body></body>
+</html>

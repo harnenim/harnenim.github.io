@@ -1,0 +1,249 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script src="lib/jquery-3.7.1.min.js"></script>
+	<script src="lib/webview.js"></script>
+	<!--
+	<script src="lib/sql-asm.js"></script>
+	-->
+	<script src="lib/sql-wasm.js"></script>
+	<script src="lib/OHLI.DB.js"></script>
+	<script src="lib/OHLI.AutoComplete.js"></script>
+	<script src="lib/SearchTable.js"></script>
+	<script src="lib/MovieLog.setting.js"></script>
+	<script src="lib/MovieLog.DAO.js"></script>
+	<script src="lib/MovieLog.js"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css" />
+	<link rel="stylesheet" type="text/css" href="lib/OHLI.AutoComplete.css" />
+	<link rel="stylesheet" type="text/css" href="lib/MovieLog.css" />
+</head>
+<body>
+<form id="form" onsubmit="return edit();" onreset="clearEdit(true);">
+	<div style="display: hidden;" id="datalists">
+		<datalist id="groupList"></datalist>
+	</div>
+	
+	<input type="hidden" name="_" id="inputKey" value="0" />
+	<ul>
+		<li><label>날짜</label><input type="date" name="date" id="inputDate" /></li>
+		<li><label>시간</label><input type="text" name="time" id="inputTime" /></li>
+	</ul>
+	<ul>
+		<li><label>영화관</label><input type="text" autocomplete="off" name="group"  id="inputGroup" list="groupList" /></li>
+		<li><label>지점  </label><input type="text" autocomplete="off" name="place"  id="inputPlace"  /></li>
+		<li><label>상영관</label><input type="text" autocomplete="off" name="screen" id="inputScreen" /></li>
+	</ul>
+	<ul>
+		<li><label>영화</label><input type="text" name="movie"   id="inputMovie" data-func="searchMovieLocal" data-key="movieCd" data-display="movieNm" /></li>
+		<li><label>코드</label><input type="text" name="movieCd" id="inputMovieCd" placeholder="더블클릭" /></li>
+		<li><button type="submit">등록</button></li>
+		<li><button type="reset">취소</button></li>
+	</ul>
+</form>
+<form id="popupSearchMovie" onsubmit="return searchMovie();" onreset="$('#popupSearchMovie').hide();">
+	<div>
+		<div>
+			<input type="text" /><button type="submit">검색</button><button type="reset">취소</button>
+		</div>
+		<div>
+			<table>
+				<colgroup>
+					<col style="width: 60px;" />
+					<col />
+					<col style="width: 100px;" />
+				</colgroup>
+				<tbody></tbody>
+			</table>
+		</div>
+	</div>
+</form>
+<div class="tab-cover">
+	<div class="tab-header">
+		<div>관람 이력</div>
+		<div>통계</div>
+		<div>달력</div>
+		<div>영화 목록</div>
+	</div>
+	<div class="tab-body">
+		<div id="tab_watch" class="table-with-search table-watch" data-func="refreshList">
+			<form class="tb-head"><table>
+				<colgroup>
+					<col style="width: 120px;" />
+					<col style="width: 300px;" />
+					<col style="width: 140px;" />
+					<col />
+					<col style="width:  70px;" />
+					<col style="width:  24px;" />
+				</colgroup>
+				<thead>
+					<tr>
+						<th data-order="$date,time" >일시</th>
+						<th data-order="group,place">영화관</th>
+						<th data-order="screen"     >상영관</th>
+						<th data-order="movie"      >영화</th>
+						<th data-order="movieCd"    >코드</th>
+						<th></th>
+					</tr>
+					<tr>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><button type="submit" style="display: none;"></button></th>
+					</tr>
+				</thead>
+			</table></form>
+			<div class="tb-body"><table class="tb-list">
+				<colgroup>
+					<col style="width: 120px;" />
+					<col style="width: 300px;" />
+					<col style="width: 140px;" />
+					<col />
+					<col style="width:  70px;" />
+					<col style="width:  24px;" />
+				</colgroup>
+				<tbody>
+				</tbody>
+			</table></div>
+		</div>
+		<div id="tab_stat">
+			<div id="tbStat">
+				<div class="tb-head"><table></table></div>
+				<div class="tb-body"><table></table></div>
+			</div>
+			<div id="tbPopup"><div class="table-watch">
+				<a href="javascript:$('#tbPopup').hide();">×</a>
+				<div class="tb-head"><table>
+					<colgroup>
+						<col style="width: 120px;" />
+						<col style="width: 300px;" />
+						<col style="width: 140px;" />
+						<col />
+						<col style="width: 17px;" />
+					</colgroup>
+					<thead>
+						<tr>
+							<th>일시</th>
+							<th>영화관</th>
+							<th>상영관</th>
+							<th>영화</th>
+							<th></th>
+						</tr>
+					</thead>
+				</table></div>
+				<div class="tb-body"><table class="tb-list">
+					<colgroup>
+						<col style="width: 120px;" />
+						<col style="width: 300px;" />
+						<col style="width: 140px;" />
+						<col />
+					</colgroup>
+					<tbody>
+					</tbody>
+				</table></div>
+			</div></div>
+		</div>
+		<div id="tab_calendar">
+			<div style="
+				margin-top: 2px;
+				width: 100%;
+				height: calc(100% - 2px;
+				overflow: auto;
+			"><table id="tbCalendar">
+				<colgroup>
+					<col style="width: 14.2857%;" />
+					<col style="width: 14.2857%;" />
+					<col style="width: 14.2857%;" />
+					<col style="width: 14.2857%;" />
+					<col style="width: 14.2857%;" />
+					<col style="width: 14.2857%;" />
+					<col />
+				</colgroup>
+				<tbody>
+				</tbody>
+			</table></div>
+		</div>
+		<div id="tab_movie" class="table-with-search" data-func="refreshMovieList">
+			<form class="tb-head"><table>
+				<colgroup>
+					<col style="width:  70px;" />
+					<col style="width: 300px;" />
+					<col style="width: 300px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+				</colgroup>
+				<thead>
+					<tr>
+						<th data-order="movieCd"    >코드</th>
+						<th data-order="movieNm"    >제목</th>
+						<th data-order="movieNmEn"  >영제</th>
+						<th data-order="prdtYear"   >제작연도</th>
+						<th data-order="openDt"     >개봉일</th>
+						<th data-order="typeNm"     >유형</th>
+						<th data-order="prdtStatNm" >상태</th>
+						<th data-order="nationAlt"  >국가</th>
+						<th data-order="genreAlt"   >장르</th>
+						<th data-order="repNationnm">국가명</th>
+						<th data-order="repGenreNm" >장르명</th>
+						<th data-order="directors"  >감독</th>
+						<th data-order="companys"   >제작사</th>
+						<th data-order="count"      >관객수</th>
+						<th data-order="myCount"    >관람횟수</th>
+					</tr>
+					<tr>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+						<th><input type="text" placeholder="검색" /></th>
+					</tr>
+				</thead>
+			</table><button type="submit" style="display: none;"></button></form>
+			<div class="tb-body"><table class="tb-list">
+				<colgroup>
+					<col style="width:  70px;" />
+					<col style="width: 300px;" />
+					<col style="width: 300px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+					<col style="width: 100px;" />
+				</colgroup>
+				<tbody>
+				</tbody>
+			</table></div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
