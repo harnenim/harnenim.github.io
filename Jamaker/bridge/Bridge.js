@@ -93,7 +93,7 @@ function WebPlayerBridge() {
 					if (this.window && this.window.name) {
 						return;
 					}
-					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?241218", "player", "scrollbars=no,location=no");
+					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?250107", "player", "scrollbars=no,location=no");
 					if (this.window) {
 						if (this.window.document) {
 							this.window.document.title = "플레이어";
@@ -240,7 +240,7 @@ var player = {}; // 가상 플레이어
 		if (this.window && this.window.name) {
 			return;
 		}
-		this.window = window.open(location.href.split("index.html?241218")[0] + "view/player.html?241218", "player", "scrollbars=no,location=no");
+		this.window = window.open(location.href.split("index.html?250107")[0] + "view/player.html?250107", "player", "scrollbars=no,location=no");
 		if (this.window) {
 			this.window.document.title = "플레이어";
 		}

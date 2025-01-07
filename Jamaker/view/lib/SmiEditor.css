@@ -1,15 +1,18 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
 #tabSelector {
 	display: none;
-	background: #ccc;
 	height: 26px;
-	border-bottom: 1px solid #aaa;
+	border-bottom-width: 1px;
 }
 .th {
 	float: left;
 	margin-top: 2px;
 	padding: 0 2px;
-	background: #ddd;
-	border: 1px solid #888;
+	border-width: 1px;
 	border-radius: 4px 4px 0 0;
 	font-size: 14px;
 	line-height: 22px;
@@ -17,13 +20,6 @@
 }
 .th:first-child {
 	margin-left: -1px;
-}
-.th:hover {
-	background: #f0f0f0;
-}
-.th.selected {
-	background: #f0f0f0;
-	border-bottom-color: #f0f0f0;
 }
 .btn-close-tab {
 	margin: 0 4px;
@@ -51,9 +47,6 @@
 	overflow: hidden;
 	position: relative;
 }
-.tab.not-saved {
-	background: #f86;
-}
 .hold-selector {
 	display: none;
 	overflow: hidden;
@@ -62,7 +55,7 @@
 	left: 2px;
 	right: 2px;
 	height: 80px;
-	border: 1px solid #aaa;
+	border-width: 1px;
 	background: #ccc;
 }
 .hold-selector > .selector {
@@ -70,14 +63,7 @@
 	position: absolute;
 	top: 30%;
 	height: 40%;
-	border: 1px solid #aaa;
-	background: #ddd;
-}
-.hold-selector > .selector.selected {
-	background: #eee;
-}
-.hold-selector > .selector:hover {
-	background: #eee;
+	border-width: 1px;
 }
 .hold-selector > .selector:not(:first-child).selected {
 	z-index: 9999;
@@ -100,9 +86,6 @@
 	position: absolute;
 	padding: 0;
 	font-size: 12px;
-}
-.hold-selector > .selector button:hover {
-	background: #fff;
 }
 .hold-selector > .selector .btn-hold-remove {
 	top: 0;
@@ -168,11 +151,6 @@
 	line-height: 20px;
 	outline: 0;
 }
-.hold .col-sync *,
-.hold textarea {
-	color: #000;
-	caret-color: #000;
-}
 .hold > .col-sync {
 	left: 0;
 	width: 100px;
@@ -181,31 +159,41 @@
 	overflow: hidden;
 	padding-bottom: 2000px;
 	border: 1px solid transparent;
-	background: #f0f0f0;
 }
 .hold > .input {
 	left: 100px;
 	right: 0;
 }
 .highlight-textarea {
+	border-width: 1px 0 0 1px;
 	overflow: hidden;
 }
 .highlight-textarea > * {
 	white-space: pre;
 }
-.highlight-textarea > div.hljs,
+.highlight-textarea > div,
+.highlight-textarea > div > div,
 .highlight-textarea > textarea {
 	position: absolute;
 	top: 0;
 	left: 0;
+}
+.highlight-textarea > textarea {
 	right: 0;
 	bottom: 0;
 }
-.highlight-textarea > div.hljs {
-    border: 1px solid #fff;
+.highlight-textarea > div {
+	right: 0;
+	bottom: 17px;
+	overflow: hidden;
+    pointer-events: none;
 }
-.highlight-textarea > div.hljs * {
+.highlight-textarea > div * {
 	font-weight: normal; /* 굵게 하면 글자폭이 달라짐 */
+}
+.highlight-textarea > div span.enter {
+	opacity: 0.5;
+	font-style: normal;
 }
 .highlight-textarea > textarea {
 	background: transparent;
@@ -213,29 +201,31 @@
 	overflow: scroll;
 	resize: none;
 }
-.highlight-textarea.nonactive > textarea {
-	background: #fff;
-	color: #000;
-}
 .hold > .input > textarea {
-	border: 1px solid #aaa;
-	border-width: 1px 0 0 1px;
-}
-.disabled {
-	color: #888;
+	border: 0;
 }
 
-.sync { border: 0 solid #000; }
 .sync.frame { border-top-width: 1px; line-height: 19px; }
 .sync.range + span { border-left-width: 1px; border-style: dotted; }
+.sync.range { opacity: 0.5; }
+
+.hljs-color {
+	display: inline-block;
+	height: 20px;
+	border-bottom-width: 3px;
+}
+
 input, textarea {
-	background: #fff;
-	border: 1px solid #666;
+	border-width: 1px;
 	user-select: text;
 }
 
-/* 사용자 설정 */
-.sync { border-color: #000; }
-.sync.error { background: #f88; }
-.sync.equal { background: #8f8; }
-.sync.range { color: #888; }
+::-webkit-scrollbar { width: 17px; height: 17px; }
+::-webkit-scrollbar-button,
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb { cursor: default; }
+::-webkit-scrollbar-thumb { border: 0 solid #000; }
+::-webkit-scrollbar-thumb:vertical   { border-width: 0 2px; }
+::-webkit-scrollbar-thumb:horizontal { border-width: 2px 0; }
+::-webkit-scrollbar-button:end { background-position-y: 17px; }
+::-webkit-scrollbar-button:horizontal { background-position-x: 17px; }

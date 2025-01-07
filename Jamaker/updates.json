@@ -1,4 +1,35 @@
-[ { "version": "2024.12.19"
+[ { "version": "2025.01.07"
+  , "comment":
+    [ "일부 영상 정보 못 가져오던 부분 수정"
+    , "에디터 색상 설정 기능 개편"
+    , "문법 하이라이트 줄바꿈 표시 및 색상 표시 기능 추가"
+    , "문법 하이라이트 관련 저장 딜레이 등 버그 수정"
+    , "홀드 추가/삭제 관련 버그 수정"
+    , "SMI 자막 파싱 재개발 관련 버그 수정"
+    ]
+  , "files":
+    [ "view/addon/Devide.html"
+    , "view/addon/Nico.html"
+    , "view/addon/SyncManager.html"
+    , "view/addon/ToAss.html"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/popup.css"
+    , "view/lib/popup.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.color.css"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/editor.html"
+    , "view/setting.html"
+    , "AutoSyncShift.exe"
+    , "AutoSyncShift.pdb"
+    , "Jamaker.exe"
+    , "Jamaker.pdb"
+    ]
+  }
+, { "version": "2024.12.19"
   , "comment":
     [ "프레임 싱크값 가져오는 방식 개선"
     , "키프레임 신뢰 설정 버그 수정"

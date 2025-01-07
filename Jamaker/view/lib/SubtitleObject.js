@@ -1764,6 +1764,9 @@ Subtitle.Smi.toAttr = function(text) {
 						}
 						break;
 					}
+					case '\n': { // 줄바꿈 무자 무시
+						break;
+					}
 					default: {
 						last.text += c;
 					}

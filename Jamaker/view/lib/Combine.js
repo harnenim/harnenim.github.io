@@ -54,6 +54,7 @@ var Combine = {
 				whiteSpace: "pre"
 			,	fontSize: "144px"
 			,	fontWeight: "bold"
+			,	textShadow: ""
 		});
 		return Combine.checker.show();
 	}
@@ -218,6 +219,7 @@ var Combine = {
 	}
 	
 	Combine.combine = function(inputUpper, inputLower) {
+		var hljs = $(".hljs").hide(); // 결합 로직 돌아갈 때 문법 하이라이트가 있으면 성능 저하됨
 		var checker = getChecker();
 		var upperSyncs = parse(inputUpper, checker);
 		var lowerSyncs = parse(inputLower, checker);
@@ -454,6 +456,7 @@ var Combine = {
 			}
 		}
 		checker.text("").hide();
+		hljs.show();
 		
 		var lines = [];
 		var lastSync = 0;

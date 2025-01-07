@@ -1,6 +1,4 @@
 ﻿var time = 0;
-var FR = 23976;
-var FL = 1000000 / FR;
 
 var tabs = [];
 var tab = 0;
@@ -23,7 +21,7 @@ function refreshTime(now, fr) {
 		if (fr == 23975) {
 			fr = 23975.7; // 일부 영상 버그
 		}
-		FL = 1000000 / (FR = fr);
+		SmiEditor.video.FL = 1000000 / (SmiEditor.video.FR = fr);
 		if (showFps == null) {
 			showFps = $("#showFps");
 		}
@@ -45,6 +43,7 @@ var Tab = function(text, path) {
 	for (var i = 0; i < holds.length; i++) {
 		this.addHold(holds[i], i == 0, i == 0);
 	}
+	this.savedHolds = this.holds.slice(0);
 	
 	var tab = this;
 	this.holdSelector.on("click", ".selector", function() {
@@ -62,7 +61,7 @@ var Tab = function(text, path) {
 				alert("잘못된 입력입니다.");
 				return;
 			}
-			hold.selector.find(".hold-name > span").text(hold.name = input);
+			hold.selector.find(".hold-name > span").text(tab.holds.indexOf(hold) + "." + (hold.name = input));
 			tab.onChangeSaved();
 		});
 		
@@ -71,15 +70,21 @@ var Tab = function(text, path) {
 		var hold = $(this).parents(".selector").data("hold");
 		confirm("삭제하시겠습니까?", function() {
 			var index = tab.holds.indexOf(hold);
+			
+			if (tab.hold == index) {
+				// 선택된 걸 삭제하는 경우 메인 홀드로 먼저 이동
+				//tab.holds[0].selector.click();
+				tab.selectHold(tab.holds[0]);
+			} else if (tab.hold > index) {
+				// 선택된 게 삭제 대상보다 뒤에 있을 경우 번호 당김
+				tab.hold--;
+			}
+			
 			tab.holds.splice(index, 1);
 			hold.selector.remove();
 			hold.area.remove();
 			delete hold;
 			
-			// 선택된 걸 삭제했을 경우 메인 홀드로
-			if (tab.hold == index) {
-				tab.holds[0].selector.click();
-			}
 			tab.holdEdited = true;
 			tab.updateHoldSelector();
 			tab.onChangeSaved();
@@ -139,21 +144,21 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	this.holdArea.append(hold.area);
 	this.updateHoldSelector();
 	if (asActive) {
-		hold.selector.click();
+		this.selectHold(hold);
 	}
+	this.onChangeSaved();
 }
 Tab.prototype.updateHoldSelector = function() {
 	if (this.holds.length <= 1) {
 		this.area.removeClass("with-hold");
+		refreshPaddingBottom();
 		return;
 	}
 	this.area.addClass("with-hold");
-
+	refreshPaddingBottom();
+	
 	var BEGIN = 1;
 	var END = -1;
-	
-	// 홀드 여부 달라질 수 있음
-	SmiEditor.refreshStyle(setting, getAppendStyle());
 	
 	var timers = [];
 	for (var i = 0; i < this.holds.length; i++) {
@@ -373,18 +378,20 @@ Tab.prototype.onChangeSaved = function(hold) {
 	}
 }
 Tab.prototype.isSaved = function() {
-	var saved = true;
-	if (this.holdEdited) {
-		saved = false;
-	} else {
-		for (var i = 0; i < this.holds.length; i++) {
-			if (!this.holds[i].isSaved()) {
-				saved = false;
-				break;
-			}
+	if (this.savedHolds && (this.savedHolds.length != this.holds.length)) {
+		return false;
+	}
+	
+	for (var i = 0; i < this.holds.length; i++) {
+		if (this.savedHolds && (this.savedHolds[i] != this.holds[i])) {
+			return false;
+		}
+		if (!this.holds[i].isSaved()) {
+			return false;
 		}
 	}
-	return saved;
+	
+	return true;
 }
 
 SmiEditor.prototype.isSaved = function() {
@@ -653,8 +660,8 @@ function init(jsonSetting) {
 		SmiEditor.selected = currentTab.holds[currentTab.hold];
 		SmiEditor.Viewer.refresh();
 		
-		// 홀드 여부 달라질 수 있음
-		SmiEditor.refreshStyle(setting, getAppendStyle());
+		// 탭에 따라 홀드 여부 다를 수 있음
+		refreshPaddingBottom();
 		
 	}).on("click", ".btn-close-tab", function(e) {
 		e.preventDefault();
@@ -703,6 +710,7 @@ function init(jsonSetting) {
 		}
 	});
 	
+	SmiEditor.activateKeyEvent();
 	SmiEditor.Viewer.open();
 	
 	setSetting(setting);
@@ -725,7 +733,53 @@ function setSetting(setting) {
 		}
 	}
 	
-	SmiEditor.setSetting(setting, getAppendStyle());
+	SmiEditor.setSetting(setting);
+	{
+		if (setting.css) {
+			delete(setting.css);
+		}
+
+		// 스크롤바 버튼 새로 그려야 함
+		var button = "";
+		var disabled = "";
+		{
+			var canvas = SmiEditor.canvas;
+			if (!canvas) canvas = SmiEditor.canvas = document.createElement("canvas");
+			canvas.width = 34;
+			canvas.height = 34;
+			
+			var c = canvas.getContext("2d");
+			var x, y;
+			x =  8; y =  8; c.moveTo(x, y-1.5); c.lineTo(x+3.5, y+2), c.lineTo(x-3.5, y+2); c.closePath();
+			x =  8; y = 25; c.moveTo(x, y+1.5); c.lineTo(x+3.5, y-2), c.lineTo(x-3.5, y-2); c.closePath();
+			x = 25; y =  8; c.moveTo(x-1.5, y); c.lineTo(x+2, y-3.5), c.lineTo(x+2, y+3.5); c.closePath();
+			x = 25; y = 25; c.moveTo(x+1.5, y); c.lineTo(x-2, y+3.5), c.lineTo(x-2, y-3.5); c.closePath();
+			
+			c.fillStyle = setting.color.tabBorder;
+			c.fill();
+			button = SmiEditor.canvas.toDataURL();
+			
+			c.fillStyle = setting.color.border;
+			c.fill();
+			disabled = SmiEditor.canvas.toDataURL();
+		}
+
+		$.ajax({url: "lib/SmiEditor.color.css?250107"
+			,	dataType: "text"
+			,	success: function(preset) {
+					for (var name in setting.color) {
+						preset = preset.split("[" + name + "]").join(setting.color[name]);
+					}
+					preset = preset.split("[button]").join(button).split("[buttonDisabled]").join(disabled);
+					
+					var $style = $("#styleColor");
+					if (!$style.length) {
+						$("head").append($style = $("<style id='styleColor'>"));
+					}
+					$style.html(preset);
+				}
+		});
+	}
 	{
 		function afterLoadHighlight() {
 			SmiEditor.refreshHighlight();
@@ -749,7 +803,7 @@ function setSetting(setting) {
 				,	dataType: "text"
 				,	success: function(parser) {
 						eval(parser);
-						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?241218"
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250107"
 							,	dataType: "text"
 							,	success: function(style) {
 									SmiEditor.highlightCss = style;
@@ -761,6 +815,13 @@ function setSetting(setting) {
 		} else {
 			afterLoadHighlight();
 		}
+	}
+	{
+		if (setting.sync.kLimit == undefined) {
+			setting.sync.kLimit = 200;
+		}
+		SmiEditor.followKeyFrame = setting.sync.kframe;
+		SmiEditor.limitKeyFrame  = setting.sync.kLimit;
 	}
 	
 	// 기본 단축키
@@ -813,7 +874,7 @@ function moveWindowsToSetting() {
 
 	// 창 위치 초기화 후 호출
 	setTimeout(function() {
-		SmiEditor.refreshStyle(setting, getAppendStyle());
+		refreshPaddingBottom();
 	}, 1);
 }
 
@@ -836,7 +897,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?241218", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250107", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -851,18 +912,22 @@ function saveSetting() {
 		binder.saveSetting(stringify(setting));
 		
 		// 창 위치/크기 조절하고 일정 시간 지나면 C#에서 여기가 호출됨
-		SmiEditor.refreshStyle(setting, getAppendStyle());
+		refreshPaddingBottom();
 	}
 }
-function getAppendStyle() {
+function refreshPaddingBottom() {
 	// 에디터 하단 여백 재조정
 	var holdTop = tabs.length ? Number(tabs[tab].area.find(".holds").css("top").split("px")[0]) : 0;
 	var append = "\n#editor textarea { padding-bottom: " + ($("#editor").height() - holdTop - SB - LH - 2) + "px; }";
-	return append;
+	var $style = $("#stylePaddingBottom");
+	if (!$style.length) {
+		$("head").append($style = $("<style id='stylePaddingBottom'>"));
+	}
+	$style.html(append);
 }
 
 function openHelp(name) {
-	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?241218";
+	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250107";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -993,6 +1058,7 @@ function afterSaveFile(path) {
 	var title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	$("#tabSelector .th:eq(" + tab + ") span").text(title);
 	currentTab.holdEdited = false;
+	currentTab.savedHolds = currentTab.holds.slice(0);
 }
 SmiEditor.prototype._afterSave = SmiEditor.prototype.afterSave;
 SmiEditor.prototype.afterSave = function() {
@@ -1088,19 +1154,45 @@ function setVideo(path) {
 	}
 }
 // C# 쪽에서 호출
-function setFrames(path, fs, kfs) {
-	fs = fs.split(",");
-	for (var i = 0; i < fs.length; i++) {
-		fs[i] = Number(fs[i]);
+function loadFkf(fkfName) {
+	// C# 파일 객체를 js 쪽에 전달할 수 없으므로, 정해진 경로의 파일을 ajax 형태로 가져옴
+	var req = new XMLHttpRequest();
+	req.open("GET", "../temp/" + fkfName);
+	req.responseType = "arraybuffer";
+	req.onload = function(e) {
+		var buffer = req.response;
+		
+		var fkf = new Int32Array(buffer);
+		var vfsLength = fkf[0];
+		var kfsLength = fkf[1];
+		
+		var vfs = [];
+		var kfs = [];
+		
+		var offset = 8;
+		var view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
+		for (var i = 0; i < vfsLength; i++) {
+			vfs.push(view.getInt32(i * 4, true));
+		}
+		offset = offset + (vfsLength * 4);
+		view = new DataView(buffer.slice(offset, offset + (kfsLength * 4)));
+		for (var i = 0; i < kfsLength; i++) {
+			kfs.push(view.getInt32(i * 4, true));
+		}
+		
+		SmiEditor.video.fs  = vfs;
+		SmiEditor.video.kfs = kfs;
+		
+		// 키프레임 신뢰 기능 활성화
+		$("#forFrameSync").removeClass("disabled");
+		$("#checkTrustKeyframe").attr({ disabled: false });
+		Progress.set("#forFrameSync", 0);
 	}
-	kfs = kfs.split(",");
-	for (var i = 0; i < kfs.length; i++) {
-		kfs[i] = Number(kfs[i]);
+	req.onerror = function(e) {
+		// 실패했어도 프로그레스바는 없애줌
+		Progress.set("#forFrameSync", 0);
 	}
-	SmiEditor.video.fs = fs;
-	SmiEditor.video.kfs = kfs;
-	$("#forFrameSync").removeClass("disabled");
-	$("#checkTrustKeyframe").attr({ disabled: false });
+	req.send();
 }
 
 // 종료 전 C# 쪽에서 호출

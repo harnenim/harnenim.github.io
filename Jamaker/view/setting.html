@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?241218"></script>
-<script src="lib/popup.js?241218"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?241218" />
+<script src="lib/jquery-3.2.1.min.js?250107"></script>
+<script src="lib/popup.js?250107"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?250107" />
 <script>
 windowName = "setting";
 
@@ -61,7 +61,7 @@ $(function() {
 	var setting = opener.setting;
 	
 	function refresh(form, setting) {
-		form.find("input[type=text][name],input[type=number][name],textarea[name]").each(function() {
+		form.find("input[type=text][name],input[type=number][name],input[type=color][name],textarea[name]").each(function() {
 			var input = $(this);
 			var name = input.attr("name");
 			if (name.indexOf("what") > 0) {
@@ -231,7 +231,9 @@ $(function() {
 			setting.sync.move   = Number($("input[name=sync_move]"  ).val());
 			setting.sync.lang   = $("input[name=sync_lang]"  ).val();
 			setting.sync.preset = preset;
-			setting.sync.frame  = $("input[name=sync_frame]").prop("checked");
+			setting.sync.frame  = $("input[name=sync_frame]" ).prop("checked");
+			setting.sync.kframe = $("input[name=sync_kframe]").prop("checked");
+			setting.sync.kLimit = Number($("input[name=sync_kLimit]").val());
 			opener.setSetting(setting);
 			opener.saveSetting();
 		};
@@ -622,9 +624,53 @@ $(function() {
 	
 	{	// 스타일
 		saved.style = { status: true, name: "스타일 설정" };
+		
+		var presetUl = $("#style_color_preset ul");
+		presetUl.on("click", "li span", function() {
+			var color = setting.colorPreset[$(this).parent().data("key")];
+			for (var name in color) {
+				$("input[name=color_" + name + "]").val(color[name]);
+			}
+		}).on("click", "li button", function() {
+			var key = $(this).parent().data("key");
+			confirm("삭제하시겠습니까?", function() {
+				delete(setting.colorPreset[key]);
+				refreshPreset(setting);
+			});
+		});
+		$("#btnAddPreset").on("click", function() {
+			var name = prompt("프리셋 이름을 입력하세요.");
+			if (!name) {
+				alert("이름이 입력되지 않았습니다.");
+			}
+			var color = {};
+			color.background = $("input[name=color_background]").val();
+			color.selector   = $("input[name=color_selector]"  ).val();
+			color.border     = $("input[name=color_border]"    ).val();
+			color.tab        = $("input[name=color_tab]"       ).val();
+			color.tabBorder  = $("input[name=color_tabBorder]" ).val();
+			color.editor     = $("input[name=color_editor]"    ).val();
+			color.text       = $("input[name=color_text]"      ).val();
+			color.hover      = $("input[name=color_hover]"     ).val();
+			color.notSaved   = $("input[name=color_notSaved]"  ).val();
+			color.syncBorder = $("input[name=color_syncBorder]").val();
+			color.syncError  = $("input[name=color_syncError]" ).val();
+			color.syncEqual  = $("input[name=color_syncEqual]" ).val();
+			setting.colorPreset[name] = color;
+			refreshPreset(setting);
+		});
+		function refreshPreset(setting) {
+			presetUl.empty();
+			for (var key in setting.colorPreset) {
+				var li = $("<li>").data({ key: key });
+				li.append($("<span>").text(key)).append($("<button>").attr({ type: "button" }).text("×"));
+				presetUl.append(li);
+			}
+		}
 
 		(refreshFuncs["style"] = function(setting) {
 			refresh($("#style"), setting);
+			refreshPreset(setting);
 			setSaved("style", setting == opener.setting);
 		})(setting);
 
@@ -645,9 +691,9 @@ $(function() {
         }
         selectParser.on("change", function() {
         	if (selectParser.val()) {
-        		selectStyle.show();
+        		$("#optionsForHighlight").removeClass("disabled").find("input, select").attr({ disabled: false });
         	} else {
-        		selectStyle.hide();
+        		$("#optionsForHighlight").addClass   ("disabled").find("input, select").attr({ disabled: true  });
         	}
         }).change();
 		
@@ -659,10 +705,23 @@ $(function() {
 			setting.useTab           = $("input[name=useTab]").prop("checked");
 			setting.highlight.parser = $("select[name=highlight_parser]").val();
 			setting.highlight.style  = $("select[name=highlight_style]").val();
+			setting.highlight.enter  = $("input[name=highlight_enter]").prop("checked");
+			setting.highlight.color  = $("input[name=highlight_color]").prop("checked");
 			setting.viewer.useAlign  = $("input[name=viewer_useAlign]").prop("checked");
-			setting.css              = $("textarea[name=css]"       ).val();
 			setting.viewer.css       = $("textarea[name=viewer_css]").val();
 			setting.newFile          = $("textarea[name=newFile]"   ).val();
+			setting.color.background = $("input[name=color_background]").val();
+			setting.color.selector   = $("input[name=color_selector]"  ).val();
+			setting.color.border     = $("input[name=color_border]"    ).val();
+			setting.color.tab        = $("input[name=color_tab]"       ).val();
+			setting.color.tabBorder  = $("input[name=color_tabBorder]" ).val();
+			setting.color.editor     = $("input[name=color_editor]"    ).val();
+			setting.color.text       = $("input[name=color_text]"      ).val();
+			setting.color.hover      = $("input[name=color_hover]"     ).val();
+			setting.color.notSaved   = $("input[name=color_notSaved]"  ).val();
+			setting.color.syncBorder = $("input[name=color_syncBorder]").val();
+			setting.color.syncError  = $("input[name=color_syncError]" ).val();
+			setting.color.syncEqual  = $("input[name=color_syncEqual]" ).val();
 			setSaved("style", true);
 			opener.setSetting(setting);
 			opener.saveSetting();
@@ -1069,6 +1128,69 @@ fieldset ol button,
 #btnPlayerPath { border-left-width: 0; }
 #replace input + button { border-left-width: 1px; }
 
+/* 스타일 */
+#optionsForHighlight > span {
+	margin-left: 215px;
+}
+#optionsForHighlight label {
+	margin-right: 8px;
+}
+#optionsForHighlight.disabled label > span {
+	opacity: 0.5;
+}
+#style_color_preset {
+	float: left;
+	width: 200px;
+	height: 146px;
+}
+#style_color_preset ul {
+	overflow-y: scroll;
+	height: calc(100% - 18px);
+}
+#style_color_preset li {
+	border: 1px solid #888;
+	cursor: pointer;
+	width: 100%;
+	height: 20px;
+	line-height: 20px;
+}
+#style_color_preset li:hover {
+	background: #fff;
+}
+#style_color_preset li span {
+	display: block;
+	width: calc(100% - 16px);
+	height: 18px;
+	float: left;
+	white-space: nowrap;
+	overflow: hidden;
+}
+#style_color_preset li button {
+	display: block;
+	width: 16px;
+	height: 18px;
+	float: right;
+	border-width: 0 0 0 1px;
+}
+#btnAddPreset {
+	width: 100%;
+}
+#style_color_setting {
+	float: left;
+}
+#style_color_setting label {
+	display: inline-block;
+	margin-left: 10px;
+}
+#style_color_setting span {
+	display: inline-block;
+	width: 140px;
+}
+#style_color:after {
+	display: block;
+	content: "";
+	clear: both;
+}
 </style>
 </head>
 <body>
@@ -1129,9 +1251,12 @@ fieldset ol button,
 		<label>싱크 태그 형태: <input type="text" name="sync_preset" style="width: 400px;" /></label><br />
 		<br />
 		<label><input type="checkbox" name="sync_frame" /> 프레임 단위 싱크 보정</label><br />
-		<p>※ FPS를 기준으로 프레임 단위 싱크로 보정이 들어갑니다.<br />
-			가변 프레임 영상의 경우 문제가 생길 수 있습니다. 
+		<p>※ 프레임 정보를 가져오지 못했을 경우 FPS를 기준으로 프레임 단위 싱크로 보정이 들어갑니다.<br />
+			　가변 프레임 영상의 경우 문제가 생길 수 있습니다. 
 		</p>
+		<br />
+		<label>키프레임을 신뢰할 수 있는 영상에 대해 <input type="number" name="sync_kLimit" />ms 범위에서 화면 싱크를 키프레임에 맞도록 보정</label><br />
+		<label><input type="checkbox" name="sync_kframe" /> 키프레임을 신뢰할 수 있는 영상에 대해 자동으로 화면 싱크 처리</label><br />
 	</form>
 	
 	<form id="cmd">
@@ -1264,7 +1389,7 @@ fieldset ol button,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?241218")</h4>
+					<h4>openAddon("~~.html?250107")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1326,8 +1451,12 @@ fieldset ol button,
 				<option value="full">전체</option>
 			</select>
 		</label>
-		<span>
-			<select name="highlight_style"></select>
+		<span id="optionsForHighlight">
+			<select name="highlight_style"></select><br />
+			<span>
+				<label><input type="checkbox" name="highlight_enter" /> <span>줄바꿈 표시</span></label>
+				<label><input type="checkbox" name="highlight_color" /> <span>색상 미리보기</span></label>
+			</span>
 		</span>
 		<br />
 		※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.
@@ -1335,16 +1464,28 @@ fieldset ol button,
 		<br />
 		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
 		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기 줄표로 시작할 경우 왼쪽 정렬</label><br />
+		<fieldset id="style_color">
+			<legend>색 설정</legend>
+			<fieldset id="style_color_preset">
+				<legend>프리셋</legend>
+				<ul></ul>
+				<button id="btnAddPreset">현재값 프리셋에 추가</button>
+			</fieldset>
+			<div id="style_color_setting">
+				<label><span>기본 배경 색      </span><input type="color" name="color_background" /></label><label><span>저장되지 않음 표시</span><input type="color" name="color_notSaved"   /></label><br />
+				<label><span>탭/홀드 배경 색   </span><input type="color" name="color_selector"   /></label><label><span>설정/탭 테두리    </span><input type="color" name="color_tabBorder"  /></label><br />
+				<label><span>비활성 탭/홀드 색 </span><input type="color" name="color_tab"        /></label><label><span>홀드/에디터 테두리</span><input type="color" name="color_border"     /></label><br />
+				<label><span>에디터 배경 색    </span><input type="color" name="color_editor"     /></label><label><span>기본 글씨/커서 색 </span><input type="color" name="color_text"       /></label><br />
+				<label><span>버튼 활성 색      </span><input type="color" name="color_hover"      /></label><label><span>화면 싱크 표시    </span><input type="color" name="color_syncBorder" /></label><br />
+				<label><span>싱크 역전 표현    </span><input type="color" name="color_syncError"  /></label><label><span>싱크 중복 표현    </span><input type="color" name="color_syncEqual"  /></label><br />
+			</div>
+		</fieldset>
 		<label>새 문서
 			<textarea name="newFile" spellcheck="false" style="height: 400px;"></textarea>
 		</label>
 		<br />
 		<label>미리보기
 			<textarea name="viewer_css" spellcheck="false" style="height: 300px;"></textarea>
-		</label>
-		<br />
-		<label>에디터
-			<textarea name="css" spellcheck="false" style="height: 200px;"></textarea>
 		</label>
 	</form>
 	
