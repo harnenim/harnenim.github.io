@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>특수 태그에 대하여</title>
-	<script src="../lib/jquery-3.2.1.min.js?250107"></script>
-	<script src="../lib/popup.js?250107"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250107" />
+	<script src="../lib/jquery-3.2.1.min.js?250124"></script>
+	<script src="../lib/popup.js?250124"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250124" />
 	<script>
 windowName = "help";
 	</script>
@@ -225,12 +225,72 @@ windowName = "help";
 					&lt;Sync Start=1958&gt;&lt;P Class=KRCC	&gt;<br />
 					&lt;FONT color="#F9B877"&gt;페이드 인&lt;/font&gt;<br />
 					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
-					&nbsp;
+					&amp;nbsp;
+				</div></td>
+			</tr>
+			<tr title="한 글자씩 출력">
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='character'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;
+				</td>
+				<td><div>
+					&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					테   　　　　<br />​
+					&lt;Sync Start=1167&gt;&lt;P Class=KRCC	&gt;<br />
+					테스   　　　<br />​
+					&lt;Sync Start=1333&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트   　　<br />​
+					&lt;Sync Start=1500&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍   　<br />​
+					&lt;Sync Start=1667&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍스   <br />​
+					&lt;Sync Start=1833&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍스트<br />​
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;<br />
 				</div></td>
 			</tr>
 			<tr title="타자기 형태 입력 효과">
 				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
 					&lt;font typing='typewriter'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;
+				</td>
+				<td><div>
+					&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					ᄐ   　　　　<br />​
+					&lt;Sync Start=1077&gt;&lt;P Class=KRCC	&gt;<br />
+					테   　　　　<br />​
+					&lt;Sync Start=1154&gt;&lt;P Class=KRCC	&gt;<br />
+					테ᄉ   　　　<br />​
+					&lt;Sync Start=1231&gt;&lt;P Class=KRCC	&gt;<br />
+					테스   　　　<br />​
+					&lt;Sync Start=1308&gt;&lt;P Class=KRCC	&gt;<br />
+					테스ᄐ   　　<br />​
+					&lt;Sync Start=1385&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트   　　​<br />
+					&lt;Sync Start=1462&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트ᄐ   　​<br />
+					&lt;Sync Start=1538&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트테   　​<br />
+					&lt;Sync Start=1615&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍   　​<br />
+					&lt;Sync Start=1692&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍ᄉ   ​<br />
+					&lt;Sync Start=1769&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍스   ​<br />
+					&lt;Sync Start=1846&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍스ᄐ​<br />
+					&lt;Sync Start=1923&gt;&lt;P Class=KRCC	&gt;<br />
+					테스트텍스트​<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;
+				</div></td>
+			</tr>
+			<tr title="타자기 형태 입력 효과에 커서 표시">
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='typewriter visible'&gt;테스트텍스트&lt;/font&gt;<br />
 					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
 					&amp;nbsp;
 				</td>
@@ -473,10 +533,70 @@ windowName = "help";
 					&amp;nbsp;
 				</div></td>
 			</tr>
+			<tr title="흔들기 효과 - 기본값: 125ms마다 크기 1만큼">
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font shake&gt;테스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;
+				</td>
+				<td><div>
+					&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font size="0"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="3"&gt; &lt;/font&gt;테스트&lt;font size="3"&gt; &lt;/font&gt;&lt;br&gt;&lt;font size="2"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1125&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="2"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="3"&gt;  &lt;/font&gt;테스트&lt;br&gt;&lt;font size="0"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1250&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="1"&gt;　&lt;/font&gt;&lt;br&gt;테스트&lt;font size="3"&gt;  &lt;/font&gt;&lt;br&gt;&lt;font size="1"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1375&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="0"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="3"&gt;  &lt;/font&gt;테스트&lt;br&gt;&lt;font size="2"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1500&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="2"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="3"&gt; &lt;/font&gt;테스트&lt;font size="3"&gt; &lt;/font&gt;&lt;br&gt;&lt;font size="0"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1625&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="0"&gt;　&lt;/font&gt;&lt;br&gt;테스트&lt;font size="3"&gt;  &lt;/font&gt;&lt;br&gt;&lt;font size="2"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1750&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="1"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="3"&gt;  &lt;/font&gt;테스트&lt;br&gt;&lt;font size="1"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1875&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="2"&gt;　&lt;/font&gt;&lt;br&gt;테스트&lt;font size="3"&gt;  &lt;/font&gt;&lt;br&gt;&lt;font size="0"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;
+				</div></td>
+			</tr>
+			<tr title="흔들기 효과 - 100ms마다 크기 3만큼">
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font shake="100,3"&gt;테스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;
+				</td>
+				<td><div>
+					&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font size="0"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="9"&gt; &lt;/font&gt;테스트&lt;font size="9"&gt; &lt;/font&gt;&lt;br&gt;&lt;font size="6"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1100&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="6"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="9"&gt;  &lt;/font&gt;테스트&lt;br&gt;&lt;font size="0"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1200&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="3"&gt;　&lt;/font&gt;&lt;br&gt;테스트&lt;font size="9"&gt;  &lt;/font&gt;&lt;br&gt;&lt;font size="3"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1300&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="0"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="9"&gt;  &lt;/font&gt;테스트&lt;br&gt;&lt;font size="6"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1400&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="6"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="9"&gt; &lt;/font&gt;테스트&lt;font size="9"&gt; &lt;/font&gt;&lt;br&gt;&lt;font size="0"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1500&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="0"&gt;　&lt;/font&gt;&lt;br&gt;테스트&lt;font size="9"&gt;  &lt;/font&gt;&lt;br&gt;&lt;font size="6"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1600&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="3"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="9"&gt;  &lt;/font&gt;테스트&lt;br&gt;&lt;font size="3"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1700&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="6"&gt;　&lt;/font&gt;&lt;br&gt;테스트&lt;font size="9"&gt;  &lt;/font&gt;&lt;br&gt;&lt;font size="0"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1800&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="0"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="9"&gt; &lt;/font&gt;테스트&lt;font size="9"&gt; &lt;/font&gt;&lt;br&gt;&lt;font size="6"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=1900&gt;&lt;P Class=KRCC	&gt;<br />
+					&lt;font size="6"&gt;　&lt;/font&gt;&lt;br&gt;&lt;font size="9"&gt;  &lt;/font&gt;테스트&lt;br&gt;&lt;font size="0"&gt;　&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;<br />
+					&amp;nbsp;
+				</div></td>
+			</tr>
 		</tbody>
 	</table>
 </div>
-페이드 기능은 겹쳐서 넣을 수 있지만, 타이핑 기능은 하나씩으로 제한됩니다.<br />
+페이드 기능은 겹쳐서 넣을 수 있지만<br />
+타이핑과 흔들기 기능은 하나씩만 사용 가능합니다.<br />
+흔들기 효과는 플레이어에 따라 크기가 무시될 수 있습니다.<br />
 <br />
 자동치환 설정에 따라 별도 변환 과정 없이 적용됩니다.
 </body>

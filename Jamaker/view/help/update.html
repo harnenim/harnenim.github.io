@@ -4,29 +4,29 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>업데이트 확인</title>
-	<script src="../lib/jquery-3.2.1.min.js?250107"></script>
-	<script src="../lib/popup.js?250107"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250107" />
+	<script src="../lib/jquery-3.2.1.min.js?250124"></script>
+	<script src="../lib/popup.js?250124"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250124" />
 	<script>
 windowName = "help";
-$(function() {
+$(() => {
 	$("#version").text(opener.setting.version);
 	
-	var url = (opener && opener.binder && !opener.binder._)
+	const url = (opener && opener.binder && !opener.binder._)
 		? /* C# 프로그램에서 서버 호출 */ "https://harnenim.github.io/Jamaker/updates.json"
 		: /* 웹버전 내부에서 로컬 호출 */ "../../updates.json"
 		;
 	$.ajax({url : url
-		,	success: function(updates) {
-				var isLatest = true;
-				var log = [];
-				var files = [];
-				for (var i = 0; i < updates.length; i++) {
-					var update = updates[i];
+		,	success: (updates) => {
+				let isLatest = true;
+				const log = [];
+				const files = [];
+				for (let i = 0; i < updates.length; i++) {
+					const update = updates[i];
 					if (update.version > opener.setting.version) {
 						isLatest = false;
-						for (var j = 0; j < update.files.length; j++) {
-							var file = update.files[j];
+						for (let j = 0; j < update.files.length; j++) {
+							const file = update.files[j];
 							if (files.indexOf(file) < 0) {
 								files.push(file);
 							}
@@ -38,7 +38,7 @@ $(function() {
 					log.push("");
 					log.push("　" + update.version);
 					log.push("");
-					for (var j = 0; j < update.comment.length; j++) {
+					for (let j = 0; j < update.comment.length; j++) {
 						log.push("　" + update.comment[j]);
 					}
 					log.push("");
@@ -51,7 +51,7 @@ $(function() {
 					$("#btnUpdate").text(updates[0].version + "으로 업데이트").attr({ disabled: false });
 				}
 			}
-		,	error: function(e) {
+		,	error: (e) => {
 				alert("업데이트 확인 실패");
 				console.log(e);
 			}

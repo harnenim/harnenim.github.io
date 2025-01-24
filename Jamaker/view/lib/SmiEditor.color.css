@@ -1,3 +1,5 @@
+@charset "utf-8";
+
 /* 기본 배경 색 */
 html, body,
 .hold > .col-sync,
@@ -58,7 +60,7 @@ input,
 	background: [notSaved];
 }
 
-/* 스크롤바(배경색 기반)... 맘에 안 드는데... */
+/* 스크롤바(배경색 기반)... 맘에 안 드는데... * /
 ::-webkit-scrollbar {background: [background]; }
 ::-webkit-scrollbar-corner { background: [tab]; }
 ::-webkit-scrollbar-button,

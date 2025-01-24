@@ -4,24 +4,22 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>외부 검색</title>
-	<script src="../lib/jquery-3.2.1.min.js?250107"></script>
-	<script src="../lib/popup.js?250107"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250107" />
+	<script src="../lib/jquery-3.2.1.min.js?250124"></script>
+	<script src="../lib/popup.js?250124"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250124" />
 	<script>
 windowName = "addon";
 
-var editor = null;
-
-$(function() {
+$(() => {
 	opener.SmiEditor.Addon.onloadExtSubmit();
 });
 function submit(method, url, values) {
-	var form = $("form");
+	const form = $("form");
 	form.attr({
 			action: url
 		,	method: method
 	});
-	for (var key in values) {
+	for (let key in values) {
 		form.append($("<input>").attr({"type": "hidden", "name": key, "value": values[key]}));
 	}
 	form[0].submit();

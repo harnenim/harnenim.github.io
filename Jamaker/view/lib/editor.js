@@ -1,13 +1,13 @@
-﻿var time = 0;
+﻿let time = 0;
 
-var tabs = [];
-var tab = 0;
-var closingTab = null;
-var tabToCloseAfterRun = null;
+const tabs = [];
+let tab = 0;
+let closingTab = null;
+let tabToCloseAfterRun = null;
 
-var autoSaveTemp = null;
+let autoSaveTemp = null;
 
-var autoFindSync = false;
+let autoFindSync = false;
 
 // C# 쪽에서 호출
 function refreshTime(now, fr) {
@@ -28,9 +28,9 @@ function refreshTime(now, fr) {
 		showFps.text((Math.floor(fr*10+0.5)/10000) + " fps");
 	}
 }
-var showFps = null;
+let showFps = null;
 
-var Tab = function(text, path) {
+window.Tab = function(text, path) {
 	this.holdSelector = $("<div class='hold-selector'>");
 	this.holdArea = $("<div class='holds'>");
 	this.area = $("<div class='tab'>").append(this.holdSelector).append(this.holdArea);
@@ -39,37 +39,38 @@ var Tab = function(text, path) {
 	this.lastHold = 1;
 	this.path = path;
 	
-	var holds = Subtitle.SmiFile.textToHolds(text);
-	for (var i = 0; i < holds.length; i++) {
-		this.addHold(holds[i], i == 0, i == 0);
+	{	const holds = Subtitle.SmiFile.textToHolds(text);
+		for (let i = 0; i < holds.length; i++) {
+			this.addHold(holds[i], i == 0, i == 0);
+		}
 	}
 	this.savedHolds = this.holds.slice(0);
 	
-	var tab = this;
+	const tab = this;
 	this.holdSelector.on("click", ".selector", function() {
 		tab.selectHold($(this).data("hold"));
 		
 	}).on("dblclick", ".hold-name", function(e) {
 		e.stopPropagation();
-		var hold = $(this).parents(".selector").data("hold");
+		const hold = $(this).parents(".selector").data("hold");
 		if (hold == tab.holds[0]) {
 			// 메인 홀드는 이름 변경 X
 			return;
 		}
-		prompt("홀드 이름 변경", function(input) {
+		prompt("홀드 이름 변경", (input) => {
 			if (!input) {
 				alert("잘못된 입력입니다.");
 				return;
 			}
 			hold.selector.find(".hold-name > span").text(tab.holds.indexOf(hold) + "." + (hold.name = input));
 			tab.onChangeSaved();
-		});
+		}, hold.name);
 		
 	}).on("click", ".btn-hold-remove", function(e) {
 		e.stopPropagation();
-		var hold = $(this).parents(".selector").data("hold");
-		confirm("삭제하시겠습니까?", function() {
-			var index = tab.holds.indexOf(hold);
+		const hold = $(this).parents(".selector").data("hold");
+		confirm("삭제하시겠습니까?", () => {
+			const index = tab.holds.indexOf(hold);
 			
 			if (tab.hold == index) {
 				// 선택된 걸 삭제하는 경우 메인 홀드로 먼저 이동
@@ -93,7 +94,7 @@ var Tab = function(text, path) {
 		
 	}).on("click", ".btn-hold-upper", function(e) {
 		e.stopPropagation();
-		var hold = $(this).parents(".selector").data("hold");
+		const hold = $(this).parents(".selector").data("hold");
 		if (hold.pos == -1) {
 			hold.pos = 1;
 		} else {
@@ -105,7 +106,7 @@ var Tab = function(text, path) {
 		
 	}).on("click", ".btn-hold-lower", function(e) {
 		e.stopPropagation();
-		var hold = $(this).parents(".selector").data("hold");
+		const hold = $(this).parents(".selector").data("hold");
 		if (hold.pos == 1) {
 			hold.pos = -1;
 		} else {
@@ -124,11 +125,10 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 			,	pos: 1
 		}
 	}
-	var hold = new SmiEditor(info.text);
+	const hold = new SmiEditor(info.text);
 	this.holds.push(hold);
 	this.holdSelector.append(hold.selector = $("<div class='selector'>").data({ hold: hold }));
-	var divName = $("<div class='hold-name'>");
-	hold.selector.append(divName.append($("<span>").text(hold.name = hold.savedName = info.name)));
+	hold.selector.append($("<div class='hold-name'>").append($("<span>").text(hold.name = hold.savedName = info.name)));
 	hold.owner = this;
 	hold.pos = hold.savedPos = info.pos;
 	hold.tempSavedText = info.text;
@@ -157,12 +157,12 @@ Tab.prototype.updateHoldSelector = function() {
 	this.area.addClass("with-hold");
 	refreshPaddingBottom();
 	
-	var BEGIN = 1;
-	var END = -1;
+	let BEGIN = 1;
+	let END = -1;
 	
-	var timers = [];
-	for (var i = 0; i < this.holds.length; i++) {
-		var hold = this.holds[i];
+	const timers = []; // 각 홀드의 시작/종료 시간을 정렬한 객체
+	for (let i = 0; i < this.holds.length; i++) {
+		const hold = this.holds[i];
 		if (i > 0) {
 			hold.selector.find(".hold-name span").text(i + "." + hold.name);
 		}
@@ -170,7 +170,7 @@ Tab.prototype.updateHoldSelector = function() {
 		timers.push({ time: hold.end  , holds: [{ index: i, type: END   }] });
 	}
 	timers[0].time = timers[0].rate = 0; // 메인 홀드는 시작 시간 0으로 출력
-	timers.sort(function(a, b) {
+	timers.sort((a, b) => {
 		if (a.time < b.time)
 			return -1;
 		if (a.time > b.time)
@@ -178,7 +178,7 @@ Tab.prototype.updateHoldSelector = function() {
 		return 0;
 	});
 	
-	for (var i = 0; i < timers.length - 1; i++) {
+	for (let i = 0; i < timers.length - 1; i++) {
 		if (timers[i].time == timers[i+1].time) {
 			timers[i].holds.push(timers[i+1].holds[0]);
 			timers.splice(i + 1, 1);
@@ -186,46 +186,45 @@ Tab.prototype.updateHoldSelector = function() {
 		}
 	}
 	
-	var add = 0;
-	{	var begins = [];
-		for (var i= 0; i < timers.length; i++) {
-			var timer = timers[i];
+	let add = 0; // 홀드 시작/종료 위치 개수에 대한 추가 보정값
+	{	const begins = []; // 각 홀드의 시작 위치를 기록한 객체
+		for (let i= 0; i < timers.length; i++) {
+			const timer = timers[i];
 			
-			var a = 0;
-			for (var j = 0; j < timer.holds.length; j++) {
+			for (let j = 0; j < timer.holds.length; j++) {
 				if (timer.holds[j].type == END) {
-					var min = begins[timer.holds[j].index] + 4;
+					// 홀드 종료 위치가 시작 위치와 4칸 이상 떨어져야 함
+					const min = begins[timer.holds[j].index] + 4;
 					if (i + add < min) {
-						Math.max(a = min - (i + add));
+						// 4칸 안 될 경우 보정값에 추가
+						add = min - i;
 					}
 				}
 			}
-			if (a) {
-				add += a;
-			}
 			timer.rate = i + add;
 			
-			for (var j = 0; j < timer.holds.length; j++) {
+			for (let j = 0; j < timer.holds.length; j++) {
 				if (timer.holds[j].type == BEGIN) {
+					// 현재 위치에서 시작하는 홀드 위치 기억
 					begins[timer.holds[j].index] = timer.rate;
 				}
 			}
 		}
 	}
 	
-	var posStatus = {};
-	for (var i = 0; i < timers.length; i++) {
-		var timer = timers[i];
-		var rate = (timer.rate / (timers.length + add - 1) * 100);
-		for (var j = 0; j < timer.holds.length; j++) {
-			var selector = timer.holds[j];
-			var hold = this.holds[selector.index];
+	const posStatus = {};
+	for (let i = 0; i < timers.length; i++) {
+		const timer = timers[i];
+		const rate = (timer.rate / (timers.length + add - 1) * 100);
+		for (let j = 0; j < timer.holds.length; j++) {
+			const selector = timer.holds[j];
+			const hold = this.holds[selector.index];
 			if (selector.type == BEGIN) {
 				// 홀드 시작
 				hold.selector.css({ left: rate + "%" });
 				
 				// 홀드끼리 영역 겹칠 경우 보완 필요
-				var pos = hold.pos;
+				let pos = hold.pos;
 				if (pos > 0) {
 					while (posStatus[pos] && posStatus[pos].length) {
 						posStatus[pos++].push(hold);
@@ -238,13 +237,13 @@ Tab.prototype.updateHoldSelector = function() {
 				posStatus[pos] = [hold];
 				hold.viewPos = pos;
 				
-				var top = 30;
+				let top = 30;
 				if (pos > 0) {
-					for (var k = 0; k < pos; k++) {
+					for (let k = 0; k < pos; k++) {
 						top /= 2;
 					}
 				} else if (hold.pos < 0) {
-					for (var k = 0; k < -pos; k++) {
+					for (let k = 0; k < -pos; k++) {
 						top /= 2;
 					}
 					top = 60 - top;
@@ -256,9 +255,9 @@ Tab.prototype.updateHoldSelector = function() {
 				hold.selector.css({ right: (100 - rate) + "%" });
 				
 				// 홀드 위치 사용 중 해제
-				for (var pos in posStatus) {
-					var posHolds = posStatus[pos];
-					var index = posHolds.indexOf(hold);
+				for (let pos in posStatus) {
+					const posHolds = posStatus[pos];
+					const index = posHolds.indexOf(hold);
 					if (index >= 0) {
 						posHolds.splice(index, 1);
 					}
@@ -268,7 +267,7 @@ Tab.prototype.updateHoldSelector = function() {
 	}
 }
 Tab.prototype.selectHold = function(hold) {
-	var index = hold;
+	let index = hold;
 	if (isFinite(hold)) {
 		if (!(hold = this.holds[hold])) {
 			return;
@@ -301,15 +300,15 @@ Tab.prototype.selectLastHold = function() {
 	}
 }
 Tab.prototype.replaceBeforeSave = function() {
-	for (var i = 0; i < this.holds.length; i++) {
-		var text = this.holds[i].text = this.holds[i].input.val(); // .text 동기화 실패 가능성 고려, 현재 값 다시 불러옴
-		var changed = false;
+	for (let i = 0; i < this.holds.length; i++) {
+		let text = this.holds[i].text = this.holds[i].input.val(); // .text 동기화 실패 가능성 고려, 현재 값 다시 불러옴
+		let changed = false;
 		
 		// 커서 기준 3개로 나눠서 치환
-		var cursor = this.holds[i].getCursor();
+		let cursor = this.holds[i].getCursor();
 		text = [text.substring(0, cursor[0]), text.substring(cursor[0], cursor[1]), text.substring(cursor[1])];
-		for (var j = 0; j < setting.replace.length; j++) {
-			var item = setting.replace[j];
+		for (let j = 0; j < setting.replace.length; j++) {
+			const item = setting.replace[j];
 			if (item.use) {
 				if (text[0].indexOf(item.from) >= 0) { text[0] = text[0].split(item.from).join(item.to); changed = true; }
 				if (text[1].indexOf(item.from) >= 0) { text[1] = text[1].split(item.from).join(item.to); changed = true; }
@@ -321,10 +320,10 @@ Tab.prototype.replaceBeforeSave = function() {
 		if (text[0].length > 0 && text[1].length > 0) {
 			// 시작 커서 전후 치환
 			text = [text[0] + text[1], text[2]];
-			for (var j = 0; j < setting.replace.length; j++) {
-				var item = setting.replace[j];
+			for (let j = 0; j < setting.replace.length; j++) {
+				const item = setting.replace[j];
 				if (item.use) {
-					var index = text[0].indexOf(item.from);
+					const index = text[0].indexOf(item.from);
 					if (index >= 0) {
 						text[0] = text[0].split(item.from).join(item.to);
 						cursor[0] = index + item.to.length;
@@ -340,10 +339,10 @@ Tab.prototype.replaceBeforeSave = function() {
 		// 종료 커서 전후 치환
 		if (text[1].length > 0) {
 			text = text[0] + text[1];
-			for (var j = 0; j < setting.replace.length; j++) {
-				var item = setting.replace[j];
+			for (let j = 0; j < setting.replace.length; j++) {
+				const item = setting.replace[j];
 				if (item.use) {
-					var index = text.indexOf(item.from);
+					const index = text.indexOf(item.from);
 					if (index >= 0) {
 						text = text.split(item.from).join(item.to);
 						cursor[1] = index;
@@ -362,7 +361,7 @@ Tab.prototype.replaceBeforeSave = function() {
 	}
 }
 Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
-	return Subtitle.SmiFile.holdsToText(this.holds, setting.saveWithNormalize, withCombine, withComment);
+	return Subtitle.SmiFile.holdsToText(this.holds, setting.saveWithNormalize, withCombine, withComment, SmiEditor.video.FR / 1000);
 }
 Tab.prototype.onChangeSaved = function(hold) {
 	if (this.isSaved()) {
@@ -382,10 +381,7 @@ Tab.prototype.isSaved = function() {
 		return false;
 	}
 	
-	for (var i = 0; i < this.holds.length; i++) {
-		if (this.savedHolds && (this.savedHolds[i] != this.holds[i])) {
-			return false;
-		}
+	for (let i = 0; i < this.holds.length; i++) {
 		if (!this.holds[i].isSaved()) {
 			return false;
 		}
@@ -400,22 +396,22 @@ SmiEditor.prototype.isSaved = function() {
 SmiEditor.prototype.onChangeSaved = function(saved) {
 	// 수정될 수 있는 건 열려있는 탭이므로
 	if (!tabs.length) return;
-	var currentTab = tabs[tab];
+	const currentTab = tabs[tab];
 	if (!currentTab) return;
 	currentTab.onChangeSaved(this);
 };
 SmiEditor.prototype.updateTimeRange = function() {
-	var start = 999999998;
-	var end = 0;
-	for (var i = 0; i < this.lines.length; i++) {
-		var line = this.lines[i];
+	let start = 999999998;
+	let end = 0;
+	for (let i = 0; i < this.lines.length; i++) {
+		const line = this.lines[i];
 		if (line[LINE.TYPE]) {
 			start = Math.min(start, line[LINE.SYNC]);
 			end   = Math.max(end  , line[LINE.SYNC]);
 		}
 	}
+	this.start = start;
 	if (end) {
-		this.start = start;
 		this.end   = (start == end) ? 999999999 : end;
 	} else {
 		this.end = 999999999;
@@ -428,8 +424,8 @@ function deepCopyObj(obj) {
 			return JSON.parse(JSON.stringify(obj));
 		}
 		
-		var out = {};
-		for (var key in obj) {
+		const out = {};
+		for (let key in obj) {
 			out[key] = deepCopyObj(obj[key]);
 		}
 		return out;
@@ -439,8 +435,8 @@ function deepCopyObj(obj) {
 	}
 }
 function setDefault(target, dflt) {
-	var count = 0; // 변동 개수... 쓸 일이 있으려나?
-	for (var key in dflt) {
+	let count = 0; // 변동 개수... 쓸 일이 있으려나?
+	for (let key in dflt) {
 		if (typeof dflt[key] == "object") {
 			if (Array.isArray(dflt[key])) {
 				// 기본값이 배열
@@ -478,14 +474,15 @@ function setDefault(target, dflt) {
 
 // C# 쪽에서 호출
 function init(jsonSetting) {
+	let setting = {};
 	try {
 		setting = JSON.parse(jsonSetting);
 		
-		var notified = checkVersion(setting.version);
+		const notified = checkVersion(setting.version);
 		
 		// C#에서 보내준 세팅값 오류로 빠진 게 있으면 채워주기
 		if (typeof setting == "object" && !Array.isArray(setting)) {
-			var count = setDefault(setting, DEFAULT_SETTING);
+			let count = setDefault(setting, DEFAULT_SETTING);
 			if (setting.version != DEFAULT_SETTING.version) {
 				setting.version = DEFAULT_SETTING.version;
 				count++;
@@ -493,17 +490,17 @@ function init(jsonSetting) {
 				if (notified.menu) {
 					// 메뉴 기본값이 바뀌었을 경우
 					
-					for (var di = 0; di < DEFAULT_SETTING.menu.length; di++) {
-						var exist0 = false;
+					for (let di = 0; di < DEFAULT_SETTING.menu.length; di++) {
+						let exist0 = false;
 						
-						var dMenu = DEFAULT_SETTING.menu[di];
-						var dMenu0 = dMenu[0];
-						var dMenu0name = dMenu0.split("(&")[0];
+						const dMenu = DEFAULT_SETTING.menu[di];
+						const dMenu0 = dMenu[0];
+						const dMenu0name = dMenu0.split("(&")[0];
 						
-						for (var si = 0; si < setting.menu.length; si++) {
-							var sMenu = setting.menu[si];
-							var sMenu0 = sMenu[0];
-							var sMenu0name = sMenu0.split("(&")[0];
+						for (let si = 0; si < setting.menu.length; si++) {
+							const sMenu = setting.menu[si];
+							const sMenu0 = sMenu[0];
+							const sMenu0name = sMenu0.split("(&")[0];
 							
 							if (sMenu0name == dMenu0name) {
 								// 이름이 같은 메뉴를 찾았을 경우
@@ -515,33 +512,33 @@ function init(jsonSetting) {
 									count++;
 								}
 								
-								for (var dj = 1; dj < dMenu.length; dj++) {
-									var exist1 = false;
+								for (let dj = 1; dj < dMenu.length; dj++) {
+									let exist1 = false;
 									
-									var dMenu1 = dMenu[dj];
-									var dMenu1name = dMenu1.split("|")[0].split("(&")[0];
+									const dMenu1 = dMenu[dj];
+									const dMenu1name = dMenu1.split("|")[0].split("(&")[0];
 									
-									for (var sj = 1; sj < sMenu.length; sj++) {
-										var sMenu1 = sMenu[sj];
-										var sMenu1name = sMenu1.split("|")[0].split("(&")[0];
+									for (let sj = 1; sj < sMenu.length; sj++) {
+										const sMenu1 = sMenu[sj];
+										const sMenu1name = sMenu1.split("|")[0].split("(&")[0];
 										
 										if (sMenu1name == dMenu1name) {
 											// 이름이 같은 메뉴를 찾았을 경우
 											exist1 = true;
-											var updated = false;
+											let updated = false;
 											
-											var sLen = sMenu1.indexOf("|");
-											var dLen = dMenu1.indexOf("|");
-											var sMenuName = sMenu1.substring(0, sLen);
-											var dMenuName = dMenu1.substring(0, dLen);
+											const sLen = sMenu1.indexOf("|");
+											const dLen = dMenu1.indexOf("|");
+											let sMenuName = sMenu1.substring(0, sLen);
+											let dMenuName = dMenu1.substring(0, dLen);
 											if (sMenuName.indexOf("(&") < 0 && dMenuName.indexOf("(&") > 0) {
 												// 단축키가 추가된 경우
 												sMenuName = dMenuName;
 												updated = true;
 											}
 											
-											var sMenuFunc = sMenu1.substring(sLen + 1);
-											var dMenuFunc = dMenu1.substring(dLen + 1);
+											let sMenuFunc = sMenu1.substring(sLen + 1);
+											let dMenuFunc = dMenu1.substring(dLen + 1);
 											if (sMenuFunc != dMenuFunc) {
 												// 기능이 바뀐 경우
 												sMenuFunc = dMenuFunc + " /* " + DEFAULT_SETTING.version + " 이전: " + sMenuFunc.split("*/").join("*​/") + " */";
@@ -587,65 +584,65 @@ function init(jsonSetting) {
 		saveSetting();
 	}
 	
-	var btnAddHold = $("#btnAddHold").on("click", function() {
+	const btnAddHold = $("#btnAddHold").on("click", function() {
 		if (tabs.length == 0) return;
 		tabs[tab].addHold();
 	});
-	var inputWeight = $("#inputWeight").bind("input propertychange", function() {
-		var weight = inputWeight.val();
+	const inputWeight = $("#inputWeight").bind("input propertychange", function() {
+		const weight = inputWeight.val();
 		if (isFinite(weight)) {
 			SmiEditor.sync.weight = Number(weight);
 		} else {
 			alert("숫자를 입력하세요.");
-			var cursor = inputWeight[0].selectionEnd - 1;
+			const cursor = inputWeight[0].selectionEnd - 1;
 			inputWeight.val(SmiEditor.sync.weight);
 			inputWeight[0].setSelectionRange(cursor, cursor);
 		}
 	});
-	var inputUnit = $("#inputUnit").on("input propertychange", function() {
-		var unit = inputUnit.val();
+	const inputUnit = $("#inputUnit").on("input propertychange", function() {
+		const unit = inputUnit.val();
 		if (isFinite(unit)) {
 			SmiEditor.sync.unit = Number(unit);
 		} else {
 			alert("숫자를 입력하세요.");
-			var cursor = inputUnit[0].selectionEnd - 1;
+			const cursor = inputUnit[0].selectionEnd - 1;
 			inputUnit.val(SmiEditor.sync.unit);
 			inputUnit[0].setSelectionRange(cursor, cursor);
 		}
 	});
-	var btnMoveToBack = $("#btnMoveToBack").on("click", function() {
+	const btnMoveToBack = $("#btnMoveToBack").on("click", function() {
 		if (tabs.length == 0) return;
 		tabs[tab].holds[tabs[tab].hold].moveSync(false);
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
-	var btnMoveToForward = $("#btnMoveToForward").on("click", function() {
+	const btnMoveToForward = $("#btnMoveToForward").on("click", function() {
 		if (tabs.length == 0) return;
 		tabs[tab].holds[tabs[tab].hold].moveSync(true);
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
 	
-	var checkAutoFindSync = $("#checkAutoFindSync").on("click", function() {
+	const checkAutoFindSync = $("#checkAutoFindSync").on("click", function() {
 		autoFindSync = $(this).prop("checked");
 		if (tabs.length == 0) return;
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
-	var checkTrustKeyframe = $("#checkTrustKeyframe").on("click", function() {
+	const checkTrustKeyframe = $("#checkTrustKeyframe").on("click", function() {
 		SmiEditor.trustKeyFrame = $(this).prop("checked");
 		if (tabs.length == 0) return;
 	});
 	
-	var btnNewTab = $("#btnNewTab").on("click", function() {
+	const btnNewTab = $("#btnNewTab").on("click", function() {
 		openNewTab();
 	});
 	
-	var tabSelector = $("#tabSelector").on("click", ".th:not(#btnNewTab)", function() {
-		var th = $(this);
+	const tabSelector = $("#tabSelector").on("click", ".th:not(#btnNewTab)", function() {
+		const th = $(this);
 		if (th[0] == closingTab) {
 			return;
 		}
 		
 		tabSelector.find(".selected").removeClass("selected");
-		var currentTab = th.addClass("selected").data("tab");
+		const currentTab = th.addClass("selected").data("tab");
 		if (currentTab) {
 			tab = tabs.indexOf(currentTab);
 			hold = tab.hold;
@@ -666,26 +663,25 @@ function init(jsonSetting) {
 	}).on("click", ".btn-close-tab", function(e) {
 		e.preventDefault();
 		
-		var th = $(this).parent();
+		const th = $(this).parent();
 		closingTab = th[0];
-		setTimeout(function() { // 탭 선택 이벤트 방지... e.preventDefault()로 안 되네...
+		setTimeout(() => { // 탭 선택 이벤트 방지... e.preventDefault()로 안 되네...
 			closingTab == null;
 		}, 1);
 		
-		var currentTab = th.data("tab");
-		var saved = (currentTab.holds[currentTab.hold].input.val() != currentTab.holds[currentTab.hold].saved);
-		var saved = true;
-		for (var i = 0; i < currentTab.holds.length; i++) {
-			if (currentTab.holds[i].input.val() != currentTab.holds[i].saved) {
-				saved = false;
-				break;
+		let saved = true;
+		{	const currentTab = th.data("tab");
+			for (let i = 0; i < currentTab.holds.length; i++) {
+				if (currentTab.holds[i].input.val() != currentTab.holds[i].saved) {
+					saved = false;
+					break;
+				}
 			}
 		}
-		
 		confirm((saved ? "저장되지 않았습니다.\n" : "") + "탭을 닫으시겠습니까?", function() {
-			var index = closeTab(th);
+			const index = closeTab(th);
 
-			setTimeout(function() {
+			setTimeout(() => {
 				if (tabs.length && $("#tabSelector .th.selected").length == 0) {
 					// 선택돼있던 탭을 닫았을 경우 다른 탭 선택
 					tab = Math.min(index, tabs.length - 1);
@@ -696,8 +692,7 @@ function init(jsonSetting) {
 						tab--;
 					}
 				}
-				var selector = "#tabSelector .th:eq(" + tab + ")";
-				$(selector).click();
+				$("#tabSelector .th:eq(" + tab + ")").click();
 			}, 1);
 		});
 	});
@@ -711,45 +706,45 @@ function init(jsonSetting) {
 	});
 	
 	SmiEditor.activateKeyEvent();
-	SmiEditor.Viewer.open();
 	
-	setSetting(setting);
+	setSetting(setting, true);
+	SmiEditor.Viewer.open(); // 스타일 세팅 설정 완료 후에 실행
 	moveWindowsToSetting();
 
-	autoSaveTemp = setInterval(function () {
+	autoSaveTemp = setInterval(() => {
 		saveTemp();
 	}, setting.tempSave * 1000);
 }
 
-function setSetting(setting) {
+function setSetting(setting, initial=false) {
+	const oldSetting = window.setting;
+	
 	// 탭 on/off 먼저 해야 height값 계산 가능
 	if (setting.useTab) {
 		$("body").addClass("use-tab");
 	} else {
 		$("body").removeClass("use-tab");
-		if (tabs.length == 0) {
-			// 탭 기능 껐을 땐 에디터 하나 열린 상태
-			newFile();
-		}
 	}
 	
 	SmiEditor.setSetting(setting);
-	{
+	if (initial || (JSON.stringify(oldSetting.color) != JSON.stringify(setting.color))) {
+		// 스타일 바뀌었을 때만 재생성
 		if (setting.css) {
 			delete(setting.css);
 		}
-
-		// 스크롤바 버튼 새로 그려야 함
-		var button = "";
-		var disabled = "";
+		
+		// 스크롤바 버튼 새로 그려야 함 - 커서 문제로 현재 미적용...
+		let button = "";
+		let disabled = "";
 		{
-			var canvas = SmiEditor.canvas;
+			let canvas = SmiEditor.canvas;
 			if (!canvas) canvas = SmiEditor.canvas = document.createElement("canvas");
 			canvas.width = 34;
 			canvas.height = 34;
 			
-			var c = canvas.getContext("2d");
-			var x, y;
+			const c = canvas.getContext("2d");
+			let x;
+			let y;
 			x =  8; y =  8; c.moveTo(x, y-1.5); c.lineTo(x+3.5, y+2), c.lineTo(x-3.5, y+2); c.closePath();
 			x =  8; y = 25; c.moveTo(x, y+1.5); c.lineTo(x+3.5, y-2), c.lineTo(x-3.5, y-2); c.closePath();
 			x = 25; y =  8; c.moveTo(x-1.5, y); c.lineTo(x+2, y-3.5), c.lineTo(x+2, y+3.5); c.closePath();
@@ -763,16 +758,16 @@ function setSetting(setting) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-
-		$.ajax({url: "lib/SmiEditor.color.css?250107"
+		
+		$.ajax({url: "lib/SmiEditor.color.css?250124"
 			,	dataType: "text"
-			,	success: function(preset) {
-					for (var name in setting.color) {
+			,	success: (preset) => {
+					for (let name in setting.color) {
 						preset = preset.split("[" + name + "]").join(setting.color[name]);
 					}
 					preset = preset.split("[button]").join(button).split("[buttonDisabled]").join(disabled);
 					
-					var $style = $("#styleColor");
+					let $style = $("#styleColor");
 					if (!$style.length) {
 						$("head").append($style = $("<style id='styleColor'>"));
 					}
@@ -780,12 +775,13 @@ function setSetting(setting) {
 				}
 		});
 	}
-	{
+	if (initial || (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight))) {
+		// 문법 하이라이트 양식 바뀌었을 때만 재생성
 		function afterLoadHighlight() {
 			SmiEditor.refreshHighlight();
-			for (var i = 0; i < tabs.length; i++) {
-				for (var j = 0; j < tabs[i].holds.length; j++) {
-					var hold = tabs[i].holds[j];
+			for (let i = 0; i < tabs.length; i++) {
+				for (let j = 0; j < tabs[i].holds.length; j++) {
+					const hold = tabs[i].holds[j];
 					hold.highlightLines = [];
 					hold.hview.empty();
 					hold.updateHighlight();
@@ -801,11 +797,11 @@ function setSetting(setting) {
 		if (setting.highlight.parser && setting.highlight.style) {
 			$.ajax({url: "lib/highlight/parser/" + setting.highlight.parser + ".js"
 				,	dataType: "text"
-				,	success: function(parser) {
+				,	success: (parser) => {
 						eval(parser);
-						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250107"
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250124"
 							,	dataType: "text"
-							,	success: function(style) {
+							,	success: (style) => {
 									SmiEditor.highlightCss = style;
 									afterLoadHighlight();
 								}
@@ -838,11 +834,14 @@ function setSetting(setting) {
 	} else {
 		$(".for-frame-sync").hide();
 	}
-	var dll = setting.player.control.dll;
-	if (dll) {
-		var playerSetting = setting.player.control[dll];
-		if (playerSetting) {
-			binder.setPlayer(dll, playerSetting.path, playerSetting.withRun);
+	
+	{
+		const dll = setting.player.control.dll;
+		if (dll) {
+			const playerSetting = setting.player.control[dll];
+			if (playerSetting) {
+				binder.setPlayer(dll, playerSetting.path, playerSetting.withRun);
+			}
 		}
 	}
 	
@@ -850,7 +849,13 @@ function setSetting(setting) {
 	
 	binder.setMenus(setting.menu);
 	
-	return setting;
+	window.setting = JSON.parse(JSON.stringify(setting));
+	
+	// 새 파일 양식은 세팅 로딩이 완료된 후에 갖춰짐
+	if (!setting.useTab && !tabs.length) {
+		// 탭 기능 껐을 땐 에디터 하나 열린 상태
+		newFile();
+	}
 }
 function moveWindowsToSetting() {
 	binder.moveWindow("editor"
@@ -873,7 +878,7 @@ function moveWindowsToSetting() {
 	binder.setFollowWindow(setting.window.follow);
 
 	// 창 위치 초기화 후 호출
-	setTimeout(function() {
+	setTimeout(() => {
 		refreshPaddingBottom();
 	}, 1);
 }
@@ -881,13 +886,13 @@ function moveWindowsToSetting() {
 // C# 쪽에서 호출
 function setDpiBy(width) {
 	// C#에서 보내준 창 크기와 js에서 구한 브라우저 크기의 불일치를 이용해 DPI 배율을 구함
-	setTimeout(function() {
+	setTimeout(() => {
 		DPI = (width + 8) / (window.outerWidth + 10);
 	}, 1000); // 로딩 덜 됐을 수가 있어서 딜레이 줌
 }
 
-var playerDlls = [];
-var highlights = [];
+window.playerDlls = [];
+window.highlights = [];
 // C# 쪽에서 호출
 function setPlayerDlls(dlls) {
 	playerDlls = dlls.split("\n");
@@ -897,7 +902,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250107", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250124", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -917,9 +922,9 @@ function saveSetting() {
 }
 function refreshPaddingBottom() {
 	// 에디터 하단 여백 재조정
-	var holdTop = tabs.length ? Number(tabs[tab].area.find(".holds").css("top").split("px")[0]) : 0;
-	var append = "\n#editor textarea { padding-bottom: " + ($("#editor").height() - holdTop - SB - LH - 2) + "px; }";
-	var $style = $("#stylePaddingBottom");
+	const holdTop = tabs.length ? Number(tabs[tab].area.find(".holds").css("top").split("px")[0]) : 0;
+	const append = "\n#editor textarea { padding-bottom: " + ($("#editor").height() - holdTop - SB - LH - 2) + "px; }";
+	let $style = $("#stylePaddingBottom");
 	if (!$style.length) {
 		$("head").append($style = $("<style id='stylePaddingBottom'>"));
 	}
@@ -927,7 +932,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	var url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250107";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250124";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -943,10 +948,10 @@ function runIfCanOpenNewTab(func) {
 	if (!setting.useTab) {
 		// 탭 미사용 -> 현재 파일 닫기
 		if (tabs.length) {
-			var currentTab = tabs[0];
-			for (var i = 0; i < currentTab.holds.length; i++) {
+			const currentTab = tabs[0];
+			for (let i = 0; i < currentTab.holds.length; i++) {
 				if (!currentTab.isSaved()) {
-					confirm("현재 파일을 닫을까요?", function () {
+					confirm("현재 파일을 닫을까요?", () => {
 						tabToCloseAfterRun = $("#tabSelector > .th:not(#btnNewTab)");
 						func();
 					});
@@ -959,8 +964,8 @@ function runIfCanOpenNewTab(func) {
 	if (func) func();
 }
 function closeTab(th) {
-	var targetTab = th.data("tab");
-	var index = tabs.indexOf(targetTab);
+	const targetTab = th.data("tab");
+	const index = tabs.indexOf(targetTab);
 	tabs.splice(index, 1);
 	targetTab.area.remove();
 	th.remove();
@@ -977,8 +982,8 @@ function newFile() {
 
 function openFile(path, text, forVideo) {
 	// C#에서 파일 열 동안 canOpenNewTab 결과가 달라질 리는 없겠지만, 일단은 바깥에서 감싸주기
-	runIfCanOpenNewTab(function() {
-		if (path) {
+	runIfCanOpenNewTab(() => {
+		if (text) {
 			// 새 탭 열기
 			openNewTab(text, path, forVideo);
 		} else {
@@ -988,26 +993,25 @@ function openFile(path, text, forVideo) {
 	});
 }
 function openFileForVideo(path, text) {
-	runIfCanOpenNewTab(function() {
+	runIfCanOpenNewTab(() => {
 		// C#에서 동영상의 자막 파일 탐색
 		binder.openFileForVideo();
 	});
 }
 
-var exporting = false;
+let exporting = false;
 function saveFile(asNew, isExport) {
-	var currentTab = tabs[tab];
-	for (var i = 0; i < currentTab.holds.length; i++) {
+	const currentTab = tabs[tab];
+	for (let i = 0; i < currentTab.holds.length; i++) {
 		currentTab.holds[i].history.log();
 	}
 
-	var path = currentTab.path;
+	let path = currentTab.path;
 	if (!path) {
 		// 파일 경로가 없으면 다른 이름으로 저장 대화상자 필요
 		asNew = true;
 	}
 	
-	var texts = [];
 	// 저장 전 일괄치환
 	if (setting.replace.length > 0) {
 		currentTab.replaceBeforeSave();
@@ -1018,8 +1022,8 @@ function saveFile(asNew, isExport) {
 	} else if (isExport) {
 		// 내보내기용 파일명 생성
 		if (binder && !binder._) {
-			var index = path.lastIndexOf("/");
-			var prefix = "_"; // 설정 만들기?
+			const index = path.lastIndexOf("/");
+			const prefix = "_"; // 설정 만들기?
 			path = path.substring(0, index + 1) + prefix + path.substring(index + 1);
 		} else {
 			path = "";
@@ -1045,39 +1049,42 @@ function saveFile(asNew, isExport) {
 
 // 저장 후 C# 쪽에서 호출
 function afterSaveFile(path) {
-	var currentTab = tabs[tab];
+	const currentTab = tabs[tab];
 	if (exporting) {
 		// 내보내기 동작일 땐 상태 바꾸지 않음
 		exporting = false;
 		return;
 	}
-	for (var i = 0; i < currentTab.holds.length; i++) {
-		currentTab.holds[i].afterSave();
+	for (let i = 0; i < currentTab.holds.length; i++) {
+		// 최종 저장 여부는 탭 단위로 다뤄져야 해서 군더더기 작업이 됨
+		// afterSave 재정의도 삭제
+		// currentTab.holds[i].afterSave();
+		const hold = currentTab.holds[i];
+		hold.saved = hold.input.val();
+		hold.savedPos = hold.pos;
+		hold.savedName = hold.name;
 	}
 	currentTab.path = path;
-	var title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
+	const title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	$("#tabSelector .th:eq(" + tab + ") span").text(title);
 	currentTab.holdEdited = false;
 	currentTab.savedHolds = currentTab.holds.slice(0);
-}
-SmiEditor.prototype._afterSave = SmiEditor.prototype.afterSave;
-SmiEditor.prototype.afterSave = function() {
-	this.savedName = this.name;
-	this.savedPos = this.pos;
-	this._afterSave();
+	
+	// savedHolds가 교체된 후에 저장 여부 체크
+	currentTab.onChangeSaved();
 }
 
 function saveTemp() {
-	var currentTab = tabs[tab];
+	const currentTab = tabs[tab];
 	if (!currentTab) {
 		return;
 	}
 
 	// 마지막 임시 저장 이후 변경 사항 없으면 무시
-	var texts = [];
-	var isChanged = false;
-	for (var i = 0; i < currentTab.holds.length; i++) {
-		var text = texts[i] = currentTab.holds[i].input.val();
+	const texts = [];
+	let isChanged = false;
+	for (let i = 0; i < currentTab.holds.length; i++) {
+		const text = texts[i] = currentTab.holds[i].input.val();
 		if (text == currentTab.holds[i].tempSavedText) {
 			continue;
 		}
@@ -1085,19 +1092,15 @@ function saveTemp() {
 	}
 	
 	if (isChanged) {
-		var path = currentTab.path;
-		if (!path) {
-			path = "\\new.smi";
-		}
-		//binder.saveTemp(texts.join("\n\n\n<!-- 홀드 -->\n\n\n"), path);
+		const path = currentTab.path ? currentTab.path : "\\new.smi";
 		binder.saveTemp(currentTab.getSaveText(false), path);
-		for (var i = 0; i < currentTab.holds.length; i++) {
+		for (let i = 0; i < currentTab.holds.length; i++) {
 			currentTab.holds[i].tempSavedText = texts[i];
 		}
 	}
 }
 
-var _for_video_ = false;
+let _for_video_ = false;
 function openNewTab(text, path, forVideo) {
 	if (tabToCloseAfterRun) {
 		closeTab(tabToCloseAfterRun);
@@ -1108,7 +1111,7 @@ function openNewTab(text, path, forVideo) {
 		return;
 	}
 	
-	var texts = [];
+	const texts = [];
 	if (path) {
 		if (path.substring(path.length - 4).toUpperCase() == ".SRT") {
 			// SRT 파일 불러왔을 경우 SMI로 변환
@@ -1117,13 +1120,13 @@ function openNewTab(text, path, forVideo) {
 		}
 	}
 
-	var title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
+	const title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	
-	var tab = new Tab(text ? text : setting.newFile, path);
+	const tab = new Tab(text ? text : setting.newFile, path);
 	tabs.push(tab);
 	$("#editor").append(tab.area);
 
-	var th = $("<div class='th'>").append($("<span>").text(title));
+	const th = $("<div class='th'>").append($("<span>").text(title));
 	th.append($("<button type='button' class='btn-close-tab'>").text("×"));
 	$("#btnNewTab").before(th);
 	
@@ -1135,8 +1138,8 @@ function openNewTab(text, path, forVideo) {
 }
 // C# 쪽에서 호출
 function confirmLoadVideo(path) {
-	setTimeout(function () {
-		confirm("동영상 파일을 같이 열까요?\n" + path, function () {
+	setTimeout(() => {
+		confirm("동영상 파일을 같이 열까요?\n" + path, function() {
 			binder.loadVideoFile(path);
 		});
 	}, 1);
@@ -1156,27 +1159,27 @@ function setVideo(path) {
 // C# 쪽에서 호출
 function loadFkf(fkfName) {
 	// C# 파일 객체를 js 쪽에 전달할 수 없으므로, 정해진 경로의 파일을 ajax 형태로 가져옴
-	var req = new XMLHttpRequest();
+	const req = new XMLHttpRequest();
 	req.open("GET", "../temp/" + fkfName);
 	req.responseType = "arraybuffer";
-	req.onload = function(e) {
-		var buffer = req.response;
+	req.onload = (e) => {
+		const buffer = req.response;
 		
-		var fkf = new Int32Array(buffer);
-		var vfsLength = fkf[0];
-		var kfsLength = fkf[1];
+		const fkf = new Int32Array(buffer);
+		const vfsLength = fkf[0];
+		const kfsLength = fkf[1];
 		
-		var vfs = [];
-		var kfs = [];
+		const vfs = [];
+		const kfs = [];
 		
-		var offset = 8;
-		var view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
-		for (var i = 0; i < vfsLength; i++) {
+		let offset = 8;
+		let view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
+		for (let i = 0; i < vfsLength; i++) {
 			vfs.push(view.getInt32(i * 4, true));
 		}
 		offset = offset + (vfsLength * 4);
 		view = new DataView(buffer.slice(offset, offset + (kfsLength * 4)));
-		for (var i = 0; i < kfsLength; i++) {
+		for (let i = 0; i < kfsLength; i++) {
 			kfs.push(view.getInt32(i * 4, true));
 		}
 		
@@ -1188,7 +1191,7 @@ function loadFkf(fkfName) {
 		$("#checkTrustKeyframe").attr({ disabled: false });
 		Progress.set("#forFrameSync", 0);
 	}
-	req.onerror = function(e) {
+	req.onerror = (e) => {
 		// 실패했어도 프로그레스바는 없애줌
 		Progress.set("#forFrameSync", 0);
 	}
@@ -1197,9 +1200,9 @@ function loadFkf(fkfName) {
 
 // 종료 전 C# 쪽에서 호출
 function beforeExit() {
-	var saved = true;
-	for (var i = 0; i < tabs.length; i++) {
-		for (var j = 0; j < tabs[i].holds.length; j++) {
+	let saved = true;
+	for (let i = 0; i < tabs.length; i++) {
+		for (let j = 0; j < tabs[i].holds.length; j++) {
 			if (tabs[i].holds[j].saved != tabs[i].holds[j].input.val()) {
 				saved = false;
 				break;
@@ -1218,7 +1221,7 @@ function doExit() {
 		, setting.player.control[setting.player.control.dll].withExit);
 }
 
-var REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}$/;
+const REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}$/;
 function srt2smi(text) {
 	return new Subtitle.SmiFile().fromSync(new Subtitle.SrtFile(text).toSync()).toTxt();
 }

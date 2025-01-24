@@ -4,21 +4,21 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저 도움말</title>
-	<script src="../lib/jquery-3.2.1.min.js?250107"></script>
-	<script src="../lib/popup.js?250107"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250107" />
+	<script src="../lib/jquery-3.2.1.min.js?250124"></script>
+	<script src="../lib/popup.js?250124"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250124" />
 	<script>
 windowName = "help";
 
-$(function() {
+$(() => {
 	$("#comment").on("mouseover", "li", function() {
 		$(".area.select").removeClass("select");
-		var area = (""+$(this).data("area")).split("-");
-		for (var i = 0; i < area[0].length; i++) {
+		const area = (""+$(this).data("area")).split("-");
+		for (let i = 0; i < area[0].length; i++) {
 			$("#preview_" + area[0][i]).addClass("input");
 		}
 		if (area.length < 2) return;
-		for (var i = 0; i < area[1].length; i++) {
+		for (let i = 0; i < area[1].length; i++) {
 			$("#preview_" + area[1][i]).addClass("output");
 		}
 	}).on("mouseout", function() {
@@ -45,10 +45,10 @@ $(function() {
 	color: #f80;
 	font-size: 28px;
 	font-weight: bold;
-    line-height: 172px;
-    text-align: center;
-    border: 4px solid #fb8;
-    z-index: 1;
+	line-height: 172px;
+	text-align: center;
+	border: 4px solid #fb8;
+	z-index: 1;
 }
 .area.input {
 	border-color: #f80;

@@ -8,7 +8,7 @@ $(document).on("keydown", function(e) {
 });
 
 window._close = window.close;
-window.close = function() {
+window.close = () => {
 	if (windowName != "finder") {
 		(opener ? opener.binder : binder).focus("editor");
 	}
@@ -24,7 +24,7 @@ function requestClose() {
 
 function confirmCancel() {
 	confirm("작업을 취소하시겠습니까?"
-	,	function() {
+	,	() => {
 			window.close();
 		}
 	);
@@ -35,11 +35,11 @@ function sendMsg(msg) {
 	alert(msg);
 }
 
-var windowName = null;
+window.windowName = null;
 
 // alert 재정의
-_alert = alert;
-alert = function(msg) {
+window._alert = alert;
+alert = (msg) => {
 	if (windowName && opener && opener.binder) {
 		opener.binder.alert(windowName, msg);
 	} else if (windowName && window.binder) {
@@ -49,18 +49,18 @@ alert = function(msg) {
 	}
 }
 // confirm 재정의
-_confirm = confirm;
-var afterConfirmYes = function() {};
-var afterConfirmNo  = function() {};
-confirm = function(msg, yes, no) {
+window._confirm = confirm;
+window.afterConfirmYes = () => {};
+window.afterConfirmNo  = () => {};
+confirm = (msg, yes, no) => {
 	if (windowName) {
 		if (opener) {
-			opener.afterConfirmYes = yes ? yes : function() {};
-			opener.afterConfirmNo  = no  ? no  : function() {};
+			opener.afterConfirmYes = yes ? yes : () => {};
+			opener.afterConfirmNo  = no  ? no  : () => {};
 			opener.binder.confirm(windowName, msg);
 		} else {
-			afterConfirmYes = yes ? yes : function() {};
-			afterConfirmNo  = no  ? no  : function() {};
+			afterConfirmYes = yes ? yes : () => {};
+			afterConfirmNo  = no  ? no  : () => {};
 			if (window.binder) {
 				binder.confirm(windowName, msg);
 			} else {
@@ -72,7 +72,7 @@ confirm = function(msg, yes, no) {
 			}
 		}
 	} else {
-		var result = _confirm(msg);
+		const result = _confirm(msg);
 		if (result) {
 			if (yes) yes();
 		} else {
@@ -83,22 +83,22 @@ confirm = function(msg, yes, no) {
 }
 
 // opener가 있는 addon에서만 쓰임
-var loadAddonSetting;
-var saveAddonSetting;
+let loadAddonSetting;
+let saveAddonSetting;
 if (opener) {
-	opener.afterLoadAddonSetting = function(){};
-	loadAddonSetting = function(name, afterLoad) {
-		opener.afterLoadAddonSetting = afterLoad ? afterLoad : function(){};
+	opener.afterLoadAddonSetting = () => {};
+	loadAddonSetting = (name, afterLoad) => {
+		opener.afterLoadAddonSetting = afterLoad ? afterLoad : () => {};
 		opener.binder.loadAddonSetting(name);
 	}
 	
-	opener.afterSaveAddonSetting = function(){};
-	saveAddonSetting = function(name, text, afterSave) {
-		opener.afterSaveAddonSetting = afterSave ? afterSave : function(){};
+	opener.afterSaveAddonSetting = () => {};
+	saveAddonSetting = (name, text, afterSave) => {
+		opener.afterSaveAddonSetting = afterSave ? afterSave : () => {};
 		opener.binder.saveAddonSetting(name, text);
 	}
 }
 
-$(function () {
+$(() => {
 	$("textarea").attr({ spellcheck: false });
 });

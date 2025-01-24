@@ -4,28 +4,22 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>싱크 유지 텍스트 대체</title>
-	<script src="../lib/jquery-3.2.1.min.js?250107"></script>
-	<script src="../lib/popup.js?250107"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250107" />
+	<script src="../lib/jquery-3.2.1.min.js?250124"></script>
+	<script src="../lib/popup.js?250124"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250124" />
 	<script>
 windowName = "addon";
 
 // 초기 상태 기억
-var origin = null;
-$(function() {
+let origin = null;
+$(() => {
 	if (opener && opener.SmiEditor && opener.SmiEditor.selected) {
 		origin = opener.SmiEditor.selected.getText();
 		origin.tab = opener.SmiEditor.selected;
 	}
 });
-var binder = {
-	setText: function(text, range) {
-		origin.tab.setText(text, range);
-	}
-};
 
 requestClose = confirmCancel;
-
 
 function init() {
 	if (!origin) {
@@ -49,13 +43,14 @@ function init() {
 }
 
 function fusion() {
-	var syncs = $("#inputSync").val().split("\n");
-	var texts = $("#inputText").val().split("\n");
-	var result = [];
-	var i = 0;
-	for (; i < Math.min(syncs.length, texts.length * 2); i++) {
-		var sync = syncs[i];
-		var isSyncLine = sync.substring(0, 6).toUpperCase() == "<SYNC ";
+	const syncs = $("#inputSync").val().split("\n");
+	const texts = $("#inputText").val().split("\n");
+	const result = [];
+	const end = Math.min(syncs.length, texts.length * 2);
+	let i = 0;
+	for (; i < end; i++) {
+		const sync = syncs[i];
+		const isSyncLine = sync.substring(0, 6).toUpperCase() == "<SYNC ";
 		if (i % 2 == 0) {
 			// 싱크 라인
 			if (!isSyncLine && sync.trim()) {
@@ -89,32 +84,32 @@ function fusion() {
 }
 
 function apply() {
-	var text = $("#output").val();
+	let text = $("#output").val();
 	while (text.indexOf("\n\n") >= 0) {
 		text = text.split("\n\n").join("\n");
 	}
 	
 	// 해당 줄 앞뒤 전체 선택되도록 조정
-	var origLines = origin.text.split("\n");
-	var front = origLines.slice(0, origin.start);
-	var range = [(origin.start > 0) ? (front.join("\n").length + 1) : 0];
+	const origLines = origin.text.split("\n");
+	const front = origLines.slice(0, origin.start);
+	const range = [(origin.start > 0) ? (front.join("\n").length + 1) : 0];
 	range.push(range[0] + text.length);
 	
 	// 교체 및 종료
-	binder.setText(front.concat(text).concat(origLines.slice(origin.end)).join("\n"), range);
+	origin.tab.setText(front.concat(text).concat(origLines.slice(origin.end)).join("\n"), range);
 	
 	window.close();
 }
 
 function resizeTextarea() {
-	var height = Math.max(
+	const height = Math.max(
 			$("#inputSync").val().split("\n").length
 		,	$("#inputText").val().split("\n").length * 2
 	) * 16;
 	$("textarea").height(height);
 }
 
-$(function() {
+$(() => {
 	init();
 	$("#btnFusion").on("click", fusion);
 	$("#btnApply" ).on("click", apply );
@@ -182,8 +177,10 @@ div.scroll > textarea {
 <body>
 	<div class="scroll">
 		<textarea tabindex="1" id="inputSync" spellcheck="false"></textarea>
-		<textarea tabindex="2" id="inputText" spellcheck="false">주로 임시 가사에서 정식 가사로 교체할 때
-쓰려고 만든 기능입니다.</textarea>
+		<textarea tabindex="2" id="inputText" spellcheck="false">
+주로 임시 가사에서 정식 가사로 교체할 때
+쓰려고 만든 기능입니다.
+		</textarea>
 		<textarea tabindex="4" id="output" spellcheck="false" readonly></textarea>
 	</div>
 	<button tabindex="3" type="button" id="btnFusion">＞</button>

@@ -1,13 +1,13 @@
-var showDrag = false;
+let showDrag = false;
 function setShowDrag(dragging) {
 	showDrag = dragging;
 }
 function setDroppable() {
-	var doc = $(document);
-	doc.on("dragleave", function () {
+	const doc = $(document);
+	doc.on("dragleave", function() {
 		return false;
 	});
-	doc.on("dragover", function () {
+	doc.on("dragover", function() {
 		if (!showDrag) {
 			binder.showDragging();
 		}
@@ -15,44 +15,44 @@ function setDroppable() {
 	});
 }
 
-var windowName = "editor";
+window.windowName = "editor";
 
 // alert 재정의
-_alert = alert;
-alert = function(msg) {
+window._alert = alert;
+alert = (msg) => {
 	binder.alert(windowName, msg);
 }
 // confirm 재정의
-_confirm = confirm;
-var afterConfirmYes = function() {};
-var afterConfirmNo  = function() {};
-confirm = function(msg, yes, no) {
-	afterConfirmYes = yes ? yes : function() {};
-	afterConfirmNo  = no  ? no  : function() {};
+window._confirm = confirm;
+window.afterConfirmYes = () => {};
+window.afterConfirmNo  = () => {};
+confirm = (msg, yes, no) => {
+	afterConfirmYes = yes ? yes : () => {};
+	afterConfirmNo  = no  ? no  : () => {};
 	binder.confirm(windowName, msg);
 }
 // prompt 재정의
-_prompt = prompt;
-var afterPrompt  = function(value) {};
-prompt = function(msg, after) {
-	afterPrompt = after ? after : function() {};
-	binder.prompt(windowName, msg);
+window._prompt = prompt;
+window.afterPrompt  = (value) => {};
+prompt = (msg, after, def) => {
+	afterPrompt = after ? after : () => {};
+	binder.prompt(windowName, msg, def);
 }
 
 // JSON.stringify 보기 좋게 커스터마이징
 function stringify(obj, depth=0, pad=2, isChild=false) {
-	var str = "";
+	let str = "";
 	switch (typeof obj) {
 		case "object": {
-			var padLine = "";
-			for (var i = 0; i < pad * depth; i++) {
+			let padLine = "";
+			for (let i = 0; i < pad * depth; i++) {
 				padLine += " ";
 			}
 			
 			if (Array.isArray(obj)) {
-				for (var i = 0; i < obj.length; i++) {
+				for (let i = 0; i < obj.length; i++) {
 					str += (i == 0 ? (isChild ? "\n" + padLine + "[" : "[") : "\n" + padLine + ",");
-					for (var j = 1; j < pad; j++) { str += " "; }
+					for (let j = 1; j < pad; j++) { str += " "; }
 					str += stringify(obj[i], depth + 1, pad);
 				}
 				if (str.length > 0) {
@@ -61,9 +61,9 @@ function stringify(obj, depth=0, pad=2, isChild=false) {
 					str = "[]";
 				}
 			} else {
-				for (var key in obj) {
+				for (let key in obj) {
 					str += (str.length == 0 ? (isChild ? "\n" + padLine + "{" : "{") : "\n" + padLine + ",");
-					for (var j = 1; j < pad; j++) { str += " "; }
+					for (let j = 1; j < pad; j++) { str += " "; }
 					str += "\"" + key + "\": " + stringify(obj[key], depth + 1, pad, true);
 				}
 				if (str.length > 0) {
@@ -96,22 +96,22 @@ function dragover(x, y) {}
 function drop(x, y) {}
 function beforeExit() {}
 
-var DPI = 1;
+let DPI = 1;
 function setDpi(dpi) {
 	DPI = dpi;
 }
 
-$(function () {
+$(() => {
 	// 우클릭 방지
 	$(document).on("contextmenu", function() {
 		return false;
 	});
-	window.onkeydown = function(e) {
+	window.onkeydown = (e) => {
 		switch(e.keyCode) {
 			case 116: return false; // F5 새로고침 방지
 		}
 	};
-	window.addEventListener("mousewheel", function(e) {
+	window.addEventListener("mousewheel", (e) => {
 		// 확대/축소 방지
 		if (e.ctrlKey) {
 			e.preventDefault();
@@ -119,7 +119,7 @@ $(function () {
 	}, { passive: false });
 	
 	if (window.binder) {
-		setTimeout(function() {
+		setTimeout(() => {
 			binder.initAfterLoad($("title").text());
 		}, 1);
 	}
@@ -133,16 +133,16 @@ $(function () {
 		,	zIndex: "9999"
 	}));
 	
-	$("[title]").each(function() {
-		var obj = $(this);
-		var title = obj.attr("title").split("\\n");
+	$("[title]").each((_, el) => {
+		const obj = $(el);
+		const title = obj.attr("title").split("\\n");
 		if (title.length > 1) {
 			obj.attr("title", title.join("\n"));
 		}
 	});
 });
 
-var Progress = function() {
+window.Progress = function() {
 	this.div = $("<div>").css({
 			position: "fixed"
 		,	top: "calc(50% - 20px)"
@@ -177,10 +177,10 @@ Progress.prototype.hide = function() {
 }
 // Progress 객체 없이 직접 다루는 경우
 Progress.bars = {};
-Progress.set = function(selector, ratio) {
-	var bar = Progress.bars[selector];
+Progress.set = (selector, ratio) => {
+	let bar = Progress.bars[selector];
 	if (bar == null) {
-		var area = $(selector);
+		const area = $(selector);
 		Progress.bars[selector] = bar = $("<div>").addClass("progress-bar");
 		area.addClass("progress").prepend(bar);
 	}

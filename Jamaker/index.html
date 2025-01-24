@@ -11,7 +11,7 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<script src="view/lib/jquery-3.2.1.min.js?250107"></script>
+<script src="view/lib/jquery-3.2.1.min.js?250124"></script>
 <script>
 var Frame = function(url, name, options, onload) {
 	var frame = this.frame = Frame.preset.clone().data("obj", this);
@@ -107,7 +107,7 @@ Frame.prototype.close = function() {
 }
 Frame.names = {};
 Frame.order = [];
-Frame.add = function (frame, name) {
+Frame.add = function(frame, name) {
 	frame.name = name;
 	Frame.names[name] = frame;
 	Frame.order.push(frame);
@@ -237,7 +237,7 @@ $(function() {
 		$(this).parents(".frame").data("obj").close();
 	});
 	
-	var fEditor = new Frame("Jamaker.html?241122", "editor", "", function() {
+	var fEditor = new Frame("Jamaker.html?250124", "editor", "", function() {
 		fEditor.frame.find(".button").remove();
 		fEditor.frame.find("h3").css({ width: "100%" });
 		

@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250107" />
-<script src="view/lib/jquery-3.2.1.min.js?250107"></script>
-<script src="bridge/WinAPI.js?250107"></script>
-<script src="bridge/Binder.js?250107"></script>
-<script src="bridge/Bridge.js?250107"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250124" />
+<script src="view/lib/jquery-3.2.1.min.js?250124"></script>
+<script src="bridge/WinAPI.js?250124"></script>
+<script src="bridge/Binder.js?250124"></script>
+<script src="bridge/Bridge.js?250124"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -103,16 +103,16 @@ Binder.prototype.moveTo  = function(time) { this._.player.moveTo(time); }
 // 부가기능
 Binder.prototype.runColorPicker = function() { alert("C#에서 동작합니다."); }
 </script>
-<script src="bridge/WebForm.js?250107"></script>
+<script src="bridge/WebForm.js?250124"></script>
 <script>
 // bridge/list.txt
-//var playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
-var playerDlls = "NoPlayer: (없음)\n Sample: 샘플";
-var highlights = "SyncOnly|SyncOnly: 싱크 줄 구분\n withoutSync|eclipse: 이클립스 스타일 (싱크줄 제외)\n full|eclipse: 이클립스 스타일";
+//const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
+const playerDlls = "NoPlayer: (없음)\n Sample: 샘플";
+const highlights = "eclipse: Eclipse \n vs: Visual Studio";
 
-var editor = new WebForm(); // 에디터
+window.editor = new WebForm(); // 에디터
 
-var window_open = function(url, name, options, opener) {
+const window_open = function(url, name, options, opener) {
 	return opener._open_(url, name, options);
 }
 
@@ -120,12 +120,12 @@ var window_open = function(url, name, options, opener) {
 	editor.player = null;
 	editor.strSettingJson = "불러오기 실패 예제";
 	editor.strBridgeList = "NoPlayer: (없음)";
-	editor.strHighlights = "SyncOnly|SyncOnly: 싱크 줄 구분\n withoutSync|eclipse: 이클립스 스타일 (싱크줄 제외)\n full|eclipse: 이클립스 스타일";
+	editor.strHighlights = "eclipse: Eclipse \n vs: Visual Studio";
 
 	// override
 	editor.drop = async function(x, y) {
-		var file = this.droppedFiles[0];
-		var ext = file.name.substring(file.name.length - 4);
+		const file = this.droppedFiles[0];
+		const ext = file.name.substring(file.name.length - 4);
 		switch (ext.toLowerCase()) {
 			case ".smi":
 			case ".srt":
@@ -139,7 +139,7 @@ var window_open = function(url, name, options, opener) {
 		this.initializeComponent();
 		
 		this.loadSetting(function() {
-			editor.mainView.src = "view/editor.html?250107";
+			editor.mainView.src = "view/editor.html?250124";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -158,7 +158,7 @@ var window_open = function(url, name, options, opener) {
 				}, 1000);
 				*/
 
-				var cd = editor.mainView.contentDocument;
+				const cd = editor.mainView.contentDocument;
 				cd.addEventListener("dragenter", function(e) {
 					e.preventDefault();
 					editor.showDragging();
@@ -171,7 +171,7 @@ var window_open = function(url, name, options, opener) {
 			setTimeout(function() {
 				// 로딩 전에 돌아가면 문제 생김
 				editor.timer = setInterval(function() {
-					for (var i = 0; i < editor.timerFuncs.length; i++) {
+					for (let i = 0; i < editor.timerFuncs.length; i++) {
 						editor.timerFuncs[i]();
 					}
 				}, 50);
@@ -213,8 +213,8 @@ var window_open = function(url, name, options, opener) {
 			/*
 			 * C#에선 초기화 여부 체크하는 등의 코드가 들어감
 			 */
-			var fps  = this.player.getFps();
-			var time = this.player.getTime();
+			const fps  = this.player.getFps();
+			const time = this.player.getTime();
 			editor.script("refreshTime", [time, fps]);
 			editor.updateViewerTime(time);
 		}
@@ -225,15 +225,15 @@ var window_open = function(url, name, options, opener) {
 		e.Cancel = true;
 		Script("beforeExit");
 		*/
-		var viewer = editor.mainView.contentWindow.SmiEditor.Viewer;
+		const viewer = editor.mainView.contentWindow.SmiEditor.Viewer;
 		if (viewer && viewer.window) viewer.window.close();
 		
-		var addon = editor.mainView.contentWindow.SmiEditor.Addon;
+		const addon = editor.mainView.contentWindow.SmiEditor.Addon;
 		if (addon && addon.window) addon.window.close();
 		
 		if (this.player && this.player.hwnd) this.player.hwnd.window.close();
 		
-		var settingWindow = editor.mainView.contentWindow.SmiEditor.settingWindow;
+		const settingWindow = editor.mainView.contentWindow.SmiEditor.settingWindow;
 		if (settingWindow) settingWindow.close();
 	}
 	/*
@@ -244,7 +244,10 @@ var window_open = function(url, name, options, opener) {
 }
 	
 // 윈도우 그림자 여백 보정
-var MT = 0, ML = 7, MR = 7, MB = 9;
+const MT = 0;
+const ML = 7;
+const MR = 7;
+const MB = 9;
 
 {	// 창 조작
 	editor.hwnd = window;
@@ -256,7 +259,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 		return this.super_getHwnd(name);
 	}
 	editor.moveWindow = function(target, x, y, width, height, resizable) {
-		var hwnd = this.getHwnd(target);
+		const hwnd = this.getHwnd(target);
 		if (!target == "editor") {
 			// follow window 동작 일시정지
 			WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
@@ -288,12 +291,13 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 						if (target == "finder") {
 							editor.mainView.contentWindow.SmiEditor.Finder.onload();
 						} else if (target == "viewer") {
-							if (hwnd.iframe && hwnd.iframe.contentWindow) {
-								hwnd = hwnd.iframe.contentWindow;
+							let viewer = hwnd;
+							if (viewer.iframe && viewer.iframe.contentWindow) {
+								viewer = viewer.iframe.contentWindow;
 							}
-							if (hwnd.setSetting) {
-								hwnd.setSetting(editor.strSettingJson);
-								hwnd.setLines(editor.viewerLines);
+							if (viewer.setSetting) {
+								viewer.setSetting(editor.strSettingJson);
+								viewer.setLines(editor.viewerLines);
 							}
 						}
 					}, 1);
@@ -305,7 +309,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 		if (target == "player") {
 			return;
 		}
-		var hwnd = this.getHwnd(target);
+		const hwnd = this.getHwnd(target);
 		WinAPI.SetForegroundWindow(hwnd);
 	}
 	editor.setFollowWindow = function(follow) {
@@ -315,11 +319,11 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 		this.useFollowWindow = follow;
 	}
 	editor.getWindows = function(targets) {
-		for (var i = 0; i < targets.length; i++) {
-			var target = targets[i];
-			var hwnd = this.getHwnd(target);
+		for (let i = 0; i < targets.length; i++) {
+			const target = targets[i];
+			const hwnd = this.getHwnd(target);
 			if (hwnd) {
-				var targetOffset = new RECT();
+				const targetOffset = new RECT();
 				WinAPI.GetWindowRect(hwnd, targetOffset);
 				this.script("afterGetWindow", [ target
 					, targetOffset.left + ML
@@ -346,13 +350,13 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 		 || editor.lastOffset.left   != editor.offset.left
 		 || editor.lastOffset.right  != editor.offset.right
 		 || editor.lastOffset.bottom != editor.offset.bottom) {
-			var moveX = this.offset.left - this.lastOffset.left;
-			var moveY = this.offset.top - this.lastOffset.top;
+			const moveX = this.offset.left - this.lastOffset.left;
+			const moveY = this.offset.top - this.lastOffset.top;
 			
-			var viewer = this.getHwnd("viewer");
+			const viewer = this.getHwnd("viewer");
 			if (viewer) {
-				var vMoveX = moveX;
-				var vMoveY = moveY;
+				let vMoveX = moveX;
+				let vMoveY = moveY;
 				
 				WinAPI.GetWindowRect(this.getHwnd("viewer"), this.viewerOffset);
 				if (this.viewerOffset.left - this.lastOffset.left > this.lastOffset.right - this.viewerOffset.left) {
@@ -367,10 +371,10 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 			}
 
 			if (this.player.hwnd && this.player.hwnd.window && this.player.hwnd.window.name) {
-				var pMoveX = moveX;
-				var pMoveY = moveY;
+				let pMoveX = moveX;
+				let pMoveY = moveY;
 				
-				var playerOffset = this.player.getWindowPosition();
+				const playerOffset = this.player.getWindowPosition();
 				if (playerOffset.left - this.lastOffset.left > this.lastOffset.right - playerOffset.left) {
 					// 오른쪽 경계에 더 가까울 땐 오른쪽을 따라감
 					pMoveX = this.offset.right - this.lastOffset.right;
@@ -399,7 +403,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 				+	"setting.window.height = " + (this.offset.bottom - this.offset.top  - MB) + ";"
 				]);
 
-				var viewer = this.getHwnd("viewer");
+				const viewer = this.getHwnd("viewer");
 				if (viewer) {
 					WinAPI.GetWindowRect(viewer, this.viewerOffset);
 					this.script("eval", [
@@ -410,9 +414,9 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 					]);
 				}
 
-				var player = this.getHwnd("player");
+				const player = this.getHwnd("player");
 				if (player) {
-					var playerOffset = this.player.currentOffset;
+					const playerOffset = this.player.currentOffset;
 					WinAPI.GetWindowRect(player, playerOffset);
 					this.script("eval", [
 						"setting.player.window.x = " + (playerOffset.left + ML) + ";"
@@ -432,7 +436,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 		this.getHwnd(target).sendMsg(msg);
 	}
 	editor.onloadFinder = function(last) {
-		var finder = this.getHwnd("finder");
+		const finder = this.getHwnd("finder");
 		if (finder.iframe && finder.iframe.contentWindow) {
 			finder = finder.iframe.contentWindow;
 		}
@@ -446,7 +450,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 	editor.runReplaceAll = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runReplaceAll(params); };
 
 	editor.updateViewerSetting = function() {
-		var viewer = this.getHwnd("viewer");
+		const viewer = this.getHwnd("viewer");
 		if (viewer) {
 			if (viewer.iframe && viewer.iframe.contentWindow) {
 				viewer = viewer.iframe.contentWindow;
@@ -458,7 +462,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 		}
 	};
 	editor.updateViewerTime = function(time) {
-		var viewer = this.getHwnd("viewer");
+		const viewer = this.getHwnd("viewer");
 		if (viewer) {
 			if (viewer.iframe && viewer.iframe.contentWindow) {
 				viewer = viewer.iframe.contentWindow;
@@ -471,7 +475,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 	editor.viewerLines = "[]";
 	editor.updateViewerLines = function(lines) {
 		this.viewerLines = lines;
-		var viewer = this.getHwnd("viewer");
+		const viewer = this.getHwnd("viewer");
 		if (viewer) {
 			if (viewer.iframe && viewer.iframe.contentWindow) {
 				viewer = viewer.iframe.contentWindow;
@@ -483,7 +487,6 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 	};
 }
 
-var accessHandle;
 {	// 설정
 	editor.loadSetting = function(afterSuccess) {
 		editor.strSettingJson = localStorage.getItem("setting");
@@ -508,7 +511,7 @@ var accessHandle;
 
 	editor.setPlayer = function(dll, exe, withRun) {
 		this.player = new WebPlayerBridge(exe);
-		var offset = JSON.parse(editor.strSettingJson).player.window;
+		const offset = JSON.parse(editor.strSettingJson).player.window;
 		this.player.currentOffset.top    = offset.y - MT;
 		this.player.currentOffset.left   = offset.x - ML;
 		this.player.currentOffset.right  = offset.x + offset.width  + MR;
@@ -544,7 +547,7 @@ var accessHandle;
 	editor.menuKeys = {};
 	
 	editor.setMenus = function(menus) {
-		var body = $("body");
+		const body = $("body");
 		body.find(".submenu").remove();
 		this.menustrip.view.empty();
 		editor.menuKeys = {};
@@ -558,22 +561,22 @@ var accessHandle;
 			]]);
 		editor.mainView.contentWindow.Jamaker = editor;
 		
-		for (var i = 0; i < menus.length; i++) {
-			var list = menus[i];
-			var li = $("<li>").text(list[0]);
-			var menuKey = null;
+		for (let i = 0; i < menus.length; i++) {
+			const list = menus[i];
+			const li = $("<li>").text(list[0]);
+			let menuKey = null;
 			if (list[0][list[0].length-4]=="(" && list[0][list[0].length-3]=="&" && list[0][list[0].length-1]==")") {
 				menuKey = list[0][list[0].length-2];
 				li.html(list[0].substring(0, list[0].length - 3) + "<u>"+menuKey+"</u>)");
 				editor.menuKeys[menuKey] = li;
 			}
-			var ol = $("<ol>").addClass("submenu").data("menu", li);
-			for (var j = 1; j < list.length; j++) {
-				var menu = list[j].split("|");
+			const ol = $("<ol>").addClass("submenu").data("menu", li);
+			for (let j = 1; j < list.length; j++) {
+				const menu = list[j].split("|");
 				
 				ol.append($("<li tabindex='1'>").html(menu[0]).data("func", menu[1]).on("click", function() {
 					$(".submenu.open").removeClass("open");
-					var func = $(this).data("func");
+					const func = $(this).data("func");
 					editor.mainView.contentWindow.eval(func);
 				}));
 			}
@@ -583,26 +586,26 @@ var accessHandle;
 		}
 	}
 	editor.exportSetting = async function() {
-		var fb = await window.showSaveFilePicker({types:[{description:'JSON',accept:{'text/json':['.json']}}]});
+		const fb = await window.showSaveFilePicker({types:[{description:'JSON',accept:{'text/json':['.json']}}]});
 		if (fb) {
-			var file = await fb.getFile();
-			var stream = await fb.createWritable();
+			const file = await fb.getFile();
+			const stream = await fb.createWritable();
 			await stream.write('\ufeff' + this.strSettingJson);
 			await stream.close();
 		}
 	};
 	editor.importSetting = async function() {
-		var fb = await window.showOpenFilePicker({types:[{description:'JSON',accept:{'text/json':['.json']}}]});
+		const fb = await window.showOpenFilePicker({types:[{description:'JSON',accept:{'text/json':['.json']}}]});
 		if (fb && fb[0]) {
-			var file = await fb[0].getFile();
-			var text = await file.text();
+			const file = await fb[0].getFile();
+			const text = await file.text();
 			this.saveSetting(text);
 			this.script("init", [this.strSettingJson]);
 		}
 	};
 	$(function() {
 		$(document).on("keydown", ".submenu.open li", function(e) {
-			var li = $(this);
+			const li = $(this);
 			switch (e.keyCode) {
 				case 38: { // ↑
 					li.prev().focus();
@@ -630,24 +633,22 @@ var accessHandle;
 		$(document).on("keydown", editor.keyDownForMenu);
 	});
 	editor.keyDownForMenu = function(e) {
-		var menu = null;
-		var key = String.fromCharCode(e.keyCode);
+		const key = String.fromCharCode(e.keyCode);
 		if (!e.shiftKey && !e.ctrlKey && e.altKey) {
-			menu = editor.menuKeys[key];
-		}
-		
-		if (menu) {
-			e.preventDefault();
-			editor.menustrip.openMenu(menu);
+			const menu = editor.menuKeys[key];
+			if (menu) {
+				e.preventDefault();
+				editor.menustrip.openMenu(menu);
+			}
 		}
 	}
 }
 {	// 파일
-	var fileBuffers = [];
-	var afterGetString = function() {};
+	const fileBuffers = [];
+	let afterGetString = function() {};
 	
 	editor.openFile = async function() {
-		var fileBuffer = await window.showOpenFilePicker({ types: [ { description: "지원되는 자막 파일", accept:{ "text/sami": [".smi"], "text/srt" : [".srt"] } } ] });
+		const fileBuffer = await window.showOpenFilePicker({ types: [ { description: "지원되는 자막 파일", accept:{ "text/sami": [".smi"], "text/srt" : [".srt"] } } ] });
 		if (fileBuffer && fileBuffer[0]) {
 			editor.loadFile(fileBuffer[0]);
 		}
@@ -661,14 +662,14 @@ var accessHandle;
 	editor.openFileAfterGetVideoFileName = function(path) { /* Native */ }
 	editor.loadFile = async function(fb) {
 		if (fb.createWritable) {
-			var index = fileBuffers.length;
+			const index = fileBuffers.length;
 			fileBuffers.push(fb);
-			var file = await fb.getFile();
-			var text = await file.text();
+			const file = await fb.getFile();
+			const text = await file.text();
 			editor.script("openFile", [index + ":" + file.name, text, false]);
 		} else {
-			var file = fb;
-			var text = await file.text();
+			const file = fb;
+			const text = await file.text();
 			editor.script("openFile", [file.name, text, false]);
 		}
 	}
@@ -676,11 +677,10 @@ var accessHandle;
 	editor.loadVideoFile = function(path) { /* native */ }
 	editor.requestFrames = function(path) { /* native */ }
 	editor.save = async function(text, path) {
-		var stream = null;
-		var paths = path.split(":");
+		const paths = path.split(":");
 		if (paths[1]) {
-			var fileBuffer = fileBuffers[paths[0]];
-			var stream = await fileBuffer.createWritable();
+			const fileBuffer = fileBuffers[paths[0]];
+			const stream = await fileBuffer.createWritable();
 			await stream.write("\ufeff" + text); // BOM 넣어줌
 			await stream.close();
 			editor.script("afterSaveFile", [path]);
@@ -689,33 +689,33 @@ var accessHandle;
 		}
 	}
 	editor.saveWithDialog = async function(text) {
-		var fileBuffer = await window.showSaveFilePicker({
+		const fileBuffer = await window.showSaveFilePicker({
 			types: [
 				{ description: "SAMI", accept:{ "text/sami": [".smi"] } }
 			]
 		});
 		if (fileBuffer) {
-			var index = fileBuffers.length;
+			const index = fileBuffers.length;
 			fileBuffers.push(fileBuffer);
-			var file = await fileBuffer.getFile();
+			const file = await fileBuffer.getFile();
 			editor.save(text, index + ":" + file.name);
 		}
 	}
 	editor.saveTemp = function(text, path) {
 		path = path.split(":");
-		var filename = path[1] ? path[1] : path[0];
-//		var key = "tmp_" + new Date().getTime() + "_" + filename;
-		var key = "tmp_" + filename;
+		const filename = path[1] ? path[1] : path[0];
+//		const key = "tmp_" + new Date().getTime() + "_" + filename;
+		const key = "tmp_" + filename;
 		
-		var keys = localStorage.getItem("tmpKeys");
-		keys = keys ? keys.split(":") : [];
+		const tmpKeys = localStorage.getItem("tmpKeys");
+		const keys = tmpKeys ? tmpKeys.split(":") : [];
 		keys.push(key);
 		localStorage.setItem("tmpKeys", keys.join(":"));
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		var hwnd = window.open("bridge/tempDir.html?250107", "tempDir", "location=no,width=1,height=1");
-		var rect = editor.mainView.contentWindow.setting.player.window;
+		const hwnd = window.open("bridge/tempDir.html?250124", "tempDir", "location=no,width=1,height=1");
+		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
 }
