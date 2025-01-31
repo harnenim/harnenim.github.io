@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>Auto Sync Shift</title>
-	<script src="lib/jquery-3.2.1.min.js?250124"></script>
-	<script src="lib/SubtitleObject.js?250124"></script>
-	<script src="lib/Combine.js?250124"></script>
-	<script src="lib/webview.js?250124"></script>
-	<link rel="stylesheet" type="text/css" href="lib/webview.css?250124" />
+	<script src="lib/jquery-3.2.1.min.js?250131"></script>
+	<script src="lib/SubtitleObject.js?250131"></script>
+	<script src="lib/Combine.js?250131"></script>
+	<script src="lib/webview.js?250131"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css?250131" />
 	<script>
 let isProcessing = false;
 function showProcessing(text) {
@@ -222,6 +222,11 @@ function setOriginSubtitleFile(path, text) {
 	for (let i = 0; i < sortedBody.length; i++) {
 		const item = sortedBody[i];
 		if (range[0] <= 0) {
+			// 새로운 범위를 시작해야 함
+			if (item.text.split("&nbsp;").join(" ").trim().length == 0) {
+				// 공백 싱크일 경우 넘기기
+				continue;
+			}
 			range[0] = item.ms;
 			ranges.push(range);
 		} else if (range[1] + maxBlank < item.ms) {
@@ -979,6 +984,7 @@ body.drag-file fieldset.hover {
 	width: 80px;
 	border-left: 1px solid #aaa;
 	text-align: center;
+	user-select: none;
 }
 .preview .preview-header .sync {
 	width: 130px;

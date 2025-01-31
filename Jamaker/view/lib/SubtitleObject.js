@@ -676,7 +676,8 @@ Subtitle.Width =
 			if (!this.div) {
 				$("body").append(this.div = $("<div>").css({
 						position: "absolute"
-					,	top: -1000
+					,	top: -100
+					,	height: 100
 					,	whiteSpace: "pre"
 				}));
 			}
@@ -2743,7 +2744,7 @@ Subtitle.SrtFile.prototype.toTxt = function() {
 	}
 	return items.join("\n");
 }
-Subtitle.SrtFile.REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}$/;
+Subtitle.SrtFile.REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*$/;
 Subtitle.SrtFile.prototype.fromTxt = function(txt) {
 	const lines = txt.split("\r\n").join("\n").split("\n");
 	const items = [];

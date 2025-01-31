@@ -3,63 +3,21 @@
 <head>
 <meta charset="utf-8">
 <title>Jamaker</title>
-<script src="lib/jquery-3.2.1.min.js?250124"></script>
-<script src="lib/SubtitleObject.js?250124"></script>
-<script src="lib/Combine.js?250124"></script>
-<script src="lib/webview.js?250124"></script>
-<script src="lib/setting.js?250124"></script>
-<script src="lib/AutoCompleteTextarea.js?250124"></script>
-<script src="lib/History.js?250124"></script>
-<script src="lib/SmiEditor.js?250124"></script>
-<script src="lib/editor.js?250124"></script>
-<link rel="stylesheet" type="text/css" href="lib/AutoCompleteTextarea.css?250124" />
-<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250124" />
-<style>
-* {
-	border-width: 0;
-	border-style: solid;
-	user-select: none;
-}
-html, body {
-	width: 100%;
-	height: 100%;
-}
-body:not(.drag-file) #cover {
-	display: none;
-}
-label, #showFps {
-	margin-left: 6px;
-}
-button {
-	line-height: 13px;
-	border-width: 1px;
-	padding: 1px;
-}
-#btnAddHold { padding: 1px 4px; }
-#inputWeight { width: 40px; }
-#inputUnit { width: 50px; }
-#btnMoveToBack,
-#btnMoveToForward {
-	border-left: 0;
-}
-.disabled span {
-	opacity: 0.5;
-}
-.progress {
-	position: relative;
-}
-.progress > .progress-bar {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 0;
-	height: 100%;
-	background: rgba(0, 122, 202, 0.3);
-}
-</style>
+<script src="lib/jquery-3.2.1.min.js?250131"></script>
+<script src="lib/SubtitleObject.js?250131"></script>
+<script src="lib/Combine.js?250131"></script>
+<script src="lib/webview.js?250131"></script>
+<script src="lib/setting.js?250131"></script>
+<script src="lib/AutoCompleteTextarea.js?250131"></script>
+<script src="lib/History.js?250131"></script>
+<script src="lib/SmiEditor.js?250131"></script>
+<script src="lib/editor.js?250131"></script>
+<link rel="stylesheet" type="text/css" href="lib/AutoCompleteTextarea.css?250131" />
+<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250131" />
+<!-- <link rel="stylesheet" type="text/css" href="lib/SmiEditor.size.css?250131" /> -->
 </head>
 <body id="body">
-	<div style="padding: 3px 2px; height: 24px;"><!--
+	<div><!--
 	--><button type="button" id="btnAddHold">홀드 추가</button><!--
 	--><label>가중치<input type="text" id="inputWeight" value="0" /></label><!--
 	--><label title="선택영역 혹은 전체 싱크를 조절합니다.">싱크 조절<input type="text" id="inputUnit" value="0" /></label><!--

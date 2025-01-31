@@ -41,7 +41,7 @@ let checkVersion;
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.01.24.v1"
+{	version: "2025.01.31.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -282,6 +282,7 @@ window.DEFAULT_SETTING =
 	, enter : false
 	, color : true
 	}
+,	size: 1
 ,	color:
 	{ background: "#f0f0f0"
 	, selector  : "#c1c1c1"

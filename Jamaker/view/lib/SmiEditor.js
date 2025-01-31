@@ -227,7 +227,7 @@ SmiEditor.findSync = (sync, fs=[], from=0, to=-1) => {
 		return SmiEditor.findSync(sync, fs, from, mid);
 	}
 }
-SmiEditor.getSyncTime = (sync, forKeyFrame=false, output={}/* 리턴값은 숫자여야 하는데, 키프레임 상태값 반환이 필요해짐 */) => {
+SmiEditor.getSyncTime = (sync, forKeyFrame=false, output={}) => { /* output: 리턴값은 숫자여야 하는데, 키프레임 상태값 반환이 필요해져서 C# out처럼 만듦 */
 	if (!sync) sync = (time + SmiEditor.sync.weight);
 	if (SmiEditor.sync.frame) { // 프레임 단위 싱크 보정
 		let adjustSync = null;
@@ -474,6 +474,23 @@ SmiEditor.activateKeyEvent = function() {
 							if (e.altKey) {
 								
 							} else {
+								// Ctrl+방향키 이동 시 태그 건너뛰기
+								const cursor = editor.getCursor();
+								if (cursor[0] > 0 && cursor[0] == cursor[1]) {
+									const text = editor.input.val();
+									if (text[cursor[0] - 1] == '>') {
+										const prev = text.substring(0, cursor[0]);
+										const index = prev.lastIndexOf('<');
+										if (index >= 0) {
+											const tag = prev.substring(index);
+											if (tag.indexOf("\n") < 0) {
+												editor.setCursor(index);
+												editor.scrollToCursor();
+												e.preventDefault();
+											}
+										}
+									}
+								}
 							}
 						} else {
 							if (e.altKey) {
@@ -510,6 +527,23 @@ SmiEditor.activateKeyEvent = function() {
 							if (e.altKey) {
 								
 							} else {
+								// Ctrl+방향키 이동 시 태그 건너뛰기
+								const cursor = editor.getCursor();
+								if (cursor[0] == cursor[1]) {
+									const text = editor.input.val();
+									if (text.length > cursor[0] && text[cursor[0]] == '<') {
+										const next = text.substring(cursor[0]);
+										const index = next.indexOf('>') + 1;
+										if (index > 0) {
+											const tag = next.substring(0, index);
+											if (tag.indexOf("\n") < 0) {
+												editor.setCursor(cursor[0] + index);
+												editor.scrollToCursor();
+												e.preventDefault();
+											}
+										}
+									}
+								}
 							}
 						} else {
 							if (e.altKey) {
@@ -550,9 +584,9 @@ SmiEditor.activateKeyEvent = function() {
 				case 8: { // Backspace
 					if (hasFocus) {
 						if (e.ctrlKey) { // Ctrl+Backspace → 공백문자 그룹 삭제
-							const text = editor.input.val();
 							const cursor = editor.getCursor();
 							if (cursor[0] == cursor[1]) {
+								const text = editor.input.val();
 								let delLen = 0;
 								if (cursor[0] >= 12) {
 									if (text.substring(cursor[0]-12, cursor[0]) == "<br><b>　</b>") {
@@ -600,9 +634,9 @@ SmiEditor.activateKeyEvent = function() {
 				case 46: { // Delete
 					if (hasFocus) {
 						if (e.ctrlKey) { // Ctrl+Delete → 공백문자 그룹 삭제
-							const text = editor.input.val();
 							const cursor = editor.getCursor();
 							if (cursor[0] == cursor[1]) {
+								const text = editor.input.val();
 								let delLen = 0;
 								if (cursor[0] + 12 <= text.length) {
 									if (text.substring(cursor[0], cursor[0]+12) == "<b>　</b><br>") {
@@ -1102,9 +1136,13 @@ SmiEditor.prototype.moveToSync = function(add) {
 			break;
 		}
 	}
+	sync += add;
+	if (sync < 0) {
+		sync = 0;
+	}
 	
 	SmiEditor.PlayerAPI.play();
-	SmiEditor.PlayerAPI.moveTo(sync + add);
+	SmiEditor.PlayerAPI.moveTo(sync);
 }
 SmiEditor.prototype.findSync = function(target) {
 	if (!target) {
@@ -1119,7 +1157,7 @@ SmiEditor.prototype.findSync = function(target) {
 				lineNo = i + 1;
 			} else {
 				if (!lineNo) {
-					lineNo = i - 1;
+					lineNo = (i > 0) ? (i - 1) : 0;
 				}
 				break;
 			}
@@ -1128,7 +1166,7 @@ SmiEditor.prototype.findSync = function(target) {
 	if (!hasSync) {
 		return;
 	}
-	const cursor = this.text.split("\n").slice(0, lineNo).join("\n").length + 1;
+	const cursor = (lineNo ? this.text.split("\n").slice(0, lineNo).join("\n").length + 1 : 0);
 	this.setCursor(cursor);
 	this.scrollToCursor(lineNo);
 }
@@ -1977,7 +2015,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250124", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?250131", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2136,7 +2174,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250124", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?250131", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2186,7 +2224,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250124";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250131";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2199,7 +2237,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250124", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?250131", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

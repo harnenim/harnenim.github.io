@@ -759,7 +759,7 @@ function setSetting(setting, initial=false) {
 			disabled = SmiEditor.canvas.toDataURL();
 		}
 		
-		$.ajax({url: "lib/SmiEditor.color.css?250124"
+		$.ajax({url: "lib/SmiEditor.color.css?250131"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -772,6 +772,29 @@ function setSetting(setting, initial=false) {
 						$("head").append($style = $("<style id='styleColor'>"));
 					}
 					$style.html(preset);
+				}
+		});
+	}
+	if (initial || (oldSetting.size != setting.size)) {
+		$.ajax({url: "lib/SmiEditor.size.css?250131"
+			,	dataType: "text"
+				,	success: (preset) => {
+					preset = preset.split("20px").join((20 * setting.size) + "px");
+					
+					let $style = $("#styleSize");
+					if (!$style.length) {
+						$("head").append($style = $("<style id='styleSize'>"));
+					}
+					$style.html(preset);
+					
+					for (let i = 0; i < tabs.length; i++) {
+						const holds = tabs[i].holds;
+						for (let j = 0; j < holds.length; j++) {
+							if (holds[j].act) {
+								holds[j].act.resize();
+							}
+						}
+					}
 				}
 		});
 	}
@@ -799,7 +822,7 @@ function setSetting(setting, initial=false) {
 				,	dataType: "text"
 				,	success: (parser) => {
 						eval(parser);
-						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250124"
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250131"
 							,	dataType: "text"
 							,	success: (style) => {
 									SmiEditor.highlightCss = style;
@@ -902,7 +925,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250124", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250131", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -932,7 +955,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250124";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250131";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1221,7 +1244,6 @@ function doExit() {
 		, setting.player.control[setting.player.control.dll].withExit);
 }
 
-const REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}$/;
 function srt2smi(text) {
 	return new Subtitle.SmiFile().fromSync(new Subtitle.SrtFile(text).toSync()).toTxt();
 }
