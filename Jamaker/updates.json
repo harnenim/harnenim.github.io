@@ -1,4 +1,26 @@
-[ { "version": "2025.01.24"
+[ { "version": "2025.01.31"
+  , "comment":
+    [ "임시저장 파일에 메인 홀드만 들어가던 문제 수정"
+    , "SRT 파일 불러오는 기능 보완"
+    , "Ctrl+좌우키, 재생 위치 이동 등 일부 기능 개선"
+    , "싱크 조절기 UI 오류 등 수정"
+    ]
+  , "files":
+    [ "view/lib/AutoCompleteTextarea.js"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SmiEditor.size.css"
+    , "view/lib/SubtitleObject.js"
+    , "view/lib/webview.js"
+    , "view/AutoSyncShift.html"
+    , "view/editor.html"
+    , "view/setting.html"
+    ]
+  }
+, { "version": "2025.01.24"
   , "comment":
     [ "흔들기 효과 특수태그화"
     , "타이핑 글자 단위 효과 지원"
