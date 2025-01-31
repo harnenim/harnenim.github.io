@@ -93,7 +93,7 @@ function WebPlayerBridge() {
 					if (this.window && this.window.name) {
 						return;
 					}
-					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?250124", "player", "scrollbars=no,location=no");
+					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?250131", "player", "scrollbars=no,location=no");
 					if (this.window) {
 						if (this.window.document) {
 							this.window.document.title = "플레이어";
