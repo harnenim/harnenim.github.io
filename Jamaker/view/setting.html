@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?250131"></script>
-<script src="lib/popup.js?250131"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?250131" />
+<script src="lib/jquery-3.2.1.min.js?250207"></script>
+<script src="lib/popup.js?250207"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?250207" />
 <script>
 windowName = "setting";
 
@@ -299,7 +299,7 @@ $(() => {
 						,	"func": func
 					});
 				}
-				const tr = $("<tr>").addClass("key-" + (keyName=='`' ? '~' : keyName)).append(th);
+				const tr = $("<tr>").addClass("key-" + (keyName=='`' ? '-' : keyName)).append(th);
 				for (let j = 0; j < withs.length; j++) {
 					const w = withs[j];
 					const td = $("<td>");
@@ -397,7 +397,7 @@ $(() => {
 				            ? ("F" + (e.keyCode - 111))
 				            : key;
 				const keyIndex = keyNames.indexOf(keyName);
-				const selector = "tr.key-" + (keyName == '`' ? '~' : keyName);
+				const selector = "tr.key-" + (keyName == '`' ? '-' : keyName);
 				
 				let w = null;
 				if (e.shiftKey) {
@@ -689,6 +689,7 @@ $(() => {
 
 		let selectParser = $("select[name=highlight_parser]");
 		let selectStyle  = $("select[name=highlight_style]" );
+		let selectSize   = $("select[name=size]");
 		if (opener.highlights) {
 			for (let i = 0; i < opener.highlights.length; i++) {
 				const item = opener.highlights[i].trim();
@@ -709,13 +710,15 @@ $(() => {
 				$("#optionsForHighlight").addClass   ("disabled").find("input, select").attr({ disabled: true  });
 			}
 		}).change();
+
+		selectSize.find("option[value='" + selectSize.data("value") + "']").prop("selected", true);
 		
 		$("#style").on("input propertychange", function() {
 			setSaved("style", false);
 		});
-	
+		
 		submitFuncs["style"] = () => {
-			setting.size             = $("input[name=size]").val();
+			setting.size             = $("select[name=size]").val();
 			setting.useTab           = $("input[name=useTab]").prop("checked");
 			setting.highlight.parser = $("select[name=highlight_parser]").val();
 			setting.highlight.style  = $("select[name=highlight_style]").val();
@@ -1415,7 +1418,7 @@ fieldset ol button,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?250131")</h4>
+					<h4>openAddon("~~.html?250207")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1488,9 +1491,22 @@ fieldset ol button,
 		※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.
 		<br />
 		<br />
-		<!-- 일단 기능 봉인 -->
-		<label style="display: none;">UI 배율
-			<input type="text" name="size" />
+		<label>UI 배율
+			<select name="size">
+				<option value="0.8" >80%</option>
+				<option value="0.9" >90%</option>
+				<option value="1"  >100%</option>
+				<option value="1.1">110%</option>
+				<option value="1.2">120%</option>
+				<option value="1.3">130%</option>
+				<option value="1.4">140%</option>
+				<option value="1.5">150%</option>
+				<option value="1.7">170%</option>
+				<option value="2.0">200%</option>
+				<option value="2.5">250%</option>
+				<option value="3.0">300%</option>
+				<option value="4.0">400%</option>
+			</select>
 			<br />
 		</label>
 		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />

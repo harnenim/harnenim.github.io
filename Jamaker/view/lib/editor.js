@@ -297,6 +297,8 @@ Tab.prototype.selectLastHold = function() {
 	}
 	if (this.lastHold && this.holds[this.lastHold]) {
 		this.selectHold(this.lastHold);
+	} else {
+		this.selectHold(1);
 	}
 }
 Tab.prototype.replaceBeforeSave = function() {
@@ -627,7 +629,11 @@ function init(jsonSetting) {
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
 	const checkTrustKeyframe = $("#checkTrustKeyframe").on("click", function() {
-		SmiEditor.trustKeyFrame = $(this).prop("checked");
+		if (SmiEditor.trustKeyFrame = $(this).prop("checked")) {
+			$("#editor").addClass("trust-keyframe");
+		} else {
+			$("#editor").removeClass("trust-keyframe");
+		}
 		if (tabs.length == 0) return;
 	});
 	
@@ -664,10 +670,7 @@ function init(jsonSetting) {
 		e.preventDefault();
 		
 		const th = $(this).parent();
-		closingTab = th[0];
-		setTimeout(() => { // 탭 선택 이벤트 방지... e.preventDefault()로 안 되네...
-			closingTab == null;
-		}, 1);
+		closingTab = th[0]; // 탭 선택 이벤트 방지... e.preventDefault()로 안 되네...
 		
 		let saved = true;
 		{	const currentTab = th.data("tab");
@@ -678,7 +681,7 @@ function init(jsonSetting) {
 				}
 			}
 		}
-		confirm((saved ? "저장되지 않았습니다.\n" : "") + "탭을 닫으시겠습니까?", function() {
+		confirm((!saved ? "저장되지 않았습니다.\n" : "") + "탭을 닫으시겠습니까?", () => {
 			const index = closeTab(th);
 
 			setTimeout(() => {
@@ -693,6 +696,13 @@ function init(jsonSetting) {
 					}
 				}
 				$("#tabSelector .th:eq(" + tab + ")").click();
+				
+				closingTab = null;
+			}, 1);
+			
+		}, () => {
+			setTimeout(() => {
+				closingTab = null;
 			}, 1);
 		});
 	});
@@ -759,7 +769,7 @@ function setSetting(setting, initial=false) {
 			disabled = SmiEditor.canvas.toDataURL();
 		}
 		
-		$.ajax({url: "lib/SmiEditor.color.css?250131"
+		$.ajax({url: "lib/SmiEditor.color.css?250207"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -776,7 +786,7 @@ function setSetting(setting, initial=false) {
 		});
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250131"
+		$.ajax({url: "lib/SmiEditor.size.css?250207"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((20 * setting.size) + "px");
@@ -822,7 +832,7 @@ function setSetting(setting, initial=false) {
 				,	dataType: "text"
 				,	success: (parser) => {
 						eval(parser);
-						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250131"
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250207"
 							,	dataType: "text"
 							,	success: (style) => {
 									SmiEditor.highlightCss = style;
@@ -925,7 +935,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250131", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250207", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -955,7 +965,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250131";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250207";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1186,39 +1196,55 @@ function loadFkf(fkfName) {
 	req.open("GET", "../temp/" + fkfName);
 	req.responseType = "arraybuffer";
 	req.onload = (e) => {
-		const buffer = req.response;
-		
-		const fkf = new Int32Array(buffer);
-		const vfsLength = fkf[0];
-		const kfsLength = fkf[1];
-		
-		const vfs = [];
-		const kfs = [];
-		
-		let offset = 8;
-		let view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
-		for (let i = 0; i < vfsLength; i++) {
-			vfs.push(view.getInt32(i * 4, true));
-		}
-		offset = offset + (vfsLength * 4);
-		view = new DataView(buffer.slice(offset, offset + (kfsLength * 4)));
-		for (let i = 0; i < kfsLength; i++) {
-			kfs.push(view.getInt32(i * 4, true));
-		}
-		
-		SmiEditor.video.fs  = vfs;
-		SmiEditor.video.kfs = kfs;
-		
-		// 키프레임 신뢰 기능 활성화
-		$("#forFrameSync").removeClass("disabled");
-		$("#checkTrustKeyframe").attr({ disabled: false });
-		Progress.set("#forFrameSync", 0);
+		afterLoadFkfFile(req.response);
 	}
 	req.onerror = (e) => {
 		// 실패했어도 프로그레스바는 없애줌
 		Progress.set("#forFrameSync", 0);
 	}
 	req.send();
+}
+// 웹버전 샘플에서 fkf 파일 드래그로 열었을 경우
+function loadFkfFile(file) {
+	const fr = new FileReader();
+	fr.onload = function(e) {
+		afterLoadFkfFile(e.target.result);
+	}
+	fr.readAsArrayBuffer(file);
+}
+function afterLoadFkfFile(buffer) {
+	const fkf = new Int32Array(buffer);
+	const vfsLength = fkf[0];
+	const kfsLength = fkf[1];
+	
+	const vfs = [];
+	const kfs = [];
+	
+	let offset = 8;
+	let view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
+	for (let i = 0; i < vfsLength; i++) {
+		vfs.push(view.getInt32(i * 4, true));
+	}
+	offset = offset + (vfsLength * 4);
+	view = new DataView(buffer.slice(offset, offset + (kfsLength * 4)));
+	for (let i = 0; i < kfsLength; i++) {
+		kfs.push(view.getInt32(i * 4, true));
+	}
+	
+	SmiEditor.video.fs  = vfs;
+	SmiEditor.video.kfs = kfs;
+	
+	// 키프레임 신뢰 기능 활성화
+	$("#forFrameSync").removeClass("disabled");
+	$("#checkTrustKeyframe").attr({ disabled: false });
+	Progress.set("#forFrameSync", 0);
+	
+	for (let i = 0; i < tabs.length; i++) {
+		const holds = tabs[i].holds;
+		for (let j = 0; j < holds.length; j++) {
+			holds[j].refreshKeyframe();
+		}
+	}
 }
 
 // 종료 전 C# 쪽에서 호출

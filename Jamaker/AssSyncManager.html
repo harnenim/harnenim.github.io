@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>AssSyncManager 샘플</title>
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250131" />
-<script src="view/lib/jquery-3.2.1.min.js?250131"></script>
-<script src="bridge/WinAPI.js?250131"></script>
-<script src="bridge/Binder.js?250131"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250207" />
+<script src="view/lib/jquery-3.2.1.min.js?250207"></script>
+<script src="bridge/WinAPI.js?250207"></script>
+<script src="bridge/Binder.js?250207"></script>
 <script>
 Binder.prototype.dropFile = function() {
 	this._.dropFile();
@@ -27,7 +27,7 @@ Binder.prototype.exitAfterSaveSetting = function(setting) {
 	this._.exitAfterSaveSetting(setting);
 }
 </script>
-<script src="bridge/WebForm.js?250131"></script>
+<script src="bridge/WebForm.js?250207"></script>
 <script>
 var main = new WebForm();
 {	// main
@@ -41,7 +41,7 @@ var main = new WebForm();
 			main.settingJson = settingJson;
 		}
 		
-		main.mainView.src = "view/AssSyncManager.html?250131";
+		main.mainView.src = "view/AssSyncManager.html?250207";
 		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;

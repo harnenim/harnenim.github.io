@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>미리보기</title>
-<script src="lib/jquery-3.2.1.min.js?250131"></script>
-<script src="lib/SmiEditor.js?250131"></script>
-<script src="lib/SubtitleObject.js?250131"></script>
+<script src="lib/jquery-3.2.1.min.js?250207"></script>
+<script src="lib/SmiEditor.js?250207"></script>
+<script src="lib/SubtitleObject.js?250207"></script>
 <script>
 let title = document.getElementsByTagName("title")[0];
 let lastTab = null;
@@ -28,6 +28,7 @@ function setSetting(jsonSetting) {
 let lines = [[],[],[]];
 let viewer = null;
 let viewers = [];
+// TODO: 사실 window.open이 아닌 별도 창을 띄울 경우를 위해 변수 공유 안 하고 이렇게 받은 거였는데...
 function setLines(newLines) {
 	lines = JSON.parse(newLines);
 	if (lines.length == 0) {
@@ -60,6 +61,9 @@ function refreshTime(receiveTime, withoutTitle) {
 			setTitle("미리보기 - " + h + ":" + (m>9?"":"0")+m + ":" + (s>9?"":"0")+s + ":" + (ms>99?"":"0")+(ms>9?"":"0")+ms);
 		}
 		titleTime = receiveTime;
+		
+		// UI 갱신 딜레이 고려해서 15ms 일찍 출력함
+		receiveTime += 15;
 	}
 	
 	for (let hold = 0; hold < lines.length; hold++) {
@@ -190,7 +194,6 @@ function setTextToView(text, hold) {
 					q = "";
 				}
 				if (size == 0) {
-					let tmp = tag.substring(index + 5 + q.length);
 					for (qEnd = index + 5 + q.length; qEnd < tag.length; qEnd++) {
 						let c = tag[qEnd];
 						if (isFinite(c)) {
@@ -201,6 +204,7 @@ function setTextToView(text, hold) {
 					}
 				}
 				if (size) {
+					/*
 					// 팟플레이어 기준 계산 
 					let potSize = (window.innerWidth / 586) * size;
 					
@@ -209,6 +213,10 @@ function setTextToView(text, hold) {
 					//if (potSize < 10) potSize += 50;
 					
 					let style = 'style="font-size: ' + potSize + 'px;"';
+					*/
+					// TODO: defaultSize 설정 만들어서 가져오도록 하는 게...?
+					let defaultSize = 18;
+					let style = 'style="font-size: ' + (size / defaultSize * 100) + '%;"';
 					text = text.substring(0, begin + index) + style + text.substring(begin + qEnd);
 					end = end - qEnd + index + style.length;
 				}
