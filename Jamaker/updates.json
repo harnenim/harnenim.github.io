@@ -1,4 +1,25 @@
-[ { "version": "2025.01.31"
+[ { "version": "2025.02.07"
+  , "comment":
+    [ "UI 배율 설정 추가"
+    , "홀드 결합 로직 개선"
+    , "기타 버그 및 마이너한 기능 수정"
+    ]
+  , "files":
+    [ "view/addon/SyncManager.html"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/lib/webview.js"
+    , "view/SamiReplacer.html"
+    , "view/setting.html"
+    , "view/viewer.html"
+    , "AutoSyncShift.exe"
+    , "AutoSyncShift.pdb"
+    ]
+  }
+, { "version": "2025.01.31"
   , "comment":
     [ "임시저장 파일에 메인 홀드만 들어가던 문제 수정"
     , "SRT 파일 불러오는 기능 보완"
