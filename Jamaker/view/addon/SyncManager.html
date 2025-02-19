@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저</title>
-	<script src="../lib/jquery-3.2.1.min.js?250207"></script>
-	<script src="../lib/SubtitleObject.js?250207"></script>
-	<script src="../lib/popup.js?250207"></script>
-	<script src="../lib/SmiEditor.js?250207"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250207" />
+	<script src="../lib/jquery-3.2.1.min.js?250219"></script>
+	<script src="../lib/SubtitleObject.js?250219"></script>
+	<script src="../lib/popup.js?250219"></script>
+	<script src="../lib/SmiEditor.js?250219"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250219" />
 	<script>
 windowName = "addon";
 
@@ -306,6 +306,7 @@ function checkDiff() {
 
 	if (originLines.length != targetLines.length) {
 		if (targetLines[0].length > 0) {
+			$("#checker").empty(); // 오차 경고는 없애줌
 			alert("줄 수가 안 맞습니다.");
 		}
 		return false;
@@ -415,7 +416,13 @@ function apply() {
 	
 	// 싱크보다 앞에 있는 것들
 	for (; bi < basicLines.length; bi++) {
-		const sync = getSync(basicLines[bi]);
+		const basicLine = basicLines[bi].toUpperCase();
+		if (basicLine == "</BODY>"
+		 || basicLine == "</SAMI>") {
+			bLast = 999999999;
+			break;
+		}
+		const sync = getSync(basicLine);
 		if (sync) {
 			bLast = sync;
 			break;
@@ -620,16 +627,16 @@ body > * {
 	</style>
 </head>
 <body>
-	<textarea wrap="off" id="originBasicSmi" spellcheck="false" readonly></textarea>
-	<textarea wrap="off" id="originFrameAss" spellcheck="false"></textarea>
+	<textarea id="originBasicSmi" spellcheck="false" readonly></textarea>
+	<textarea id="originFrameAss" spellcheck="false"></textarea>
 	<button id="btnFrameAssToSmi" accesskey="1" title="Alt+1">∨</button>
 	<div id="areaFrameSmi">
 		<div id="checker"></div>
-		<textarea wrap="off" id="originFrameSmi" spellcheck="false"></textarea>
-		<textarea wrap="off" id="targetFrameSmi" spellcheck="false"></textarea>
+		<textarea id="originFrameSmi" spellcheck="false"></textarea>
+		<textarea id="targetFrameSmi" spellcheck="false"></textarea>
 	</div>
 	<button id="btnJoinFrame" accesskey="2" title="Alt+2">&gt;</button>
-	<textarea wrap="off" id="resultFrameSmi" spellcheck="false" readonly></textarea>
+	<textarea id="resultFrameSmi" spellcheck="false" readonly></textarea>
 	<button id="btnApply" accesskey="3" title="Alt+3">적용</button>
 </body>
 </html>

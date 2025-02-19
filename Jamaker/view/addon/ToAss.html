@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>ASS 자막으로 변환</title>
-	<script src="../lib/jquery-3.2.1.min.js?250207"></script>
-	<script src="../lib/popup.js?250207"></script>
-	<script src="../lib/SubtitleObject.js?250207"></script>
-	<script src="../lib/SmiEditor.js?250207"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250207" />
+	<script src="../lib/jquery-3.2.1.min.js?250219"></script>
+	<script src="../lib/popup.js?250219"></script>
+	<script src="../lib/SubtitleObject.js?250219"></script>
+	<script src="../lib/SmiEditor.js?250219"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250219" />
 	<script>
 windowName = "addon";
 
@@ -27,17 +27,34 @@ $(() => {
 			start = editor.text.substring(0, range[0]).split("\n").length - 1;
 			end   = editor.text.substring(0, range[1]).split("\n").length;
 		}
-		$("#input").val(linesToText(editor.lines.slice(start, end)));
+		//$("#input").val(linesToText(editor.lines.slice(start, end)));
+		const smiFile = new Subtitle.SmiFile(linesToText(editor.lines.slice(start, end)));
+		smiFile.body = Subtitle.Smi.normalize(smiFile.body).result;
+		$("#input").val(smiFile.toTxt());
 	}
-	
+
+	function optimizeSync(sync) {
+		return Math.floor((findSync(sync) - 15) / 10);
+	}
+	function findSync(sync) {
+		return opener.SmiEditor.findSync(sync, opener.SmiEditor.video.fs);
+	}
 	$("#btnExport").on("click", function() {
 		const input = new Subtitle.SmiFile($("#input").val());
 		{	// 프레임 단위 싱크 역보정... 필요한가?
 			if (opener && opener.SmiEditor && opener.SmiEditor.sync && opener.SmiEditor.sync.frame) {
-				const FL = opener.SmiEditor.video.FL;
-				for (let i = 0; i < input.body.length; i++) {
-					const item = input.body[i];
-					item.start = Math.max(1, ((Math.round(item.start / FL) - 0.5) * FL));
+				if (opener.SmiEditor.video.fs.length) {
+					const fs = opener.SmiEditor.video.fs;
+					for (let i = 0; i < input.body.length; i++) {
+						const item = input.body[i];
+						item.start = optimizeSync(item.start) * 10;
+					}
+				} else {
+					const FL = opener.SmiEditor.video.FL;
+					for (let i = 0; i < input.body.length; i++) {
+						const item = input.body[i];
+						item.start = Math.max(1, ((Math.round(item.start / FL) - 0.5) * FL));
+					}
 				}
 			}
 		}

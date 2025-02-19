@@ -17,7 +17,7 @@ function refreshTime(now, fr) {
 			tabs[tab].holds[tabs[tab].hold].findSync();
 		}
 	}
-	if (fr) {
+	if (!SmiEditor.video.isAudio && fr) {
 		if (fr == 23975) {
 			fr = 23975.7; // 일부 영상 버그
 		}
@@ -476,7 +476,6 @@ function setDefault(target, dflt) {
 
 // C# 쪽에서 호출
 function init(jsonSetting) {
-	let setting = {};
 	try {
 		setting = JSON.parse(jsonSetting);
 		
@@ -593,7 +592,7 @@ function init(jsonSetting) {
 	const inputWeight = $("#inputWeight").bind("input propertychange", function() {
 		const weight = inputWeight.val();
 		if (isFinite(weight)) {
-			SmiEditor.sync.weight = Number(weight);
+			SmiEditor.sync.weight = setting.sync.weight = Number(weight);
 		} else {
 			alert("숫자를 입력하세요.");
 			const cursor = inputWeight[0].selectionEnd - 1;
@@ -604,7 +603,7 @@ function init(jsonSetting) {
 	const inputUnit = $("#inputUnit").on("input propertychange", function() {
 		const unit = inputUnit.val();
 		if (isFinite(unit)) {
-			SmiEditor.sync.unit = Number(unit);
+			SmiEditor.sync.unit = setting.sync.unit = Number(unit);
 		} else {
 			alert("숫자를 입력하세요.");
 			const cursor = inputUnit[0].selectionEnd - 1;
@@ -769,7 +768,7 @@ function setSetting(setting, initial=false) {
 			disabled = SmiEditor.canvas.toDataURL();
 		}
 		
-		$.ajax({url: "lib/SmiEditor.color.css?250207"
+		$.ajax({url: "lib/SmiEditor.color.css?250219"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -786,7 +785,7 @@ function setSetting(setting, initial=false) {
 		});
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250207"
+		$.ajax({url: "lib/SmiEditor.size.css?250219"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((20 * setting.size) + "px");
@@ -832,7 +831,7 @@ function setSetting(setting, initial=false) {
 				,	dataType: "text"
 				,	success: (parser) => {
 						eval(parser);
-						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250207"
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250219"
 							,	dataType: "text"
 							,	success: (style) => {
 									SmiEditor.highlightCss = style;
@@ -935,7 +934,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250207", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250219", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -965,7 +964,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250207";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250219";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1174,7 +1173,7 @@ function confirmLoadVideo(path) {
 	setTimeout(() => {
 		confirm("동영상 파일을 같이 열까요?\n" + path, function() {
 			binder.loadVideoFile(path);
-		});
+		});	
 	}, 1);
 }
 
@@ -1186,7 +1185,23 @@ function setVideo(path) {
 		SmiEditor.video.kfs = [];
 		$("#forFrameSync").addClass("disabled");
 		$("#checkTrustKeyframe").attr({ disabled: true });
-		binder.requestFrames(path);
+
+		// 동영상 파일이 열려있을 때만 프레임 분석 진행
+		const ext = path.toLowerCase();
+		if (ext.endsWith(".avi")
+		 || ext.endsWith(".mp4")
+		 || ext.endsWith(".mkv")
+		 || ext.endsWith(".ts")
+		 || ext.endsWith(".m2ts")
+		) {
+			SmiEditor.video.isAudio = false;
+			binder.requestFrames(path);
+		} else {
+			// 오디오 파일을 불러온 경우 ms 단위 싱크로 동작
+			SmiEditor.video.isAudio = true;
+			SmiEditor.video.FR = 1000000;
+			SmiEditor.video.FL = 1;
+		}
 	}
 }
 // C# 쪽에서 호출
@@ -1221,16 +1236,17 @@ function afterLoadFkfFile(buffer) {
 	const kfs = [];
 	
 	let offset = 8;
-	let view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
-	for (let i = 0; i < vfsLength; i++) {
-		vfs.push(view.getInt32(i * 4, true));
+	{	const view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
+		for (let i = 0; i < vfsLength; i++) {
+			vfs.push(view.getInt32(i * 4, true));
+		}
 	}
 	offset = offset + (vfsLength * 4);
-	view = new DataView(buffer.slice(offset, offset + (kfsLength * 4)));
-	for (let i = 0; i < kfsLength; i++) {
-		kfs.push(view.getInt32(i * 4, true));
+	{	const view = new DataView(buffer.slice(offset, offset + (kfsLength * 4)));
+		for (let i = 0; i < kfsLength; i++) {
+			kfs.push(view.getInt32(i * 4, true));
+		}
 	}
-	
 	SmiEditor.video.fs  = vfs;
 	SmiEditor.video.kfs = kfs;
 	

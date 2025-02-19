@@ -1473,6 +1473,8 @@ Subtitle.Smi.Status.prototype.setFont = function(attrs) {
 						const attr = attrs[i][1].split(",");
 						if (isFinite(attr[0])) shake.ms   = Number(attr[0]);
 						if (isFinite(attr[1])) shake.size = Number(attr[1]);
+						if (shake.ms   < 1) shake.ms   = 1;
+						if (shake.size < 1) shake.size = 1;
 					}
 					this.shake.push(shake);
 					break;
@@ -2081,14 +2083,12 @@ Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
 		} else {
 			if (startIndex >= 0) {
 				const endIndex = i;
-				if (smis[startIndex].syncType == smis[endIndex].syncType) {
-					const startSync = smis[startIndex].start;
-					const endSync = smis[endIndex].start;
-					const count = endIndex - startIndex;
+				const startSync = smis[startIndex].start;
+				const endSync   = smis[endIndex  ].start;
+				const count = endIndex - startIndex;
 
-					for (let j = 1; j < count; j++) {
-						smis[startIndex + j].start = Math.round(((count - j) * startSync + j * endSync) / count);
-					}
+				for (let j = 1; j < count; j++) {
+					smis[startIndex + j].start = Math.round(((count - j) * startSync + j * endSync) / count);
 				}
 				startIndex = -1;
 			}
@@ -2097,66 +2097,43 @@ Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
 
 	for (let i = 0; i < smis.length - 1; i++) {
 		const smi = smis[i];
-		/*
-		if (smi.syncType != smis[i + 1].syncType) {
-			// 전후 싱크 타입이 맞을 때만 안전함
-			continue;
-		}
-		*/
 		
 		const attrs = smi.toAttr();
 		
 		let hasFade = false;
-		let hasShake = false;
 		let hasTyping = false;
+		let shakeRange = null;
 		for (let j = 0; j < attrs.length; j++) {
 			if (attrs[j].fade != 0) {
 				hasFade = true;
 			}
-			if (attrs[j].shake) {
-				hasShake = true;
-			}
 			if (attrs[j].typing) {
 				hasTyping = true;
 			}
-		}
-		
-		if (hasShake) {
-			// 흔들기는 한 싱크에 하나만 가능
-			let attrIndex = -1;
-			let attr = null;
-			let isLastAttr = false;
-			for (let j = 0; j < attrs.length; j++) {
-				if (attrs[j].shake != null) {
-					attr = attrs[(attrIndex = j)];
-					let remains = "";
-					for (let k = j + 1; k < attrs.length; k++) {
-						remains += attrs[k].text;
-					}
-					isLastAttr = (remains.length == 0) || (remains[0] == "\n");
-					if (!isLastAttr) {
-						let length = 0;
-						for (let k = j + 1; k < attrs.length; k++) {
-							length += attrs[k].text.length;
-						}
-						isLastAttr = (length == 0);
-					}
-					break;
+			if (attrs[j].shake) {
+				// 흔들기는 연속된 그룹으로 처리
+				if (!shakeRange) {
+					shakeRange = [j, j+1];
+				} else if (shakeRange[1] == j) {
+					shakeRange[1]++;
 				}
 			}
-			if (attr == null) {
-				continue;
+		}
+		
+		if (shakeRange) {
+			// 흔들기는 한 싱크에 하나만 가능
+			const shake = attrs[shakeRange[0]].shake;
+			for (let j = shakeRange[0]; j < shakeRange[1]; j++) {
+				attrs[j].shake = null;
 			}
-			
-			const shake = attr.shake;
-			attr.shake = null;
-			attr.text = "{SL}" + attr.text + "{SR}";
+			attrs[shakeRange[0]  ].text = "{SL}" + attrs[shakeRange[0]].text;
+			attrs[shakeRange[1]-1].text = attrs[shakeRange[1]-1].text + "{SR}";
 			
 			const start = smi.start;
 			const end = smis[i + 1].start;
 			const count = Math.floor(((end - start) / shake.ms) + 0.5);
 			
-			let j = attrIndex - 1;
+			let j = shakeRange[0] - 1;
 			for (; j >= 0; j--) {
 				const text = attrs[j].text;
 				const brIndex = text.lastIndexOf("\n");
@@ -2168,7 +2145,7 @@ Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
 			if (j < 0) {
 				attrs[0].text = "{ST}" + attrs[0].text;
 			}
-			for (j = attrIndex + 1; j < attrs.length; j++) {
+			for (j = shakeRange[1]; j < attrs.length; j++) {
 				const text = attrs[j].text;
 				const brIndex = text.indexOf("\n");
 				if (brIndex >= 0) {
@@ -2328,7 +2305,18 @@ Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
 			}
 			
 			smis.splice(i, 1);
+			
+			// 10ms 미만 간격이면 팟플레이어에서 겹쳐서 나오므로 적절히 건너뛰기
+			const countLimit = Math.min(count, Math.floor((end - start) / 10));
+			let realJ = 0;
+			
 			for (let j = 0; j < count; j++) {
+				const sync = (start * (count - j) + end * (j)) / count;
+				const limitSync = (countLimit < count) ? ((start * (countLimit - realJ) + end * (realJ)) / countLimit) : sync;
+				if (sync < limitSync) {
+					continue;
+				}
+				
 				const textLines = types[j + typingStart].split("\n");
 				const text = textLines.join("<br>");
 				{
@@ -2367,7 +2355,8 @@ Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
 				tAttrs.push(attr);
 				tAttrs.push(...attrs.slice(attrIndex + 1));
 				
-				smis.splice(i + j, 0, new Subtitle.Smi((start * (count - j) + end * (j)) / count, (j == 0 ? smi.syncType : Subtitle.SyncType.inner)).fromAttr(tAttrs));
+				smis.splice(i + realJ, 0, new Subtitle.Smi(limitSync, (j == 0 ? smi.syncType : Subtitle.SyncType.inner)).fromAttr(tAttrs));
+				realJ++;
 			}
 			if (withComment) {
 				smis[i].text = "<!-- End=" + end + "\n" + smi.text.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[i].text;

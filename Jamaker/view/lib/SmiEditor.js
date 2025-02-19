@@ -28,7 +28,7 @@ window.SmiEditor = function(text) {
 	this.initialize = false;
 	this.area = $("<div class='hold'>");
 	this.area.append(this.colSync = $("<div class='col-sync'>"));
-	this.area.append($("<div class='col-sync' style='background: transparent;'>")); // 블록지정 방지 영역
+	this.area.append(this.colSyncCover = $("<div class='col-sync-cover'>")); // 블록지정 방지 영역
 	{	// 문법 하이라이트 기능 지원용
 		this.hArea = $("<div class='input highlight-textarea hljs" + (SmiEditor.useHighlight ? "" : " nonactive") + "'>");
 		this.hArea.append($("<div>").append(this.hview = $("<div>")));
@@ -303,7 +303,55 @@ SmiEditor.prototype.bindEvent = function() {
 	
 	this.input.on("mousedown", function(e) {
 		editor.history.log();
+		editor.colSyncCover.show();
 	});
+	this.area.on("mouseup", function(e) {
+		editor.colSyncCover.hide();
+	});
+	// 창 벗어난 상태에서 mouseup 해서 레이어가 안 사라진 경우, 클릭하면 제거
+	this.colSyncCover.on("click", function(e) {
+		editor.colSyncCover.hide();
+	});
+	
+	{
+		// 싱크 영역에서 휠 돌리는 경우
+		let targetScrollTop = 0;
+		let lastScrollStart = -1;
+		this.colSync.on("wheel", function(e) {
+			if (e.ctrlKey || e.shiftKey || e.altKey) {
+				return;
+			}
+			
+			if (lastScrollStart < 0) {
+				targetScrollTop = editor.input.scrollTop() + e.originalEvent.deltaY;
+			} else {
+				targetScrollTop += e.originalEvent.deltaY;
+			}
+			editor.input[0].scrollTo({ top: targetScrollTop, behavior: "smooth" });
+			
+			const start = lastScrollStart = new Date().getTime();
+			setTimeout(() =>  {
+				if (start == lastScrollStart) {
+					lastScrollStart = -1;
+				}
+			}, 200);
+		}).on("wheel", ".sync", function(e) {
+			if (!e.ctrlKey) {
+				return;
+			}
+			// Ctrl+휠이면 싱크 조절 동작
+			const $sync = $(this);
+			editor.moveSyncLine($sync.index(), (e.originalEvent.deltaY < 0));
+		}).attr({ title: "Ctrl+휠로 개별 싱크를 조절할 수 있습니다." });
+
+		// 싱크 조절 버튼 기능
+		this.colSync.on("click", ".sync", function(e) {
+			if ((e.clientX / editor.colSync.width()) >= 0.84) {
+				const $sync = $(this);
+				editor.moveSyncLine($sync.index(), (((e.clientY - $sync.offset().top) / $sync.height() * 4) < 1));
+			}
+		});
+	}
 };
 
 SmiEditor.selected = null;
@@ -353,6 +401,13 @@ SmiEditor.activateKeyEvent = function() {
 								e.preventDefault();
 							}
 						}
+					}
+					break;
+				}
+				case 36: { // Home
+					if (hasFocus) {
+						// 커서가 원래부터 맨 앞에 있는 경우엔 커서 이동이 없어서, 알아서 스크롤이 안 됨
+						editor.input.scrollLeft(0);
 					}
 					break;
 				}
@@ -1007,8 +1062,10 @@ SmiEditor.prototype.insertSync = function(forFrame) {
 				lineText = lineText.split(" >").join(">");
 				type = TYPE.BASIC;
 			}
-		} 
-		for (let i = 0; i < lineNo + SmiEditor.sync.update; i++) { // 싱크 찍은 다음 줄로 커서 이동
+		}
+		// 에디터 맨 아래에 싱크줄이 있는 예외가 있음
+		const limit = Math.min(this.lines.length, lineNo + SmiEditor.sync.update);
+		for (let i = 0; i < limit; i++) { // 싱크 찍은 다음 줄로 커서 이동
 			cursor += this.lines[i][LINE.TEXT].length + 1;
 		}
 		this.input.val(linesToText(this.lines.slice(0, lineNo).concat([[lineText, sync, type]], this.lines.slice(lineNo + 1))));
@@ -1466,6 +1523,8 @@ SmiEditor.prototype.updateSync = function(range=null) {
 					if (line.indexOf(" >") > 0) {
 						newLines[i][LINE.TYPE] = TYPE.FRAME;
 						typeCss = " frame";
+					} else {
+						typeCss = " normal";
 					}
 					if (SmiEditor.findSync(sync, SmiEditor.video.kfs, false)) {
 						typeCss += " keyframe";
@@ -1877,7 +1936,27 @@ SmiEditor.prototype.afterMoveSync = function(range) {
 		}, 100);
 	}, 1);
 }
-SmiEditor.prototype.fitSyncsToFrame = function() {
+SmiEditor.prototype.moveSyncLine = function(lineIndex, toForward) {
+	this.history.log();
+	
+	const line = this.lines[lineIndex];
+	const lines = this.text.split("\n");
+	const sync = line[LINE.SYNC] + ((toForward ? 1 : -1) * SmiEditor.sync.unit);
+	lines[lineIndex] = SmiEditor.makeSyncLine(sync, line[LINE.TYPE]);
+	
+	this.input.val(lines.join("\n"));
+	this.setCursor(lines.slice(0, lineIndex).join("\n").length + 1);
+	this.updateSync();
+	this.scrollToCursor();
+	this.input.focus();
+
+	this.history.log();
+}
+/**
+ * frameSyncOnly: 화면 싱크만 맞춰주기
+ * add: 과거 반프레임 보정치 안 넣었던 것들을 위해 추가
+ */
+SmiEditor.prototype.fitSyncsToFrame = function(frameSyncOnly=false, add=0) {
 	if (!SmiEditor.video.fs.length) {
 		//*
 		return;
@@ -1903,8 +1982,9 @@ SmiEditor.prototype.fitSyncsToFrame = function() {
 		}
 		//*/
 	}
+	const lines = JSON.parse(JSON.stringify(this.lines.slice(0)));
 	const cursor = this.getCursor();
-	const range = [0, this.lines.length];
+	const range = [0, lines.length];
 	const cursorLine = this.text.substring(0, cursor[0]).split("\n").length - 1;
 	if (cursor[0] < cursor[1]) {
 		range[0] = cursorLine;
@@ -1913,9 +1993,9 @@ SmiEditor.prototype.fitSyncsToFrame = function() {
 	
 	const colSyncs = this.colSync.children();
 	for (let i = range[0]; i < range[1]; i++) {
-		const line = this.lines[i];
-		if (line[LINE.TYPE] == TYPE.BASIC || line[LINE.TYPE] == TYPE.FRAME) {
-			const sync = SmiEditor.findSync(line[LINE.SYNC], SmiEditor.video.fs);
+		const line = lines[i];
+		if ((line[LINE.TYPE] == TYPE.FRAME) || (!frameSyncOnly && (line[LINE.TYPE] == TYPE.BASIC))) {
+			const sync = SmiEditor.findSync(line[LINE.SYNC] + add, SmiEditor.video.fs);
 			if (sync != null) {
 				line[LINE.TEXT] = SmiEditor.makeSyncLine((line[LINE.SYNC] = sync), line[LINE.TYPE]);
 
@@ -1934,12 +2014,45 @@ SmiEditor.prototype.fitSyncsToFrame = function() {
 			}
 		}
 	}
-	// TODO: 중간 싱크 재계산도 여기서 해줘야 하나?
-	// 그냥 저장 자동치환에 맡기는 게 나은가? 사용 빈도 자체가 드문데
-	this.input.val(this.text = linesToText(this.lines));
-	this.setCursor(cursorLine == 0 ? 0 : (this.text.split("\n").slice(0, cursorLine).join("\n").length + 1));
-	this.updateHighlight();
-	this.afterChangeSaved(this.isSaved());
+	{	// 중간 싱크 재계산
+		let lastIndex = -1;
+		let startIndex = -1;
+		let count = 0;
+		for (let i = 0; i < lines.length; i++) {
+			if (lines[i][LINE.TYPE]) { // 텍스트 건너뛰고 싱크 라인만 따짐
+				if (lines[i][LINE.TYPE] == TYPE.RANGE) {
+					if (startIndex < 0) {
+						startIndex = lastIndex;
+						count = 2;
+					} else {
+						count++;
+					}
+				} else {
+					if (startIndex >= 0) {
+						const endIndex = i;
+						const startSync = lines[startIndex][LINE.SYNC];
+						const endSync   = lines[endIndex  ][LINE.SYNC];
+						
+						let ratio = 0;
+						for (let j = startIndex + 1; j < endIndex; j++) {
+							if (lines[j][LINE.TYPE] == TYPE.RANGE) {
+								ratio++;
+								const line = lines[j];
+								const sync = Math.round(((count - ratio) * startSync + ratio * endSync) / count);
+								line[LINE.TEXT] = SmiEditor.makeSyncLine((line[LINE.SYNC] = sync), TYPE.RANGE);
+							}
+						}
+						startIndex = -1;
+					}
+					lastIndex = i;
+				}
+			}
+		}
+	}
+	const text = linesToText(lines);
+	this.input.val(text);
+	this.setCursor(cursorLine == 0 ? 0 : (text.split("\n").slice(0, cursorLine).join("\n").length + 1));
+	this.updateSync(range);
 }
 SmiEditor.prototype.refreshKeyframe = function() {
 	const colSyncs = this.colSync.children();
@@ -2126,7 +2239,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250207", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?250219", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2285,7 +2398,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250207", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?250219", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2335,7 +2448,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250207";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250219";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2348,7 +2461,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250207", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?250219", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
