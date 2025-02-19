@@ -1,4 +1,24 @@
-[ { "version": "2025.02.07"
+[ { "version": "2025.02.19"
+  , "comment":
+    [ "개별 싱크 조절 버튼 및 Ctrl+휠 기능 등 추가"
+    , "몇몇 마이너한 버그 수정"
+    ]
+  , "files":
+    [ "view/addin/SyncManager.html"
+    , "view/addon/ToAss.html"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.color.css"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SmiEditor.size.css"
+    , "view/lib/SubtitleObject.js"
+    , "view/lib/webview.js"
+    , "view/viewer.html"
+    ]
+  }
+, { "version": "2025.02.07"
   , "comment":
     [ "UI 배율 설정 추가"
     , "홀드 결합 로직 개선"
