@@ -304,6 +304,9 @@ SmiEditor.prototype.bindEvent = function() {
 	this.input.on("mousedown", function(e) {
 		editor.history.log();
 		editor.colSyncCover.show();
+	}).on("keyup", function(e) {
+		// 찾기/바꾸기 창이 있었을 경우 재활성화
+		SmiEditor.Finder.focus();
 	});
 	this.area.on("mouseup", function(e) {
 		editor.colSyncCover.hide();
@@ -1709,7 +1712,7 @@ SmiEditor.prototype.updateHighlight = function() {
 		setTimeout(() => {
 			if (self.needToUpdateHighlight) {
 				// 렌더링 대기열 있으면 재실행
-				self.updateSync();
+				self.updateHighlight();
 			}
 		}, 1);
 	};
@@ -1726,7 +1729,7 @@ SmiEditor.highlightText = (text, state=null) => {
 SmiEditor.refreshHighlight = () => {
 	let $style = $("#styleHighlight");
 	if (!$style.length) {
-		$("head").append($style = $("<style id='#styleHighlight'>"));
+		$("head").append($style = $("<style id='styleHighlight'>"));
 	}
 	$style.html(SmiEditor.highlightCss);
 }
@@ -1958,29 +1961,7 @@ SmiEditor.prototype.moveSyncLine = function(lineIndex, toForward) {
  */
 SmiEditor.prototype.fitSyncsToFrame = function(frameSyncOnly=false, add=0) {
 	if (!SmiEditor.video.fs.length) {
-		//*
 		return;
-		/*/
-		// 테스트용 코드
-		for (let s = 0; s < 2000000; s += 50) {
-			SmiEditor.video.fs.push(s);
-			if (s % 1000 == 0) {
-				SmiEditor.video.kfs.push(s);
-			}
-		}
-		
-		// 키프레임 신뢰 기능 활성화
-		$("#forFrameSync").removeClass("disabled");
-		$("#checkTrustKeyframe").attr({ disabled: false });
-		Progress.set("#forFrameSync", 0);
-		
-		for (let i = 0; i < tabs.length; i++) {
-			const holds = tabs[i].holds;
-			for (let j = 0; j < holds.length; j++) {
-				holds[j].refreshKeyframe();
-			}
-		}
-		//*/
 	}
 	const lines = JSON.parse(JSON.stringify(this.lines.slice(0)));
 	const cursor = this.getCursor();
@@ -2239,7 +2220,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250219", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?250307", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2282,9 +2263,7 @@ SmiEditor.Finder = {
 			this.finding.upperFind = this.finding.find.toUpperCase();
 		}
 	,	afterFind: function() {
-			const tab = SmiEditor.selected;
-			tab.updateSync();
-			tab.scrollToCursor();
+			SmiEditor.selected.scrollToCursor();
 			this.last.find    = this.finding.find;
 			this.last.replace = this.finding.replace;
 			this.last.withCase= this.finding.withCase;
@@ -2344,9 +2323,12 @@ SmiEditor.Finder = {
 			
 			// 찾은 상태로 선택돼 있었으면 바꾸기
 			if (selection = this.doReplace()) {
+				SmiEditor.selected.history.log();
 				this.finding.input.value = this.finding.text;
 				this.finding.input.setSelectionRange(selection[0], selection[1]);
 				this.afterFind();
+				SmiEditor.selected.updateSync();
+				SmiEditor.selected.history.log();
 			}
 			
 			// 다음 거 찾기
@@ -2380,25 +2362,45 @@ SmiEditor.Finder = {
 			}
 			
 			if (count) {
+				SmiEditor.selected.history.log();
 				this.finding.input.value = this.finding.text;
 				this.finding.input.setSelectionRange(last[0], last[1]);
 				this.afterFind();
+				SmiEditor.selected.updateSync();
+				SmiEditor.selected.history.log();
 				this.sendMsgAfterRun(count + "개 바꿈");
 			} else {
 				this.sendMsgAfterRun("찾을 수 없습니다.");
 			}
 		}
 	,	sendMsgAfterRun: function(msg) {
+			// 딜레이 안 주면 화면 갱신 안 된 상태로 뜰 수 있음
 			setTimeout(() => {
 				binder.sendMsg("finder", msg);
 			}, 1);
+		}
+
+		// 찾기/바꾸기 창 항상 위에
+	,	lastFocus: 0
+	,	focus: function(delay=1000) {
+			if (!this.window) return;
+			
+			const now = this.lastFocus = new Date().getTime();
+			setTimeout(() => {
+				// 다른 입력이 있었으면 넘김
+				if (now != this.lastFocus) return;
+				
+				binder.focus("finder"); // C#
+				SmiEditor.Finder.window.focus(); // 웹버전
+				SmiEditor.Finder.lastFocus = 0;
+			}, delay);
 		}
 };
 
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250219", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?250307", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2448,7 +2450,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250219";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250307";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2461,7 +2463,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250219", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?250307", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -2512,20 +2514,22 @@ function extSubmit(method, url, values, withoutTag=true) {
 				const lines = text.text.split("\n");
 				const lineNo = text.text.substring(0, text.selection[0]).split("\n").length - 1;
 
-				// 현재 싱크 맨 윗줄 찾기
+				// 현재 문단 or 싱크 맨 윗줄 찾기
 				let syncLineNo = lineNo;
 				while (syncLineNo >= 0) {
-					if (lines[syncLineNo].substring(0, 6).toUpperCase() == "<SYNC ") {
+					const line = lines[syncLineNo];
+					if (!line || line.substring(0, 6).toUpperCase() == "<SYNC ") {
 						break;
 					}
 					syncLineNo--;
 				}
 
 				if (syncLineNo >= 0) {
-					// 다음 싱크 라인 찾기
+					// 다음 문단 or 싱크 라인 찾기
 					let nextSyncLineNo = syncLineNo + 1;
 					while (nextSyncLineNo < lines.length) {
-						if (lines[nextSyncLineNo].substring(0, 6).toUpperCase() == "<SYNC ") {
+						const line = lines[nextSyncLineNo];
+						if (!line || line.substring(0, 6).toUpperCase() == "<SYNC ") {
 							break;
 						}
 						nextSyncLineNo++;
@@ -2652,16 +2656,8 @@ SmiEditor.fillSync = (text) => {
 $(() => {
 	SmiEditor.refreshHighlight();
 	
-	// 찾기/바꾸기 창 항상 위에
-	let last = 0;
-	window.addEventListener("focus", () => {
-		if (SmiEditor.Finder.window) {
-			now = new Date().getTime();
-			if ((now - last) < 100) return; // 중복 실행 방지
-			last = now;
-			setTimeout(() => {
-				binder.focus("finder");
-			}, 100); // 딜레이 안 주면 순서 꼬임
-		}
+	$(document).on("mouseup", function(e) {
+		// 찾기/바꾸기 창이 있었을 경우 재활성화
+		SmiEditor.Finder.focus();
 	});
 });

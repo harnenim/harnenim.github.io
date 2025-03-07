@@ -59,6 +59,13 @@ input,
 .tab.not-saved {
 	background: [notSaved];
 }
+.tab.not-saved.tmp-saved {
+	background: [notSaved]aa;
+	transition: 1s;
+}
+.hold-selector > .selector.not-saved {
+	border-color: [notSaved];
+}
 
 /* 스크롤바(배경색 기반)... 맘에 안 드는데... * /
 ::-webkit-scrollbar {background: [background]; }
@@ -81,6 +88,3 @@ input,
 .col-sync .sync.normal:after, .col-sync .sync.frame:after {
     text-decoration-color: [background];
 }
-
-/* 어두운 테마 + 문법 하이라이트 밝은 테마일 때 커서 보이도록 */
-.hold textarea { caret-color: #000; }

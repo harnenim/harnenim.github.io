@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250219" />
-<script src="view/lib/jquery-3.2.1.min.js?250219"></script>
-<script src="bridge/WinAPI.js?250219"></script>
-<script src="bridge/Binder.js?250219"></script>
-<script src="bridge/Bridge.js?250219"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250307" />
+<script src="view/lib/jquery-3.2.1.min.js?250307"></script>
+<script src="bridge/WinAPI.js?250307"></script>
+<script src="bridge/Binder.js?250307"></script>
+<script src="bridge/Bridge.js?250307"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -144,7 +144,7 @@ const window_open = function(url, name, options, opener) {
 		this.initializeComponent();
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/editor.html?250219";
+			editor.mainView.src = "view/editor.html?250307";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -720,7 +720,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("bridge/tempDir.html?250219", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("bridge/tempDir.html?250307", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

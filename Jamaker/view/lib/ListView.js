@@ -164,8 +164,6 @@
 	});
 }
 ListView.prototype.add = function(value, checkDuplication) {
-	if (this.lock) return;
-	
 	if (checkDuplication) {
 		for (let i = 0; i < this.list.length; i++) {
 			if (this.list[i].value == value) {
@@ -187,8 +185,6 @@ ListView.prototype.add = function(value, checkDuplication) {
 	}, 1);
 }
 ListView.prototype.remove = function() {
-	if (this.lock) return;
-	
 	const list = [];
 	let cursor = this.cursor;
 	for (let i = 0; i < this.list.length; i++) {
