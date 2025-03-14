@@ -1,4 +1,31 @@
-[ { "version": "2025.03.07"
+[ { "version": "2025.03.15"
+  , "comment":
+    [ "UI 배율 조절 관련 버그 수정"
+    , "홀드 결합 로직 및 UI 보완"
+    , "서브 프로그램 홀드 결합 폰트 크기 오류 수정"
+    , "문법 하이라이트 다크테마 보완 (재설정 필요)"
+    , "문법 하이라이트 성능 개선 등"
+    ]
+  , "files":
+    [ "view/addon/Combine.html"
+    , "view/lib/highlight/list.txt"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/ListView.js"
+    , "view/lib/popup.css"
+    , "view/lib/setting.js.css"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.size.css"
+    , "view/lib/SmiEditor.color.css"
+    , "view/lib/webview.css"
+    , "view/AutoSyncShift.html"
+    , "view/setting.html"
+    , "Jamaker.exe"
+    , "Jamaker.pdb"
+    ]
+  }
+, { "version": "2025.03.07"
   , "comment":
     [ "메인홀드 비웠을 때 저장 오류 수정"
     , "탭 관련 기능 및 버그 수정"
