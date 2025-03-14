@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250307" />
-<script src="view/lib/jquery-3.2.1.min.js?250307"></script>
-<script src="bridge/WinAPI.js?250307"></script>
-<script src="bridge/Binder.js?250307"></script>
-<script src="bridge/Bridge.js?250307"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250315" />
+<script src="view/lib/jquery-3.2.1.min.js?250315"></script>
+<script src="bridge/WinAPI.js?250315"></script>
+<script src="bridge/Binder.js?250315"></script>
+<script src="bridge/Bridge.js?250315"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -31,6 +31,9 @@ Binder.prototype.focusToMenu = function(keyCode) {
 	//this._.focusToMenu(keyCode);
 }
 
+Binder.prototype.repairSetting = function() {
+	this._.repairSetting();
+}
 Binder.prototype.saveSetting = function(setting) {
 	this._.saveSetting(setting);
 }
@@ -103,7 +106,7 @@ Binder.prototype.moveTo  = function(time) { this._.player.moveTo(time); }
 // 부가기능
 Binder.prototype.runColorPicker = function() { alert("C#에서 동작합니다."); }
 </script>
-<script src="bridge/WebForm.js?250211"></script>
+<script src="bridge/WebForm.js?250315"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -144,7 +147,7 @@ const window_open = function(url, name, options, opener) {
 		this.initializeComponent();
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/editor.html?250307";
+			editor.mainView.src = "view/editor.html?250315";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -399,6 +402,8 @@ window.MB = 9;
 			//this.saveSettingAfter = 300; // 창 이동 후 3초간 변화 없으면 설정 저장
 			this.saveSettingAfter = 60; // 리프레시 주기가 C#에선 10ms였는데 여기선 50ms임
 			
+			this.script("refreshPaddingBottom");
+			
 		} else if (this.saveSettingAfter > 0) {
 			if (--this.saveSettingAfter == 0) {
 				WinAPI.GetWindowRect(this.getHwnd("editor"), this.offset);
@@ -495,8 +500,8 @@ window.MB = 9;
 
 {	// 설정
 	editor.loadSetting = function(afterSuccess) {
-		editor.strSettingJson = localStorage.getItem("setting");
-		editor.strBridgeList = playerDlls;
+		this.strSettingJson = localStorage.getItem("setting");
+		this.strBridgeList = playerDlls;
 		$.ajax({url: "view/lib/highlight/list.txt"
 			,	dataType: "text"
 			,	success: (highlights) => {
@@ -506,6 +511,19 @@ window.MB = 9;
 					}
 				}
 		});
+	}
+	editor.repairSetting = function() {
+		// 백지 상태에서 시작
+		this.strSettingJson = "";
+		
+		// TODO: 설정 파일 존재하면 삭제
+		
+		// 백업 파일 존재하는지 확인
+		if (false) {
+			// 존재하면 가져오기
+			this.strSettingJson = localStorage.getItem("setting.bak");
+		}
+		this.script("init", [this.strSettingJson, false]);
 	}
 	editor.saveSetting = function(setting) {
 		localStorage.setItem("setting", (this.strSettingJson = setting));
@@ -596,7 +614,7 @@ window.MB = 9;
 		if (fb) {
 			const file = await fb.getFile();
 			const stream = await fb.createWritable();
-			await stream.write('\ufeff' + this.strSettingJson);
+			await stream.write(this.strSettingJson);
 			await stream.close();
 		}
 	};
@@ -720,7 +738,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("bridge/tempDir.html?250307", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("bridge/tempDir.html?250315", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

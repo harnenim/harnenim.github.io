@@ -49,7 +49,7 @@ window.Combine = {
 	}
 	function getChecker() {
 		if (!Combine.checker) {
-			$("body").append(Combine.checker = $("<span>"));
+			$("body").append(Combine.checker = $("<span class='width-checker'>"));
 		}
 		Combine.checker.attr({ style: Combine.css }).css({
 				whiteSpace: "pre"
@@ -734,42 +734,64 @@ if (Subtitle && Subtitle.SmiFile) {
 					const lastLine = main.body[i - 1];
 					if (lastLine.start <= hold.start && (lastLine.text.split("&nbsp;").join("").trim().length == 0)) {
 						hold.afterMain = true;
-						let hasImport = false;
-						for (let j = 0; j < imports.length; j++) {
-							if (imports[j][0] == i) {
-								hasImport = true;
-							}
-						}
-						if (!hasImport) {
-							// 내포 홀드 결합 대상 제외
-							imports.push([i, hold, holdBody]);
-							result[hold.resultIndex] = "";
-							hold.imported = true;
-						}
-					}
-				}
-				if (!hold.imported) {
-					for (let i = 0; i < main.body.length; i++) {
-						const line = main.body[i];
-						if (hold.start < line.start) {
-							if (hold.end <= line.start) {
-								if ((i == 0) || (main.body[i - 1].text.split("&nbsp;").join("").trim().length == 0)) {
-									let hasImport = false;
-									for (let j = 0; j < imports.length; j++) {
-										if (imports[j][0] == i) {
-											hasImport = true;
-										}
-									}
-									if (!hasImport) {
-										// 내포 홀드 결합 대상 제외
-										imports.push([i, hold, holdBody]);
-										result[hold.resultIndex] = "";
-										hold.imported = true;
-									}
+						if (withCombine) {
+							let hasImport = false;
+							for (let j = 0; j < imports.length; j++) {
+								if (imports[j][0] == i) {
+									hasImport = true;
 								}
 							}
+							if (!hasImport) {
+								// 내포 홀드는 결합 대상에서 제외
+								imports.push([i, hold, holdBody]);
+								result[hold.resultIndex] = "";
+								hold.imported = true;
+							}
+						}
+					}
+					if (withCombine && !hold.imported) {
+						for (let i = 0; i < main.body.length; i++) {
+							const line = main.body[i];
+							if (hold.start < line.start) {
+								if (hold.end <= line.start) {
+									if ((i == 0) || (main.body[i - 1].text.split("&nbsp;").join("").trim().length == 0)) {
+										let hasImport = false;
+										for (let j = 0; j < imports.length; j++) {
+											const imported = imports[j];
+											if (imported[0] == i) {
+												// 기존 내포 홀드와 겹치면 내포 홀드 불가능
+												if (hold.start < imported[1].end) {
+													hasImport = true;
+													break;
+												}
+											}
+										}
+										if (!hasImport) {
+											// 내포 홀드는 결합 대상에서 제외
+											imports.push([i, hold, holdBody]);
+											result[hold.resultIndex] = "";
+											hold.imported = true;
+										}
+									}
+								}
+								break;
+							}
+						}
+					}
+				} else if (withCombine) {
+					// 메인 홀드 없으면 서로 겹치지만 않으면 내포 홀드 처리
+					let hasImport = false;
+					for (let j = 0; j < imports.length; j++) {
+						if (hold.start < imports[j][1].end) {
+							hasImport = true;
 							break;
 						}
+					}
+					if (!hasImport) {
+						// 내포 홀드는 결합 대상에서 제외
+						imports.push([0, hold, holdBody]);
+						result[hold.resultIndex] = "";
+						hold.imported = true;
 					}
 				}
 			}

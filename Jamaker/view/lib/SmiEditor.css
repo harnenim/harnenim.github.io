@@ -11,6 +11,7 @@
 html, body {
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 }
 body:not(.drag-file) #cover {
 	display: none;
@@ -41,6 +42,7 @@ button {
 
 #body > div:first-child {
 	padding: 3px 2px;
+	white-space: pre;
 }
 
 #tabSelector {
@@ -114,9 +116,17 @@ button {
 	vertical-align: middle;
 	white-space: nowrap;
 }
+.hold-selector > .selector .area-btn-hold {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	max-width: 60%;
+}
 .hold-selector > .selector button {
 	position: absolute;
 	padding: 0;
+	width: 50%;
 }
 .hold-selector > .selector .btn-hold-remove {
 	top: 0;
@@ -126,11 +136,13 @@ button {
 }
 .hold-selector > .selector .btn-hold-upper {
 	top: 0;
+	right: 50%;
 	height: 50%;
 	border-width: 0 0 1px 1px;
 }
 .hold-selector > .selector .btn-hold-lower {
 	bottom: 0;
+	right: 50%;
 	height: 50%;
 	border-width: 1px 0 0 1px;
 }
@@ -211,6 +223,10 @@ button {
 }
 .highlight-textarea > div * {
 	font-weight: normal; /* 굵게 하면 글자폭이 달라짐 */
+}
+.highlight-textarea > div > div > span {
+	display: block;
+	position: absolute;
 }
 .highlight-textarea > div span.enter {
 	opacity: 0.5;

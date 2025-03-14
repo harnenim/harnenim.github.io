@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?250307"></script>
-<script src="lib/popup.js?250307"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?250307" />
+<script src="lib/jquery-3.2.1.min.js?250315"></script>
+<script src="lib/popup.js?250315"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?250315" />
 <script>
 windowName = "setting";
 
@@ -198,6 +198,9 @@ $(() => {
 			opener.setSetting(setting);
 			opener.saveSetting();
 			opener.moveWindowsToSetting();
+			setTimeout(() => { // 딜레이 줘야 정상적으로 계산됨
+				opener.refreshPaddingBottom();
+			}, 10);
 			refreshFuncs["window"](setting);
 		};
 		
@@ -696,7 +699,8 @@ $(() => {
 				if (item.length) {
 					const split = item.split(":");
 					const value = split[0].trim();
-					const name = (split.length > 1) ? split[1].trim() : value;
+					let name = (split.length > 1) ? split[1].trim() : value;
+					if (name.indexOf("?")) name = name.split("?")[0];
 					selectStyle.append($("<option>").val(value).text(name));
 				}
 			}
@@ -1419,7 +1423,7 @@ fieldset ol button,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?250307")</h4>
+					<h4>openAddon("~~.html?250315")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1488,9 +1492,6 @@ fieldset ol button,
 				<label><input type="checkbox" name="highlight_color" /> <span>색상 미리보기</span></label>
 			</span>
 		</span>
-		<br />
-		※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.
-		<br />
 		<br />
 		<label>UI 배율
 			<select name="size">

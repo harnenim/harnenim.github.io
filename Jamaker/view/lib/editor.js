@@ -63,7 +63,8 @@ window.Tab = function(text, path) {
 				return;
 			}
 			hold.selector.find(".hold-name > span").text(tab.holds.indexOf(hold) + "." + (hold.name = input));
-			tab.onChangeSaved();
+			hold.selector.attr({ title: hold.name });
+			hold.afterChangeSaved(hold.isSaved());
 		}, hold.name);
 		
 	}).on("click", ".btn-hold-remove", function(e) {
@@ -129,6 +130,7 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	this.holds.push(hold);
 	this.holdSelector.append(hold.selector = $("<div class='selector'>").data({ hold: hold }));
 	hold.selector.append($("<div class='hold-name'>").append($("<span>").text(hold.name = hold.savedName = info.name)));
+	hold.selector.attr({ title: hold.name });
 	hold.owner = this;
 	hold.pos = hold.savedPos = info.pos;
 	hold.tempSavedText = info.text;
@@ -136,9 +138,11 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	if (isMain) {
 		hold.selector.addClass("selected");
 	} else {
-		hold.selector.append($("<button type='button' class='btn-hold-remove'>"));
-		hold.selector.append($("<button type='button' class='btn-hold-upper'>"));
-		hold.selector.append($("<button type='button' class='btn-hold-lower'>"));
+		const btnArea = $("<div class='area-btn-hold'>");
+		hold.selector.append(btnArea);
+		btnArea.append($("<button type='button' class='btn-hold-remove'>"));
+		btnArea.append($("<button type='button' class='btn-hold-upper'>"));
+		btnArea.append($("<button type='button' class='btn-hold-lower'>"));
 		hold.area.hide();
 	}
 	this.holdArea.append(hold.area);
@@ -414,23 +418,6 @@ SmiEditor.prototype.onChangeSaved = function(saved) {
 	if (!currentTab) return;
 	currentTab.onChangeSaved(this);
 };
-SmiEditor.prototype.updateTimeRange = function() {
-	let start = 999999998;
-	let end = 0;
-	for (let i = 0; i < this.lines.length; i++) {
-		const line = this.lines[i];
-		if (line[LINE.TYPE]) {
-			start = Math.min(start, line[LINE.SYNC]);
-			end   = Math.max(end  , line[LINE.SYNC]);
-		}
-	}
-	this.start = start;
-	if (end) {
-		this.end   = (start == end) ? 999999999 : end;
-	} else {
-		this.end = 999999999;
-	}
-}
 
 function deepCopyObj(obj) {
 	if (obj && typeof obj == "object") {
@@ -817,7 +804,7 @@ function setSetting(setting, initial=false) {
 			disabled = SmiEditor.canvas.toDataURL();
 		}
 		*/
-		$.ajax({url: "lib/SmiEditor.color.css?250307"
+		$.ajax({url: "lib/SmiEditor.color.css?250315"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -834,10 +821,10 @@ function setSetting(setting, initial=false) {
 		});
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250307"
+		$.ajax({url: "lib/SmiEditor.size.css?250315"
 			,	dataType: "text"
 				,	success: (preset) => {
-					preset = preset.split("20px").join((20 * setting.size) + "px");
+					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
 					
 					let $style = $("#styleSize");
 					if (!$style.length) {
@@ -880,12 +867,24 @@ function setSetting(setting, initial=false) {
 				,	dataType: "text"
 				,	success: (parser) => {
 						eval(parser);
-						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css?250307"
+						
+						let name = setting.highlight.style;
+						let isDark = false;
+						if (name.endsWith("-dark") || (name.indexOf("-dark-") > 0)) {
+							isDark = true;
+						} else if (name.endsWith("?dark")) {
+							isDark = true;
+							name = name.split("?")[0];
+						}
+						
+						$.ajax({url: "lib/highlight/styles/" + name + ".css?250315"
 							,	dataType: "text"
 							,	success: (style) => {
-									// 문법 하이라이트 밝은 테마일 때 커서 검은색 되도록 기본값 추가
-									// 어두운 테마는 css 파일에서 가져온 값으로 덮어써짐
-									SmiEditor.highlightCss = ".hold textarea { caret-color: #000; }\n" + style;
+									// 문법 하이라이트 테마에 따른 커서 색상 추가
+									SmiEditor.highlightCss
+										= ".hljs { color: unset; }\n"
+										+ ".hold textarea { caret-color: " + (isDark ? "#fff" : "#000") + "; }\n"
+										+ style;
 									afterLoadHighlight();
 								}
 						});
@@ -986,7 +985,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250307", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250315", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -999,9 +998,6 @@ function openSetting() {
 function saveSetting() {
 	if (window.binder) {
 		binder.saveSetting(stringify(setting));
-		
-		// 창 위치/크기 조절하고 일정 시간 지나면 C#에서 여기가 호출됨
-		refreshPaddingBottom();
 	}
 }
 function refreshPaddingBottom() {
@@ -1013,10 +1009,13 @@ function refreshPaddingBottom() {
 		$("head").append($style = $("<style id='stylePaddingBottom'>"));
 	}
 	$style.html(append);
+	if (SmiEditor.selected) {
+		SmiEditor.selected.input.scroll();
+	}
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250307";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250315";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
