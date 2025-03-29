@@ -3,11 +3,6 @@ window.Combine = {
 ,	defaultSize: 18 // TODO: 설정에서 바뀌도록... 하려면 서브 프로그램에서도 설정을 불러와야 하는데...
 };
 {
-	const LINE = {
-			TEXT: 0
-		,	SYNC: 1
-		,	TYPE: 2
-	};
 	const TYPE = {
 			TEXT: null
 		,	BASIC: 1
@@ -27,6 +22,100 @@ window.Combine = {
 	const LOWER = 5;
 	
 	const LOG = false;
+	
+	if (!window.Line) {
+		window.Line = function(text="", sync=0, type=TYPE.TEXT) {
+			this.TEXT = text;
+			this.SYNC = sync;
+			this.TYPE = type;
+			
+			if (sync == 0 && type == null) {
+				let j = 0;
+				let k = 0;
+				
+				while ((k = text.indexOf("<", j)) >= 0) {
+					// 태그 열기
+					j = k + 1;
+
+					// 태그 닫힌 곳까지 탐색
+					const closeIndex = text.indexOf(">", j);
+					if (j < closeIndex) {
+						// 태그명 찾기
+						for (k = j; k < closeIndex; k++) {
+							const c = text[k];
+							if (c == ' ' || c == '\t' || c == '"' || c == "'" || c == '\n') {
+								break;
+							}
+						}
+						const tagName = text.substring(j, k);
+						j = k;
+
+						if (tagName.toUpperCase() == "SYNC") {
+							while (j < closeIndex) {
+								// 속성 찾기
+								for (; j < closeIndex; j++) {
+									const c = text[j];
+									if (('0'<=c&&c<='9') || ('a'<=c&&c<='z') || ('A'<=c&&c<='Z')) {
+										break;
+									}
+								}
+								for (k = j; k < closeIndex; k++) {
+									const c = text[k];
+									if ((c<'0'||'9'<c) && (c<'a'||'z'<c) && (c<'A'||'Z'<c)) {
+										break;
+									}
+								}
+								const attrName = text.substring(j, k);
+								j = k;
+								
+								// 속성 값 찾기
+								if (text[j] == "=") {
+									j++;
+									
+									let q = text[j];
+									if (q == "'" || q == '"') { // 따옴표로 묶인 경우
+										k = text.indexOf(q, j + 1);
+										k = (0 <= k && k < closeIndex) ? k : closeIndex;
+									} else {
+										q = "";
+										k = text.indexOf(" ");
+										k = (0 <= k && k < closeIndex) ? k : closeIndex;
+										k = text.indexOf("\t");
+										k = (0 <= k && k < closeIndex) ? k : closeIndex;
+									}
+									const value = text.substring(j + q.length, k);
+									
+									if (q.length && k < closeIndex) { // 닫는 따옴표가 있을 경우
+										j += q.length + value.length + q.length;
+									} else {
+										j += q.length + value.length;
+									}
+									
+									if (attrName.toUpperCase() == "START" && isFinite(value)) {
+										this.SYNC = Number(value);
+									}
+								}
+							}
+						} else {
+							// 싱크 태그 아니면 그냥 제낌
+							j = closeIndex;
+						}
+						
+						// 태그 닫기
+						j++;
+					}
+				}
+			}
+			if (this.SYNC && type == null) {
+				this.TYPE = TYPE.BASIC;
+				if (text.indexOf("\t>") > 0) {
+					this.TYPE = TYPE.RANGE;
+				} else if (text.indexOf(" >") > 0) {
+					this.TYPE = TYPE.FRAME;
+				}
+			}
+		}
+	}
 	
 	function toText(html, checker) {
 		// RUBY태그 없애고 계산
@@ -94,119 +183,30 @@ window.Combine = {
 		// SMI는 태그 꺽쇠 내에서 줄바꿈을 하는 경우는 일반적으로 없다고 가정
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-			let parsed = [line, null, null];
+			let parsed = new Line(line);
 			parseds.push(parsed);
-			
-			let j = 0;
-			let k = 0;
-			let hasSync = false;
-			let sync = 0;
-			
-			while ((k = line.indexOf("<", j)) >= 0) {
-				// 태그 열기
-				j = k + 1;
 
-				// 태그 닫힌 곳까지 탐색
-				const closePos = line.indexOf(">", j);
-				if (j < closePos) {
-					// 태그명 찾기
-					for (k = j; k < closePos; k++) {
-						const c = line[k];
-						if (c == ' ' || c == '\t' || c == '"' || c == "'" || c == '\n') {
-							break;
-						}
-					}
-					const tagName = line.substring(j, k);
-					j = k;
-					
-					hasSync = (tagName.toUpperCase() == "SYNC");
-
-					if (hasSync) {
-						while (j < closePos) {
-							// 속성 찾기
-							for (; j < closePos; j++) {
-								const c = line[j];
-								if (('0'<=c&&c<='9') || ('a'<=c&&c<='z') || ('A'<=c&&c<='Z')) {
-									break;
-								}
-							}
-							for (k = j; k < closePos; k++) {
-								const c = line[k];
-								if ((c<'0'||'9'<c) && (c<'a'||'z'<c) && (c<'A'||'Z'<c)) {
-									break;
-								}
-							}
-							const attrName = line.substring(j, k);
-							j = k;
-							
-							// 속성 값 찾기
-							if (line[j] == "=") {
-								j++;
-								
-								let q = line[j];
-								if (q == "'" || q == '"') { // 따옴표로 묶인 경우
-									k = line.indexOf(q, j + 1);
-									k = (0 <= k && k < closePos) ? k : closePos;
-								} else {
-									q = "";
-									k = line.indexOf(" ");
-									k = (0 <= k && k < closePos) ? k : closePos;
-									k = line.indexOf("\t");
-									k = (0 <= k && k < closePos) ? k : closePos;
-								}
-								const value = line.substring(j + q.length, k);
-								
-								if (q.length && k < closePos) { // 닫는 따옴표가 있을 경우
-									j += q.length + value.length + q.length;
-								} else {
-									j += q.length + value.length;
-								}
-								
-								if (attrName.toUpperCase() == "START" && isFinite(value)) {
-									sync = Number(value);
-								}
-							}
-						}
-					} else {
-						// 싱크 태그 아니면 그냥 제낌
-						j = closePos;
-					}
-					
-					// 태그 닫기
-					j++;
-				}
-			}
-			
-			if (parsed[LINE.SYNC] = sync) { // 어차피 0이면 플레이어에서도 씹힘
-				// 화면 싱크 체크
-				parsed[LINE.TYPE] = TYPE.BASIC;
-				let typeCss = "";
-				if (line.indexOf(" >") > 0) {
-					parsed[LINE.TYPE] = TYPE.FRAME;
-					typeCss = " frame";
-					syncLines.frame[sync] = line;
-				} else if (line.indexOf("\t>") > 0) {
-					parsed[LINE.TYPE] = TYPE.RANGE;
-					typeCss = " range";
-					syncLines.range[sync] = line;
+			if (parsed.SYNC) {
+				if (parsed.TYPE == TYPE.FRAME) {
+					syncLines.frame[parsed.SYNC] = line;
+				} else if (parsed.TYPE == TYPE.RANGE) {
+					syncLines.range[parsed.SYNC] = line;
 				} else {
-					syncLines.basic[sync] = line;
+					syncLines.basic[parsed.SYNC] = line;
 				}
-			} else {
-				parsed[LINE.TYPE] = TYPE.TEXT;
 			}
 		}
-		parseds.push(["&nbsp;", 99999999, TYPE.BASIC]);
+		parseds.push(new Line("&nbsp;", 99999999, TYPE.BASIC));
 		
 		const syncs = [];
 		let last = null;
 		for (let i = 0; i < parseds.length; i++) {
 			const parsed = parseds[i];
-			if (parsed[LINE.TYPE]) {
+			if (parsed.TYPE) {
 				if (last) {
 					const lines = [];
 					for (let j = last[0] + 1; j < i; j++) {
-						lines.push(parseds[j][LINE.TEXT]);
+						lines.push(parseds[j].TEXT);
 					}
 					const text = lines.join("\n");
 					if (text.split("&nbsp;").join("").trim()) {
@@ -241,12 +241,12 @@ window.Combine = {
 							}
 							sizedWidth = getWidth(Subtitle.Smi.fromAttr(attrs, Combine.defaultSize), checker);
 						}
-						
+
 						//[STIME, STYPE, ETIME, ETYPE, TEXT, LINES, WIDTH, SIZED];
-						syncs.push([last[LINE.SYNC], last[LINE.TYPE], parsed[LINE.SYNC], parsed[LINE.TYPE], text, lineCount, defaultWidth, sizedWidth]);
+						syncs.push([last[1], last[2], parsed.SYNC, parsed.TYPE, text, lineCount, defaultWidth, sizedWidth]);
 					}
 				}
-				last = [i, parsed[LINE.SYNC], parsed[LINE.TYPE]];
+				last = [i, parsed.SYNC, parsed.TYPE];
 			}
 		}
 		
@@ -463,7 +463,7 @@ window.Combine = {
 							
 							if (toText(newLine, checker).split("　").join("").split(" ").join("").length) {
 								// 공백 줄인 경우는 별도 처리 하지 않음
-								// 태그로 감싼 줄은 태그 안에 공백문자 넣기
+								// 태그로 감싼 줄은 태그 안에 공백문자 넣기 <- 기능X, 그냥 소스 보기 좋게 만들기
 								let prev = "";
 								let next = "";
 								while (newLine.startsWith("\n")) {
@@ -474,6 +474,14 @@ window.Combine = {
 									let tagEnd = newLine.indexOf(">") + 1;
 									if (tagEnd == 0) {
 										break;
+									}
+									{	const tag = newLine.substring(0, tagEnd).toUpperCase();
+										
+										// 밑줄은 공백문자 추가되면 안 됨
+										if (tag == "<U>") {
+											break;
+										}
+										// TODO: font size 적용된 경우도 막아야 하나...?
 									}
 									while (newLine.length > tagEnd && newLine[tagEnd] == "\n") {
 										// 태그 직후에 줄바꿈을 한 경우가 있음
@@ -486,6 +494,18 @@ window.Combine = {
 									const tagStart = newLine.lastIndexOf("<");
 									if (tagStart < 0) {
 										break;
+									}
+									const tagEnd = newLine.lastIndexOf(">") + 1;
+									if (tagEnd <= tagStart) {
+										break;
+									}
+									{	const tag = newLine.substring(tagStart, tagEnd).toUpperCase();
+										
+										// 밑줄은 공백문자 추가되면 안 됨
+										if (tag == "</U>") {
+											break;
+										}
+										// TODO: font size 적용된 경우도 막아야 하나...?
 									}
 									next = newLine.substring(tagStart) + next;
 									newLine = newLine.substring(0, tagStart);
@@ -683,11 +703,23 @@ if (Subtitle && Subtitle.SmiFile) {
 		normalized[0].pos = 0;
 		normalized[0].name = "메인";
 		holds = normalized.concat(holds.slice(1));
+		if (holds[0].isWithSplit()) {
+			// 대사 사이 1프레임 공백 싱크 제거
+			const body = holds[0].body;
+			for (let i = 1; i < body.length; i++) {
+				const smi = body[i];
+				if (smi.syncType == Subtitle.SyncType.split) {
+					body[i - 1].text = smi.text;
+					body.splice(i, 1);
+				}
+			}
+		}
 		holds[0].text = holds[0].toTxt().trim();
+		
 		for (let i = 1; i < normalized.length; i++) {
 			// 내포된 홀드는 종료싱크가 빠졌을 수 있음
 			const hold = holds[i];
-			if (hold.next && hold.body[hold.body.length - 1].text.split("&nbsp;").join("").trim().length > 0) {
+			if (hold.next && !hold.body[hold.body.length - 1].isEmpty()) {
 				hold.body.push(new Subtitle.Smi(hold.next.start, hold.next.syncType, "&nbsp;"));
 			}
 			holds[i].text = hold.toTxt().trim();
@@ -697,12 +729,67 @@ if (Subtitle && Subtitle.SmiFile) {
 		}
 		return holds;
 	}
+	
+	// TODO: <BODY split> 형식일 때 동작 - 기능이 필요할까...?
+	Subtitle.SmiFile.prototype.isWithSplit = function() {
+		const match = /<body( [^>]*)*>/gi.exec(this.header);
+		return match && (match[0].indexOf("split") > 0);
+	}
 	Subtitle.SmiFile.holdsToText = (origHolds, withNormalize=true, withCombine=true, withComment=true, fps=23.976) => {
 		const result = [];
 		let logs = [];
 		let originBody = [];
 		
 		const main = new Subtitle.SmiFile(origHolds[0].text);
+		if (main.isWithSplit()) { // 메인 홀드 이외에도 지원이 필요한가...?
+			// 대사 사이 1프레임 공백 싱크 생성
+			const body = main.body;
+			const add = Math.round(1000 / fps);
+			let before = null;
+			for (let i = 0; i < body.length; i++) {
+				const smi = body[i];
+				if (smi.isEmpty()) {
+					before = null;
+				} else {
+					if (smi.text.indexOf(" fade=") > 0) {
+						before = null;
+						// 페이드인일 경우 끊기지 않도록 다음 싱크도 건너뛰기
+						i++;
+						continue;
+					}
+					
+					// TODO: 설정에 따른 예외처리 넣기? 정규식으로?
+					if (smi.text.indexOf("harne") >= 0) {
+						before = null;
+						continue;
+					}
+					if (smi.text.startsWith("[")) {
+						before = null;
+						continue;
+					}
+					
+					if (before) {
+						// 대사끼리 붙어있을 때 1프레임 공백 싱크 생성
+						const splitted = new Subtitle.Smi((smi.start + add), Subtitle.SyncType.split, (before = smi.text));
+						body.splice(++i, 0, splitted);
+						smi.text = "&nbsp;";
+						/*
+					} else if (smi.syncType == Subtitle.SyncType.frame) { // TODO: 설정으로 on/off? <BODY> 태그 플래그로?
+						// 대사 사이 싱크가 화면 싱크일 때
+						const splitted = new Subtitle.Smi((smi.start + add), Subtitle.SyncType.split, (before = smi.text));
+						body.splice(++i, 0, splitted);
+						smi.text = "&nbsp;";
+						
+						// TODO: 여기서 작업한 결과는 아래에 주석 생성 없도록 만들어야 함
+						//*/
+					} else {
+						before = smi.text;
+					}
+				}
+			}
+		}
+		//console.log(JSON.parse(JSON.stringify(body)));
+		
 		withCombine = withCombine && origHolds.length > 1;
 		
 		{	// 시작 시간 순으로 저장
@@ -719,6 +806,11 @@ if (Subtitle && Subtitle.SmiFile) {
 				hold.imported = false;
 				hold.afterMain = false;
 				
+				// 홀드 위치가 1 또는 -1인 경우에만 내포 홀드 여부 확인
+				if ((hold.pos > 1) || (hold.pos < -1)) {
+					continue;
+				}
+				
 				// 내용물 없으면 내포 홀드 아님
 				const holdBody = new Subtitle.SmiFile(hold.text).body;
 				if (holdBody.length == 0) {
@@ -732,13 +824,18 @@ if (Subtitle && Subtitle.SmiFile) {
 					// 메인 홀드보다 뒤에 있는지 확인
 					const i = main.body.length;
 					const lastLine = main.body[i - 1];
-					if (lastLine.start <= hold.start && (lastLine.text.split("&nbsp;").join("").trim().length == 0)) {
+					if ((lastLine.start <= hold.start) && lastLine.isEmpty()) {
 						hold.afterMain = true;
 						if (withCombine) {
 							let hasImport = false;
 							for (let j = 0; j < imports.length; j++) {
-								if (imports[j][0] == i) {
-									hasImport = true;
+								const imported = imports[j];
+								if (imported[0] == i) {
+									// 기존 내포 홀드와 겹치면 내포 홀드 불가능
+									if (hold.start < imported[1].end) {
+										hasImport = true;
+										break;
+									}
 								}
 							}
 							if (!hasImport) {
@@ -754,7 +851,7 @@ if (Subtitle && Subtitle.SmiFile) {
 							const line = main.body[i];
 							if (hold.start < line.start) {
 								if (hold.end <= line.start) {
-									if ((i == 0) || (main.body[i - 1].text.split("&nbsp;").join("").trim().length == 0)) {
+									if ((i == 0) || main.body[i - 1].isEmpty()) {
 										let hasImport = false;
 										for (let j = 0; j < imports.length; j++) {
 											const imported = imports[j];
@@ -888,16 +985,29 @@ if (Subtitle && Subtitle.SmiFile) {
 						main.body = main.body.concat(smi.body);
 						continue;
 					}
-					if (main.body[mainBegin].text.split("&nbsp;").join("").trim().length == 0) {
+					if (main.body[mainBegin].isEmpty()) {
 						mainBegin++;
 					}
 					
 					mainEnd = mainBegin;
-					const end = smi.body[smi.body.length - 1].start;
-					for (; mainEnd < main.body.length; mainEnd++) {
-						if (main.body[mainEnd].start > end) {
-							break;
+					const last = smi.body[smi.body.length - 1];
+					let isEnded = last.isEmpty();
+					if (!isEnded) {
+						// 미완성 자막인 경우 과도한 결합 발생
+						// 마지막 대사가 5줄 넘어가면 미완성본으로 간주하고 종료 싱크로 처리, 결합 대상에서 제외
+						isEnded = (last.text.split("\n").length > 5);
+					}
+					if (isEnded) {
+						// 마지막 싱크가 종료 싱크일 경우 결합 범위 찾기
+						const end = last.start;
+						for (; mainEnd < main.body.length; mainEnd++) {
+							if (main.body[mainEnd].start > end) {
+								break;
+							}
 						}
+					} else {
+						// 대사가 남은 채 끝날 경우 끝까지 결합
+						mainEnd = main.body.length;
 					}
 					if (mainEnd == 0) {
 						// 홀드 전체가 메인보다 앞에 있음

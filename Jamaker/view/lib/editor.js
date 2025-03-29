@@ -52,20 +52,7 @@ window.Tab = function(text, path) {
 		
 	}).on("dblclick", ".hold-name", function(e) {
 		e.stopPropagation();
-		const hold = $(this).parents(".selector").data("hold");
-		if (hold == tab.holds[0]) {
-			// 메인 홀드는 이름 변경 X
-			return;
-		}
-		prompt("홀드 이름 변경", (input) => {
-			if (!input) {
-				alert("잘못된 입력입니다.");
-				return;
-			}
-			hold.selector.find(".hold-name > span").text(tab.holds.indexOf(hold) + "." + (hold.name = input));
-			hold.selector.attr({ title: hold.name });
-			hold.afterChangeSaved(hold.isSaved());
-		}, hold.name);
+		$(this).parents(".selector").data("hold").rename();
 		
 	}).on("click", ".btn-hold-remove", function(e) {
 		e.stopPropagation();
@@ -418,6 +405,22 @@ SmiEditor.prototype.onChangeSaved = function(saved) {
 	if (!currentTab) return;
 	currentTab.onChangeSaved(this);
 };
+SmiEditor.prototype.rename = function() {
+	if (this == this.owner.holds[0]) {
+		// 메인 홀드는 이름 변경 X
+		return;
+	}
+	const hold = this;
+	prompt("홀드 이름 변경", (input) => {
+		if (!input) {
+			alert("잘못된 입력입니다.");
+			return;
+		}
+		hold.selector.find(".hold-name > span").text(hold.owner.holds.indexOf(hold) + "." + (hold.name = input));
+		hold.selector.attr({ title: hold.name });
+		hold.afterChangeSaved(hold.isSaved());
+	}, hold.name);
+}
 
 function deepCopyObj(obj) {
 	if (obj && typeof obj == "object") {
@@ -804,7 +807,7 @@ function setSetting(setting, initial=false) {
 			disabled = SmiEditor.canvas.toDataURL();
 		}
 		*/
-		$.ajax({url: "lib/SmiEditor.color.css?250315"
+		$.ajax({url: "lib/SmiEditor.color.css?250329"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -821,7 +824,7 @@ function setSetting(setting, initial=false) {
 		});
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250315"
+		$.ajax({url: "lib/SmiEditor.size.css?250329"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -835,6 +838,7 @@ function setSetting(setting, initial=false) {
 					for (let i = 0; i < tabs.length; i++) {
 						const holds = tabs[i].holds;
 						for (let j = 0; j < holds.length; j++) {
+							holds[j].input.scroll();
 							if (holds[j].act) {
 								holds[j].act.resize();
 							}
@@ -849,10 +853,7 @@ function setSetting(setting, initial=false) {
 			SmiEditor.refreshHighlight();
 			for (let i = 0; i < tabs.length; i++) {
 				for (let j = 0; j < tabs[i].holds.length; j++) {
-					const hold = tabs[i].holds[j];
-					hold.HL.lines = [];
-					hold.HL.views = [];
-					hold.updateHighlight();
+					tabs[i].holds[j].refreshHighlight();
 				}
 			}
 		}
@@ -877,7 +878,7 @@ function setSetting(setting, initial=false) {
 							name = name.split("?")[0];
 						}
 						
-						$.ajax({url: "lib/highlight/styles/" + name + ".css?250315"
+						$.ajax({url: "lib/highlight/styles/" + name + ".css?250329"
 							,	dataType: "text"
 							,	success: (style) => {
 									// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -985,7 +986,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250315", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250329", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -1003,7 +1004,9 @@ function saveSetting() {
 function refreshPaddingBottom() {
 	// 에디터 하단 여백 재조정
 	const holdTop = tabs.length ? Number(tabs[tab].area.find(".holds").css("top").split("px")[0]) : 0;
-	const append = "\n#editor textarea { padding-bottom: " + ($("#editor").height() - holdTop - SB - LH - 2) + "px; }";
+	const padding = $("#editor").height() - holdTop - LH;
+	const append = "\n#editor textarea { padding-bottom: " + (padding - 2 - SB) + "px; }"
+	             + "\n.hold > .col-sync > div:first-child { height: " + (padding - 1) + "px; }";
 	let $style = $("#stylePaddingBottom");
 	if (!$style.length) {
 		$("head").append($style = $("<style id='stylePaddingBottom'>"));
@@ -1015,7 +1018,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250315";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250329";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)

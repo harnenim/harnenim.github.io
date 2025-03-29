@@ -41,7 +41,7 @@ let checkVersion;
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.03.15.v2"
+{	version: "2025.03.29.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -84,7 +84,7 @@ window.DEFAULT_SETTING =
 		]
 	]
 ,	window:
-	{	x: 0
+	{	x: 1280
 	,	y: 0
 	,	width: 640
 	,	height: 920
@@ -115,6 +115,7 @@ window.DEFAULT_SETTING =
 		,	'z': '/* 정지 */\n' + 'SmiEditor.PlayerAPI.stop()'
 		,	"s": "/* 되감기 */\nSmiEditor.PlayerAPI.move(-SmiEditor.sync.move);\nSmiEditor.PlayerAPI.play();"
 		,	"r": "/* 실행 취소 */\neditor.history.back();"
+		,	"q": "/* 홀드명 변경 */\neditor.rename();"
 		}
 	,	withCtrls:
 		{	't': '/* 일괄 싱크 찍기 */\n' + 'editor.reSync();'
@@ -352,7 +353,7 @@ window.DEFAULT_SETTING =
 		+	"</SAMI>"
 ,	viewer:
 	{	window:
-		{	x: 640
+		{	x: 0
 		,	y: 720
 		,	width: 1280
 		,	height: 200
@@ -374,7 +375,7 @@ window.DEFAULT_SETTING =
 	}
 ,	player:
 	{	window:
-		{	x: 640
+		{	x: 0
 		,	y: 0
 		,	width: 1280
 		,	height: 720
