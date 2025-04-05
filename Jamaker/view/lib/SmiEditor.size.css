@@ -48,6 +48,7 @@ label, #showFps {
 }
 .hold-selector > .selector .area-btn-hold {
 	width: calc(20px * 2);
+	right: calc(20px * -2);
 }
 .hold-selector > .selector button {
 	font-size: calc(20px * 0.6);
@@ -91,3 +92,8 @@ label, #showFps {
 .hljs-color {
 	height: 20px;
 }
+
+.custom-scrollbar ::-webkit-scrollbar,
+.custom-scrollbar ::-webkit-scrollbar-button { width: calc(20px * 0.8 + 1px); height: calc(20px * 0.8 + 1px); }
+.custom-scrollbar ::-webkit-scrollbar-button:end { background-position-y: calc(20px * 0.8 + 1px); }
+.custom-scrollbar ::-webkit-scrollbar-button:horizontal { background-position-x: calc(20px * 0.8 + 1px); }

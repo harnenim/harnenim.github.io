@@ -25,6 +25,8 @@ function linesToText(lines) {
 }
 
 window.Line = function(text="", sync=0, type=TYPE.TEXT) {
+	// TODO: 처음에 객체 변수명이 아니라, 배열 번호 상수로 만들어서 대문자로 해놔서
+	// 고칠 때도 대문자를 따라가 버렸는데, 변수명은 소문자로 바꾸는 게 맞나...
 	this.TEXT = text;
 	this.SYNC = sync;
 	this.TYPE = type;
@@ -476,11 +478,35 @@ SmiEditor.prototype.bindEvent = function() {
 		const scrollTop  = editor.input.scrollTop ();
 		const scrollLeft = editor.input.scrollLeft();
 		
+		{
+			const ta = editor.input[0];
+			if (ta.scrollTop) {
+				editor.input.removeClass("scrollTop");
+			} else {
+				editor.input.addClass("scrollTop");
+			}
+			if (ta.clientHeight + ta.scrollTop < ta.scrollHeight) {
+				editor.input.removeClass("scrollBottom");
+			} else {
+				editor.input.addClass("scrollBottom");
+			}
+			if (ta.scrollLeft) {
+				editor.input.removeClass("scrollLeft");
+			} else {
+				editor.input.addClass("scrollLeft");
+			}
+			if (ta.clientWidth + ta.scrollLeft < ta.scrollWidth) {
+				editor.input.removeClass("scrollRight");
+			} else {
+				editor.input.addClass("scrollRight");
+			}
+		}
+		
 		// 싱크 스크롤 동기화
 		editor.colSync.scrollTop(scrollTop);
 		
+		// 문법 하이라이트 스크롤 동기화
 		if (SmiEditor.useHighlight) {
-			// 문법 하이라이트 스크롤 동기화
 			editor.hview.css({
 					marginTop : -scrollTop 
 				,	marginLeft: -scrollLeft
@@ -489,40 +515,44 @@ SmiEditor.prototype.bindEvent = function() {
 					marginTop : -scrollTop 
 				,	marginLeft: -scrollLeft
 			});
-			
-			// 문법 하이라이트 보이는 범위 찾기
-			const showFrom = Math.floor(scrollTop / LH);
-			const showEnd  = Math.ceil((scrollTop + editor.input.outerHeight()) / LH);
-			
-			const toAppendLefts = [];
-			const toRemoveLefts = [];
-			editor.colSync.children().each(function() {
-				toRemoveLefts.push(this);
-			});
-			const toAppendViews = [];
-			const toRemoveViews = [];
+		}
+		
+		// 현재 스크롤에서 보이는 범위 찾기
+		const showFrom = Math.floor(scrollTop / LH);
+		const showEnd  = Math.ceil((scrollTop + editor.input.outerHeight()) / LH);
+		
+		const toAppendLefts = [];
+		const toRemoveLefts = [];
+		const toAppendViews = [];
+		const toRemoveViews = [];
+		editor.colSync.children().each(function() {
+			toRemoveLefts.push(this);
+		});
+		if (SmiEditor.useHighlight) {
 			editor.hview.children().each(function() {
 				toRemoveViews.push(this);
 			});
-			
-			const a = Math.max(0, showFrom);
-			const b = Math.min(showEnd, editor.lines.length);
-			for (let i = a; i < b; i++) {
-				const css = { top: (i * LH) + "px" };
-				const $left = editor.lines[i].LEFT;
-				const $view = editor.lines[i].VIEW;
-				if ($left != null) {
-					const rIndex = toRemoveLefts.indexOf($left[0]);
-					if (rIndex >= 0) {
-						// 기존에 있었는데 범위에 남아있음
-						toRemoveLefts.splice(rIndex, 1);
-					} else {
-						// 기존에 없었는데 범위에 들어옴
-						toAppendLefts.push($left);
-					}
-					// 위치 계산은 새로 해줌
-					$left.css(css);
+		}
+		
+		const a = Math.max(0, showFrom);
+		const b = Math.min(showEnd, editor.lines.length);
+		for (let i = a; i < b; i++) {
+			const css = { top: (i * LH) + "px" };
+			const $left = editor.lines[i].LEFT;
+			if ($left != null) {
+				const rIndex = toRemoveLefts.indexOf($left[0]);
+				if (rIndex >= 0) {
+					// 기존에 있었는데 범위에 남아있음
+					toRemoveLefts.splice(rIndex, 1);
+				} else {
+					// 기존에 없었는데 범위에 들어옴
+					toAppendLefts.push($left);
 				}
+				// 위치 계산은 새로 해줌
+				$left.css(css);
+			}
+			if (SmiEditor.useHighlight) {
+				const $view = editor.lines[i].VIEW;
 				if ($view != null) {
 					const rIndex = toRemoveViews.indexOf($view[0]);
 					if (rIndex >= 0) {
@@ -536,13 +566,15 @@ SmiEditor.prototype.bindEvent = function() {
 					$view.css(css);
 				}
 			}
-			// 0번은 colSyncSizer
-			for (let i = 1; i < toRemoveLefts.length; i++) {
-				$(toRemoveLefts[i]).remove();
-			}
-			for (let i = 0; i < toAppendLefts.length; i++) {
-				editor.colSync.append(toAppendLefts[i]);
-			}
+		}
+		// 0번은 colSyncSizer
+		for (let i = 1; i < toRemoveLefts.length; i++) {
+			$(toRemoveLefts[i]).remove();
+		}
+		for (let i = 0; i < toAppendLefts.length; i++) {
+			editor.colSync.append(toAppendLefts[i]);
+		}
+		if (SmiEditor.useHighlight) {
 			for (let i = 0; i < toRemoveViews.length; i++) {
 				$(toRemoveViews[i]).remove();
 			}
@@ -550,6 +582,7 @@ SmiEditor.prototype.bindEvent = function() {
 				editor.hview.append(toAppendViews[i]);
 			}
 		}
+		
 	}).on("blur", function() {
 		const text = editor.input.val();
 		const prev  = $("<span>").text(text.substring(0, editor.input[0].selectionStart));
@@ -901,9 +934,18 @@ SmiEditor.activateKeyEvent = function() {
 					return;
 				}
 				case 9: { // Tab
-					e.preventDefault();
-					if (hasFocus) {
-						editor.inputTextLikeNative("\t"); // TODO: 횡스크롤 이동 안 되고 있음...
+					if (e.ctrlKey) { // Ctrl+Tab → 탭 전환
+						// 순정 SmiEditor엔 탭이 없음
+						// editor.js 등에서 추가 선언 필요함
+						if (SmiEditor.selectTab) {
+							SmiEditor.selectTab();
+						}
+						
+					} else {
+						if (hasFocus) {
+							e.preventDefault();
+							editor.inputTextLikeNative("\t"); // TODO: 횡스크롤 이동 안 되고 있음...
+						}
 					}
 					break;
 				}
@@ -1673,7 +1715,7 @@ SmiEditor.prototype.render = function(range=null) {
 
 		self.text = newText;
 		self.lines = newLines;
-		self.colSyncSizer.css({ top: newLines.length * LH + "px" });
+		self.colSyncSizer.css({ top: (newLines.length * LH) + "px" });
 		
 		if (SmiEditor.PlayerAPI && SmiEditor.PlayerAPI.setLines) {
 			SmiEditor.PlayerAPI.setLines(newLines);
@@ -1686,6 +1728,24 @@ SmiEditor.prototype.render = function(range=null) {
 		self.afterChangeSaved(self.isSaved());
 		
 		setTimeout(() => {
+			{
+				const ta = self.input[0];
+				if (ta.scrollWidth > ta.clientWidth) {
+					self.input.removeClass("disable-scroll-x");
+					if (ta.scrollLeft) {
+						self.input.removeClass("scrollLeft");
+					} else {
+						self.input.addClass("scrollLeft");
+					}
+					if (ta.clientWidth + ta.scrollLeft < ta.scrollWidth) {
+						self.input.removeClass("scrollRight");
+					} else {
+						self.input.addClass("scrollRight");
+					}
+				} else {
+					self.input.addClass("disable-scroll-x scrollLeft scrollRight");
+				}
+			}
 			if (self.needToRender) {
 				// 렌더링 대기열 있으면 재실행
 				self.render();
@@ -2180,7 +2240,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250329", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?250405", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2217,6 +2277,9 @@ SmiEditor.Finder = {
 				return "열려있는 파일이 없습니다.";
 			}
 			this.finding = JSON.parse(params);
+			if (this.finding.find.length == 0) {
+				return "찾을 문자열이 없습니다.";
+			}
 			this.finding.input = SmiEditor.selected.input[0];
 			this.finding.text      = this.finding.input.value;
 			this.finding.upperText = this.finding.text.toUpperCase();
@@ -2360,7 +2423,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250329", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?250405", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2410,7 +2473,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250329";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250405";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2423,7 +2486,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250329", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?250405", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

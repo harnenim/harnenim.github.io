@@ -421,6 +421,37 @@ SmiEditor.prototype.rename = function() {
 		hold.afterChangeSaved(hold.isSaved());
 	}, hold.name);
 }
+SmiEditor.selectTab = function(index=-1) {
+	const tabSelector = $("#tabSelector");
+	if (index < 0) {
+		const selectedTab = tabSelector.find(".selected").data("tab");
+		console.log(selectedTab);
+		if (selectedTab) {
+			// 다음 탭 선택
+			index = (tabs.indexOf(selectedTab) + 1) % tabs.length;
+		} else {
+			index = 0;
+		}
+	}
+	
+	const currentTab = tabs[tab = index];
+	tabSelector.find(".selected").removeClass("selected");
+	$(currentTab.th).addClass("selected").data("tab");
+	
+	$("#editor > .tab").hide();
+	currentTab.area.show();
+	if (_for_video_) { // 동영상 파일명으로 자막 파일을 연 경우 동영상 열기 불필요
+		_for_video_ = false;
+	} else if (currentTab.path && currentTab.path.length > 4 && binder) {
+		binder.checkLoadVideoFile(currentTab.path);
+	}
+	SmiEditor.selected = currentTab.holds[currentTab.hold];
+	SmiEditor.Viewer.refresh();
+	SmiEditor.selected.input.focus();
+	
+	// 탭에 따라 홀드 여부 다를 수 있음
+	refreshPaddingBottom();
+}
 
 function deepCopyObj(obj) {
 	if (obj && typeof obj == "object") {
@@ -691,24 +722,10 @@ function init(jsonSetting, isBackup=true) {
 			return;
 		}
 		
-		tabSelector.find(".selected").removeClass("selected");
-		const currentTab = th.addClass("selected").data("tab");
+		const currentTab = th.data("tab");
 		if (currentTab) {
-			tab = tabs.indexOf(currentTab);
-			hold = tab.hold;
-			$("#editor > .tab").hide();
-			currentTab.area.show();
-			if (_for_video_) { // 동영상 파일명으로 자막 파일을 연 경우 동영상 열기 불필요
-				_for_video_ = false;
-			} else if (currentTab.path && currentTab.path.length > 4 && binder) {
-				binder.checkLoadVideoFile(currentTab.path);
-			}
+			SmiEditor.selectTab(tabs.indexOf(currentTab));
 		}
-		SmiEditor.selected = currentTab.holds[currentTab.hold];
-		SmiEditor.Viewer.refresh();
-		
-		// 탭에 따라 홀드 여부 다를 수 있음
-		refreshPaddingBottom();
 		
 	}).on("click", ".btn-close-tab", function(e) {
 		e.preventDefault();
@@ -752,6 +769,12 @@ function init(jsonSetting, isBackup=true) {
 		});
 	});
 	
+	// ::-webkit-scrollbar에 대해 CefSharp에서 커서 모양이 안 바뀜
+	// ... 라이브러리 버그? 업데이트하면 달라지나?
+	$("body").on("mousemove", "textarea", function(e) {
+		$(this).css({ cursor: ((this.clientWidth <= e.offsetX) || (this.clientHeight <= e.offsetY) ? "default" : "text") });
+	});
+	
 	SmiEditor.activateKeyEvent();
 	
 	setSetting(setting, true);
@@ -774,31 +797,37 @@ function setSetting(setting, initial=false) {
 	}
 	
 	SmiEditor.setSetting(setting);
-	if (initial || (JSON.stringify(oldSetting.color) != JSON.stringify(setting.color))) {
+	if (initial || (oldSetting.size != setting.size) || (JSON.stringify(oldSetting.color) != JSON.stringify(setting.color))) {
 		// 스타일 바뀌었을 때만 재생성
 		if (setting.css) {
 			delete(setting.css);
 		}
 		
-		/*
-		// 스크롤바 버튼 새로 그려야 함 - 커서 문제로 현재 미적용...
+		// 스크롤바 버튼 새로 그려야 함 //- 커서 문제로 현재 미적용...
 		let button = "";
 		let disabled = "";
 		{
 			let canvas = SmiEditor.canvas;
 			if (!canvas) canvas = SmiEditor.canvas = document.createElement("canvas");
-			canvas.width = 34;
-			canvas.height = 34;
-			
+			canvas.width = canvas.height = ((SB = (16 * setting.size)) + 1) * 2;
+
+			const v1 = SB / 2;
+			const v2 = SB + 1 + (SB / 2);
+			const v15 = setting.size * 1.5;
+			const v20 = setting.size * 2.0;
+			const v35 = setting.size * 3.5;
 			const c = canvas.getContext("2d");
 			let x;
 			let y;
-			x =  8; y =  8; c.moveTo(x, y-1.5); c.lineTo(x+3.5, y+2), c.lineTo(x-3.5, y+2); c.closePath();
-			x =  8; y = 25; c.moveTo(x, y+1.5); c.lineTo(x+3.5, y-2), c.lineTo(x-3.5, y-2); c.closePath();
-			x = 25; y =  8; c.moveTo(x-1.5, y); c.lineTo(x+2, y-3.5), c.lineTo(x+2, y+3.5); c.closePath();
-			x = 25; y = 25; c.moveTo(x+1.5, y); c.lineTo(x-2, y+3.5), c.lineTo(x-2, y-3.5); c.closePath();
+			x = v1; y = v1; c.moveTo(x, y-v15); c.lineTo(x+v35, y+v20), c.lineTo(x-v35, y+v20); c.closePath();
+			x = v1; y = v2; c.moveTo(x, y+v15); c.lineTo(x+v35, y-v20), c.lineTo(x-v35, y-v20); c.closePath();
+			x = v2; y = v1; c.moveTo(x-v15, y); c.lineTo(x+v20, y-v35), c.lineTo(x+v20, y+v35); c.closePath();
+			x = v2; y = v2; c.moveTo(x+v15, y); c.lineTo(x-v20, y+v35), c.lineTo(x-v20, y-v35); c.closePath();
 			
-			c.fillStyle = setting.color.tabBorder;
+			const r = Math.floor((Number("0x" + setting.color.border.substring(1,3)) + Number("0x" + setting.color.text.substring(1,3))) / 2);
+			const g = Math.floor((Number("0x" + setting.color.border.substring(3,5)) + Number("0x" + setting.color.text.substring(3,5))) / 2);
+			const b = Math.floor((Number("0x" + setting.color.border.substring(5,7)) + Number("0x" + setting.color.text.substring(5,7))) / 2);
+			c.fillStyle = "#" + ((((r << 8) | g) << 8) + b).toString(16);
 			c.fill();
 			button = SmiEditor.canvas.toDataURL();
 			
@@ -806,14 +835,18 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		*/
-		$.ajax({url: "lib/SmiEditor.color.css?250329"
+		$.ajax({url: "lib/SmiEditor.color.css?250405"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
 						preset = preset.split("[" + name + "]").join(setting.color[name]);
 					}
-					//preset = preset.split("[button]").join(button).split("[buttonDisabled]").join(disabled);
+					if (button) {
+						preset = preset.split("[button]").join(button).split("[buttonDisabled]").join(disabled);
+						$("body").addClass("custom-scrollbar");
+					} else {
+						$("body").removeClass("custom-scrollbar");
+					}
 					
 					let $style = $("#styleColor");
 					if (!$style.length) {
@@ -824,7 +857,7 @@ function setSetting(setting, initial=false) {
 		});
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250329"
+		$.ajax({url: "lib/SmiEditor.size.css?250405"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -878,7 +911,7 @@ function setSetting(setting, initial=false) {
 							name = name.split("?")[0];
 						}
 						
-						$.ajax({url: "lib/highlight/styles/" + name + ".css?250329"
+						$.ajax({url: "lib/highlight/styles/" + name + ".css?250405"
 							,	dataType: "text"
 							,	success: (style) => {
 									// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -986,7 +1019,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250329", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250405", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -1018,7 +1051,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250329";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250405";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1093,8 +1126,21 @@ function openFileForVideo(path, text) {
 let exporting = false;
 function saveFile(asNew, isExport) {
 	const currentTab = tabs[tab];
+	let syncError = null;
+	
 	for (let i = 0; i < currentTab.holds.length; i++) {
-		currentTab.holds[i].history.log();
+		const hold = currentTab.holds[i];
+		hold.history.log();
+		
+		if (!syncError) {
+			for (let j = 0; j < hold.lines.length; j++) {
+				const line = hold.lines[j];
+				if (line.LEFT && (line.LEFT.hasClass("error") || line.LEFT.hasClass("equal"))) {
+					syncError = [i, j];
+					break;
+				}
+			}
+		}
 	}
 
 	let path = currentTab.path;
@@ -1129,9 +1175,18 @@ function saveFile(asNew, isExport) {
 	}
 	*/
 	
-	if (currentTab.area.find(".sync.error,.sync.equal").length) {
+	if (syncError) {
 		confirm("싱크 오류가 있습니다.\n저장하시겠습니까?", function() {
 			binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
+			
+		}, function() {
+			const hold = currentTab.holds[syncError[0]];
+			currentTab.selectHold(hold);
+			
+			const lineNo = syncError[1];
+			const cursor = (lineNo ? hold.text.split("\n").slice(0, lineNo).join("\n").length + 1 : 0);
+			hold.setCursor(cursor);
+			hold.scrollToCursor(lineNo);
 		});
 	} else {
 		binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
@@ -1223,8 +1278,7 @@ function openNewTab(text, path, forVideo) {
 	$("#btnNewTab").before(th);
 	
 	_for_video_ = forVideo;
-	th.data("tab", tab).click();
-	tab.th = th;
+	(tab.th = th).data("tab", tab).click();
 	
 	return tab;
 }

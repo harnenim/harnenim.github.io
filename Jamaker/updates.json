@@ -1,4 +1,23 @@
-[ { "version": "2025.03.29"
+[ { "version": "2025.04.05"
+  , "comment":
+    [ "탭 조작성 개선"
+    , "홀드 UI 개선"
+    , "테마에 따른 스크롤바 색상 적용"
+    , "기타 버그 수정"
+    ]
+  , "files":
+    [ "view/lib/highlight/full.js"
+    , "view/lib/highlight/withoutSync.js"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.color.css"
+    , "view/lib/SmiEditor.size.css"
+    ]
+  }
+, { "version": "2025.03.29"
   , "comment":
     [ "변수명, 함수명 등 정리"
     , "에디터 렌더링 로직 개편"
