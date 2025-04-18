@@ -3,9 +3,23 @@ window.AutoCompleteTextarea = function(ta, sets, onSelect) {
 	this.sets = sets ? sets : [];
 	this.onSelect = onSelect;
 	this.resize();
+	if (this.sets[0]) {
+		// 일반 단어 자동완성은 정렬해서 표시
+		this.sets[0][1].sort();
+	} else {
+		this.sets[0] = ["", []];
+	}
 	
 	if (!AutoCompleteTextarea.view) {
-		$("body").append(AutoCompleteTextarea.view = $("<ol class='act-select'>").css(this.font).hide());
+		AutoCompleteTextarea.view = $("<ol class='act-select'>").css(this.font).hide().on("click", "li", function() {
+			const act = AutoCompleteTextarea.opened;
+			act.input($(this));
+			act.close();
+			if (act.onSelect) {
+				act.onSelect();
+			}
+		});
+		$("body").append(AutoCompleteTextarea.view);
 	}
 	
 	this.LH = Number(this.font["line-height"].split("px")[0]);
@@ -37,9 +51,16 @@ window.AutoCompleteTextarea = function(ta, sets, onSelect) {
 			ta.ac.onKeyup(e);
 		}
 		// else가 아닌 이유: 자동완성 닫았다 다시 열 수도 있음
-		if (ta.ac.selected < 0 && !e.ctrlKey && !e.altKey) {
-			ta.ac.onCheck(e);
+		if (ta.ac.selected < 0) {
+			if (!e.ctrlKey && !e.altKey) {
+				ta.ac.onCheck(e);
+			} else if (e.ctrlKey && (e.keyCode == 32)) { // Ctrl+SpaceBar
+				ta.ac.onCheckWord();
+			}
 		}
+	});
+	ta.on("click", function() {
+		ta.ac.close();
 	});
 }
 AutoCompleteTextarea.prototype.resize = function() {
@@ -77,6 +98,7 @@ AutoCompleteTextarea.prototype.open = function(list) {
 		this.select(0);
 		this.setPos();
 		AutoCompleteTextarea.view.show();
+		AutoCompleteTextarea.opened = this;
 	}
 };
 // 닫기
@@ -152,24 +174,7 @@ AutoCompleteTextarea.prototype.onKeyup = function(e) {
 				e.preventDefault();
 				
 				// 현재 항목 입력 및 커서 이동
-				let pos = this.pos;
-				let value = this.lis[this.selected].text();
-				if (value.indexOf("|") > 0) {
-					value = value.split("|")[1];
-				}
-				this.ta.val(this.text.substring(0, pos) + value + this.text.substring(pos+1));
-				pos += value.length;
-				this.ta[0].setSelectionRange(pos, pos);
-				
-				// 커서 위치에 맞게 스크롤 이동
-				let tmp = this.ta.val().substring(0, pos).split("\n");
-				tmp = tmp[tmp.length - 1];
-				this.ta.parent().append(tmp = $("<span>").text(tmp));
-				const targetLeft = tmp.width() - this.ta.width() + this.SB;
-				tmp.remove();
-				if (targetLeft > this.ta.scrollLeft()) {
-					this.ta.scrollLeft(targetLeft);
-				}
+				this.input(this.lis[this.selected]);
 			}
 			
 			// 선택 닫기
@@ -182,38 +187,60 @@ AutoCompleteTextarea.prototype.onKeyup = function(e) {
 			break;
 		}
 		default: {
-			const end = this.ta[0].selectionEnd;
-			
 			// 백스페이스든 방향키든 뒤로 간 경우: 선택 취소
-			const length = end - this.pos;
-			if (length <= 0) {
+			if (this.ta[0].selectionEnd <= this.pos) {
 				this.close();
 				break;
 			}
 			
-			// 최초 리스트에서 현재 입력값에 대해 검색
-			const value = this.ta.val().substring(this.pos, end);
-			this.lis = [];
-			AutoCompleteTextarea.view.empty();
-			for (let i = 0; i < this.list.length; i++) {
-				if (this.list[i].substring(0, length) == value) {
-					const li = $("<li>").text(this.list[i]);
-					this.lis.push(li);
-					AutoCompleteTextarea.view.append(li);
-				}
-			}
-			if (this.lis.length) {
-				AutoCompleteTextarea.view.height(this.lis.length * this.LH);
-				// 첫 번째 항목 선택
-				this.select(0);
-				
-			} else {
-				// 검색된 게 없으면 선택 취소
-				this.close();
-			}
+			this.afterInput();
 		}
 	}
 };
+AutoCompleteTextarea.prototype.input = function(li) {
+	let pos = this.pos;
+	let value = li.text();
+	if (value.indexOf("|") > 0) {
+		value = value.split("|")[1];
+	}
+	this.ta.val(this.text.substring(0, pos) + value + this.text.substring(this.end));
+	pos += value.length;
+	this.ta[0].setSelectionRange(pos, pos);
+	
+	// 커서 위치에 맞게 스크롤 이동
+	let tmp = this.ta.val().substring(0, pos).split("\n");
+	tmp = tmp[tmp.length - 1];
+	this.ta.parent().append(tmp = $("<span>").text(tmp));
+	const targetLeft = tmp.width() - this.ta.width() + this.SB;
+	tmp.remove();
+	if (targetLeft > this.ta.scrollLeft()) {
+		this.ta.scrollLeft(targetLeft);
+	}
+}
+AutoCompleteTextarea.prototype.afterInput = function() {
+	// 최초 리스트에서 현재 입력값에 대해 검색
+	const value = this.ta.val().substring(this.pos, this.ta[0].selectionEnd);
+	this.lis = [];
+	AutoCompleteTextarea.view.empty();
+	for (let i = 0; i < this.list.length; i++) {
+		// 설정 순서대로 표시하려고 정렬 없이 전체 비교를 돌리는데
+		// 기능 특성상 전체를 돌려도 연산량이 과도하진 않을 듯함
+		if (this.list[i].substring(0, value.length) == value) {
+			const li = $("<li>").text(this.list[i]);
+			this.lis.push(li);
+			AutoCompleteTextarea.view.append(li);
+		}
+	}
+	if (this.lis.length) {
+		AutoCompleteTextarea.view.height(this.lis.length * this.LH);
+		// 첫 번째 항목 선택
+		this.select(0);
+		
+	} else {
+		// 검색된 게 없으면 선택 취소
+		this.close();
+	}
+}
 AutoCompleteTextarea.prototype.onCheck = function(e) {
 	const c = e.keyCode;
 	const text = this.ta.val();
@@ -223,7 +250,41 @@ AutoCompleteTextarea.prototype.onCheck = function(e) {
 	if (sets && sets[0] == text[pos]) {
 		this.text = text;
 		this.pos = pos;
+		this.end = pos + 1;
 		this.open(sets[1]);
+	}
+}
+//TODO: 구분자 더 필요한가...?
+AutoCompleteTextarea.wordBreaker = " \t\r\n()<>[]{},.`'\"?!;:/\\";
+AutoCompleteTextarea.prototype.onCheckWord = function(e) {
+	const text = this.ta.val();
+	
+	const end = this.ta[0].selectionEnd;
+	let start = this.ta[0].selectionStart;
+	
+	if (start == end) {
+		// 블록지정 없을 때
+		while (start > 0) {
+			start--;
+			const c = text[start];
+			if (AutoCompleteTextarea.wordBreaker.indexOf(c) >= 0) {
+				start++;
+				break;
+			}
+		}
+	}
+	if (start == end) {
+		// 단어 없을 때
+		return;
+	}
+	
+	const word = text.substring(start, end);
+	{
+		this.text = text;
+		this.pos = start;
+		this.end = end;
+		this.open(this.sets[0][1]);
+		this.afterInput();
 	}
 }
 AutoCompleteTextarea.prototype.on = function(a, b) {

@@ -7,6 +7,7 @@ html, body,
 #tabSelector > .th.selected,
 .hold-selector > .selector.selected,
 .hold-selector > .selector:hover,
+.hold-style-area > div,
 button {
 	background: [background];
 }
@@ -49,6 +50,9 @@ body, input, button,
 	color: [text];
 	caret-color: [text];
 }
+.hljs-zw {
+	border-color: [text];
+}
 
 /* 버튼 활성 색 */
 .hold-selector > .selector button:hover {
@@ -65,6 +69,9 @@ body, input, button,
 }
 .hold-selector > .selector.not-saved {
 	border-color: [notSaved];
+}
+.hold-style-area > div {
+	border-color: [tabBorder];
 }
 
 /* 스크롤바(배경색 기반)... */
@@ -85,7 +92,8 @@ body, input, button,
 .sync,.sync > span { border-color: [syncBorder]; }
 .sync.error > span { background: [syncError]; }
 .sync.equal > span { background: [syncEqual]; }
-.col-sync .sync.normal:after, .col-sync .sync.frame:after {
+.col-sync .sync.normal:after,
+.col-sync .sync.frame:after {
 	text-decoration-color: [background];
 }
 

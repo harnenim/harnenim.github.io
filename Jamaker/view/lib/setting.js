@@ -35,13 +35,13 @@ let checkVersion;
 		return notified;
 	}
 	const lastNotifyForCommand = "2024.12.07.v1";
-	const lastNotifyForAutoComplete = "";
+	const lastNotifyForAutoComplete = "2025.04.19.v1";
 	const lastNotifyForStyle = "2025.03.07.v1";
 	const lastNotifyForMenu = "2024.11.19.v2";
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.04.05.v1"
+{	version: "2025.04.19.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -56,7 +56,7 @@ window.DEFAULT_SETTING =
 		,	"찾기/바꾸기(&F)|SmiEditor.Finder.open()"
 		,	"색상코드 입력(&C)|binder.runColorPicker()"
 		,	"특수태그 정규화|SmiEditor.selected && SmiEditor.selected.normalize()"
-		,	"싱크 채우기|SmiEditor.selected && SmiEditor.selected.fillSync()"
+		,	"중간 싱크 생성|SmiEditor.selected && SmiEditor.selected.fillSync()"
 		,	"미리보기창 실행|SmiEditor.Viewer.open()"
 		,	"설정(&S)|openSetting()"
 		]
@@ -207,23 +207,29 @@ window.DEFAULT_SETTING =
 		,	'F': '/* 싱크 유지 텍스트 대체 */\n' + 'openAddon("Fusion");'
 		}
 	,	withCtrlShifts:
-		{	'`': 'editor.owner.selectHold(0);'
-		,	'1': 'editor.owner.selectHold(1);'
-		,	'2': 'editor.owner.selectHold(2);'
-		,	'3': 'editor.owner.selectHold(3);'
-		,	'4': 'editor.owner.selectHold(4);'
-		,	'5': 'editor.owner.selectHold(5);'
-		,	'6': 'editor.owner.selectHold(6);'
-		,	'7': 'editor.owner.selectHold(7);'
-		,	'8': 'editor.owner.selectHold(8);'
-		,	'9': 'editor.owner.selectHold(9);'
-		,	'0': 'editor.owner.selectHold(10);'
+		{	'`': '/* 메인홀드 선택 */\neditor.owner.selectHold(0);'
+		,	'1': '/* 1번 홀드 선택 */\neditor.owner.selectHold(1);'
+		,	'2': '/* 2번 홀드 선택 */\neditor.owner.selectHold(2);'
+		,	'3': '/* 3번 홀드 선택 */\neditor.owner.selectHold(3);'
+		,	'4': '/* 4번 홀드 선택 */\neditor.owner.selectHold(4);'
+		,	'5': '/* 5번 홀드 선택 */\neditor.owner.selectHold(5);'
+		,	'6': '/* 6번 홀드 선택 */\neditor.owner.selectHold(6);'
+		,	'7': '/* 7번 홀드 선택 */\neditor.owner.selectHold(7);'
+		,	'8': '/* 8번 홀드 선택 */\neditor.owner.selectHold(8);'
+		,	'9': '/* 9번 홀드 선택 */\neditor.owner.selectHold(9);'
+		,	'0': '/*10번 홀드 선택 */\neditor.owner.selectHold(10);'
 		,	'F': '/* 중간 싱크 생성 */\n' + 'editor.fillSync();'
 		,	'S': '/* 설정 */\n' + 'openSetting();'
 		}
 	}
 ,	autoComplete:
-	{	"50" : ['@', [
+	{	"0" : ['', [
+			'fade="in"'
+		,	'fade="out"'
+		,	'미노프스키 입자'
+		,	'아스티카시아 학원'
+		]]
+	,	"50" : ['@', [
 			'@naver.com'
 		,	"@gmail.com"
 		]]
@@ -235,8 +241,8 @@ window.DEFAULT_SETTING =
 	,	"53" : ['%', []]
 	,	"54" : ['^', []]
 	,	"55" : ['&', ['&nbsp;', '&amp;', '&lt;', '&gt;']]
-	,	"57" : ['(', ['(|「', '(|『', '(|“', '()|「」', '()|『』', '()|“”']]
-	,	"48" : [')', [')|」', ')|』', ')|”']]
+	,	"57" : ['(', ['(', '(|「', '(|『', '(|“', '()|「」', '()|『』', '()|“”']]
+	,	"48" : [')', [')', ')|」', ')|』', ')|”']]
 	,	"188": ['<', [
 			'<br>'
 		,	'<RUBY>쓰기<RT><RP>(</RP>읽기<RP>)</RP></RT></RUBY>'
@@ -263,7 +269,7 @@ window.DEFAULT_SETTING =
 	, { from: "신 났"     , to: "신났"    , use: true }
 	
 	, { from: "지구 상"   , to: "지구상"  , use: true } // 2017년 맞춤법 변경사항
-	, { from: "지도 상"   , to: "지도상"  , use: true }
+	, { from: "지도 상"   , to: "지도상"  , use: false } // '지구 상공'에 과잉 보정되는 경우
 	, { from: "직선 상"   , to: "직선상"  , use: true }
 	, { from: "궤도 상"   , to: "궤도상"  , use: true }
 	, { from: "인터넷 상" , to: "인터넷상", use: true }
@@ -275,13 +281,14 @@ window.DEFAULT_SETTING =
 	, { from: "터키"      , to: "튀르키예", use: false }
 	, { from: "켄튀르키예", to: "켄터키"  , use: false }
 	]
-,	tempSave: 300
+,	tempSave: 300 // 임시 저장 주기 설정 현재 만들지 않음
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
 ,	highlight:
-	{ parser: "withoutSync"
+	{ parser: "full"
 	, style : "eclipse"
 	, enter : false
 	, color : true
+	, sync  : 0.5
 	}
 ,	size: 1
 ,	color:

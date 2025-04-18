@@ -185,14 +185,26 @@ Line.prototype.renderHighlight = function(last, forced=false) {
 							color = color.substring(1, color.length - 1);
 						}
 						color = color.trim();
-						if (!(color.length == 7 && color.startsWith("#"))) {
-							let hex = sToAttrColor(color);
-							if (hex == color) {
-								return;
+						
+						if (color.length == 15 && color[0] == '#' && color[7] == '~' && color[8] == '#') {
+							// 그라데이션 색상
+							$value.addClass("hljs-color").css({
+									borderColor: "transparent"
+								,	borderImage: "linear-gradient(to right, " + color.substring(0,7) + " 0%, " + color.substring(8,15) + " 100%)"
+								,	borderImageSlice: "1"
+							});
+							
+						} else {
+							if (!(color.length == 7 && color.startsWith("#"))) {
+								let hex = sToAttrColor(color);
+								if (hex == color) {
+									return;
+								}
+								color = "#" + hex;
 							}
-							color = "#" + hex;
+							
+							$value.addClass("hljs-color").css({ borderColor: color });
 						}
-						$value.addClass("hljs-color").css({ borderColor: color });
 					}
 				}
 			});
@@ -720,6 +732,10 @@ SmiEditor.activateKeyEvent = function() {
 					} else {
 						if (e.ctrlKey) {
 							if (e.altKey) {
+								// 홀드 위로 올리기
+								if (editor.selector) {
+									editor.selector.find(".btn-hold-upper").click();
+								}
 								
 							} else {
 								// 스크롤 이동
@@ -770,6 +786,10 @@ SmiEditor.activateKeyEvent = function() {
 					} else {
 						if (e.ctrlKey) {
 							if (e.altKey) {
+								// 홀드 아래로 내리기
+								if (editor.selector) {
+									editor.selector.find(".btn-hold-lower").click();
+								}
 								
 							} else {
 								// 스크롤 이동
@@ -1766,12 +1786,57 @@ SmiEditor.highlightText = (text, state=null) => {
 	}
 	return previewLine.text(text);
 }
-SmiEditor.refreshHighlight = () => {
+SmiEditor.setHighlight = (SH, editors) => {
+	SmiEditor.useHighlight = SH && SH.parser;
+	SmiEditor.showColor = SH.color;
+	SmiEditor.showEnter = SH.enter;
+	if (SH.parser) {
+		$.ajax({url: "lib/highlight/parser/" + SH.parser + ".js"
+			,	dataType: "text"
+			,	success: (parser) => {
+					eval(parser);
+					
+					let name = SH.style;
+					let isDark = false;
+					if (name.endsWith("-dark") || (name.indexOf("-dark-") > 0)) {
+						isDark = true;
+					} else if (name.endsWith("?dark")) {
+						isDark = true;
+						name = name.split("?")[0];
+					}
+					
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?250419"
+						,	dataType: "text"
+						,	success: (style) => {
+								// 문법 하이라이트 테마에 따른 커서 색상 추가
+								SmiEditor.highlightCss
+									= ".hljs { color: unset; }\n"
+									+ ".hold textarea { caret-color: " + (isDark ? "#fff" : "#000") + "; }\n"
+									+ style
+									+ ".hljs-sync { opacity: " + SH.sync + " }\n";
+									SmiEditor.refreshHighlight(editors);
+							}
+					});
+				}
+		});
+	} else {
+		SmiEditor.afterRefreshHighlight(editors);
+	}
+}
+SmiEditor.refreshHighlight = (editors) => {
 	let $style = $("#styleHighlight");
 	if (!$style.length) {
 		$("head").append($style = $("<style id='styleHighlight'>"));
 	}
 	$style.html(SmiEditor.highlightCss);
+	
+	SmiEditor.afterRefreshHighlight(editors);
+}
+SmiEditor.afterRefreshHighlight = (editors) => {
+	if (!editors) return;
+	for (let i = 0; i < editors.length; i++) {
+		editors[i].refreshHighlight();
+	}
 }
 SmiEditor.prototype.refreshHighlight = function() {
 	if (SmiEditor.useHighlight) {
@@ -2240,7 +2305,7 @@ SmiEditor.Finder = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250405", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?250419", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2400,7 +2465,7 @@ SmiEditor.Finder = {
 			// 딜레이 안 주면 화면 갱신 안 된 상태로 뜰 수 있음
 			setTimeout(() => {
 				binder.sendMsg("finder", msg);
-			}, 1);
+			}, 100);
 		}
 
 		// 찾기/바꾸기 창 항상 위에
@@ -2423,7 +2488,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250405", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?250419", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2455,7 +2520,16 @@ SmiEditor.Viewer = {
 							return 0;
 						});
 						for (let i = 0; i < holds.length; i++) {
-							lines.push(holds[i].lines);
+							if (holds[i].style) {
+								// 홀드 스타일 있을 경우 넣어줌
+								const holdLines = JSON.parse(JSON.stringify(holds[i].lines));
+								for (let j = 0; j < holdLines.length; j++) {
+									holdLines[j].TEXT = holds[i].style + holdLines[j].TEXT; // 닫는 태그는 그냥 브라우저한테 맡김
+								}
+								lines.push(holdLines);
+							} else {
+								lines.push(holds[i].lines);
+							}
 						}
 					} else {
 						// 홀드 기능 개발 전 코드 일단은 유지
@@ -2473,7 +2547,7 @@ SmiEditor.Viewer = {
 SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250405";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250419";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2486,7 +2560,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250405", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?250419", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

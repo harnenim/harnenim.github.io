@@ -104,6 +104,12 @@ window.Tab = function(text, path) {
 		hold.afterChangeSaved(hold.isSaved());
 		SmiEditor.Viewer.refresh();
 	});
+	
+	this.area.on("click", ".btn-hold-style", function(e) {
+		const hold = $(this).data("hold");
+		hold.styleArea.show();
+		hold.inputPreset.focus();
+	});
 };
 Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	if (!info) {
@@ -119,19 +125,62 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	hold.selector.append($("<div class='hold-name'>").append($("<span>").text(hold.name = hold.savedName = info.name)));
 	hold.selector.attr({ title: hold.name });
 	hold.owner = this;
-	hold.pos = hold.savedPos = info.pos;
+	hold.pos   = hold.savedPos   = info.pos;
+	hold.style = hold.savedStyle = (info.style ? info.style : "");
 	hold.tempSavedText = info.text;
 	hold.updateTimeRange();
+	
 	if (isMain) {
 		hold.selector.addClass("selected");
+		
 	} else {
 		const btnArea = $("<div class='area-btn-hold'>");
 		hold.selector.append(btnArea);
-		btnArea.append($("<button type='button' class='btn-hold-remove'>"));
-		btnArea.append($("<button type='button' class='btn-hold-upper'>"));
-		btnArea.append($("<button type='button' class='btn-hold-lower'>"));
-		hold.area.hide();
+		btnArea.append($("<button type='button' class='btn-hold-remove' title='삭제'>"));
+		btnArea.append($("<button type='button' class='btn-hold-upper'  title='위로(Ctrl+Alt+↑)'>"));
+		btnArea.append($("<button type='button' class='btn-hold-lower'  title='아래로(Ctrl+Alt+↓)'>"));
+		// 홀드 생성 직후에 숨기면 스크롤바 렌더링이 문제 생김
+		// 최초 로딩 시 메인 홀드만 보이는 상태에서 사용상 문제는 없음
+		//hold.area.hide();
+		
+		hold.area.append($("<button type='button' class='btn-hold-style' title='홀드 공통 스타일 설정'>").data({ hold: hold }));
+		hold.area.append(hold.styleArea = $("<div class='hold-style-area'>"));
+		const area = $("<div>");
+		hold.styleArea.append(area);
+		
+		hold.inputPreset = $("<input type='text' spellcheck='false' class='input-hold-preset' placeholder='홀드 공통 스타일 태그 입력' />");
+		const inputEnd = $("<input type='text' spellcheck=false' class='input-hold-preset-end' placeholder='종료 태그는 자동으로 생성됩니다.' disabled />");
+		const btnClose = $("<button type='button' class='btn-close-preset'>");
+		area.append(hold.inputPreset).append(inputEnd).append(btnClose);
+		
+		hold.inputPreset.on("input propertychange", function() {
+			hold.style = $(this).val();
+			hold.afterChangeSaved(hold.isSaved());
+
+			let presetEnd = "";
+			let tags = hold.style.split("<");
+			for (let j = 1; j < tags.length; j++) {
+				const tag = tags[j];
+				if (tag.indexOf(">") > 0) {
+					const inTag = tag.substring(0, tag.indexOf(">"));
+					const tagName = inTag.split(" ")[0].split("\t")[0];
+					presetEnd = "</" + tagName + ">" + presetEnd;
+				}
+			}
+			inputEnd.val(presetEnd);
+		}).on("keydown", function(e) {
+			if (e.keyCode == 27 // Esc
+			 || e.keyCode == 13 // Enter
+			) {
+				btnClose.click();
+			}
+		}).val(hold.style).trigger("input");
+		
+		btnClose.on("click", function() {
+			hold.styleArea.hide();
+		});
 	}
+	
 	this.holdArea.append(hold.area);
 	this.updateHoldSelector();
 	if (asActive) {
@@ -387,7 +436,10 @@ Tab.prototype.isSaved = function() {
 }
 
 SmiEditor.prototype.isSaved = function() {
-	return (this.name == this.savedName) && (this.pos == this.savedPos) && (this.saved == this.input.val());
+	return (this.savedName  == this.name )
+		&& (this.savedPos   == this.pos  )
+		&& (this.savedStyle == this.style)
+		&& (this.saved == this.input.val());
 };
 SmiEditor.prototype.onChangeSaved = function(saved) {
 	// 홀드 저장 여부 표시
@@ -835,7 +887,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?250405"
+		$.ajax({url: "lib/SmiEditor.color.css?250419"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -857,7 +909,7 @@ function setSetting(setting, initial=false) {
 		});
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250405"
+		$.ajax({url: "lib/SmiEditor.size.css?250419"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -882,51 +934,19 @@ function setSetting(setting, initial=false) {
 	}
 	if (initial || (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight))) {
 		// 문법 하이라이트 양식 바뀌었을 때만 재생성
-		function afterLoadHighlight() {
-			SmiEditor.refreshHighlight();
-			for (let i = 0; i < tabs.length; i++) {
-				for (let j = 0; j < tabs[i].holds.length; j++) {
-					tabs[i].holds[j].refreshHighlight();
-				}
-			}
-		}
 		if (setting.useHighlight == false) {
-			setting.highlight = { parser: "", style: eclipse };
+			setting.highlight = { parser: "", style: "eclipse" };
 			delete(setting.useHighlight);
 		} else if (setting.useHighlight) {
 			delete(setting.useHighlight);
 		}
-		if (setting.highlight.parser && setting.highlight.style) {
-			$.ajax({url: "lib/highlight/parser/" + setting.highlight.parser + ".js"
-				,	dataType: "text"
-				,	success: (parser) => {
-						eval(parser);
-						
-						let name = setting.highlight.style;
-						let isDark = false;
-						if (name.endsWith("-dark") || (name.indexOf("-dark-") > 0)) {
-							isDark = true;
-						} else if (name.endsWith("?dark")) {
-							isDark = true;
-							name = name.split("?")[0];
-						}
-						
-						$.ajax({url: "lib/highlight/styles/" + name + ".css?250405"
-							,	dataType: "text"
-							,	success: (style) => {
-									// 문법 하이라이트 테마에 따른 커서 색상 추가
-									SmiEditor.highlightCss
-										= ".hljs { color: unset; }\n"
-										+ ".hold textarea { caret-color: " + (isDark ? "#fff" : "#000") + "; }\n"
-										+ style;
-									afterLoadHighlight();
-								}
-						});
-					}
-			});
-		} else {
-			afterLoadHighlight();
+		const editors = [];
+		for (let i = 0; i < tabs.length; i++) {
+			for (let j = 0; j < tabs[i].holds.length; j++) {
+				editors.push(tabs[i].holds[j]);
+			}
 		}
+		SmiEditor.setHighlight(setting.highlight, editors);
 	}
 	{
 		if (setting.sync.kLimit == undefined) {
@@ -1019,7 +1039,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250405", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250419", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -1051,7 +1071,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250405";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250419";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1189,7 +1209,10 @@ function saveFile(asNew, isExport) {
 			hold.scrollToCursor(lineNo);
 		});
 	} else {
-		binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
+		// replaceBeforeSave 이후 렌더링 작업이 덜 끝났을 수 있음
+		setTimeout(function() {
+			binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
+		}, 100);
 	}
 }
 
@@ -1209,6 +1232,7 @@ function afterSaveFile(path) {
 		hold.saved = hold.input.val();
 		hold.savedPos = hold.pos;
 		hold.savedName = hold.name;
+		hold.savedStyle = hold.style;
 	}
 	currentTab.path = path;
 	const title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
