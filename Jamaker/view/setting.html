@@ -3,65 +3,82 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?250419"></script>
-<script src="lib/popup.js?250419"></script>
-<script src="lib/History.js?250419"></script>
-<script src="lib/SmiEditor.js?250419"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?250419" />
-<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250419" />
+<script src="lib/jquery-3.2.1.min.js?250426"></script>
+<script src="lib/popup.js?250426"></script>
+<script src="lib/History.js?250426"></script>
+<script src="lib/SmiEditor.js?250426"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?250426" />
+<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250426" />
 <script>
 windowName = "setting";
 
-function show(index) {
-	$("#settingNav > a.selected").removeClass("selected");
-	$("#settingNav > a:eq(" + index + ")").addClass("selected");
-	$("#settingArea > form.selected").removeClass("selected");
-	opened = $("#settingArea > form:eq(" + index + ")").addClass("selected").attr("id");
-	opener.setting.show = index;
-}
-let opened = null;
-const submitFuncs = {};
-const refreshFuncs = {};
-let refreshTableCommand = () => {};
+let styleColorAppendPreset = "";
+_setColor = setColor;
+setColor = function(color) {
+	_setColor(color);
 
-const saved = {};
-function checkSaved(key, ok, no) {
-	if (saved[key].status) {
-		if (ok) ok();
-		return;
+	let preset = styleColorAppendPreset;
+	for (let name in color) {
+		preset = preset.split("[" + name + "]").join(color[name]);
 	}
-	confirm(saved[key].name + " 변경사항이 사라집니다.", ok, no);
-}
-function setSaved(key, status) {
-	const item = saved[key];
-	if (item) {
-		item.status = status;
-	}
-}
-function requestClose(keys) {
-	if (!keys) {
-		keys = [];
-		for (let key in saved) {
-			keys.push(key);
-		}
-	}
-	if (keys.length) {
-		for (let i = 0; i < keys.length; i++) {
-			const key = keys[i];
-			checkSaved(key, () => {
-				requestClose(keys.slice(i + 1));
-			});
-			success = false;
-			break;
-		}
-	} else {
-		window.close();
-	}
+	$("#styleColorAppend").html(preset);;
 }
 
 $(() => {
 	const setting = JSON.parse(JSON.stringify(opener.setting));
 	const oSmiEditor = opener.SmiEditor;
+	
+	styleColorAppendPreset = $("#styleColorAppend").html();
+	setColor(setting.color);
+	
+	// 전역에서 접근 가능해야 함
+	window.show = function(index) {
+		$("#settingNav > a.selected").removeClass("selected");
+		$("#settingNav > a:eq(" + index + ")").addClass("selected");
+		$("#settingArea > form.selected").removeClass("selected");
+		opened = $("#settingArea > form:eq(" + index + ")").addClass("selected").attr("id");
+		// 지역변수 setting도 건드려야 함
+		opener.setting.show = setting.show = index;
+	}
+	let opened = null;
+	const submitFuncs = {};
+	const refreshFuncs = {};
+	let refreshTableCommand = () => {};
+
+	const saved = {};
+	function checkSaved(key, ok, no) {
+		if (saved[key].status) {
+			if (ok) ok();
+			return;
+		}
+		confirm(saved[key].name + " 변경사항이 사라집니다.", ok, no);
+	}
+	function setSaved(key, status) {
+		const item = saved[key];
+		if (item) {
+			item.status = status;
+		}
+	}
+	function requestClose(keys) {
+		if (!keys) {
+			keys = [];
+			for (let key in saved) {
+				keys.push(key);
+			}
+		}
+		if (keys.length) {
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i];
+				checkSaved(key, () => {
+					requestClose(keys.slice(i + 1));
+				});
+				success = false;
+				break;
+			}
+		} else {
+			window.close();
+		}
+	}
 	
 	function refresh(form, setting) {
 		form.find("input[type=text][name],input[type=number][name],input[type=color][name],input[type=range][name],textarea[name]").each((_, el) => {
@@ -245,6 +262,7 @@ $(() => {
 			setting.sync.frame  = $("input[name=sync_frame]" ).prop("checked");
 			setting.sync.kframe = $("input[name=sync_kframe]").prop("checked");
 			setting.sync.kLimit = Number($("input[name=sync_kLimit]").val());
+			setting.sync.holds  = $("input[name=sync_holds]").prop("checked");
 			opener.setSetting(setting);
 			opener.saveSetting();
 		};
@@ -784,6 +802,7 @@ $(() => {
 			setSaved("style", true);
 			opener.setSetting(setting);
 			opener.saveSetting();
+			setColor(setting.color);
 		};
 	}
 	
@@ -1009,9 +1028,6 @@ $(() => {
 * {
 	font-size: 14px;
 }
-body {
-	background: #f0f0f0;
-}
 textarea {
 	width: 100%;
 	height: 100px;
@@ -1022,7 +1038,6 @@ textarea {
 input[type=number] { width: 50px; }
 
 fieldset {
-	border-color: #888;
 	padding: 8px;
 	margin: 8px 0;
 }
@@ -1046,7 +1061,6 @@ fieldset li { margin-bottom: 2px; }
 	right: 8px;
 	bottom: 48px;
 	overflow-y: scroll;
-	background: #f8f8f8;
 	border: 1px solid #888;
 	border-top: 0;
 	padding: 8px;
@@ -1076,20 +1090,11 @@ fieldset li { margin-bottom: 2px; }
 	margin: 0 -1px -1px 0;
 	border: 1px solid #888;
 	border-radius: 6px 6px 0 0;
-	background: #eee;
-	color: #000;
 	font-size: 16px;
 	text-decoration: none;
 	height: 32px;
 	line-height: 32px;
 	padding: 0 8px;
-}
-#settingNav > a.selected {
-	background: #f8f8f8;
-	border-bottom-color: #f8f8f8;
-}
-#settingNav > a:hover {
-	background: #f8f8f8;
 }
 #settingArea > form {
 	display: none;
@@ -1112,7 +1117,6 @@ fieldset li { margin-bottom: 2px; }
 }
 #fieldWindow > fieldset:hover {
 	z-index: 9999;
-	background: #f8f8f8;
 }
 #fieldWindow > fieldset span {
 	display: inline-block;
@@ -1133,12 +1137,6 @@ fieldset li { margin-bottom: 2px; }
 #tableCommand tr {
 	height: 20px;
 }
-#tableCommand th {
-	background: #e1e1e1;
-}
-#tableCommand th.not-used {
-	background: #fff;
-}
 #tableCommand th.used,
 #tableCommand th.not-used {
 	cursor: pointer;
@@ -1150,21 +1148,8 @@ fieldset li { margin-bottom: 2px; }
 	text-overflow: ellipsis;
 	cursor: pointer;
 }
-#tableCommand th.not-used:hover,
-#tableCommand td:hover {
-	background: #ff8;
-}
 #tableCommand td.fixed {
-	background: #f88;
 	cursor: default;
-}
-#tableCommand th.used,
-#tableCommand td.used {
-	background: #8ff;
-}
-#tableCommand th.used:hover,
-#tableCommand td.used:hover {
-	background: #cfc;
 }
 #areaFunctions li {
 	margin: 8px 0;
@@ -1172,9 +1157,6 @@ fieldset li { margin-bottom: 2px; }
 	border-radius: 8px;
 	padding: 4px;
 	cursor: pointer;
-}
-#areaFunctions li:hover {
-	background: #ffd;
 }
 #areaFunctions h4 {
 	margin-bottom: 4px;
@@ -1287,6 +1269,79 @@ fieldset ol button,
 	resize: vertical;
 }
 </style>
+<style id="styleColor"></style>
+<style id="styleColorAppend">
+body {
+	background: [selector];
+}
+#settingArea fieldset {
+	border-color: [tabBorder];
+}
+
+#settingArea,
+#applyArea button {
+	background: [background];
+	color: [text];
+}
+#settingNav > a {
+	background: [tab];
+	color: [text];
+}
+#settingNav > a.selected {
+	background: [background];
+	border-bottom-color: [background];
+}
+#settingNav > a:hover {
+	background: [background];
+}
+
+#fieldWindow > fieldset:hover {
+	background: [hover]88;
+}
+#tableCommand {
+	color: #000;
+}
+#tableCommand th {
+	background: #e1e1e1;
+}
+#tableCommand th.not-used {
+	background: #fff;
+}
+#tableCommand th.not-used:hover,
+#tableCommand td:hover {
+	background: #ff8;
+}
+#tableCommand td.fixed {
+	background: #f88;
+}
+#tableCommand th.used,
+#tableCommand td.used {
+	background: #8ff;
+}
+#tableCommand th.used:hover,
+#tableCommand td.used:hover {
+	background: #cfc;
+}
+#areaFunctions li {
+	border-color: [tab];
+}
+#areaFunctions li:hover {
+	/*
+	background: #ffd;
+	*/
+	background: [hover];
+}
+
+#style_color_preset li {
+	border-color: [tabBorder];
+}
+#style_color_preset li:hover {
+	background: [hover];
+}
+#areaNewFile .highlight-textarea {
+	border-color: [tabBorder];
+}
+</style>
 </head>
 <body>
 
@@ -1347,11 +1402,14 @@ fieldset ol button,
 		<br />
 		<label><input type="checkbox" name="sync_frame" /> 프레임 단위 싱크 보정</label><br />
 		<p>※ 프레임 정보를 가져오지 못했을 경우 FPS를 기준으로 프레임 단위 싱크로 보정이 들어갑니다.<br />
-			　가변 프레임 영상의 경우 문제가 생길 수 있습니다. 
+			　가변 프레임 영상의 경우 문제가 생길 수 있습니다.
 		</p>
 		<br />
 		<label>키프레임을 신뢰할 수 있는 영상에 대해 <input type="number" name="sync_kLimit" />ms 범위에서 화면 싱크를 키프레임에 맞도록 보정</label><br />
 		<label><input type="checkbox" name="sync_kframe" /> 키프레임을 신뢰할 수 있는 영상에 대해 자동으로 화면 싱크 처리</label><br />
+		<br />
+		<label><input type="checkbox" name="sync_holds" /> 싱크 일괄 이동 시 다른 홀드에도 적용</label><br />
+		<p>※ 블록지정 영역에 대한 일괄 싱크 입력에는 적용되지 않습니다.</p>
 	</form>
 	
 	<form id="cmd">
@@ -1484,7 +1542,7 @@ fieldset ol button,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?250419")</h4>
+					<h4>openAddon("~~.html?250426")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1494,11 +1552,12 @@ fieldset ol button,
 	<form id="ac">
 		<p>
 			줄 단위로 자동완성 문자열을 설정할 수 있습니다.<br />
-			특수문자에 대해선, '|'를 이용해 입력값과 출력값이 다르게 설정할 수 있습니다. 
+			'|'를 이용해 입력값과 출력값이 다르게 설정할 수 있습니다. 
 		</p>
 		<br />
-		<label>일반 문자열 (단어 입력 중 Ctrl+스페이스바)
-			<textarea name="autoComplete_0_1"  spellcheck="false"></textarea>
+		<label>일반 문자열 (단어 입력 중 Ctrl+스페이스바 혹은 Tab키)<br />
+			이곳에 입력한 값은 맞춤법 검사기 등을 사용할 때 예외처리에도 사용됩니다.
+			<textarea name="autoComplete_0_1"   spellcheck="false"></textarea>
 		</label>
 		<label>@
 			<textarea name="autoComplete_50_1"  spellcheck="false"></textarea>

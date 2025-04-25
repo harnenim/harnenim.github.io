@@ -343,7 +343,7 @@ Tab.prototype.selectLastHold = function() {
 }
 Tab.prototype.replaceBeforeSave = function() {
 	for (let i = 0; i < this.holds.length; i++) {
-		let text = this.holds[i].text = this.holds[i].input.val(); // .text 동기화 실패 가능성 고려, 현재 값 다시 불러옴
+		let text = this.holds[i].input.val(); // .text 동기화 실패 가능성 고려, 현재 값 다시 불러옴
 		let changed = false;
 		
 		// 커서 기준 3개로 나눠서 치환
@@ -887,7 +887,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?250419"
+		$.ajax({url: "lib/SmiEditor.color.css?250426"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -907,9 +907,18 @@ function setSetting(setting, initial=false) {
 					$style.html(preset);
 				}
 		});
+		
+		// 찾기/바꾸기 내재화했을 경우
+		if (SmiEditor.Finder
+		 && SmiEditor.Finder.window
+		 && SmiEditor.Finder.window.iframe
+		 && SmiEditor.Finder.window.iframe.contentWindow
+		 && SmiEditor.Finder.window.iframe.contentWindow.setColor) {
+			SmiEditor.Finder.window.iframe.contentWindow.setColor(setting.color);
+		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250419"
+		$.ajax({url: "lib/SmiEditor.size.css?250426"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -931,6 +940,23 @@ function setSetting(setting, initial=false) {
 					}
 				}
 		});
+		
+		// 찾기/바꾸기 내재화했을 경우
+		if (SmiEditor.Finder
+		 && SmiEditor.Finder.window
+		 && SmiEditor.Finder.window.iframe
+		 && SmiEditor.Finder.window.iframe.contentWindow
+		 && SmiEditor.Finder.window.iframe.contentWindow.setSize) {
+			SmiEditor.Finder.window.iframe.contentWindow.setSize(setting.size);
+			const w = 440 * setting.size;
+			const h = 220 * setting.size;
+			SmiEditor.Finder.window.frame.css({
+					top: (window.innerHeight - h) / 2
+				,	left: (window.innerWidth - w) / 2
+				,	width: w
+				,	height: h
+			});
+		}
 	}
 	if (initial || (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight))) {
 		// 문법 하이라이트 양식 바뀌었을 때만 재생성
@@ -1039,7 +1065,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250419", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250426", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, setting.window.x + (40 * DPI)
 			, setting.window.y + (40 * DPI)
@@ -1071,7 +1097,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250419";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250426";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1209,10 +1235,7 @@ function saveFile(asNew, isExport) {
 			hold.scrollToCursor(lineNo);
 		});
 	} else {
-		// replaceBeforeSave 이후 렌더링 작업이 덜 끝났을 수 있음
-		setTimeout(function() {
-			binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
-		}, 100);
+		binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
 	}
 }
 

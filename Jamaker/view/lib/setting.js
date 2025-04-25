@@ -41,7 +41,7 @@ let checkVersion;
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.04.19.v1"
+{	version: "2025.04.26.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -101,6 +101,7 @@ window.DEFAULT_SETTING =
 	,	frame: true
 	,	kframe: false
 	,	kLimit: 200
+	,	holds: true
 	}
 ,	command:
 	{	fn: // F1~F12: pqrstuvwxyz{
@@ -188,7 +189,7 @@ window.DEFAULT_SETTING =
 		,	'0': '/* 색상태그 종료 */\n' + 'editor.inputText("</font>")'
 		,	'D': '/* 줄 삭제 */\n' + 'editor.deleteLine();'
 		,	'M': '/* 화면 싱크 매니저 실행 */\n' + 'openAddon("SyncManager");'
-		,	'Q': '/* 현재 위치 재생 */\n' + 'editor.moveToSync();'
+		,	'Q': '/* 현재 위치 재생 */\n' + 'editor.moveToSync(-2000);'
 		}
 	,	withAlts:
 		{	't': '/* 일괄 싱크 입력 */\n' + 'editor.reSyncPrompt();'
@@ -226,6 +227,10 @@ window.DEFAULT_SETTING =
 	{	"0" : ['', [
 			'fade="in"'
 		,	'fade="out"'
+		,	'ㄹ|fade="in"'
+		,	'ㄹ|fade="out"'
+		,	'typing="keyboard"'
+		,	'ㅅ|typing="keyboard"'
 		,	'미노프스키 입자'
 		,	'아스티카시아 학원'
 		]]
@@ -247,6 +252,8 @@ window.DEFAULT_SETTING =
 			'<br>'
 		,	'<RUBY>쓰기<RT><RP>(</RP>읽기<RP>)</RP></RT></RUBY>'
 		,	'<font color="#cccccc">'
+		,	'<font fade="in">'
+		,	'<font keyboard="typing">'
 		]]
 	,	"190": ['>', ['>>>|…']]
 	}

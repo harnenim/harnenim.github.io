@@ -23,6 +23,27 @@ window.Combine = {
 	
 	const LOG = false;
 	
+	// 다중 결합에 대해 중간 싱크 처리를 위한 부분
+	Subtitle.SyncType.combinedNormal = 4;
+	Subtitle.SyncType.combinedFrame  = 5;
+	Subtitle.SyncType.combinedInner  = 6;
+	Subtitle.Smi.TypeParser[Subtitle.SyncType.combinedNormal] = "\t\t";
+	Subtitle.Smi.TypeParser[Subtitle.SyncType.combinedFrame] = " \t\t";
+	Subtitle.Smi.TypeParser[Subtitle.SyncType.combinedInner] = "\t\t\t";
+	Subtitle.Smi._getSyncType = Subtitle.Smi.getSyncType;
+	Subtitle.Smi.getSyncType = function(syncLine) {
+		if (syncLine.endsWith("\t\t>")) {
+			switch (syncLine[syncLine.length - 4]) {
+				case '\t':
+					return Subtitle.SyncType.combinedInner;
+				case ' ':
+					return Subtitle.SyncType.combinedFrame;
+			}
+			return Subtitle.SyncType.combinedNormal;
+		}
+		return Subtitle.Smi._getSyncType(syncLine);
+	}
+	
 	if (!window.Line) {
 		// SmiEditor의 Line에서 렌더링 기능 빼고 가져옴
 		window.Line = function(text="", sync=0, type=TYPE.TEXT) {
@@ -657,12 +678,10 @@ window.Combine = {
 				}
 				if (line[ETIME] < 99999999) {
 					let syncLine = getSyncLine(lastSync = line[ETIME], line[ETYPE]);
-					/* 반영해도 되는지 검토 필요
-					if (i < group.lines.length - 1) {
-						// 결합 시 임시로 중간 싱크로 처리, 이중 결합 시 그룹화
+					if (i < group.lines.length - 1 && !syncLine.endsWith("\t\t>")) {
+						// 결합 시 임시 중간 싱크로 처리, 다중 결합 시 그룹화
 						syncLine = syncLine.substring(0, syncLine.length - 1) + "\t\t>";
 					}
-					*/
 					lines.push(syncLine);
 				} else {
 					lastSync = 0;
@@ -758,7 +777,8 @@ if (Subtitle && Subtitle.SmiFile) {
 		let logs = [];
 		let originBody = [];
 		
-		const main = new Subtitle.SmiFile(origHolds[0].text);
+		// .text 동기화 안 끝났을 가능성 고려, 현재 값 다시 불러옴
+		const main = new Subtitle.SmiFile(origHolds[0].input ? origHolds[0].input.val() : origHolds[0].text);
 		if (main.isWithSplit()) { // 메인 홀드 이외에도 지원이 필요한가...?
 			// 대사 사이 1프레임 공백 싱크 생성
 			const body = main.body;
@@ -820,7 +840,8 @@ if (Subtitle && Subtitle.SmiFile) {
 			const imports = [];
 			for (let hi = 0; hi < holdsWithoutMain.length; hi++) {
 				const hold = holdsWithoutMain[hi];
-				let text = hold.text;
+				const holdText = hold.input ? hold.input.val() : hold.text; // .text 동기화 안 끝났을 가능성 고려, 현재 값 다시 불러옴
+				let text = holdText;
 				if (hold.style) {
 					text = "<!-- Style\n" + hold.style + "\n-->\n" + text;
 				}
@@ -839,7 +860,7 @@ if (Subtitle && Subtitle.SmiFile) {
 				}
 				
 				// 내용물 없으면 내포 홀드 아님
-				const holdBody = new Subtitle.SmiFile(hold.text).body;
+				const holdBody = new Subtitle.SmiFile(holdText).body;
 				if (holdBody.length == 0) {
 					continue;
 				}
@@ -983,7 +1004,8 @@ if (Subtitle && Subtitle.SmiFile) {
 				if (hold.imported) {
 					continue;
 				}
-				let text = hold.text;
+				const holdText = hold.input ? hold.input.val() : hold.text;
+				let text = holdText;
 				if (hold.style) {
 					text = "<!-- Style\n" + hold.style + "\n-->\n" + text;
 				}
@@ -1021,8 +1043,16 @@ if (Subtitle && Subtitle.SmiFile) {
 						mainBegin++;
 					} else {
 						// 중간 싱크는 함께 결합돼야 함
-						while (mainBegin >= 0 && (main.body[mainBegin].syncType == Subtitle.SyncType.inner)) {
-							mainBegin--;
+						while (mainBegin >= 0) {
+							if ((main.body[mainBegin].syncType == Subtitle.SyncType.inner)
+							 || (main.body[mainBegin].syncType == Subtitle.SyncType.combinedNormal)
+							 || (main.body[mainBegin].syncType == Subtitle.SyncType.combinedFrame)
+							 || (main.body[mainBegin].syncType == Subtitle.SyncType.combinedInner)
+							) {
+								mainBegin--;
+							} else {
+								break;
+							}
 						}
 					}
 					
@@ -1063,6 +1093,17 @@ if (Subtitle && Subtitle.SmiFile) {
 				const combined = new Subtitle.SmiFile(((hold.pos < 0) ? Combine.combine(slicedText, combineText) : Combine.combine(combineText, slicedText)).join("\n"));
 				// 원칙상 normalized.result를 다뤄야 맞을 것 같지만...
 				main.body = main.body.slice(0, mainBegin).concat(combined.body).concat(main.body.slice(mainEnd));
+			}
+			// 임시 중간 싱크 정상화
+			for (let i = 0; i < main.body.length; i++) {
+				const smi = main.body[i];
+				if (smi.syncType == Subtitle.SyncType.combinedNormal) {
+					smi.syncType = Subtitle.SyncType.normal;
+				} else if (smi.syncType == Subtitle.SyncType.combinedFrame) {
+					smi.syncType = Subtitle.SyncType.frame;
+				} else if (smi.syncType == Subtitle.SyncType.combinedInner) {
+					smi.syncType = Subtitle.SyncType.inner;
+				}
 			}
 			
 			if (withComment) {

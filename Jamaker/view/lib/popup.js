@@ -1,4 +1,4 @@
-$(document).on("keydown", function(e) {
+﻿$(document).on("keydown", function(e) {
 	switch (e.keyCode) {
 		case 27: { // Esc
 			requestClose();
@@ -97,6 +97,23 @@ if (opener) {
 		opener.afterSaveAddonSetting = afterSave ? afterSave : () => {};
 		opener.binder.saveAddonSetting(name, text);
 	}
+}
+
+function setColor(color) {
+	$.ajax({url: "lib/popup.color.css?250426"
+		,	dataType: "text"
+		,	success: (preset) => {
+				for (let name in color) {
+					preset = preset.split("[" + name + "]").join(color[name]);
+				}
+				
+				let $style = $("#styleColor");
+				if (!$style.length) {
+					$("head").append($style = $("<style id='styleColor'>"));
+				}
+				$style.html(preset);
+			}
+	});
 }
 
 $(() => {

@@ -41,7 +41,9 @@ input, button {
 
 /* 에디터 배경 색 */
 input,
-.highlight-textarea.nonactive > textarea {
+.highlight-textarea.nonactive > textarea,
+.fr > .fhead,
+.fr > .fhead > button {
 	background: [editor];
 }
 /* 기본 글씨 색 */
@@ -52,6 +54,10 @@ body, input, button,
 }
 .hljs-zw {
 	border-color: [text];
+}
+/* 찾기/바꾸기 창 그림자 */
+.window-frame {
+	box-shadow: 0 0 4px 4px [text]22;
 }
 
 /* 버튼 활성 색 */
