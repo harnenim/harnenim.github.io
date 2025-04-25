@@ -1,4 +1,36 @@
-[ { "version": "2025.04.19"
+[ { "version": "2025.04.26"
+  , "comment":
+    [ "찾기/바꾸기 창 팝업에서 내부로 변경"
+    , "찾기 및 설정창에 색상 설정 적용"
+    , "일반 문자열 자동완성 Tab키 지원"
+    , "맞춤법 검사기 등 외부검색 시 고유명사 예외처리"
+    , "'<' 입력 시 자동완성에 닫는 태그 자동 추가"
+    , "다중 홀드 결합 시 높이 고정 보완"
+    , "싱크 일괄 이동(Ctrl/Alt+F5)에 대해 다중 홀드 처리 지원"
+    , "자동 싱크 계산기 start_time 문제 보완"
+    ]
+  , "files":
+    [ "view/addon/ExtSubmit.html"
+    , "view/lib/AutoCompleteTextarea.js"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/Frame.js"
+    , "view/lib/Frame.css"
+    , "view/lib/popup.js"
+    , "view/lib/popup.color.css"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.color.css"
+    , "view/lib/SubtitleObject.js"
+    , "view/editor.html"
+    , "view/finder.html"
+    , "view/setting.html"
+    , "AutoSyncShift.exe"
+    , "AutoSyncShift.pdb"
+    ]
+  }
+, { "version": "2025.04.19"
   , "comment":
     [ "Ctrl+스페이스바 자동완성 기능 등 추가"
     , "문법 하이라이트 싱크 투명도 등 추가"
