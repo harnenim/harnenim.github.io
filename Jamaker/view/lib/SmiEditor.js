@@ -1881,6 +1881,9 @@ SmiEditor.refreshHighlight = (editors) => {
 }
 SmiEditor.afterRefreshHighlight = (editors) => {
 	if (!editors) return;
+	if (typeof editors == "function") {
+		editors = editors();
+	}
 	for (let i = 0; i < editors.length; i++) {
 		editors[i].refreshHighlight();
 	}
