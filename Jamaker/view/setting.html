@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?250426"></script>
-<script src="lib/popup.js?250426"></script>
-<script src="lib/History.js?250426"></script>
-<script src="lib/SmiEditor.js?250426"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?250426" />
-<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250426" />
+<script src="lib/jquery-3.2.1.min.js?250531"></script>
+<script src="lib/popup.js?250531"></script>
+<script src="lib/History.js?250531"></script>
+<script src="lib/SmiEditor.js?250531"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?250531" />
+<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250531" />
 <script>
 windowName = "setting";
 
@@ -40,6 +40,34 @@ $(() => {
 		// 지역변수 setting도 건드려야 함
 		opener.setting.show = setting.show = index;
 	}
+	$(document).on("keydown", function(e) {
+		if (e.ctrlKey) {
+			switch (e.keyCode) {
+				case 9: {
+					// Ctrl+Tab 탭 전환
+					let index = setting.show;
+					if (e.shiftKey) {
+						index = (index + 7) % 8;
+					} else {
+						index = (index + 1) % 8;
+					}
+					show(index);
+					break;
+				}
+				case 49:
+				case 50:
+				case 51:
+				case 52:
+				case 53:
+				case 54:
+				case 55:
+				case 56: {
+					// Ctrl + 숫자 탭 전환
+					show(e.keyCode - 49);
+				}
+			}
+		}
+	});
 	let opened = null;
 	const submitFuncs = {};
 	const refreshFuncs = {};
@@ -409,6 +437,7 @@ $(() => {
 
 		inputCommandKey.on("keydown", function(e) {
 			e.preventDefault();
+			e.stopPropagation();
 			
 			let name = "";
 			let key = String.fromCharCode(e.keyCode);
@@ -1497,8 +1526,8 @@ body {
 					<h4>editor.insertSync()</h4>
 					<p>싱크를 찍습니다.</p>
 				</li>
-				<li data-input="editor.insertSync(true)">
-					<h4>editor.insertSync(true)</h4>
+				<li data-input="editor.insertSync(1)">
+					<h4>editor.insertSync(1)</h4>
 					<p>화면 싱크를 찍습니다.</p>
 				</li>
 				<li data-input="editor.toggleSyncType()">
@@ -1542,7 +1571,7 @@ body {
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?250426")</h4>
+					<h4>openAddon("~~.html?250531")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>

@@ -37,11 +37,11 @@ let checkVersion;
 	const lastNotifyForCommand = "2024.12.07.v1";
 	const lastNotifyForAutoComplete = "2025.04.19.v1";
 	const lastNotifyForStyle = "2025.03.07.v1";
-	const lastNotifyForMenu = "2024.11.19.v2";
+	const lastNotifyForMenu = "2025.05.30.v2";
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.04.26.v1"
+{	version: "2025.05.31.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -70,7 +70,7 @@ window.DEFAULT_SETTING =
 		,	"니코동 효과(&N)|openAddon('Nico');"
 		,	"ASS 자막으로 변환(&A)|openAddon('ToAss');"
 		,	"재생 속도 조절|openAddon('Speed');"
-		,	"맞춤법 검사기|extSubmit(\"post\", \"https://nara-speller.co.kr/speller/results\", \"text1\");"
+		,	"맞춤법 검사기|extSubmit(\"post\", \"https://nara-speller.co.kr/old_speller/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
 		]
 	,	[	"도움말(&H)"
@@ -79,7 +79,6 @@ window.DEFAULT_SETTING =
 		,	"홀드에 대하여|openHelp('aboutHold')"
 		,	"싱크 표현에 대하여|openHelp('aboutSync')"
 		,	"특수 태그에 대하여|openHelp('aboutTag')"
-		,	"화면 싱크 매니저 도움말|openHelp('SyncManager')"
 		,	"업데이트 확인|openHelp('update')"
 		]
 	]
@@ -106,7 +105,7 @@ window.DEFAULT_SETTING =
 ,	command:
 	{	fn: // F1~F12: pqrstuvwxyz{
 		{	't': '/* 기본 싱크 */\n' + 'editor.insertSync()'
-		,	'u': '/* 화면 싱크 */\n' + 'editor.insertSync(true)'
+		,	'u': '/* 화면 싱크 */\n' + 'editor.insertSync(1)'
 		,	'v': '/* 기본/화면 싱크 토글 */\n' + 'editor.toggleSyncType()'
 		,	'w': '/* 선택 영역 싱크 삭제 */\n' + 'editor.removeSync()'
 		,	'x': '/* 재생/일시정지 */\n' + 'SmiEditor.PlayerAPI.playOrPause()'
@@ -126,10 +125,13 @@ window.DEFAULT_SETTING =
 			   + 'let text = editor.getText();\n'
 			   + 'let lines = text.text.split("\\n");\n'
 			   + 'let lineNo = text.text.substring(0, text.selection[0]).split("\\n").length - 1;\n'
-			   + '// 현재 싱크 맨 윗줄 찾기\n'
+			   + '// 현재 싱크 맨 윗줄 찾기 (공백 줄이어도 끊음)\n'
 			   + 'let syncLineNo = lineNo;\n'
 			   + 'while (syncLineNo >= 0) {\n'
-			   + '	if (lines[syncLineNo].substring(0, 6).toUpperCase() == "<SYNC ") {\n'
+			   + '	const line = lines[syncLineNo].trim();\n'
+			   + '	if (line.length == 0\n'
+			   + '	 || line == "&nbsp"\n'
+			   + '	 || line.substring(0, 6).toUpperCase() == "<SYNC ") {\n'
 			   + '		break;\n'
 			   + '	}\n'
 			   + '	syncLineNo--;\n'
@@ -195,7 +197,7 @@ window.DEFAULT_SETTING =
 		{	't': '/* 일괄 싱크 입력 */\n' + 'editor.reSyncPrompt();'
 		,	'1': '/* 맞춤법 검사기 */\n'
 			   + 'let text = editor.getText();\n'
-			   + 'extSubmit("post", "https://nara-speller.co.kr/speller/results", "text1");'
+			   + 'extSubmit("post", "https://nara-speller.co.kr/old_speller/results", "text1");'
 		,	'2': '/* 국어사전 */\n'
 			   + 'let text = editor.getText();\n'
 			   + 'extSubmit("get", "https://ko.dict.naver.com/%23/search", "query");'
@@ -276,7 +278,7 @@ window.DEFAULT_SETTING =
 	, { from: "신 났"     , to: "신났"    , use: true }
 	
 	, { from: "지구 상"   , to: "지구상"  , use: true } // 2017년 맞춤법 변경사항
-	, { from: "지도 상"   , to: "지도상"  , use: false } // '지구 상공'에 과잉 보정되는 경우
+	, { from: "지도 상"   , to: "지도상"  , use: false } // '지구 상공'에 과잉 보정되는 경우 있음
 	, { from: "직선 상"   , to: "직선상"  , use: true }
 	, { from: "궤도 상"   , to: "궤도상"  , use: true }
 	, { from: "인터넷 상" , to: "인터넷상", use: true }
@@ -287,6 +289,13 @@ window.DEFAULT_SETTING =
 	, { from: "맥주있"    , to: "비어있"  , use: false }
 	, { from: "터키"      , to: "튀르키예", use: false }
 	, { from: "켄튀르키예", to: "켄터키"  , use: false }
+	
+	, { from: "ㅇ벗", to: "없"  , use: true }
+	, { from: "ㅇ낳", to: "않"  , use: true }
+	, { from: "햇다", to: "했다", use: true }
+	, { from: "햇어", to: "했어", use: true }
+	, { from: "혓다", to: "혔다", use: true }
+	, { from: "혓어", to: "혔어", use: true }
 	]
 ,	tempSave: 300 // 임시 저장 주기 설정 현재 만들지 않음
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로

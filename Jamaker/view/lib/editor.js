@@ -435,6 +435,60 @@ Tab.prototype.isSaved = function() {
 	return true;
 }
 
+Tab.prototype.toAss = function() {
+	// Default 설정 있어야 함
+	// Style: Default,맑은 고딕,80,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,4,0,2,64,64,40,1
+	
+	// 각 홀드 헤더에 스타일 설정 있으면 가져오기, 없으면 기본값 넣기
+	// 홀드명이 같은데 스타일이 다른 경우 경고 후 해당 홀드에 번호 붙여서 수정
+	/*
+	 * <!-- Ass-Styles
+	 * 
+	 * -->
+	 */
+	for (let h = 0; h < this.holds.length; h++) {
+		const hold = this.holds[h];
+		const input = hold.body ? hold : new Subtitle.SmiFile(hold.text);
+		const syncs = input.toSync();
+		console.log(syncs);
+		const ass = new Subtitle.AssFile2().fromSync(syncs, hold.name);
+		// 타이핑 효과 등 normalize 필요
+		console.log(ass);
+		/*
+		hold.style = 
+		
+		
+		*/
+	}
+	
+	/*
+	 * SMI-ASS 대응
+	 * 
+	 * 1:0 (보통 이런 경우는 잘 없음
+	 * <Font replace="">SMI 전용 대사</Font>
+	 * 
+	 * 1:1 (이게 일반적)
+	 * <Font ass="\fs100"></Font>공통 대사, ASS만의 스타일 추가
+	 * 
+	 * 1:1에 내용 추가
+	 * <Font ass="\fs100"></Font>공통 대사<Font replace="ASS만의 내용 추가"></Font>
+	 * 
+	 * 1:n (동일 싱크의 ASS 자막 여러 개로 분화)
+	 * <Font add="{\fs100}추가 대사"></Font>
+	 * <Font ass="\fs100"></Font>공통 대사, ASS만의 스타일 추가
+	 * 
+	 * 0:n (SMI에 아예 없는 싱크에 대사 추가)
+	 * 홀드에 산입? 비산입?
+	 * <!-- Ass-Events
+	 * (그대로 가져오기)
+	 * -->
+	 * 
+	 */
+}
+Tab.prototype.getAssText = function() {
+	this.toAss();
+}
+
 SmiEditor.prototype.isSaved = function() {
 	return (this.savedName  == this.name )
 		&& (this.savedPos   == this.pos  )
@@ -477,7 +531,6 @@ SmiEditor.selectTab = function(index=-1) {
 	const tabSelector = $("#tabSelector");
 	if (index < 0) {
 		const selectedTab = tabSelector.find(".selected").data("tab");
-		console.log(selectedTab);
 		if (selectedTab) {
 			// 다음 탭 선택
 			index = (tabs.indexOf(selectedTab) + 1) % tabs.length;
@@ -828,6 +881,38 @@ function init(jsonSetting, isBackup=true) {
 	});
 	
 	SmiEditor.activateKeyEvent();
+
+	// Win+방향키 이벤트 직후 창 위치 초기화
+	const winKeyStatus = [false, false];
+	$(window).on("keydown", function (e) {
+		if (e.keyCode == 91 || e.keyCode == 92) {
+			// WinKey 최우선 처리
+			winKeyStatus[e.keyCode - 91] = true;
+			return;
+		}
+	}).on("keyup", function (e) {
+		if (winKeyStatus[0] || winKeyStatus[1]) {
+			switch (e.keyCode) {
+				case 37: // ←
+				case 38: // ↑
+				case 39: // →
+				{
+					setTimeout(() => {
+						moveWindowsToSetting();
+					}, 1);
+					break;
+				}
+				case 91: {
+					winKeyStatus[0] = false;
+					break;
+				}
+				case 92: {
+					winKeyStatus[1] = false;
+					break;
+				}
+			}
+		}
+	});
 	
 	setSetting(setting, true);
 	SmiEditor.Viewer.open(); // 스타일 세팅 설정 완료 후에 실행
@@ -855,7 +940,7 @@ function setSetting(setting, initial=false) {
 			delete(setting.css);
 		}
 		
-		// 스크롤바 버튼 새로 그려야 함 //- 커서 문제로 현재 미적용...
+		// 스크롤바 버튼 새로 그려야 함
 		let button = "";
 		let disabled = "";
 		{
@@ -887,7 +972,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?250426"
+		$.ajax({url: "lib/SmiEditor.color.css?250531"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -918,7 +1003,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250426"
+		$.ajax({url: "lib/SmiEditor.size.css?250531"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -1069,9 +1154,11 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250426", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250531", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
-			, setting.window.x + (40 * DPI)
+			, (setting.window.x < setting.player.window.x)
+			  ? (setting.window.x + (40 * DPI))
+			  : (setting.window.x + setting.window.width - (840 * DPI))
 			, setting.window.y + (40 * DPI)
 			, 800 * DPI
 			, (600+30) * DPI
@@ -1101,7 +1188,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250426";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250531";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -1225,9 +1312,57 @@ function saveFile(asNew, isExport) {
 	}
 	*/
 	
+	let withAss = false;
+	{
+		const match = /<sami( [^>]*)*>/gi.exec(currentTab.holds[0].text);
+		if (match && match[1]) {
+			const attrs = match[1].toUpperCase().split(" ");
+			for (let i = 0; i < attrs.length; i++) {
+				if (attrs[i] == "ASS") {
+					withAss = true;
+					break;
+				}
+			}
+		}
+	}
+	if (withAss) {
+		const styles = {};
+		for (let i = 1; i < currentTab.holds.length; i++) {
+			const hold = currentTab.holds[i];
+			if (hold.name.indexOf(",") >= 0) {
+				alert("ASS 자막 변환을 하는 경우 홀드명에 ,(쉼표)가 들어갈 수 없습니다.");
+				currentTab.selectHold(hold);
+				return;
+			}
+			if (typeof styles[hold.name] == "string") {
+				if (hold.style != styles[hold.name]) {
+					alert("같은 이름의 홀드끼리 스타일이 일치하지 않습니다.\n임의로 이름을 변경합니다.");
+					for (let j = 1; ; j++) {
+						let holdName = hold.name + j;
+						if (typeof styles[holdName] == "undefined") {
+							hold.selector.find(".hold-name > span").text(hold.owner.holds.indexOf(hold) + "." + (hold.name = holdName));
+							hold.selector.attr({ title: hold.name });
+							hold.afterChangeSaved(hold.isSaved());
+							styles[hold.name] = hold.style;
+							break;
+						}
+					}
+				}
+			} else {
+				styles[hold.name] = hold.style;
+			}
+		}
+		
+		// TODO: ASS 저장용 스타일 지정돼 있는지 확인 및 추가
+	}
+	
 	if (syncError) {
 		confirm("싱크 오류가 있습니다.\n저장하시겠습니까?", function() {
-			binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
+			binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path, true);
+			if (withAss) {
+				currentTab.getAssText();
+//				binder.save(currentTab.getAssText(), assPath, false);
+			}
 			
 		}, function() {
 			const hold = currentTab.holds[syncError[0]];
@@ -1239,7 +1374,11 @@ function saveFile(asNew, isExport) {
 			hold.scrollToCursor(lineNo);
 		});
 	} else {
-		binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
+		binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path, true);
+		if (withAss) {
+			currentTab.getAssText();
+//			binder.save(currentTab.getAssText(), assPath, false);
+		}
 	}
 }
 
@@ -1331,6 +1470,31 @@ function openNewTab(text, path, forVideo) {
 	_for_video_ = forVideo;
 	(tab.th = th).data("tab", tab).click();
 	
+	if (path && path.indexOf(":")) { // 웹버전에선 온전한 파일 경로를 얻지 못해 콜론 없음
+		let withAss = false;
+		{
+			const match = /<sami( [^>]*)*>/gi.exec(text);
+			if (match && match[1]) {
+				const attrs = match[1].toUpperCase().split(" ");
+				for (let i = 0; i < attrs.length; i++) {
+					if (attrs[i] == "ASS") {
+						withAss = true;
+						break;
+					}
+				}
+			}
+		}
+		if (withAss) {
+			let assPath = path + ".ass";
+			if (path.toUpperCase().endsWith(".SMI")) {
+				assPath = path.substring(0, path.length - 4) + ".ass";
+			} else if (path.toUpperCase().endsWith(".SAMI")) {
+				assPath = path.substring(0, path.length - 5) + ".ass";
+			}
+			binder.loadAssFile(assPath, tabs.length - 1);
+		}
+	}
+	
 	return tab;
 }
 // C# 쪽에서 호출
@@ -1340,6 +1504,23 @@ function confirmLoadVideo(path) {
 			binder.loadVideoFile(path);
 		});	
 	}, 1);
+}
+
+// C# 쪽에서 호출
+function loadAssFile(path, text, target=-1) {
+	if (target < 0) {
+		// 탭이 지정 안 된 경우..는 없어야 맞음
+		target = tab;
+	}
+	const currentTab = tabs[target];
+	if (!currentTab) return;
+	
+	const loadedAssFile = new Subtitle.AssFile2(text);
+	console.log(loadedAssFile);
+	
+	// TODO:
+	// SMI->ASS 변환 결과 생성 및 비교
+	// 불일치 부분 확인 및 보정
 }
 
 // C# 쪽에서 호출
