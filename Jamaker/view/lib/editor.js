@@ -1503,22 +1503,25 @@ function setDefault(target, dflt) {
 
 // C# 쪽에서 호출
 function init(jsonSetting, isBackup=true) {
-	{
+	if (!SmiEditor.tabPreset) {
 		const tabPreset = $("#tabPreset");
 		SmiEditor.tabPreset = tabPreset.clone();
 		SmiEditor.tabPreset.attr({ id: null });
 		tabPreset.remove();
-		
+	}
+	if (!SmiEditor.assHoldPreset) {
 		const assHoldPreset = $("#assHoldPreset");
 		SmiEditor.assHoldPreset = assHoldPreset.clone();
 		SmiEditor.assHoldPreset.attr({ id: null });
 		assHoldPreset.remove();
-		
+	}
+	if (!SmiEditor.stylePreset) {
 		const holdStylePreset = $("#holdStylePreset");
 		SmiEditor.stylePreset = holdStylePreset.clone();
 		SmiEditor.stylePreset.attr({ id: null });
 		holdStylePreset.remove();
-		
+	}
+	if (!SmiEditor.assPreset) {
 		const holdAssPreset = $("#holdAssPreset");
 		SmiEditor.assPreset = holdAssPreset.clone();
 		SmiEditor.assPreset.attr({ id: null });
