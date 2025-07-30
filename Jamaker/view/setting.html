@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?250531"></script>
-<script src="lib/popup.js?250531"></script>
-<script src="lib/History.js?250531"></script>
-<script src="lib/SmiEditor.js?250531"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?250531" />
-<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250531" />
+<script src="lib/jquery-3.2.1.min.js?250730"></script>
+<script src="lib/popup.js?250730"></script>
+<script src="lib/History.js?250730"></script>
+<script src="lib/SubtitleObject.js?250730"></script>
+<script src="lib/SmiEditor.js?250730"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?250730" />
+<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?250730" />
 <script>
 windowName = "setting";
 
@@ -811,6 +812,7 @@ $(() => {
 			setting.highlight.enter  = $("input[name=highlight_enter]").prop("checked");
 			setting.highlight.color  = $("input[name=highlight_color]").prop("checked");
 			setting.highlight.sync   = Number($("input[name=highlight_sync]").val());
+			setting.scrollMargin     = $("input[name=scrollMargin]").val();
 			setting.viewer.useAlign  = $("input[name=viewer_useAlign]").prop("checked");
 			setting.viewer.size      = $("input[name=viewer_size]").val();
 			setting.viewer.css       = $("textarea[name=viewer_css]").val();
@@ -1571,7 +1573,7 @@ body {
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?250531")</h4>
+					<h4>openAddon("~~.html?250730")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1652,6 +1654,11 @@ body {
 				</span>
 			</div>
 		</div>
+		<div>
+			<label class="for-withoutSync"><span >커서 이동 시 스크롤 여백</span>
+				<input type="number" name="scrollMargin" step="0.5" />줄
+			</label>
+		</div>
 		<label>UI 배율
 			<select name="size">
 				<option value="0.8" >80%</option>
@@ -1671,7 +1678,7 @@ body {
 			<br />
 		</label>
 		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
-		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기 줄표로 시작할 경우 왼쪽 정렬</label><br />
+		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기/ASS 변환 시 줄표로 시작할 경우 왼쪽 정렬</label><br />
 		<fieldset id="style_color">
 			<legend>색 설정</legend>
 			<fieldset id="style_color_preset">

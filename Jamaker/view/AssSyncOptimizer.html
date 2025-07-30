@@ -4,13 +4,14 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>ASS 싱크 보정기</title>
-	<script src="lib/jquery-3.2.1.min.js?250531"></script>
-	<script src="lib/webview.js?250531"></script>
-	<script src="lib/SubtitleObject.js?250531"></script>
-	<link rel="stylesheet" type="text/css" href="lib/webview.css?250531" />
+	<script src="lib/jquery-3.2.1.min.js?250730"></script>
+	<script src="lib/webview.js?250730"></script>
+	<script src="lib/SubtitleObject.js?250730"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css?250730" />
 	<script>
 let sw = 0;
 let fs = [];
+let aegisubSyncs = [0];
 let HFL = 41.7;
 
 function drop(x, y) {
@@ -80,7 +81,7 @@ function afterLoadFkfFile(buffer) {
 	const fkf = new Int32Array(buffer);
 	const vfsLength = fkf[0];
 	
-	fs = [];
+	Subtitle.video.fs = fs = [];
 	const view = new DataView(buffer.slice(8, 8 + (vfsLength * 4)));
 	for (let i = 0; i < vfsLength; i++) {
 		fs.push(view.getInt32(i * 4, true));
@@ -101,44 +102,53 @@ function optimize() {
 		return;
 	}
 	
-	const ass = new Subtitle.AssFile(origin);
-	for (let i = 0; i < ass.body.length; i++) {
-		const item = ass.body[i];
-		item.start = optimizeSync(smiSync(item.start));
-		item.end   = optimizeSync(smiSync(item.end  ));
+	const ass = new AssFile(origin);
+	const events = ass.getEvents().body;
+	for (let i = 0; i < events.length; i++) {
+		events[i].optimizeSync();
 	}
-	const result = ass.toTxt();
-	$result.val(result);
-}
-function smiSync(assSync) {
-	return assSync * 10 + HFL;
-}
-function optimizeSync(sync) {
-	return Math.floor((findSync(sync) - 15) / 10);
-}
-function findSync(sync, findNear=true, from=0, to=-1) {
-	if (fs.length == 0) return null;
-	if (to < 0) to = fs.length;
-	if (from + 1 == to) {
-		if (to < fs.length) {
-			const dist0 = sync - fs[from];
-			const dist1 = fs[to] - sync;
-			if (dist0 <= dist1) {
-				return (findNear || (dist0 == 0)) ? fs[from] : null;
-			} else {
-				return (findNear || (dist1 == 0)) ? fs[to] : null;
+	
+	// 원래의 스크립트 순서를 기준으로, 시간이 겹치는 걸 기준으로 레이어 재부여
+	{
+		let forLayers = [];
+		for (let i = 0; i < events.length; i++) {
+			let item = events[i];
+			let forLayer = forLayers[item.Layer];
+			if (!forLayer) {
+				forLayers[item.Layer] = forLayer = [];
 			}
-		} else {
-			// 동영상 길이 넘어가서 프레임 정보가 없는 싱크
-			return findNear ? sync : null;
+			forLayer.push(item);
+		}
+		let checkeds = [];
+		for (let l = 0; l < forLayers.length; l++) {
+			let forLayer = forLayers[l];
+			if (!forLayer) continue;
+			for (let i = 0; i < forLayer.length; i++) {
+				const item = forLayer[i];
+				let maxLayer = -1;
+				for (let j = 0; j < checkeds.length; j++) {
+					const checked = checkeds[j];
+					if (item.start < checked.end && checked.start < item.end) {
+						maxLayer = Math.max(maxLayer, checked.Layer);
+					}
+				}
+				item.Layer = maxLayer + 1;
+				checkeds.push(item);
+			}
 		}
 	}
-	const mid = from + Math.floor((to - from) / 2);
-	if (fs[mid] < sync) {
-		return findSync(sync, findNear, mid, to);
-	} else {
-		return findSync(sync, findNear, from, mid);
-	}
+	
+	// 시간 순 정렬 돌리고 시작
+	events.sort((a, b) => {
+		let cmp = a.start - b.start;
+		if (cmp == 0) {
+			cmp = a.end - b.end;
+		}
+		return cmp;
+	});
+	
+	const result = ass.toText();
+	$result.val(result);
 }
 
 function save() {

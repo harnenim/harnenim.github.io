@@ -4,182 +4,371 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저</title>
-	<script src="../lib/jquery-3.2.1.min.js?250531"></script>
-	<script src="../lib/SubtitleObject.js?250531"></script>
-	<script src="../lib/popup.js?250531"></script>
-	<script src="../lib/SmiEditor.js?250531"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250531" />
+	<script src="../lib/jquery-3.2.1.min.js?250730"></script>
+	<script src="../lib/SubtitleObject.js?250730"></script>
+	<script src="../lib/popup.js?250730"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250730" />
 	<script>
 windowName = "addon";
 
 // 초기 상태 기억
-// TODO: 경우에 따라 opener 분리 필요
-const tab = (opener && opener.SmiEditor) ? opener.SmiEditor.selected : null;
-const origin = tab ? tab.getText() : null;
+const tab = opener && opener.tabs && opener.tabs.length ? opener.tabs[opener.tab] : null;
+const origins = [];
 if (tab) {
-	SmiEditor.video = opener.SmiEditor.video;
+	Subtitle.video = opener.Subtitle.video;
 }
+
 const RANGE = 10; // 현재 싱크 전후로 렌더링할 범위
 let mode = 1;
 const M = [null, "", "_", "~"]; // 모드에 따른 파일명 끝 표시
 
 $(() => {
-	if (!origin) {
+	if (!tab) {
 		alert("작업 대상이 없습니다.");
 		window.close();
 		return;
 	}
-	if (!SmiEditor || !SmiEditor.video || !SmiEditor.video.fs || !SmiEditor.video.fs.length) {
-		alert("영상 프레임 정보가 없습니다.");
-		window.close();
-		return;
-	}
-	const fs = SmiEditor.video.fs;
-	const kfs = SmiEditor.video.kfs;
-	
-	origin.tab = tab;
-	origin.lines = tab.lines;
-	origin.start = 0;
-	origin.end = 0;
 
-	// 선택 범위만 작업
-	if (origin.selection[0] != origin.selection[1]) {
-		origin.start = origin.text.substring(0, origin.selection[0]).split("\n").length - 1;
-		origin.end   = origin.text.substring(0, origin.selection[1]).split("\n").length;
-	} else {
-		origin.end = origin.text.split("\n").length;
+    if (!Subtitle.video.fs.length) {
+        alert("동영상 프레임 분석이 끝나야 진행할 수 있습니다.");
+        window.close();
+        return;
+	}
+
+	{
+		// 현재 선택된 홀드 기준
+		const hold = (opener && opener.SmiEditor) ? opener.SmiEditor.selected : null;
+		const origin = hold.getText(true);
+		origin.hold = hold;
+		origin.lines = hold.lines;
+		
+		origin.start = 0;
+		origin.end = 0;
+		
+		if (hold.isAssHold) {
+			// ASS만 작업
+			origin.assBody = origin.hold.assEditor.syncs;
+			origins.push(origin);
+			
+		} else {
+			if (origin.selection[0] != origin.selection[1]) {
+				// 선택 범위만 작업
+				origin.start = origin.text.substring(0, origin.selection[0]).split("\n").length - 1;
+				origin.end   = origin.text.substring(0, origin.selection[1]).split("\n").length;
+				origin.assBody = [];
+				origins.push(origin);
+				
+			} else {
+				// 전체 작업
+			}
+		}
 	}
 	
-	const lines = origin.lines.slice(origin.start, origin.end);
-	for (let i = 0; i < lines.length; i++) {
-		lines[i] = lines[i].TEXT;
+	let count = 0;
+	
+	if (origins.length) {
+		// 선택된 홀드만 작업
+		const origin = origins[0];
+
+		const lines = origin.lines.slice(origin.start, origin.end);
+		for (let i = 0; i < lines.length; i++) {
+			lines[i] = lines[i].TEXT;
+		}
+		origin.smiFile = new Subtitle.SmiFile(lines.join("\n"));
+		count = origin.smiFile.body.length + origin.assBody.length;
+		
+	} else {
+		// 모든 홀드에 대해 작업
+		const holds = tab.holds.slice(0);
+		holds.push(tab.assHold);
+		
+		for (let i = 0; i < holds.length; i++) {
+			const hold = holds[i];
+			const origin = hold.getText(true);
+			origin.hold = hold;
+			origin.lines = hold.lines;
+			
+			origin.start = 0;
+			origin.end = origin.text.split("\n").length;
+			origin.assBody = origin.hold.assEditor ? origin.hold.assEditor.syncs : [];
+			
+			const lines = origin.lines.slice(origin.start, origin.end);
+			for (let i = 0; i < lines.length; i++) {
+				lines[i] = lines[i].TEXT;
+			}
+			origin.smiFile = new Subtitle.SmiFile(lines.join("\n"));
+			count += origin.smiFile.body.length + origin.assBody.length;
+			
+			origins.push(origin);
+		}
 	}
-	origin.file = new Subtitle.SmiFile(lines.join("\n"));
-	if (!origin.file.body.length) {
+
+	if (!count) {
 		alert("작업 대상이 없습니다.");
 		window.close();
 		return;
 	}
+	
+	const fs = Subtitle.video.fs;
+	const kfs = Subtitle.video.kfs;
+	const trustKeyFrame = opener.SmiEditor.trustKeyFrame;
+	const renderFromKeyframe = Subtitle.video.path && Subtitle.video.path.endsWith(".m2ts");
 	
 	const $body = $("body");
 	const $tbody = $("#editor tbody").empty();
 	const $framesStorage = $("<div>"); // 객체 remove 하면 data가 날아가서 여기에 보관함
 	const frameSyncs = [];
-	
-	$("#editor thead").empty().append($("<tr>").append($("<td>")).append($("<td>")).append($("<td>").text(origin.file.header.split("\n").join(""))));
-	$("#editor tfoot").empty().append($("<tr>").append($("<td>")).append($("<td>")).append($("<td>").text(origin.file.footer.split("\n").join(""))));
-	
-	const renderList = [];
-	let renderGroup = { end: -11 };
-	
-	let lastFade = 0;
-	for (let i = 0; i < origin.file.body.length; i++) {
-		const smi = origin.file.body[i];
-		const attrs = smi.toAttr();
-		let fade = 0;
-		for (let j = 0; j < attrs.length; j++) {
-			const attr = attrs[j];
-			if (attr.fade == -1 || attr.fade == 1) {
-				fade = attr.fade;
-				break;
+
+	function setFrames($frames, frameIndex, flag) {
+		for (let j = -RANGE; j < RANGE; j++) {
+			const imgIndex = frameIndex + j;
+			const $img = $("<img>").addClass("frame img" + imgIndex + flag).css({ left: (j * 98) }).data({ index: imgIndex, offset: j });
+			if (trustKeyFrame && Subtitle.findSync(fs[imgIndex], kfs, false)) {
+				$img.addClass("keyframe");
 			}
+			$frames.append($img);
 		}
+	}
+	
+	for (let oi = 0; oi < origins.length; oi++) {
+		const origin = origins[oi];
 		
-		const $tr = $("<tr>").data({ smi: smi });
-		if (smi.syncType == Subtitle.SyncType.frame) {
-			const frameIndex = SmiEditor.findSyncIndex(smi.start, fs);
-			const $frames = $("<div>").addClass("frames");
-			const $sync = $("<td>").addClass("sync").text(fs[frameIndex]);
-			$framesStorage.append($frames);
-			$tr.addClass("fs").append($("<td>")).append($sync).append($("<td>").text(smi.text.split("\n").join("")));
-			$tr.data({ index: frameSyncs.length, $frames: $frames, frameIndex: frameIndex, offset: 0 });
-			$tbody.append($tr);
-			frameSyncs.push($tr);
-			
-			let flag = "";
-			if (fade == 1) {
-				// 페이드인 시작 이미지 밝게
-				flag = "b";
-			} else if (fade == -1) {
-				// 페이드아웃 시작 이미지 어둡게
-				flag = "d";
-			} else if (lastFade == -1) {
-				// 페이드아웃 종료 이미지 밝게
-				flag = "b";
-			} else if (lastFade == 1) {
-				// 페이드인 종료 이미지 어둡게
-				flag = "d";
-			}
-			
-			const begin = (frameIndex < RANGE ? 0 : frameIndex - RANGE);
-			const end = (frameIndex + RANGE > fs.length ? fs.length : frameIndex + RANGE);
-			let lastKf = 0;
-			{
-				const beginSync = fs[begin];
-				for (let j = 0; j < kfs.length; j++) {
-					if (kfs[j] < beginSync) {
-						lastKf = kfs[j];
+		let lastIndex = -1;
+		let count = 0;
+		if (origin.smiFile.body) {
+			// SMI
+			let lastFade = 0;
+			for (let i = 0; i < origin.smiFile.body.length; i++) {
+				const smi = origin.smiFile.body[i];
+				let fade = 0;
+				if (smi.text.indexOf("\\fade(")) {
+					if (smi.text.indexOf("\\fade(0")) {
+						// ASS 페이드인
+						fade = 1;
+					} else {
+						// ASS 페이드아웃
+						fade = -1;
+					}
+				} else {
+					// SMI 페이드 여부 확인
+					const attrs = smi.toAttrs();
+					for (let j = 0; j < attrs.length; j++) {
+						const attr = attrs[j];
+						if (attr.fade == -1 || attr.fade == 1) {
+							fade = attr.fade;
+							break;
+						}
 					}
 				}
+				
+				const $tr = $("<tr>").data({ oi: oi, smi: smi, origin: smi.start });
+				
+				if (smi.syncType == Subtitle.SyncType.frame) {
+					const frameIndex = Subtitle.findSyncIndex(smi.start, fs);
+					const $frames = $("<div>").addClass("frames");
+					const $sync = $("<td>").addClass("sync");
+					setSync($sync, fs[frameIndex]);
+					$framesStorage.append($frames);
+					$tr.addClass("fs").append($("<td>")).append($sync);
+					frameSyncs.push($tr);
+	
+					let flag = "";
+					if (fade == 1) {
+						// 페이드인 시작 이미지 밝게
+						flag = "b";
+					} else if (fade == -1) {
+						// 페이드아웃 시작 이미지 어둡게
+						flag = "d";
+					} else if (lastFade == -1) {
+						// 페이드아웃 종료 이미지 밝게
+						flag = "b";
+					} else if (lastFade == 1) {
+						// 페이드인 종료 이미지 어둡게
+						flag = "d";
+					}
+					$tr.data({ index: (lastIndex = frameSyncs.length - 1), $frames: $frames, frameIndex: frameIndex, offset: 0, flag: flag });
+					count = 0;
+					
+					setFrames($frames, frameIndex, flag);
+	
+				} else {
+					$tr.append($("<td>")).append($("<td>").addClass("sync").text(smi.syncType == Subtitle.SyncType.inner ? "~" : smi.start));
+					$tr.data({ index: lastIndex + (++count / 1000) }); // 1000개를 넘어갈 일은 없을 것
+				}
+				$tbody.append($tr.append($("<td>").text(smi.text.split("\n").join(""))));
+	
+				lastFade = fade;
 			}
-			if ((renderGroup.flag == flag) && (lastKf < fs[renderGroup.end] + 100)) { // 렌더링에 필요한 키프레임이 앞쪽과 100ms 이내로 이어짐
+		}
+		if (origin.assBody) {
+			// ASS
+			$tbody.append($("<tr>").append($("<td>")).append($("<td>")).append($("<td>").text("&nbsp;")).data({ index: lastIndex + (++count / 1000) }));
+			
+			for (let i = 0; i < origin.assBody.length; i++) {
+				const ass = origin.assBody[i];
+				let start = ass.inputStart.val();
+				let end   = ass.inputEnd  .val();
+				
+				{	// start
+					const $tr = $("<tr>").data({ ass: ass, type: "start", origin: start });
+					
+					if (ass.checkStart.prop("checked")) {
+						const frameIndex = Subtitle.findSyncIndex(start, fs);
+						const $frames = $("<div>").addClass("frames");
+						const $sync = $("<td>").addClass("sync");
+						setSync($sync, fs[frameIndex]);
+						$framesStorage.append($frames);
+						$tr.addClass("fs").append($("<td>")).append($sync);
+						frameSyncs.push($tr);
+						
+						// TODO: 페이드는?
+						let flag = "";
+						
+						$tr.data({ index: (lastIndex = frameSyncs.length - 1), $frames: $frames, frameIndex: frameIndex, offset: 0, flag: flag });
+						count = 0;
+						
+						setFrames($frames, frameIndex, flag);
+						
+					} else {
+						$tr.append($("<td>")).append($("<td>").addClass("sync").text(start));
+						$tr.data({ index: lastIndex + (++count / 1000) }); // 1000개를 넘어갈 일은 없을 것
+					}
+					$tbody.append($tr.append($("<td>").attr({ rowspan: 2 }).text(ass.inputText.val())));
+				}
+				
+				{	// end
+					const $tr = $("<tr>").data({ ass: ass, type: "end", origin: end });
+	
+					if (ass.checkEnd.prop("checked")) {
+						const frameIndex = Subtitle.findSyncIndex(end, fs);
+						const $frames = $("<div>").addClass("frames");
+						const $sync = $("<td>").addClass("sync");
+						setSync($sync, fs[frameIndex]);
+						$framesStorage.append($frames);
+						$tr.addClass("fs").append($("<td>")).append($sync);
+						frameSyncs.push($tr);
+						
+						// TODO: 페이드는?
+						let flag = "";
+						
+						$tr.data({ index:(lastIndex = frameSyncs.length - 1), $frames: $frames, frameIndex: frameIndex, offset: 0, flag: flag });
+						count = 0;
+						
+						setFrames($frames, frameIndex, flag);
+						
+					} else {
+						$tr.append($("<td>")).append($("<td>").addClass("sync").text(end));
+						$tr.data({ index: lastIndex + (++count / 1000) }); // 1000개를 넘어갈 일은 없을 것
+					}
+					$tbody.append($tr);
+				}
+			}
+		}
+	}
+	
+	function renderThumbnails() {
+		const datas = [];
+		$tbody.find("tr.fs").each(function() {
+			const $tr = $(this);
+			datas.push($tr.data());
+		});
+		// ASS 지원하면서 정렬 기능이 필요해짐
+		datas.sort((a, b) => {
+			return a.frameIndex - b.frameIndex;
+		});
+		
+		const renderList = [];
+		let renderGroup = { end: -11 };
+		
+		for (let i = 0; i < datas.length; i++) {
+			const data = datas[i];
+
+			const begin = data.offset + (data.frameIndex < RANGE ? 0 : data.frameIndex - RANGE);
+			const end   = data.offset + (data.frameIndex + RANGE > fs.length ? fs.length : data.frameIndex + RANGE);
+			
+			let fs0 = fs[begin];
+			if (renderFromKeyframe) {
+				// 필요한 프레임 바로 앞 키프레임 찾기
+				let index = Subtitle.findSyncIndex(fs0, kfs);
+				if (kfs[index] > fs0) {
+					index--;
+				}
+				fs0 = kfs[index];
+			}
+			
+			if ((renderGroup.flag == data.flag)
+			 && (fs0 < fs[renderGroup.end] + 500) // 렌더링에 필요한 프레임이 앞쪽과 500ms 이내로 이어질 때
+			) {
 				renderGroup.end = end;
+				
 			} else {
 				renderList.push(renderGroup = {
-						flag: flag
-					,	time: fs[begin] + 1 // 반올림되거나 한 경우 고려해서 +1ms
+						flag: data.flag
+					,	time: fs0 + 1 // 반올림되거나 한 경우 고려해서 +1ms
 					,	begin: begin
 					,	end: end
 				});
 			}
-			
-			for (let j = -RANGE; j < RANGE; j++) {
-				const imgIndex = frameIndex + j;
-				$frames.append($("<img>").addClass("frame img" + imgIndex + flag).css({ left: (j * 98) }).data({ index: imgIndex, offset: j }));
+
+			for (let j = data.offset - RANGE; j < data.offset + RANGE; j++) {
+				const imgIndex = data.frameIndex + j;
+				const cName = "img" + imgIndex + data.flag;
+				if (data.$frames.find("." + cName).length == 0) {
+					const $img = $("<img>").addClass("frame " + cName).css({ left: (j * 98) }).data({ index: imgIndex, offset: j });
+					if (trustKeyFrame && Subtitle.findSync(fs[imgIndex], kfs, false)) {
+						$img.addClass("keyframe");
+					}
+					data.$frames.append($img);
+				}
 			}
-			
-		} else {
-			$tr.append($("<td>").html("&nbsp;")).append($("<td>").addClass("sync").text(smi.syncType == Subtitle.SyncType.inner ? "~" : smi.start)).append($("<td>").text(smi.text.split("\n").join("")))
-			$tbody.append($tr);
+		};
+		if (renderList.length == 0) {
+			return false;
 		}
-		
-		lastFade = fade;
+
+		// 이미지 렌더링 요청
+		let params = [];
+		for (let i = 0; i < renderList.length; i++) {
+			const group = renderList[i];
+			// [ 시작시간, 종료시간, 시작인덱스, 종료인덱스, 플래그 ]
+			params.push([group.time, fs[group.end] + 1 - group.time, group.begin, group.end, group.flag].join(","));
+		}
+		opener.binder.renderThumbnails(Subtitle.video.path, params.join("\n"));
+		return true;
 	}
-	if (!renderList.length) {
+	if (!renderThumbnails()) {
 		alert("작업 대상이 없습니다.");
 		window.close();
 		return;
 	}
-	
-	// 이미지 렌더링 요청
-	let params = [];
-	for (let i = 0; i < renderList.length; i++) {
-		const group = renderList[i];
-		// [ 시작시간, 종료시간, 시작인덱스, 종료인덱스, 플래그 ]
-		params.push([group.time, fs[group.end] + 1 - group.time, group.begin, group.end, group.flag].join(","));
-	}
-	opener.binder.renderThumbnails(SmiEditor.video.path, params.join("\n"));
 	
 	let fileSeq = 0;
 	opener.setThumbnailsFileSeq = function(thumbnailsFileSeq) {
 		fileSeq = thumbnailsFileSeq;
 	}
 
-    // 렌더링 중일 때 색깔 넣어줌
-    opener.startRenderThumbnails = function(begin, end, flag) {
-        for (let i = begin; i < end; i++) {
-            $tbody.find("img.img" + i + flag).addClass("rendering");
-            $framesStorage.find("img.img" + i + flag).addClass("rendering");
-        }
-        $body.scroll();
-    }
-
+	// 렌더링 중일 때 색깔 넣어줌
+	opener.startRenderThumbnails = function(begin, end, flag) {
+		for (let i = begin; i < end; i++) {
+			$tbody.find("img.img" + i + flag).addClass("rendering");
+			$framesStorage.find("img.img" + i + flag).addClass("rendering");
+		}
+		$body.scroll();
+	}
+	opener.startCompareThumbnails = function (begin, end, flag) {
+		for (let i = begin; i < end; i++) {
+			$tbody.find("img.img" + i + flag).removeClass("rendering").addClass("comparing");
+			$framesStorage.find("img.img" + i + flag).removeClass("rendering").addClass("comparing");
+		}
+		$body.scroll();
+	}
+	
 	// 렌더링 완료 후 이미지 세팅
 	// 미리 값을 넣어주면 삭제되지 않은 다른 영상 섬네일 가져올 수 있음
 	opener.afterRenderThumbnails = function(begin, end, flag) {
 		for (let i = begin; i < end; i++) {
 			$tbody.find("img.img" + i + flag).data({ img: i + flag });
-            $framesStorage.find("img.img" + i + flag).data({ img: i + flag });
+			$framesStorage.find("img.img" + i + flag).data({ img: i + flag });
 		}
 		$body.scroll();
 	}
@@ -190,12 +379,15 @@ $(() => {
 	}
 	
 	let selected = -1;
-	function select(index) {
+	function select(index, $tr=null) {
 		if (selected == index) return;
 		
-		const $tr = frameSyncs[selected = index];
+		selected = index;
+		if ($tr == null) {
+			$tr = frameSyncs[selected];
+		}
 		
-		$tbody.find("tr.fs.selected").removeClass("selected");
+		$tbody.find("tr.selected").removeClass("selected");
 		$tr.addClass("selected");
 		
 		const offset = $tr.offset();
@@ -209,31 +401,61 @@ $(() => {
 			}
 		}
 	}
+	function setSync($td, sync) {
+		$td.text(sync == 0 ? 1 : sync);
+		if (!trustKeyFrame) return;
+		if (Subtitle.findSync(sync, kfs, false)) {
+			$td.addClass("keyframe");
+		} else {
+			$td.removeClass("keyframe");
+		}
+	}
 	function moveSync(direction, isOffset=false) {
 		const $tr = frameSyncs[selected];
 		const data = $tr.data();
 		
 		const offset = isOffset ? direction : (data.offset + direction);
-		if (offset < -12 || offset >= 12) return;
+		//if (offset < -12 || offset >= 12) return;
 		
 		const index = data.frameIndex + offset;
 		if (index < 0) return;
 		
 		$tr.data({ offset: offset });
 		data.$frames.css({ left: "calc(50% - " + (offset * 98) + "px)" });
-		$tr.find("td.sync").text(fs[index]);
+		
+		setSync($tr.find("td.sync"), fs[index]);
 	}
 	
 	function apply() {
 		const smis = [];
+		for (let oi = 0; oi < origins.length; oi++) {
+			smis[oi] = [];
+		}
+		let countSmi = 0;
 		$tbody.find("tr").each(function() {
 			const $tr = $(this);
-			const smi = $tr.data("smi");
-			if ($tr.hasClass("fs")) {
-				smi.start = Number($tr.find(".sync").text());
+			const data = $tr.data();
+			if (data.smi) {
+				if ($tr.hasClass("fs")) {
+					data.smi.start = Number($tr.find(".sync").text());
+				}
+				smis[data.oi].push(data.smi);
+				countSmi++;
+				
+			} else if (data.ass && $tr.hasClass("fs")) {
+				const sync = Number($tr.find(".sync").text());
+				if (data.type == "start") {
+					data.ass.inputStart.val(sync);
+				} else if (data.type == "end") {
+					data.ass.inputEnd.val(sync);
+				}
+				data.ass.update();
 			}
-			smis.push(smi);
 		});
+		if (!countSmi) {
+			// SMI 내역 없음 = ASS 편집
+			return;
+		}
 		
 		// 중간 싱크 재계산
 		let startIndex = -1;
@@ -257,26 +479,36 @@ $(() => {
 			}
 		}
 		
-		const result = new Subtitle.SmiFile();
-		result.header = origin.file.header;
-		result.footer = origin.file.footer;
-		result.body = smis;
-		
-		// 해당 줄 앞뒤 전체 선택되도록 조정
-		const origLines = origin.text.split("\n");
-		const prev = origLines.slice(0, origin.start).join("\n");
-		const next = origLines.slice(origin.end).join("\n");
-		
-		// 교체 및 종료
-		origin.tab.setText((prev ? prev + "\n" : "") + result.toTxt() + (next ? "\n" + next : ""), [prev ? prev.length + 1 : 0]);
+		for (let oi = 0; oi < origins.length; oi++) {
+			const origin = origins[oi];
+			
+			const result = new Subtitle.SmiFile();
+			result.header = origin.smiFile.header;
+			result.footer = origin.smiFile.footer;
+			result.body = smis[oi];
+			
+			// 해당 줄 앞뒤 전체 선택되도록 조정
+			const origLines = origin.text.split("\n");
+			const prev = origLines.slice(0, origin.start).join("\n");
+			const next = origLines.slice(origin.end).join("\n");
+			
+			// 에디터에 적용
+			const text = (prev ? prev + "\n" : "") + result.toText() + (next ? "\n" + next : "");
+			// 현재 커서 위치를 기반으로 다시 맞춤
+			const selectedLine = origin.hold.input.val().substring(0, origin.hold.input[0].selectionEnd).split("\n").length;
+			const cursor = text.split("\n").slice(0, selectedLine - 1).join("\n").length + 1;
+			origin.hold.history.log();
+			origin.hold.setText(text, [cursor]);
+		}
 	}
 	
-	$tbody.on("click", "tr.fs", function(e) {
-		select($(this).data("index"));
+	$tbody.on("click", "tr", function(e) {
+		const $tr = $(this);
+		select($tr.data("index"), $tr);
 		
 	}).on("dblclick", "tr.fs", function(e) {
 		// 에디터 해당 싱크로 이동
-		opener.SmiEditor.selected.findSync($(this).find("td.sync").text());
+		opener.SmiEditor.selected.findSync(Number($(this).find("td.sync").text()) + 1);
 		
 	}).on("click", "img.frame", function(e) {
 		const $img = $(this);
@@ -293,7 +525,11 @@ $(() => {
 					break;
 				}
 				if (selected > 0) {
-					select(selected - 1);
+					if (selected % 1) {
+						select(Math.floor(selected));
+					} else {
+						select(selected - 1);
+					}
 				}
 				break;
 			}
@@ -304,7 +540,11 @@ $(() => {
 					break;
 				}
 				if (selected < frameSyncs.length - 1) {
-					select(selected + 1);
+					if (selected % 1) {
+						select(Math.ceil(selected));
+					} else {
+						select(selected + 1);
+					}
 				}
 				break;
 			}
@@ -320,24 +560,49 @@ $(() => {
 				moveSync(0, true);
 				break;
 			}
+			case 81: { // Q
+				if (!shiftKey && ctrlKey && !altKey) {
+					origin.hold.moveToSync(-2000);
+				}
+				break;
+			}
 		}
 	}).on("keydown", "input[name=mode]", function(e) {
 		// 모드 선택 후에도 방향키 조작은 원래대로 동작해야 함
 		e.preventDefault();
 	});
 	
-	function showFrames($tr) {
-		const $frames = $tr.data("$frames");
-		$frames.find("img").each(function () {
+	$tbody.on("load", "image", function() {
+		// 이미지 로딩 성공 후엔 추가 갱신 없도록 함
+		$(this).data({ img: null });
+	});
+	function refreshImages($imgs) {
+		$imgs.each(function () {
 			const $img = $(this);
-            $img.attr({ src: "../../temp/thumbnails/" + fileSeq + "_" + $img.data("img") + M[mode] + ".jpg" });
+			const img = $img.data("img");
+			if (img) {
+				$img.attr({ src: "../../temp/thumbnails/" + fileSeq + "_" + img + M[mode] + ".jpg" });
+			}
 		});
-        $tr.find("td:eq(0)").append($frames);
+	}
+	function showFrames($tr) {
+		const showing = $tr.hasClass("showing");
+		const $frames = $tr.data("$frames");
+		refreshImages($frames.find("img"));
+		if (!showing) {
+			$tr.addClass("showing").find("td:eq(0)").append($frames);
+		}
 	}
 	function hideFrames($tr) {
+		if ($tr.hasClass("showing")) {
+			$tr.removeClass("showing");
+		}
 		const $frames = $tr.data("$frames");
 		$framesStorage.append($frames);
 	}
+	$(window).on("resize", function(e) {
+		$("body").scroll();
+	});
 	$("body").on("scroll", function(e) {
 		let status = -1;
 		$("#editor tbody tr.fs").each(function() {
@@ -375,25 +640,20 @@ $(() => {
 	
 	$("#formShift").on("submit", function() {
 		const shift = Number($("#inputShift").val());
-		for (let i = 0; i < origin.file.body.length; i++) {
-			const smi = origin.file.body[i];
-			if (smi.syncType == Subtitle.SyncType.frame) {
-				const frameIndex = SmiEditor.findSyncIndex(smi.start, fs);
-				const shiftIndex = SmiEditor.findSyncIndex(smi.start + shift, fs);
-				const offset = shiftIndex - frameIndex;
-				const $tr = $tbody.find("tr:eq(" + i + ")");
-				$tr.data({ offset: offset });
-				$tr.data("$frames").css({ left: "calc(" + (-98 * offset) + "px + 50%" });
-				$tr.find("td.sync").text(fs[shiftIndex]);
-			}
-		}
+		$("#editor tbody tr.fs").each(function () {
+			const $tr = $(this);
+			const data = $tr.data();
+			const frameIndex = Subtitle.findSyncIndex(data.origin, fs);
+			const shiftIndex = Subtitle.findSyncIndex(data.origin + shift, fs);
+			const offset = shiftIndex - frameIndex;
+			$tr.data({ offset: offset });
+			$tr.data("$frames").css({ left: "calc(" + (-98 * offset) + "px + 50%" });
+			setSync($tr.find("td.sync"), fs[shiftIndex]);
+		});
 		return false;
 	}).on("click", "input[name=mode]", function() {
 		mode = $("input[name=mode]:checked").val();
-		$tbody.find("img").each(function() {
-			const $img = $(this);
-			$img.attr({ src: "../../temp/thumbnails/" + fileSeq + "_" + $img.data("img") + M[mode] + ".jpg" });
-		});
+		refreshImages($tbody.find("img"));
 		for (let i = 1; i <= 3; i++) {
 			if (i == mode) {
 				$body.addClass("mode" + i);
@@ -405,11 +665,13 @@ $(() => {
 	
 	$("#btnApply").on("click", function() {
 		apply();
-    });
-    $("#btnSet").on("click", function () {
-        apply();
-        window.close();
-    });
+		// 조정한 타이밍에 맞춰서 추가 렌더링
+		renderThumbnails();
+	});
+	$("#btnSet").on("click", function () {
+		apply();
+		window.close();
+	});
 	
 	// 페이지 벗어날 경우 렌더링 취소
 	window.onunload = function () {
@@ -438,7 +700,7 @@ body {
 	height: 57px;
 	color: #000;
 }
-#editor tr.fs.selected td {
+#editor tr.selected td {
 	background: #ffc;
 }
 #editor td {
@@ -449,8 +711,11 @@ body {
 	position: relative;
 	border-left: 0;
 }
-#editor td:nth-child(2) {
+#editor td.sync {
 	text-align: right;
+}
+#editor td.sync.keyframe {
+	font-weight: bold;
 }
 #editor td:last-child {
 	white-space: pre;
@@ -471,9 +736,16 @@ body {
 	width: 98px;
 	height: 56px;
 	cursor: pointer;
+	transition: 0.2s;
+}
+#editor .frame.keyframe {
+	border-left-color: #f88;
 }
 #editor .frame.rendering {
 	background: #fee;
+}
+#editor .frame.comparing {
+	background: #efe;
 }
 #editor .frame:hover {
 	border-color: #f88;
@@ -495,6 +767,7 @@ body:not(.mode1) #editor .frames {
 }
 body:not(.mode1) .frameChecker.left  { left: calc(35% - 49.5px); }
 body:not(.mode1) .frameChecker.right { left: calc(35% + 48.5px); }
+body:not(.mode1) .frame:first-child { margin-left: 98px; }
 #formShift, #btnApply, #btnSet {
 	position: fixed;
 	opacity: 0.5;

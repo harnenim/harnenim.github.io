@@ -4,11 +4,12 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>니코동 효과</title>
-	<script src="../lib/jquery-3.2.1.min.js?250531"></script>
-	<script src="../lib/popup.js?250531"></script>
-	<script src="../lib/setting.js?250531"></script>
-	<script src="../lib/SmiEditor.js?250531"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250531" />
+	<script src="../lib/jquery-3.2.1.min.js?250730"></script>
+	<script src="../lib/popup.js?250730"></script>
+	<script src="../lib/setting.js?250730"></script>
+	<script src="../lib/SubtitleObject.js?250730"></script>
+	<script src="../lib/SmiEditor.js?250730"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250730" />
 	<style>
 body > * {
 	position: absolute;
@@ -27,8 +28,8 @@ let FL = 1000000 / FR;
 $(() => {
 	if (opener) {
 		setting = opener.setting;
-		FR = opener.SmiEditor.video.FR;
-		FL = opener.SmiEditor.video.FL;
+		FR = opener.Subtitle.video.FR;
+		FL = opener.Subtitle.video.FL;
 	}
 });
 

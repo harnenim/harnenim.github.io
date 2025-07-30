@@ -34,14 +34,14 @@ let checkVersion;
 		}
 		return notified;
 	}
-	const lastNotifyForCommand = "2024.12.07.v1";
+	const lastNotifyForCommand = "2025.07.30.v1";
 	const lastNotifyForAutoComplete = "2025.04.19.v1";
 	const lastNotifyForStyle = "2025.03.07.v1";
-	const lastNotifyForMenu = "2025.05.30.v2";
+	const lastNotifyForMenu = "2025.07.30.v1";
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.05.31.v1"
+{	version: "2025.07.30.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -57,18 +57,19 @@ window.DEFAULT_SETTING =
 		,	"색상코드 입력(&C)|binder.runColorPicker()"
 		,	"특수태그 정규화|SmiEditor.selected && SmiEditor.selected.normalize()"
 		,	"중간 싱크 생성|SmiEditor.selected && SmiEditor.selected.fillSync()"
+		,	"ASS 기반 SMI 텍스트 생성|generateSmiFromAss()"
 		,	"미리보기창 실행|SmiEditor.Viewer.open()"
 		,	"설정(&S)|openSetting()"
 		]
 	,	[	"부가기능(&A)"
 		,	"화면 싱크 매니저(&M)|openAddon('SyncManager')"
+		,	"여러 SMI 파일에서 찾기(&G)|openAddon('SearchFiles')"
 		,	"겹치는 대사 결합(&C)|openAddon('Combine');"
 		,	"겹치는 대사 분리(&D)|openAddon('Devide');"
 		,	"싱크 유지 텍스트 대체(&F)|openAddon('Fusion');"
 		,	"노래방 자막(&K)|openAddon('Karaoke', 'karaoke');"
 		,	"흔들기 효과(&S)|openAddon('Shake');"
 		,	"니코동 효과(&N)|openAddon('Nico');"
-		,	"ASS 자막으로 변환(&A)|openAddon('ToAss');"
 		,	"재생 속도 조절|openAddon('Speed');"
 		,	"맞춤법 검사기|extSubmit(\"post\", \"https://nara-speller.co.kr/old_speller/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
@@ -79,6 +80,7 @@ window.DEFAULT_SETTING =
 		,	"홀드에 대하여|openHelp('aboutHold')"
 		,	"싱크 표현에 대하여|openHelp('aboutSync')"
 		,	"특수 태그에 대하여|openHelp('aboutTag')"
+		,	"ASS 변환에 대하여|openHelp('aboutAss')"
 		,	"업데이트 확인|openHelp('update')"
 		]
 	]
@@ -190,8 +192,10 @@ window.DEFAULT_SETTING =
 		,	'9': '/* 색상태그 시작 */\n' + 'editor.inputText("<font color=\\"#aaaaaa\\">")'
 		,	'0': '/* 색상태그 종료 */\n' + 'editor.inputText("</font>")'
 		,	'D': '/* 줄 삭제 */\n' + 'editor.deleteLine();'
+		,	'G': '/* 여러 SMI 파일에서 찾기 실행 */\n' + 'openAddon("SearchFiles");'
 		,	'M': '/* 화면 싱크 매니저 실행 */\n' + 'openAddon("SyncManager");'
 		,	'Q': '/* 현재 위치 재생 */\n' + 'editor.moveToSync(-2000);'
+		,	'T': '/* 홀드 추가 */\n' + 'editor.owner.addHold();'
 		}
 	,	withAlts:
 		{	't': '/* 일괄 싱크 입력 */\n' + 'editor.reSyncPrompt();'
@@ -306,6 +310,7 @@ window.DEFAULT_SETTING =
 	, color : true
 	, sync  : 0.5
 	}
+,	scrollMargin: 3.5
 ,	size: 1
 ,	color:
 	{ background: "#f0f0f0"

@@ -621,12 +621,6 @@ Typing.prototype.outputWithCursorOnlyHangeul = function() {
 
 
 
-
-
-
-// from SubtitleObject.cs
-
-
 window.Subtitle = {
 	SyncType:
 	{	comment: -1
@@ -635,42 +629,86 @@ window.Subtitle = {
 	,	inner: 2
 	,	split: 3
 	}
+,	$tmp: $("<a>")
 };
-Subtitle.SyncAttr = function(start, end, startType, endType, text) {
+window.SyncType = Subtitle.SyncType;
+Subtitle.video = {
+		path: null
+	,	FR: 23976 // 기본값 23.976fps
+	,	FL: 1000000 / 23976
+	,	fs: []
+	,	kfs: []
+}
+Subtitle.findSync = (sync, fs=null, findNear=true, from=0, to=-1) => {
+	if (fs == null) fs = Subtitle.video.fs;
+	if (fs.length == 0) return null;
+	if (fs.length == 1) {
+		return (findNear || (fs[0] == sync)) ? fs[0] : null;
+	}
+	if (to < 0) {
+		// 최초 파라미터 없이 탐색 시작일 때
+		to = fs.length;
+		if (sync > fs[to - 1]) {
+			// 마지막 프레임보다 뒤쪽 싱크일 때
+			return findNear ? fs[to - 1] : null;
+		}
+	}
+	if (from + 1 == to) {
+		const dist0 = sync - fs[from];
+		const dist1 = fs[to] - sync;
+		if (dist0 <= dist1) {
+			return (findNear || (dist0 == 0)) ? fs[from] : null;
+		} else {
+			return (findNear || (dist1 == 0)) ? fs[to] : null;
+		}
+	}
+	const mid = from + Math.floor((to - from) / 2);
+	if (fs[mid] < sync) {
+		return Subtitle.findSync(sync, fs, findNear, mid, to);
+	} else {
+		return Subtitle.findSync(sync, fs, findNear, from, mid);
+	}
+}
+Subtitle.findSyncIndex = (sync, fs=null, from=0, to=-1) => {
+	if (fs == null) fs = Subtitle.video.fs;
+	if (fs.length == 0) return null;
+	if (to < 0) to = fs.length;
+	if (from + 1 == to) {
+		const dist0 = sync - fs[from];
+		const dist1 = fs[to] - sync;
+		if (dist0 <= dist1) {
+			return from;
+		} else {
+			return to;
+		}
+	}
+	const mid = from + Math.floor((to - from) / 2);
+	if (fs[mid] < sync) {
+		return Subtitle.findSyncIndex(sync, fs, mid, to);
+	} else {
+		return Subtitle.findSyncIndex(sync, fs, from, mid);
+	}
+}
+
+window.SyncAttr = Subtitle.SyncAttr = function(start, end, startType, endType, text, origin=null) {
 	this.start = start ? start : 0;
 	this.end   = end   ? end   : 35999999;
-	this.startType = startType ? startType : Subtitle.SyncType.normal;
-	this.endType   = endType   ? endType   : Subtitle.SyncType.normal;
-	this.text = text ? text : null;
+	this.startType = startType ? startType : SyncType.normal;
+	this.endType   = endType   ? endType   : SyncType.normal;
+	this.text = text ? text : null; // 이것도 옛날에 왜 text라고 했지... attrs 같은 걸로 할걸...
+	this.origin = origin;
 }
-/*
-	public interface ISubtitleObject<SObj>
-	{
-		string ToTxt();
-		string ColorToAttr(string soColor);
-		string ColorFromAttr(string attrColor);
+SyncAttr.prototype.getTextOnly = function () {
+	if (!this.text) return "";
 
-		List<Attr> ToAttr();
-		SObj FromAttr(List<Attr> attrs);
-
-		SyncAttr ToSync();
-		SObj FromSync(SyncAttr sync);
+	let text = "";
+	for (let i = 0; i < this.text.length; i++) {
+		text += this.text[i].text;
 	}
-	public interface ISubtitleFile<SObj, FObj>
-	{
-		string ToTxt();
-		FObj FromTxt(string txt);
-
-		List<SyncAttr> ToSync();
-		FObj FromSync(List<SyncAttr> sync);
-	}
-*/
+	return text;
+}
 Subtitle.Width =
-{	DEFAULT_FONT: { fontFamily: "맑은 고딕", fontSize: 72 }
-/*
-	public static Font DEFAULT_FONT = new Font("맑은 고딕", 72.0F);
-	public static Image FAKE_IMAGE = new Bitmap(1, 1);
-*/
+{	DEFAULT_FONT: { fontFamily: "맑은 고딕", fontSize: "72px" }
 ,	getWidth: function(input, font) {
 		if (typeof input == "string") {
 			if (!font) font = this.DEFAULT_FONT;
@@ -746,7 +784,7 @@ Subtitle.Width =
 
 // 객체 복사용이 아닌, 기존 속성에 이어지는 새 객체를 만드는 쪽으로 만들었던 부분이라 text는 비운 채로 생성함
 // SMI 복원용 태그는 기본적으론 복사 안 함
-Subtitle.Attr = function(old, text="", withTagString=false) {
+window.Attr = Subtitle.Attr = function(old, text="", withTagString=false) {
 	if (old) {
 		this.text = text;
 		this.b    = old.b;
@@ -756,6 +794,7 @@ Subtitle.Attr = function(old, text="", withTagString=false) {
 		this.fs   = old.fs;
 		this.fn   = old.fn;
 		this.fc   = old.fc;
+		this.ass  = old.ass;
 		this.fade = old.fade;
 		this.shake = old.shake;
 		this.typing = old.typing;
@@ -770,32 +809,48 @@ Subtitle.Attr = function(old, text="", withTagString=false) {
 		this.fs   = 0;	// FontSize
 		this.fn   = ""; // FontName
 		this.fc   = ""; // Fontcolor
-		this.fade = 0;
+		this.ass  = null;
+		this.fade = 0; // 형식> in: 1 / out: -1 / #ABCDEF / #ABCDEF~#FEDCBA
 		this.shake = null;
 		this.typing = null;
 		this.tagString = null;
 	}
 }
-Subtitle.Attr.TypingAttr = function(mode, start, end) {
+Attr.TypingAttr = function(mode, start, end) {
 	this.cursor = (mode == Typing.Mode.keyboard) ? Typing.Cursor.visible : Typing.Cursor.invisible;
 	this.mode   = mode;
 	this.start  = start ? start : 0;
 	this.end	= end   ? end   : 0;
 }
-Subtitle.Attr.prototype.getWidth = function() {
+
+Attr.prototype.clone = function(withText=true) {
+	return new Attr(this, withText ? this.text : "");
+}
+
+// ASS 그대로 쓸 속성만 넣음
+Attr.junkAss = function(ass) {
+	const attr = new Attr();
+	attr.ass = ass;
+	return attr;
+}
+Attr.prototype.isEmpty = function () {
+	return this.text.split(" ").join("").split("　").join("").split("\n").join("").length == 0;
+}
+
+Attr.prototype.getWidth = function() {
 	const css = Subtitle.Width.DEFAULT_FONT;
 	if (this.fs) css.fontSize   = this.fs;
 	if (this.fn) css.fontFamily = this.fn;
 	return Subtitle.Width.getWidth(this.text, css);
 }
-Subtitle.Attr.getWidths = (attrs) => {
+Attr.getWidths = (attrs) => {
 	const widths = [];
 	let width = 0;
 	let index = 0;
 	for (let i = 0; i < attrs.length; i++) {
 		const attr = attrs[i];
 		if ((index = attr.text.indexOf('\n')) >= 0) {
-			const sAttr = new Subtitle.Attr(attr);
+			const sAttr = new Attr(attr);
 			
 			sAttr.text = attr.text.substring(0, index);
 			width += sAttr.getWidth();
@@ -812,11 +867,11 @@ Subtitle.Attr.getWidths = (attrs) => {
 	return widths;
 }
 
-Subtitle.Attr.fromSubtitle = (subtitle) => {
-	return subtitle.toAttr();
+Attr.fromSubtitle = (subtitle) => {
+	return subtitle.toAttrs();
 }
-Subtitle.Attr.linesFromSubtitle = (subtitle) => {
-	const attrs = Subtitle.Attr.fromSubtitle(subtitle);
+Attr.linesFromSubtitle = (subtitle) => {
+	const attrs = Attr.fromSubtitle(subtitle);
 	
 	let line = [];
 	const lines = [line];
@@ -826,12 +881,12 @@ Subtitle.Attr.linesFromSubtitle = (subtitle) => {
 		
 		if ((index = attr.text.indexOf('\n')) >= 0) {
 			// 줄바꿈 전후 분리
-			{	const sAttr = new Subtitle.Attr(attr);
+			{	const sAttr = new Attr(attr);
 				sAttr.text = attr.text.substring(0, index);
 				line.push(sAttr);
 			}
 			lines.push(line = []);
-			{	const sAttr = new Subtitle.Attr(attr);
+			{	const sAttr = new Attr(attr);
 				sAttr.text = attr.text.substring(index + 1);
 				line.push(sAttr);
 			}
@@ -842,11 +897,11 @@ Subtitle.Attr.linesFromSubtitle = (subtitle) => {
 	}
 	return lines;
 }
-Subtitle.Attr.toSubtitle = (attrs, subtitle) => {
-	subtitle.fromAttr(attrs);
+Attr.toSubtitle = (attrs, subtitle) => {
+	subtitle.fromAttrs(attrs);
 }
 
-Subtitle.Attr.prototype.toHtml = function() {
+Attr.prototype.toHtml = function() {
 	if (this.text == null || this.text.length == 0) {
 		return "";
 	}
@@ -861,10 +916,10 @@ Subtitle.Attr.prototype.toHtml = function() {
 	if (this.fn != null && this.fn.length > 0) css += "font-family: '" + this.fn + "';";
 	if (this.fc != null && this.fc.length > 0) css += "color: #" + this.fc + ";";
 	return "<span" + (css.length > 0 ? " style=\"" + css + "\"" : "") + ">"
-		+ $("<a>").text(text).html().split(" ").join("&nbsp;").split("\n").join("​<br>​")
+		+ Subtitle.$tmp.text(text).html().split(" ").join("&nbsp;").split("\n").join("​<br>​")
 		+ "</span>";
 }
-Subtitle.Attr.toHtml = (attrs) => {
+Attr.toHtml = (attrs) => {
 	let result = "";
 	for (let i = 0; i < attrs.length; i++) {
 		result += attrs[i].toHtml();
@@ -872,27 +927,130 @@ Subtitle.Attr.toHtml = (attrs) => {
 	return result;
 }
 
-
-
-
-
-// SubtitleObjectAss.cs
-
-Subtitle.Ass = function(start, end, style, text) {
-	this.start = start;
-	this.end   = end;
-	this.style = style;
-	this.text  = text;
+Attr.toText = (attrs) => {
+	let result = "";
+	for (let i = 0; i < attrs.length; i++) {
+		result += attrs[i].text;
+	}
+	return result;
 }
-Subtitle.Ass.cols = [ "Layer", "Start", "End", "Style", "Name", "MarginL", "MarginR", "MarginV", "Effect", "Text" ];
 
-Subtitle.Ass.int2Time = (time) => {
-	time = Math.round(time);
-	const h = Math.floor(time / 360000);
-	const m = Math.floor(time / 6000) % 60;
-	const s = Math.floor(time / 100) % 60;
-	const ds= Math.floor(time % 100);
-	return h + ":" + intPadding(m) + ":" + intPadding(s) + "." + intPadding(ds);
+window.Color = Subtitle.Color = function(target, color, index=0) {
+	this.index = index; // 페이드 index가 아니라, 속성의 index를 변칙적으로 사용 중...
+	
+	if (color.length == 7 && color[0] == "#") {
+		color = color.substring(1);
+	}
+	// 16진수 맞는지 확인
+	if (isFinite("0x" + color)) {
+		this.r = this.tr = Color.v(color.substring(0, 2));
+		this.g = this.tg = Color.v(color.substring(2, 4));
+		this.b = this.tb = Color.v(color.substring(4, 6));
+	} else {
+		this.r = this.tr = 255;
+		this.g = this.tg = 255;
+		this.b = this.tb = 255;
+	}
+	
+	if (target == 1) {
+		this.r = this.g = this.b = 0;
+	} else if (target == -1) {
+		this.tr = this.tg = this.tb = 0;
+	} else {
+		if (target.length == 7 && target[0] == "#") {
+			target = target.substring(1);
+		}
+		// 16진수 맞는지 확인
+		if (isFinite("0x" + target)) {
+			this.tr = Color.v(target.substring(0, 2));
+			this.tg = Color.v(target.substring(2, 4));
+			this.tb = Color.v(target.substring(4, 6));
+		}
+	}
+}
+Color.v = (c) => {
+	if (c.length == 1) {
+		if (c >= '0' && c <= '9')
+			return c.charCodeAt() - 48
+		if (c >= 'a' && c <= 'z')
+			return c.charCodeAt() - 87;
+		if (c >= 'A' && c <= 'Z')
+			return c.charCodeAt() - 55;
+		return 0;
+		
+	} else {
+		let v = 0;
+		for (let i = 0; i < c.length; i++) {
+			v = v * 16 + Color.v(c[i]);
+		}
+		return v;
+	}
+}
+Color.c = (v) => {
+	return v < 10 ? String.fromCharCode(v + 48) : String.fromCharCode(v + 55);
+}
+Color.hex = (v) => {
+	return "" + Color.c(v / 16) + Color.c(v % 16);
+}
+Color.prototype.getColor = function(value, total) {
+	return [
+		(Math.ceil(((this.r * (total - value)) + (this.tr * value)) / total))
+	,	(Math.ceil(((this.g * (total - value)) + (this.tg * value)) / total))
+    ,	(Math.ceil(((this.b * (total - value)) + (this.tb * value)) / total))
+    ];
+}
+Color.prototype.get = function(value, total) {
+	const color = this.getColor(value, total);
+	return Color.hex(color[0]) + Color.hex(color[1]) + Color.hex(color[2]);
+}
+Color.prototype.smi = function(value, total) {
+	return "#" + this.get(value, total);
+}
+Color.prototype.ass = function(value, total) {
+	const color = this.getColor(value, total);
+	return "&H" + Color.hex(color[2]) + Color.hex(color[1]) + Color.hex(color[0]) + "&";
+}
+
+
+
+
+
+
+
+window.AssEvent = Subtitle.AssEvent = function(start, end, style, text, layer=0) {
+	this.key = "Dialogue";
+	this.Layer = layer;
+	this.Start = AssEvent.toAssTime(this.start = start); // 소문자 start/end: ms 단위 숫자값
+	this.End   = AssEvent.toAssTime(this.end   = end  ); // 대문자 Start/End: ASS 형식 시간값
+	this.Style = style;
+	this.Name = "";
+	this.MarginL = 0;
+	this.MarginR = 0;
+	this.MarginV = 0;
+	this.Effect = "";
+	this.Text = text;
+}
+AssEvent.toAssTime = (time=0, fromFrameSync=false) => {
+	if (fromFrameSync) {
+		time -= 15; // TODO: 15ms는 경험적 값이라서, 정확한 계산식을 만드는 게 좋을 듯함
+		// time = Math.floor((time - 5) / 10) * 10; // 저번에 이게 실패했었나?
+	}
+	if (time < 0) time = 0;
+	const h = Math.floor( time / 3600000);
+	const m = Math.floor( time /   60000) % 60;
+	const s = Math.floor( time /    1000) % 60;
+	const ds= Math.floor((time % 1000) / 10);
+	const result = h + ":" + intPadding(m) + ":" + intPadding(s) + "." + intPadding(ds);
+	return result;
+}
+AssEvent.fromAssTime = (assTime, toFrameSync=false) => {
+	const vs = assTime.split(':');
+	let time = ((Number(vs[0]) * 360000) + (Number(vs[1]) * 6000) + (Number(vs[2].split(".").join("")))) * 10;
+	if (toFrameSync) {
+//		time = Subtitle.findSync(time + 15);
+		time = AssEvent.optimizeSync(time);
+	}
+	return time;
 }
 function intPadding(value, length = 2) {
 	value = "" + value;
@@ -901,370 +1059,729 @@ function intPadding(value, length = 2) {
 	}
 	return value;
 }
-Subtitle.Ass.time2Int = (time) => {
-	const vs = time.split(':');
-	return (Number(vs[0]) * 360000) + (Number(vs[1]) * 6000) + (Number(vs[2].split(".").join("")));
-}
 
-Subtitle.Ass.prototype.toTxt = function() {
-	return "Dialogue: 0," + Subtitle.Ass.int2Time(this.start) + "," + Subtitle.Ass.int2Time(this.end) + "," + this.style + ",,0,0,0,," + this.text;
-}
-Subtitle.Ass.ss2txt = (asss) => {
-	let result = "";
-	for (let i = 0; i < asss.length; i++) {
-		result += asss[i].toTxt() + "\r\n";
-	}
-	return result;
-}
-
-Subtitle.Ass.sColorFromAttr = (soColor) => {
+AssEvent.sColorFromAttr = (soColor) => {
 	return soColor.length == 6 ? "&H" + soColor.substring(4, 6) + soColor.substring(2, 4) + soColor.substring(0, 2) + "&" : soColor;
 }
-Subtitle.Ass.colorToAttr = (soColor) => {
+AssEvent.colorToAttr = (soColor) => {
 	return "" + soColor.substring(6, 8) + soColor.substring(4, 6) + soColor.substring(2, 4);
 }
-Subtitle.Ass.colorFromAttr = (attrColor) => {
-	return Subtitle.Ass.sColorFromAttr(attrColor);
+AssEvent.colorFromAttr = (attrColor) => {
+	return AssEvent.sColorFromAttr(attrColor);
 }
 
-Subtitle.Ass.prototype.toAttr = function() {
-	const result = [];
+//팟플레이어에서 실제 의도한 프레임에 출력되도록 시간값 재계산
+AssEvent.optimizeSync = function(sync) {
+	const fs = Subtitle.video.fs;
+	let aegisubSyncs = Subtitle.video.aegisubSyncs;
+	if (!aegisubSyncs) {
+		// Aegisub에서 싱크 찍을 때 찍히는 싱크 -> 버림을 하면서 빨리 나오는 경우가 발생함
+		aegisubSyncs = [0];
+		for (let i = 1; i < fs.length; i++) {
+			let bfr = fs[i - 1];
+			let now = fs[i];
+			aegisubSyncs.push(Math.floor((bfr + now) / 20) * 10);
+		}
+		Subtitle.video.aegisubSyncs = aegisubSyncs;
+	}
+	let i = 0;
+	for (; i < aegisubSyncs.length; i++) {
+		if (sync < aegisubSyncs[i]) {
+			// 싱크 위치 찾음
+			return (i == 1 && fs[0] == 0) ? 1 : fs[i - 1]; // ASS 0:00:00.00은 출력되지만, SMI 0ms는 출력되지 않아 1ms 부여
+		}
+	}
+	// 마지막 싱크로 맞춰줌
+	return Subtitle.video.fs[i - 1];
+}
+AssEvent.prototype.optimizeSync = function() {
+	this.Start = AssEvent.toAssTime((this.start = AssEvent.optimizeSync(this.start)), true);
+	this.End   = AssEvent.toAssTime((this.end   = AssEvent.optimizeSync(this.end  )), true);
+}
 
-	let index = 0;
-	let pos = 0;
-	let last = new Subtitle.Attr();
-	result.push(last);
-
-	while ((pos = this.text.indexOf('{', index)) >= 0) {
-		last.text += this.text.substring(index, pos).split("\\N").join("\n");
-		
-		const endPos = text.indexOf('}', pos);
-		const attrString = this.text.substring(pos + 1, endPos);
-		
-		let mode = -1;
-		let tagStart = 0, tagEnd = 0;
-		let tag = null;
-		for (pos = 0; pos < attrString.length; pos++) {
-			switch (mode) {
-				case -1: { // 태그 시작 전
-					while (pos < attrString.length && attrString[pos] != '\\') pos++;
-					mode = 0;
-					tagStart = pos + 1;
-					pos--;
-					break;
-				}
-
-				case 0: { // 태그
-					for (tagEnd = tagStart; tagEnd < attrString.length; tagEnd++) {
-						if (attrString[tagEnd] == '\\') {
-							break;
-						} else if (attrString[tagEnd] == '(') {
-							mode++;
-							pos = tagEnd + 1;
-							break;
-						}
+AssEvent.prototype.fromSync = function(sync, style) {
+	this.Start = AssEvent.toAssTime(this.start = sync.start);
+	this.End   = AssEvent.toAssTime(this.end   = sync.end  );
+	this.Style = sync.style ? sync.style : "Default";
+	this.Text = (this.texts = AssEvent.fromAttrs(sync.text))[0];
+	return this;
+}
+AssEvent.fromAttrs = (attrs) => {
+	const texts = AssEvent.inFromAttrs(attrs);
+	for (let i = 0; i < texts.length; i++) {
+		texts[i] = texts[i].trim();
+	}
+	return texts;
+}
+AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true, last=null) => {
+	if (checkFurigana) {
+		let hasFurigana = false;
+		for (let i = 0; i < attrs.length; i++) {
+			if (attrs[i].furigana) {
+				hasFurigana = true;
+				break;
+			}
+		}
+		if (hasFurigana) {
+			let line = { attrs: [] };
+			const lines = [line];
+			for (let i = 0; i < attrs.length; i++) {
+				const attr = attrs[i];
+				if (attr.text.indexOf("\n") < 0) {
+					line.attrs.push(attr);
+					
+				} else {
+					const text = attr.text.split("\n");
+					let newAttr = attr.clone();
+					newAttr.text = text[0];
+					line.attrs.push(newAttr);
+					
+					for (let j = 1; j < text.length; j++) {
+						newAttr = attr.clone();
+						newAttr.text = text[j];
+						lines.push(line = { attrs: [newAttr] });
 					}
-					if (mode > 0) break;
-					if (tagStart == tagEnd) break;
-
-					tag = attrString.substring(tagStart, tagEnd);
-
-					if (tag[0] == "c" || tag.substring(0,2) == "1c") {
-						if (last.text.length > 0) {
-							result.push((last = new Subtitle.Attr(last)));
-						}
-						if (tag[0] == "c") {
-							tag = "1" + tag;
-						}
-						if (tag.length >= 11 && tag[2] == '&' && tag[3] == 'H' && tag[10] == '&') {
-							last.fc = Subtitle.Ass.colorToAttr(tag.substring(2, 11));
+				}
+			}
+			
+			let count = 0;
+			for (let i = 0; i < lines.length; i++) {
+				line = lines[i];
+				line.furigana = [];
+				for (let j = 0; j < line.attrs.length; j++) {
+					if (line.attrs[j].furigana) {
+						const furigana = [];
+						if (j > 0) {
+							furigana.push(Attr.junkAss("{\\fscy50\\bord0\\1a&HFF&}"));
+							furigana.push(...line.attrs.slice(0, j));
+							furigana.push(Attr.junkAss("{\\1a\\bord\\fscx50}"));
 						} else {
-							last.fc = "";
+							furigana.push(Attr.junkAss("{\\fscy50\\fscx50}"));
 						}
-					} else if (tag.substring(0,2) == "fn") {
-						if (last.text.length > 0) {
-							result.push((last = new Subtitle.Attr(last)));
-						}
-						last.fn = (tag.length > 2) ? tag.substring(2) : "";
 						
-					} else if (tag[0] == "b") {
-						if (last.text.length > 0) {
-							result.push((last = new Subtitle.Attr(last)));
-						}
-						last.b = (tag.length >= 2 && tag[1] == '1');
+						furigana.push(line.attrs[j].furigana);
 						
-					} else if (tag[0] == "u") {
-						if (last.text.length > 0) {
-							result.push((last = new Subtitle.Attr(last)));
+						if (j < line.attrs.length - 1) {
+							furigana.push(Attr.junkAss("{\\fscx\\bord0\\1a&HFF&}"));
+							furigana.push(...line.attrs.slice(j + 1));
+							furigana.push(Attr.junkAss("{\\1a\\bord\\fscy}\\N"));
+						} else {
+							furigana.push(Attr.junkAss("{\\fscx\\fscy}\\N"));
 						}
-						last.u = (tag.length >= 2 && tag[1] == '1');
-						
-					} else if (tag[0] == "i") {
-						if (last.text.length > 0) {
-							result.push((last = new Subtitle.Attr(last)));
-						}
-						last.i = (tag.length >= 2 && tag[1] == '1');
+						line.furigana.push(furigana);
 					}
+				}
+				count = Math.max(count, line.furigana.length);
+			}
+			
+			const texts = [];
+			for (let c = 0; c < count; c++) {
+				const combined = [];
+				for (let i = 0; i < lines.length; i++) {
+					if (i > 0) {
+						combined.push(Attr.junkAss("\\N"));
+					}
+					line = lines[i];
+					if (line.furigana.length) {
+						if (c < line.furigana.length) {
+							combined.push(...line.furigana[c]);
+						} else {
+							combined.push(Attr.junkAss("{\\fscy50\\fscx50}　{\\fscx\\fscy}\\N"));
+						}
+					}
+					if (c == 0) {
+						combined.push(...line.attrs);
+					} else {
+						combined.push(Attr.junkAss("{\\bord0\\1a&HFF&}"));
+						combined.push(...line.attrs);
+						combined.push(Attr.junkAss("{\\1a\\bord}"));
+					}
+				}
+				texts.push(AssEvent.inFromAttrs(combined, false)[0]);
+			}
+			return texts;
+		}
+	}
+	
+	// 페이드 효과 있을 경우
+	// 일부 페이드 인/아웃 - 겹치는 객체 만들어서 처리해야 함
+	// 색상to색상인 경우 - 겹치는 객체 만들어서 처리해야 함
+	if (checkFade) {
+		let count = 0;
+		let countHides = 0;
+		const baseAttrs = [];
+		for (let i = 0; i < attrs.length; i++) {
+			const attr = new Attr(attrs[i], attrs[i].text);
+			if (attr.fade != 0) {
+				count++;
+				if (isNaN(attr.fade)) {
+					countHides++; // 색상 페이드면 무조건 카운트
+				}
+			}
+			attr.fade = 0;
+			baseAttrs.push(attr);
+		}
+		
+		if (count) {
+			const texts = [];
+			
+			{	// 페이드 인
+				count = 0;
+				let countHide = 0;
+				const fadeAttrs = [Attr.junkAss("{\\fade([FADE_LENGTH],0)}")];
+				let wasFade = false;
+				for (let i = 0; i < attrs.length; i++) {
+					const attr = new Attr(attrs[i], attrs[i].text);
+					const base = baseAttrs[i];
+					if (attr.fade == 1) {
+						count++;
+						if (!wasFade) {
+							// 페이드 대상 원본 투명화
+							base.hide = true;
+							// 페이드 대상 활성화
+							if (countHide > 0) {
+								fadeAttrs.push(Attr.junkAss("{\\1a\\bord}"));
+							}
+							wasFade = true;
+						}
 
-					mode = 0;
-					pos = tagEnd;
-					tagStart = tagEnd + 1;
-					break;
+					} else if (!attr.isEmpty()) {
+						if (wasFade || i == 0) {
+							// 페이드 비대상 비활성화
+							fadeAttrs.push(Attr.junkAss("{\\bord0\\1a&HFF&}"));
+							wasFade = false;
+							countHide++;
+						}
+					}
+					attr.fade = 0;
+					fadeAttrs.push(attr);
+				}
+				if (count) {
+					texts.push(...AssEvent.inFromAttrs(fadeAttrs, false, false));
+					countHides += countHide;
+				}
+			}
+
+			{	// 페이드 아웃
+				count = 0;
+				let countHide = 0;
+				const fadeAttrs = [Attr.junkAss("{\\fade(0,[FADE_LENGTH])}")];
+				let wasFade = false;
+				for (let i = 0; i < attrs.length; i++) {
+					const attr = new Attr(attrs[i], attrs[i].text);
+					const base = baseAttrs[i];
+					if (attr.fade == -1) {
+						count++;
+						if (!wasFade) {
+							// 페이드 대상 원본 투명화
+							base.hide = true;
+							// 페이드 대상 활성화
+							if (countHide > 0) {
+								fadeAttrs.push(Attr.junkAss("{\\1a\\bord}"));
+							}
+							wasFade = true;
+						}
+
+					} else if (!attr.isEmpty()) {
+						if (wasFade || i == 0) {
+							// 페이드 비대상 비활성화
+							fadeAttrs.push(Attr.junkAss("{\\bord0\\1a&HFF&}"));
+							wasFade = false;
+							countHide++;
+						}
+					}
+					attr.fade = 0;
+					fadeAttrs.push(attr);
+				}
+				if (count) {
+					texts.push(...AssEvent.inFromAttrs(fadeAttrs, false, false));
+					countHides += countHide;
+				}
+			}
+
+			if (countHides) {
+				// 페이드와 무관하게 보이는 내용물
+				let wasHide = false;
+				for (let i = 0; i < baseAttrs.length; i++) {
+					const attr = baseAttrs[i];
+					if (!wasHide && attr.hide) {
+						attr.text = "{\\bord0\\1a&HFF&}" + attr.text;
+						wasHide = true;
+					} else if (wasHide && !attr.hide) {
+						attr.text = "{\\1a\\bord}" + attr.text;
+						wasHide = false;
+					}
 				}
 
-				default: { // 괄호
-					for (; pos < attrString.length; pos++) {
-						if (attrString[pos] == ')') {
-							mode--;
-							break;
+				texts.push(...AssEvent.inFromAttrs(baseAttrs, false, false));
+			}
+
+			{	// 색상 페이드는 위를 덮어야 해서 더 나중에 추가함
+				count = 0;
+				const fadeAttrs = [Attr.junkAss("{\\fade([FADE_LENGTH],0)\\bord0}")];
+				let wasFade = false;
+				for (let i = 0; i < attrs.length; i++) {
+					const attr = new Attr(attrs[i], attrs[i].text);
+					let isFade = false;
+					if (typeof attr.fade == "string" && attr.fade[0] == "#") {
+						if (attr.fade.length == 7) {
+							// 색상 페이드
+							isFade = true;
+							attr.fc = attr.fade.substring(1);
+
+						} else if (attr.fade.length == 15 && attr.fade[7] == "~" && attr.fade[8] == "#") {
+							// 그라데이션 페이드
+							isFade = true;
+							attr.fc = attr.fade;
 						}
 					}
-					break;
+					if (isFade) {
+						count++;
+						if (!wasFade) {
+							// 페이드 대상 활성화
+							if (i > 0) {
+								fadeAttrs.push(Attr.junkAss("{\\1a}"));
+							}
+							wasFade = true;
+						}
+
+					} else {
+						if (wasFade || i == 0) {
+							// 페이드 비대상 비활성화
+							fadeAttrs.push(Attr.junkAss("{\\1a&HFF&}"));
+							wasFade = false;
+						}
+					}
+					attr.fade = 0;
+					fadeAttrs.push(attr);
+				}
+				if (count) {
+					texts.push(...AssEvent.inFromAttrs(fadeAttrs, false, false));
+				}
+			}
+
+			return texts;
+		}
+	}
+	
+	let text = "";
+	
+	// ASS 변환용 속성 먼저 처리
+	let assEnd = 0;
+	if (checkAss) {
+		for (let i = 0; i < attrs.length; i++) {
+			const attr = attrs[i];
+			
+			if (typeof attr.ass == "string") {
+				// ASS 속성 이전 부분 처리
+				text += AssEvent.inFromAttrs(attrs.slice(assEnd, i), false, false, false, (assEnd > 0 ? attrs[assEnd - 1] : null));
+				
+				// ASS 속성 처리
+				for (; i < attrs.length; i++) {
+					if (attr.ass != attrs[i].ass) {
+						assEnd = i;
+						i--; // 다음 루프에 ++ 됨
+						break;
+					}
+				}
+				if (i == attrs.length) {
+					// ASS 속성 이후 내용물 없음
+					// 속성 채워주는 것도 무의미
+					assEnd = i;
+				} else {
+					// 의도적으로 구분함, 최종 단계에서 제거
+					text += "{\\ass1}" + attr.ass + "{\\ass0}";
 				}
 			}
 		}
-
-		index = endPos + 1;
 	}
-	last.text += text.substring(index).split("\n").join("\\n");
-
-	return result;
-}
-Subtitle.Ass.prototype.fromAttr = function(attrs) {
-	let text = "";
 	
-	let last = new Subtitle.Attr();
-	for (let i = 0; i < attrs.length; i++) {
+	// ASS 변환용 속성 없는 부분
+	if (last == null) {
+		last = new Attr();
+	}
+	for (let i = assEnd; i < attrs.length; i++) {
 		const attr = attrs[i];
 		
-		if (!last.b && attr.b) text += "{\\b1}";
-		else if (last.b && !attr.b) text += "{\\b}";
+		if (attr.fade ==  1) text += "{\\fade([FADE_LENGTH],0)}";
+		if (attr.fade == -1) text += "{\\fade(0,[FADE_LENGTH])}";
 		
-		if (!last.i && attr.i) text += "{\\i1}";
-		else if (last.i && !attr.i) text += "{\\i}";
+		if      (!last.b &&  attr.b) text += "{\\b1}";
+		else if ( last.b && !attr.b) text += "{\\b0}";
 		
-		if (!last.u && attr.u) text += "{\\u1}";
-		else if (last.u && !attr.u) text += "{\\u}";
+		if      (!last.i &&  attr.i) text += "{\\i1}";
+		else if ( last.i && !attr.i) text += "{\\i0}";
 		
-		if (!last.s && attr.s) text += "{\\s1}";
-		else if (last.s && !attr.s) text += "{\\s}";
+		if      (!last.u &&  attr.u) text += "{\\u1}";
+		else if ( last.u && !attr.u) text += "{\\u0}";
 		
-		if (last.fn != attr.fn) text += "{\\fn" + attr.fn + "}";
+		if      (!last.s &&  attr.s) text += "{\\s1}";
+		else if ( last.s && !attr.s) text += "{\\s0}";
+		
+		if (last.fn != attr.fn) text += "{\\fn" + (attr.fn ? attr.fn : "") + "}";
+		
+		if (last.fs != attr.fs) text += "{\\fs" + (attr.fs ? (Math.round(attr.fs / 18 * 800) / 10) : "") + "}";
 		
 		if (attr.fc.length == 15 && attr.fc[0] == '#' && attr.fc[7] == '~' && attr.fc[8] == '#') {
 			// 그라데이션 분할
 			const cFrom = attr.fc.substring(0,  7);
 			const cTo   = attr.fc.substring(8, 15);
-			const color = new Subtitle.Smi.Color(cTo, cFrom); // TODO: Smi 객체에 기생하지 않아야 함...
+			const color = new Color(cTo, cFrom);
 			
 			let attrText = "";
 			for (let k = 0; k < attr.text.length; k++) {
-				attrText += "{\\c" + Subtitle.Ass.colorFromAttr(color.get(k, attr.text.length - 1)) + "}" + attr.text[k];
+				attrText += "{\\c" + color.ass(k, attr.text.length - 1) + "}" + attr.text[k];
 			}
-
-			if (attr.furigana) {
-				let furigana = "";
-				for (let k = 0; k < attr.furigana.text.length; k++) {
-					furigana += "{\\c" + Subtitle.Ass.colorFromAttr(color.get(k, attr.furigana.text.length - 1)) + "}" + attr.furigana.text[k];
-				}
-				text += "[" + attrText + "|" + furigana.split("]").join("\\]") + "]";
-				
-			} else {
-				text += attrText;
-			}
+			attr.text = attrText;
 			
 		} else {
 			if (last.fc != attr.fc) {
-				text += "{\\c" + Subtitle.Ass.colorFromAttr(attr.fc) + "}";
-			}
-			
-			if (attr.furigana) {
-				text += "[" + attr.text + "|" + attr.furigana.text.split("]").join("\\]") + "]";
-			} else {
-				text += attr.text;
+				text += "{\\c" + AssEvent.colorFromAttr(attr.fc) + "}";
 			}
 		}
+		
+		text += attr.text;
+		
 		last = attr;
 	}
 	
-	const lines = text.split("\n");
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
-		const rubyList = [];
+	return [text.split("\n").join("\\N")];
+}
 
-		let pos = 0;
-		let rStart = 0;
-		do {
-			rStart = line.indexOf("[", pos);
-			if (rStart < 0) {
-				break;
-			}
-			const fStart = line.indexOf("|", rStart);
-			if (fStart < 0) {
-				pos = rStart + 1;
-				continue;
-			}
-			let rEnd = fStart;
-			do {
-				rEnd = line.indexOf("]", rEnd);
-				if (rEnd < 0) {
-					break;
-				}
-				if (line[rEnd - 1] != "\\") {
-					break;
-				}
-				rEnd++;
-			} while (rEnd > 0);
-			if (rEnd < 0) {
-				pos = fStart + 1;
-				continue;
-			}
-			pos = rEnd + 1;
-			rubyList.push([rStart, fStart, rEnd]);
-		} while (true);
-		
-		if (rubyList.length) {
-			let newLine = "";
-			for (let j = 0; j < rubyList.length; j++) {
-				newLine += "{\\fscy50\\bord0\\1a&HFF&}";
-				let pos = 0;
-				for (let k = 0; k < j; k++) {
-					newLine += line.substring(pos, rubyList[k][0]);
-					newLine += line.substring(rubyList[k][0] + 1, rubyList[k][1]);
-					pos = rubyList[k][2] + 1;
-				}
-				newLine += line.substring(pos, rubyList[j][0]);
-				newLine += "{\\1a\\bord\\fscx50}" + line.substring(rubyList[j][1] + 1, rubyList[j][2]).split("\\]").join("]") + "{\\fscx\\bord0\\1a&HFF&}";
-				pos = rubyList[j][2] + 1;
-				for (let k = j + 1; k < rubyList.length; k++) {
-					newLine += line.substring(pos, rubyList[k][0]);
-					newLine += line.substring(rubyList[k][0] + 1, rubyList[k][1]);
-					pos = rubyList[k][2] + 1;
-				}
-				newLine += line.substring(pos);
-				newLine += "{\\1a\\bord\\fscy}\\N";
-			}
-			{
-				let pos = 0;
-				for (let k = 0; k < rubyList.length; k++) {
-					newLine += line.substring(pos, rubyList[k][0]);
-					newLine += line.substring(rubyList[k][0] + 1, rubyList[k][1]);
-					pos = rubyList[k][2] + 1;
-				}
-				newLine += line.substring(pos);
-			}
-			lines[i] = newLine;
+// 뒤쪽에 붙은 군더더기 종료태그 삭제
+AssEvent.prototype.clearEnds = function() {
+	let text = this.Text;
+	while (text.endsWith("}")) {
+		if (text.endsWith("{}")) {
+			// 의도적으로 넣은 것
+			break;
+		}
+		let end = text.lastIndexOf("{");
+		if (end > 0) {
+			text = text.substring(0, end);
+		} else {
+			// {로 시작 - 의도적으로 넣은 것
+			break;
 		}
 	}
-	
-	this.text = lines.join("\\N").split("}{").join("");
-	return this;
+	// 공백문자로 끝날 경우 잡아줘야 함
+	if (text.endsWith(" ") || text.endsWith("　")) {
+		text += "{}";
+	}
+	return this.Text = text;
 }
 
-Subtitle.Ass.prototype.toSync = function() {
-	return new Subtitle.SyncAttr(
-			start * 10
-		,	end * 10
-		,	(this.style.StartsWith("［") ? Subtitle.SyncType.frame : Subtitle.SyncType.normal)
-		,	(this.style.EndsWith  ("］") ? Subtitle.SyncType.frame : Subtitle.SyncType.normal)
-		,	this.toAttr()
-	);
-}
-Subtitle.Ass.prototype.fromSync = function(sync, checkFrame=true) {
-	this.start = sync.start / 10;
-	this.end   = sync.end   / 10;
-	this.style = 
-		( (!checkFrame || (sync.startType == Subtitle.SyncType.normal && sync.endType == Subtitle.SyncType.normal))
-			? sync.style ? sync.style : "Default"
-			: ( (sync.startType == Subtitle.SyncType.frame ? "［" : "（")
-			  + (sync.endType   == Subtitle.SyncType.frame ? "］" : "）")
-			)
-		);
-	this.fromAttr(sync.text);
-	return this;
-}
-
-Subtitle.AssFile = function(txt) {
-	this.header = "";
-	this.body = [];
-	if (txt) {
-		this.fromTxt(txt);
-	}
-}
-Subtitle.AssFile.prototype.toTxt = function() {
-	let result = this.header.split("\r\n").join("\n");
-	for (let i = 0; i < this.body.length; i++) {
-		result += this.body[i].toTxt() + "\n";
-	}
-	return result;
-}
-Subtitle.AssFile.prototype.fromTxt = function(txt) {
-	this.header = "";
-	this.body = [];
+AssEvent.fromSync = function(sync, style=null) {
+	const events = sync.events = [];
+	const start = sync.start;
+	const end   = sync.end;
 	
-	const lines = txt.split("\r\n").join("\n").split('\n');
+	let attrs = sync.text;
 	
-	const header = [];
-	let canBeHeader = true;
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
+	const texts = AssEvent.fromAttrs(attrs);
+	for (let i = 0; i < texts.length; i++) {
+		let text = texts[i];
+		if (text.indexOf("[FADE_LENGTH]") > 0) {
+			text = text.split("[FADE_LENGTH]").join(end - start);
+		}
 		
-		if (line.substring(0,9) == ("Dialogue:")) {
-			canBeHeader = false;
-			const cols = line.trim().split(',');
-			const ass = new Subtitle.Ass(
-				Subtitle.Ass.time2Int(cols[1])
-			,	Subtitle.Ass.time2Int(cols[2])
-			,	cols[3]
-			,	cols[9]
-			);
-			for (let j = 10; j < cols.length; j++) {
-				ass.text += "," + cols[j];
-			}
-			this.body.push(ass);
+		// ASS에선 필요 없는 공백문자 군더더기 제거
+		if (style && style.pos) {
+			let x = style.pos[0];
+			let y = style.pos[1];
 			
-		} else if (canBeHeader) {
-			if (line.substring(0,7) == ("Format:")) {
-				//canBeHeader = false;
-				const cols = line.trim().split(',');
-				Subtitle.Ass.cols = [];
-				for (let j = 0; j < cols.length; j++) {
-					Subtitle.Ass.cols.push(cols[j].trim());
+			// RUBY 태그 등을 레이어 둘 이상으로 나눴으면 pos 같게 고정 필요
+			let moved = (texts.length > 1);
+			
+			// 다른 홀드랑 겹쳐서 기본적으로 올려야 하는 내용물
+			if (sync.bottom) {
+				y -= sync.bottom * style.Fontsize * 1.1;
+				moved = true;
+			}
+			
+			// 아래쪽에 공백줄 쌓아서 위로 올린 경우
+			while (true) {
+				let endsLength = 0;
+				if (text.endsWith("\\N")) {
+					endsLength = 2;
+				} else if (text.endsWith("\\N　")) {
+					endsLength = 3;
+				} else if (text.endsWith("\\N{\\b1}　{\\b0}")) {
+					endsLength = 13;
+				} else if (text.endsWith("\\N{\\i1}　{\\i0}")) {
+					endsLength = 13;
+				}
+				if (endsLength == 0) break;
+
+				if (style.Name == "Default") {
+					// 메인 홀드만 자동으로 pos 태그 반영
+					y -= style.Fontsize * 1.1;
+					moved = true;
+				}
+				text = text.substring(0, text.length - endsLength);
+			}
+			// 위쪽에 공백줄 쌓아서 결합 맞춘 경우
+			{
+				let prev = "";
+				// 앞쪽에 ASS 변환 전용 태그가 붙은 경우 건너뛰어야 함
+				while (text.startsWith("{\\ass1}")) {
+					const endIndex = text.indexOf("{\\ass0}");
+					if (endIndex > 0) {
+						prev += text.substring(0, endIndex + 7);
+						text = text.substring(endIndex + 7);
+					} else {
+						// 원래 없으면 안 됨
+						prev += text.substring(0, 7);
+						text = text.substring(7);
+					}
+				}
+				while (text.startsWith("{\\b1}　{\\b0}\\N") || text.startsWith("{\\i1}　{\\i0}\\N")) {
+					text = text.substring(13);
+				}
+				if (prev) {
+					text = prev + text;
+				}
+			}
+			
+			// 정렬용 좌우 여백 제거
+			do {
+				if (style && style.Alignment) {
+					if (style.Alignment % 3 != 2) {
+						// 가운데 정렬 아니면 무시하기
+						break;
+					}
 				}
 				
+				const lines = text.split("\\N");
+				if (lines.length > 1 && text.indexOf("\\fs") > 0) {
+					// 여러 줄인데 글씨 크기를 건드렸을 경우 작업하지 않음 (예: 흔들기 효과)
+					break;
+				}
+				
+				let minLeft = 99;
+				let minRight = 99;
+				
+				for (let j = 0; j < lines.length; j++) {
+					let line = lines[j];
+					let prev = "";
+					let next = "";
+					while (line.startsWith("{")) {
+						const tagEnd = line.indexOf("}") + 1;
+						if (tagEnd) {
+							const tag = line.substring(0, tagEnd);
+							if (tag == "{\\ass1}") {
+								// ASS 전용 태그 강제 지정한 부분
+								const endIndex = line.indexOf("{\\ass0}");
+								if (endIndex > 0) {
+									prev += line.substring(7, endIndex);
+									line = line.substring(endIndex + 7);
+								} else {
+									// 없으면 안 됨
+									line = line.substring(tagEnd);
+									break;
+								}
+							} else {
+								if (tag.indexOf("\\u1") > 0 || tag.indexOf("\\s1") > 0) {
+									// 밑줄이나 취소선이 있으면 공백으로 치부할 수 없음
+									break;
+								}
+								prev += tag;
+								line = line.substring(tagEnd);
+							}
+						} else {
+							break;
+						}
+					}
+					while (line.endsWith("}")) {
+						const tagBegin = line.lastIndexOf("{");
+						if (tagBegin > 0) {
+							if (line.endsWith("{}")) {
+								// 의도적으로 넣은 것
+								break;
+							}
+							const tag = line.substring(tagBegin);
+							if (tag == "{\\ass0}") {
+								// ASS 전용 태그 강제 지정한 부분
+								const beginIndex = line.lastIndexOf("{\\ass1}");
+								if (beginIndex >= 0) {
+									next = line.substring(beginIndex) + next;
+									line = line.substring(0, beginIndex);
+								} else {
+									// 없으면 안 됨
+									line = line.substring(0, tagBegin);
+									break;
+								}
+							} else {
+								if (tag.indexOf("\\u1") > 0 || tag.indexOf("\\s1") > 0) {
+									// 밑줄이나 취소선이 있으면 공백으로 치부할 수 없음
+									break;
+								}
+								next = tag + next;
+								line = line.substring(0, tagBegin);
+							}
+						} else {
+							break;
+						}
+					}
+					
+					line = line.split("​").join("");
+					if (line.split("　").join("").trim().length == 0) {
+						// 비어있는 줄이면 무시
+						continue;
+					}
+					
+					let left = 0;
+					for (let k = 0; k < line.length; k++) {
+						if (line[k] == "　") {
+							left += 3;
+						} else if (line[k] == " ") {
+							left += 1;
+						} else {
+							line = line.substring(k);
+							break;
+						}
+					}
+					minLeft = Math.min(left);
+					
+					let right = 0;
+					for (let k = line.length - 1; k >= 0; k--) {
+						if (line[k] == "　") {
+							right += 3;
+						} else if (line[k] == " ") {
+							right += 1;
+						} else {
+							line = line.substring(0, k + 1);
+							break;
+						}
+					}
+					minRight = Math.min(right);
+					
+					lines[j] = prev + line + next;
+				}
+				text = lines.join("\\N");
+
+				const shift = minLeft - minRight;
+				if (shift) {
+					// 모든 줄에 공통으로 한쪽에 여백이 있을 경우 좌우 이동
+					x += style.Fontsize * shift / 8;
+					if (style.Alignment % 3 == 2) {
+						// 가운데 정렬일 때만 실제 태그에 반영
+						moved = true;
+					}
+				}
+			} while (false);
+			
+			if (moved) {
+				if (text.indexOf("\\pos(") > 0 || text.indexOf("\\move(") > 0) {
+					// 강제로 pos 태그 잡혀있으면 추가 적용하지 않음
+				} else {
+					text = "{\\pos(" + x + "," + y + ")}" + text;
+				}
 			}
-			header.push(line);
+		}
+		
+		// 군더더기 제거
+		text = text.split("{\\ass1}").join("").split("{\\ass0}").join("").split("}{").join("");
+		
+		if (text) {
+			// Default에 대해서 줄표 달린 것들 정렬 맞춰주기
+			if (AssEvent.useAlignDialogue && style && sync.style == "Default") {
+				let frontTag = "";
+				let lines = text;
+				if (text.startsWith("{")) {
+					const end = text.indexOf("}");
+					if (end > 0) {
+						frontTag = text.substring(0, end + 1);
+						lines = text.substring(end + 1);
+					}
+				}
+				
+				// \fs, \fscx 태그 등이 없어서 글씨 크기 유지가 보장될 때 동작
+				if (lines.indexOf("\\fs") < 0) {
+					lines = lines.split("\\N");
+					const pureLines = [];
+					for (let i = 0; i < lines.length; i++) {
+						let pureLine = Subtitle.$tmp.html(lines[i].split("{").join("<span ").split("}").join(">")).text();
+						if (pureLine.startsWith("-")) {
+							pureLines.push({ i: i, text: pureLine });
+						}
+					}
+					if (pureLines.length == 0) {
+						// 반각 줄표 없으면 전각 줄표로 재확인
+						for (let i = 0; i < lines.length; i++) {
+							let pureLine = Subtitle.$tmp.html(lines[i].split("{").join("<span ").split("}").join(">")).text();
+							if (pureLine.startsWith("－")) {
+								pureLines.push({ i: i, text: pureLine });
+							}
+						}
+					}
+					// 줄표 달린 게 2개 이상일 때
+					if (pureLines.length >= 2) {
+						const wStyle = { fontFamily: style.Fontname, fontSize: style.Fontsize + "px" };
+						const oneWidth = Subtitle.Width.getWidth("　", wStyle);
+						let maxWidth = 0;
+						for (let i = 0; i < pureLines.length; i++) {
+							const width = pureLines[i].width = Subtitle.Width.getWidth(pureLines[i].text, wStyle);
+							maxWidth = Math.max(width, maxWidth);
+						}
+						for (let i = 0; i < pureLines.length; i++) {
+							const add = (maxWidth - pureLines[i].width);
+							if (add) {
+								lines[pureLines[i].i] += "{\\fscx" + Math.floor(add / oneWidth * 100) + "}　{"
+									+ ((pureLines[i].i < lines.length - 1) ? "\\fscx" : "") + "}"; // 마지막 줄이면 {}으로 끝내기
+							}
+						}
+						text = lines.join("\\N");
+						if (frontTag) {
+							text = (frontTag + text).split("}{").join("");
+						}
+					}
+				}
+			}
+			
+			// SMI와 공통인 건 레이어 200 부여
+			const ass = new AssEvent(start, end, sync.style, text, 200);
+			ass.origin = sync;
+			events.push(ass);
 		}
 	}
-	this.header = header.join("\n") + "\n";
-
-	return this;
-}
-Subtitle.AssFile.prototype.toSync = function() {
-	const result = [];
-	for (let i = 0; i < this.body.length; i++) {
-		result.push(this.body[i].toSync());
-	}
-	return result;
+	return events;
 }
 
-Subtitle.AssFile.prototype.fromSync = function(syncs, checkFrame=true) {
-	this.body = [];
-	for (let i = 0; i < syncs.length; i++) {
-		this.body.push(new Subtitle.Ass().fromSync(syncs[i], checkFrame));
-	}
-	return this;
-}
-
-Subtitle.AssPart = function(name, format=null, body=[]) {
+window.AssPart = Subtitle.AssPart = function(name, format=null, body=[]) {
 	this.name = name;
 	this.format = format;
 	this.body = body;
 }
-Subtitle.AssPart.prototype.toTxt = function() {
-	const result = ['[' + this.name + ']'];
-	if (this.format) {
-		result.push("Format: " + this.format.join(", "));
+AssPart.prototype.get = function(key) {
+	if (this.format) return null;
+	for (let i = 0; i < this.body.length; i++) {
+		if (this.body[i].key == key) {
+			return this.body[i].value;
+		}
+	}
+	return null;
+}
+AssPart.prototype.set = function(key, value) {
+	if (this.format) return;
+	for (let i = 0; i < this.body.length; i++) {
+		if (this.body[i].key == key) {
+			this.body[i].value = value;
+			return;
+		}
+	}
+	this.body.push({ key: key, value: value });
+}
+AssPart.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+AssPart.prototype.toText = function(withName=true, withFormat=true) {
+	const result = [];
+	if (withFormat) {
+		if (withName) {
+			result.push('[' + this.name + ']');
+		}
+		if (this.format) {
+			result.push("Format: " + this.format.join(", "));
+		}
 	}
 	for (let i = 0; i < this.body.length; i++) {
 		const item = this.body[i];
@@ -1276,7 +1793,14 @@ Subtitle.AssPart.prototype.toTxt = function() {
 		if (this.format) {
 			const value = [];
 			for (let j = 0; j < this.format.length; j++) {
-				value.push(item[this.format[j]]);
+				const key = this.format[j];
+				if (!item[key]) {
+					switch (key) {
+						case "Start": item.Start = AssEvent.fromAssTime(item.start); break;
+						case "End"  : item.End   = AssEvent.fromAssTime(item.end  ); break;
+					}
+				}
+				value.push(item[key]);
 			}
 			result.push(item.key + ": " + value.join(","));
 		} else {
@@ -1285,27 +1809,54 @@ Subtitle.AssPart.prototype.toTxt = function() {
 	}
 	return result.join("\n");
 }
-Subtitle.AssPart.StylesFormat = ["Name", "Fontname", "Fontsize", "PrimaryColour", "SecondaryColour", "OutlineColour", "BackColour", "Bold", "Italic", "Underline", "StrikeOut", "ScaleX", "ScaleY", "Spacing", "Angle", "BorderStyle", "Outline", "Shadow", "Alignment", "MarginL", "MarginR", "MarginV", "Encoding"];
-Subtitle.AssPart.EventsFormat = ["Layer", "Start", "End", "Style", "Name", "MarginL", "MarginR", "MarginV", "Effect", "Text"];
+AssPart.StylesFormat = ["Name", "Fontname", "Fontsize", "PrimaryColour", "SecondaryColour", "OutlineColour", "BackColour", "Bold", "Italic", "Underline", "StrikeOut", "ScaleX", "ScaleY", "Spacing", "Angle", "BorderStyle", "Outline", "Shadow", "Alignment", "MarginL", "MarginR", "MarginV", "Encoding"];
+AssPart.EventsFormat = ["Layer", "Start", "End", "Style", "Name", "MarginL", "MarginR", "MarginV", "Effect", "Text"];
 
-Subtitle.AssFile2 = function(txt) {
+AssEvent.prototype.toText = function(format=AssPart.EventsFormat) {
+	const value = [];
+	for (let j = 0; j < format.length; j++) {
+		const key = format[j];
+		if (key) {
+			value.push(this[key]);
+		} else {
+			value.push("");
+		}
+	}
+	return value.join(",");
+}
+
+window.AssFile = Subtitle.AssFile = function(text) {
 	this.parts = [];
-	if (txt) {
-		this.fromTxt(txt);
+	if (text) {
+		this.fromText(text);
 	} else {
-		this.parts.push(new Subtitle.AssPart("V4+ Styles", Subtitle.AssPart.StylesFormat));
-		this.parts.push(new Subtitle.AssPart("Events"    , Subtitle.AssPart.EventsFormat));
+		const scriptInfo = new AssPart("Script Info");
+		scriptInfo.body.push("; Script generated by Jamaker");
+		scriptInfo.body.push("; https://github.com/harnenim/Jamaker");
+		scriptInfo.body.push({ key: "ScriptType", value: "v4.00+" });
+		scriptInfo.body.push({ key: "PlayResX", value: Subtitle.video.width});
+		scriptInfo.body.push({ key: "PlayResY", value: Subtitle.video.height });
+		scriptInfo.body.push({ key: "Timer", value: "100.0000" });
+		scriptInfo.body.push({ key: "ScaledBorderAndShadow", value: "yes" });
+		this.parts.push(scriptInfo);
+		
+		this.parts.push(new AssPart("V4+ Styles", AssPart.StylesFormat));
+		this.parts.push(new AssPart("Events"    , AssPart.EventsFormat));
 	}
 }
-Subtitle.AssFile2.prototype.toTxt = function() {
+AssFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+AssFile.prototype.toText = function() {
 	const result = [];
 	for (let i = 0; i < this.parts.length; i++) {
-		result.push(this.parts[i].toTxt());
+		if (this.parts[i].body.length) {
+			result.push(this.parts[i].toText());
+		}
 	}
 	return result.join("\n\n");
 }
-Subtitle.AssFile2.prototype.fromTxt = function(txt) {
-	const lines = txt.split("\n");
+AssFile.prototype.fromTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+AssFile.prototype.fromText = function(text) {
+	const lines = text.split("\n");
 	
 	let part = null;
 	for (let i = 0; i < lines.length; i++) {
@@ -1314,7 +1865,7 @@ Subtitle.AssFile2.prototype.fromTxt = function(txt) {
 		
 		if (line.startsWith('[') && line.endsWith(']')) {
 			// 파트 시작
-			this.parts.push(part = new Subtitle.AssPart(line.substring(1, line.length - 1)));
+			this.parts.push(part = new AssPart(line.substring(1, line.length - 1)));
 			
 		} else if (part) {
 			// 파트 내용물
@@ -1338,12 +1889,42 @@ Subtitle.AssFile2.prototype.fromTxt = function(txt) {
 					value[part.format.length - 1] = value.slice(part.format.length - 1).join(",");
 					value.length = part.format.length;
 				}
-				const item = { key: key };
 				if (part.name == "Events") {
 					// 형 변환 필요?
 				}
+				const isStyle = part.name == "V4+ Styles";
+				const isEvent = part.name == "Events";
+				
+				const item = isEvent ? new AssEvent() : {};
+				item.key = key;
+				
 				for (let j = 0; j < part.format.length; j++) {
-					item[part.format[j]] = value[j];
+					const key = part.format[j];
+					let v = value[j];
+					if (isStyle && isFinite(v)) {
+						v = Number(v);
+					}
+					item[key] = v;
+					
+					if (isEvent) {
+						if (isFinite(v)) {
+							switch (key) {
+								case "Layer":
+								case "start":
+								case "end":
+								case "MarginL":
+								case "MarginR":
+								case "MarginV":
+									item[key] = Number(v);
+									break;
+							}
+						} else {
+							switch (key) {
+								case "Start": item.start = AssEvent.fromAssTime(v, true); break;
+								case "End"  : item.end   = AssEvent.fromAssTime(v, true); break;
+							}
+						}
+					}
 				}
 				part.body.push(item);
 				
@@ -1364,7 +1945,48 @@ Subtitle.AssFile2.prototype.fromTxt = function(txt) {
 	}
 	return this;
 }
-Subtitle.AssFile2.prototype.toSync = function() {
+AssFile.prototype.addFromSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+AssFile.prototype.addFromSyncs = function(syncs, styleName) {
+	let playResX = 1920;
+	let playResY = 1080;
+	const infoPart = this.getInfo();
+	for (let i = 0; i < infoPart.body.length; i++) {
+		const info = infoPart.body[i];
+		switch (info.key) {
+			case "PlayResX": playResX = Number(info.value); break;
+			case "PlayResY": playResY = Number(info.value); break;
+		}
+	}
+
+	const style = (typeof styleName == "string") ? this.getStyle(styleName) : styleName;
+	if (style) {
+		let x = 0;
+		let y = 0;
+		switch (style.Alignment % 3) {
+			case 0: x = playResX - style.MarginR; break;
+			case 1: x = style.MarginL; break;
+			case 2: x = (playResX + style.MarginL - style.MarginR) / 2; break;
+		}
+		switch (Math.floor((style.Alignment - 1) / 3)) {
+			case 0: y = playResY - style.MarginV; break;
+			case 1: y = playResY / 2; break;
+			case 2: y = style.MarginV; break;
+		}
+		// 후리가나 등 겹치는 항목을 생성할 경우 위치 고정
+		style.pos = [x, y];
+	}
+	
+	const part = this.getEvents();
+	let ti = 0;
+	for (let i = 0; i < syncs.length; i++) {
+		const sync = syncs[i];
+		sync.style = styleName;
+		const events = AssEvent.fromSync(sync, style);
+		part.body.push(...events);
+	}
+}
+AssFile.prototype.toSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+AssFile.prototype.toSyncs = function() {
 	let part = null;
 	for (let i = 0; i < this.parts.length; i++) {
 		if (this.parts[i].name == "Events") {
@@ -1381,8 +2003,72 @@ Subtitle.AssFile2.prototype.toSync = function() {
 	}
 	return result;
 }
+AssFile.prototype.getPart = function(name) {
+	for (let i = 0; i < this.parts.length; i++) {
+		if (this.parts[i].name == name) {
+			return this.parts[i];
+		}
+	}
+	return null;
+}
+AssFile.prototype.getInfo = function(withGenerate=false) {
+	let part = this.getPart("Script Info");
+	if (part == null && withGenerate) {
+		part = new AssPart("Script Info");
+		this.parts.push(part);
+	}
+	return part;
+}
+AssFile.prototype.getStyles = function() {
+	let part = this.getPart("V4+ Styles");
+	if (part == null) {
+		part = new AssPart("V4+ Styles", AssPart.StylesFormat);
+		this.parts.push(part);
+	}
+	return part;
+}
+AssFile.prototype.getEvents = function() {
+	let part = this.getPart("Events");
+	if (part == null) {
+		part = new AssPart("Events", AssPart.EventsFormat);
+		this.parts.push(part);
+	}
+	return part;
+}
+AssFile.prototype.getStyle = function(name) {
+	const stylesPart = this.getStyles();
+	for (let i = 0; i < stylesPart.body.length; i++) {
+		const style = stylesPart.body[i];
+		if (style.Name == name) {
+			return style;
+		}
+	}
+	return null;
+}
+AssFile.prototype.addStyle = function(name, style, origin=null) {
+	style = JSON.parse(JSON.stringify(style));
+	style.key = "Style";
+	style.Name = name;
+	style.Encoding = 1;
+	style.origin = origin;
+	
+	if (!style.Fontname) style.Fontname = "맑은 고딕";
+	style.Bold        = style.Bold        ? -1 : 0;
+	style.Italic      = style.Italic      ? -1 : 0;
+	style.Underline   = style.Underline   ? -1 : 0;
+	style.StrikeOut   = style.StrikeOut   ? -1 : 0;
+	style.BorderStyle = style.BorderStyle ?  3 : 1;
+	
+	{ let fc = (style.PrimaryColour   + (511 - style.PrimaryOpacity  ).toString(16).substring(1)).toUpperCase(); style.PrimaryColour   = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	{ let fc = (style.SecondaryColour + (511 - style.SecondaryOpacity).toString(16).substring(1)).toUpperCase(); style.SecondaryColour = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	{ let fc = (style.OutlineColour   + (511 - style.OutlineOpacity  ).toString(16).substring(1)).toUpperCase(); style.OutlineColour   = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	{ let fc = (style.BackColour      + (511 - style.BackOpacity     ).toString(16).substring(1)).toUpperCase(); style.BackColour      = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	
+	this.getStyles().body.push(style);
+}
 
-Subtitle.AssFile2.prototype.fromSync = function(syncs, style) {
+AssFile.prototype.fromSync =
+AssFile.prototype.fromSyncs = function(syncs, style) {
 	let part = null;
 	for (let i = 0; i < this.parts.length; i++) {
 		if (this.parts[i].name == "Events") {
@@ -1391,13 +2077,13 @@ Subtitle.AssFile2.prototype.fromSync = function(syncs, style) {
 		}
 	}
 	if (!part) {
-		part = new Subtitle.AssPart("Events", Subtitle.AssPart.EventsFormat);
+		part = new AssPart("Events", AssPart.EventsFormat);
 	}
 	
-	this.body = [];
+	part.body = [];
 	for (let i = 0; i < syncs.length; i++) {
 		syncs[i].style = style;
-		this.body.push(new Subtitle.Ass().fromSync(syncs[i], false));
+		part.body.push(new AssEvent().fromSync(syncs[i], false));
 	}
 	return this;
 }
@@ -1406,33 +2092,32 @@ Subtitle.AssFile2.prototype.fromSync = function(syncs, style) {
 
 
 
-// SubtitleObjectSmi.cs
-
-Subtitle.Smi = function(start, syncType, text) {
+window.Smi = Subtitle.Smi = function(start, syncType, text) {
 	this.start = start ? Math.round(start) : 0;
-	this.syncType = syncType ? syncType : Subtitle.SyncType.normal;
+	this.syncType = syncType ? syncType : SyncType.normal;
 	this.text = text ? text : "";
 }
-Subtitle.Smi.TypeParser = {};
-Subtitle.Smi.TypeParser[Subtitle.SyncType.normal] = "";
-Subtitle.Smi.TypeParser[Subtitle.SyncType.frame] = " ";
-Subtitle.Smi.TypeParser[Subtitle.SyncType.inner] = "\t";
-Subtitle.Smi.TypeParser[Subtitle.SyncType.split] = "  ";
+window.TypeParser = Smi.TypeParser = {};
+TypeParser[SyncType.normal] = "";
+TypeParser[SyncType.frame] = " ";
+TypeParser[SyncType.inner] = "\t";
+TypeParser[SyncType.split] = "  ";
 
-Subtitle.Smi.prototype.toTxt = function() {
-	if (this.syncType == Subtitle.SyncType.comment) { // Normalize 시에만 존재
+Smi.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Smi.prototype.toText = function() {
+	if (this.syncType == SyncType.comment) { // Normalize 시에만 존재
 		return "<!--" + this.text + "-->";
 	}
-	return "<Sync Start=" + this.start + "><P Class=KRCC" + Subtitle.Smi.TypeParser[this.syncType] + ">\n" + this.text;
+	return "<Sync Start=" + this.start + "><P Class=KRCC" + TypeParser[this.syncType] + ">\n" + this.text;
 }
-Subtitle.Smi.smi2txt = (smis) => {
+Smi.smi2txt = (smis) => {
 	let result = "";
 	for (let i = 0; i < smis.length; i++) {
-		result += smis[i].toTxt() + "\n";
+		result += smis[i].toText() + "\n";
 	}
 	return result;
 }
-Subtitle.Smi.prototype.isEmpty = function() {
+Smi.prototype.isEmpty = function() {
 	return (this.text.split("&nbsp;").join("").trim().length == 0);
 }
 
@@ -1587,14 +2272,14 @@ function sToAttrColor(soColor) {
 	}
 	return soColor;
 }
-Subtitle.Smi.colorToAttr = (soColor) => {
+Smi.colorToAttr = (soColor) => {
 	return sToAttrColor(soColor);
 }
-Subtitle.Smi.colorFromAttr = (attrColor) => {
+Smi.colorFromAttr = (attrColor) => {
 	return ((attrColor.length == 6) ? "#" : "") + attrColor;
 }
 
-Subtitle.Smi.Status = function() {
+Smi.Status = function() {
 	this.b = 0;
 	this.i = 0;
 	this.u = 0;
@@ -1602,32 +2287,33 @@ Subtitle.Smi.Status = function() {
 	this.fs = [];
 	this.fn = [];
 	this.fc = [];
+	this.ass = []; // ASS 변환 시에만 쓰이는 속성
 	this.fade = [];
 	this.shake = [];
 	this.typing = [];
 	this.fontAttrs = [];
 }
-Subtitle.Smi.Status.prototype.setB = function(isOpen) {
+Smi.Status.prototype.setB = function(isOpen) {
 	if (isOpen) this.b++;
 	else if (this.b > 0) this.b--;
 	return this;
 }
-Subtitle.Smi.Status.prototype.setI = function(isOpen) {
+Smi.Status.prototype.setI = function(isOpen) {
 	if (isOpen) this.i++;
 	else if (this.i > 0) this.i--;
 	return this;
 }
-Subtitle.Smi.Status.prototype.setU = function(isOpen) {
+Smi.Status.prototype.setU = function(isOpen) {
 	if (isOpen) this.u++;
 	else if (this.u > 0) this.u--;
 	return this;
 }
-Subtitle.Smi.Status.prototype.setS = function(isOpen) {
+Smi.Status.prototype.setS = function(isOpen) {
 	if (isOpen) this.s++;
 	else if (this.s > 0) this.s--;
 	return this;
 }
-Subtitle.Smi.Status.prototype.setFont = function(attrs) {
+Smi.Status.prototype.setFont = function(attrs) {
 	if (attrs != null) {
 		const thisAttrs = [];
 		for (let i = 0; i < attrs.length; i++) {
@@ -1645,6 +2331,10 @@ Subtitle.Smi.Status.prototype.setFont = function(attrs) {
 					
 				case "color":
 					this.fc.push(sToAttrColor(attrs[i][1]));
+					break;
+					
+				case "ass":
+					this.ass.push(attrs[i][1]);
 					break;
 					
 				case "fade":
@@ -1698,38 +2388,38 @@ Subtitle.Smi.Status.prototype.setFont = function(attrs) {
 
 					if (mode.startsWith("character")) {
 						if (mode == "character") {
-							tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.character);
+							tAttr = new Attr.TypingAttr(Typing.Mode.character);
 
 						} else if (mode.length == 11) {
 							const s = ((mode[ 9] == '(') ? 1 : ((mode[ 9] == '[') ? 0 : -1));
 							const e = ((mode[10] == ')') ? 1 : ((mode[10] == ']') ? 0 : -1));
 							if (s > -1 && e > -1) {
-								tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.character, s, e);
+								tAttr = new Attr.TypingAttr(Typing.Mode.character, s, e);
 							}
 							
 						} else if (match = /keyboard\(([0-9]+),([0-9]+)\)/.exec(mode)) {
-							tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.character, Number(match[1]), Number(match[2]));
+							tAttr = new Attr.TypingAttr(Typing.Mode.character, Number(match[1]), Number(match[2]));
 						}
 						
 					} else if (mode == "typewriter") {
-						tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.typewriter);
+						tAttr = new Attr.TypingAttr(Typing.Mode.typewriter);
 						
 					} else if (match = /typewriter\(([0-9]+),([0-9]+)\)/.exec(mode)) {
-						tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.typewriter, Number(match[1]), Number(match[2]));
+						tAttr = new Attr.TypingAttr(Typing.Mode.typewriter, Number(match[1]), Number(match[2]));
 						
 					} else if (mode.startsWith("keyboard")) {
 						if (mode == "keyboard") {
-							tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.keyboard);
+							tAttr = new Attr.TypingAttr(Typing.Mode.keyboard);
 							
 						} else if (mode.length == 10) {
 							const s = ((mode[8] == '(') ? 1 : ((mode[8] == '[') ? 0 : -1));
 							const e = ((mode[9] == ')') ? 1 : ((mode[9] == ']') ? 0 : -1));
 							if (s > -1 && e > -1) {
-								tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.keyboard, s, e);
+								tAttr = new Attr.TypingAttr(Typing.Mode.keyboard, s, e);
 							}
 							
 						} else if (match = /keyboard\(([0-9]+),([0-9]+)\)/.exec(mode)) {
-							tAttr = new Subtitle.Attr.TypingAttr(Typing.Mode.keyboard, Number(match[1]), Number(match[2]));
+							tAttr = new Attr.TypingAttr(Typing.Mode.keyboard, Number(match[1]), Number(match[2]));
 						}
 					}
 					
@@ -1762,13 +2452,16 @@ Subtitle.Smi.Status.prototype.setFont = function(attrs) {
 		for (let i = 0; i < lastAttrs.length; i++) {
 			switch (lastAttrs[i]) {
 				case "size":
-					this.fs.pop()
+					this.fs.pop();
 					break;
 				case "face":
 					this.fn.pop();
 					this.break;
 				case "color":
 					this.fc.pop();
+					break;
+				case "ass":
+					this.ass.pop();
 					break;
 				case "fade":
 					this.fade.pop();
@@ -1785,7 +2478,7 @@ Subtitle.Smi.Status.prototype.setFont = function(attrs) {
 	}
 	return this;
 }
-Subtitle.Smi.setStyle = (attr, status) => {
+Smi.setStyle = (attr, status) => {
 	attr.b = status.b > 0;
 	attr.i = status.i > 0;
 	attr.u = status.u > 0;
@@ -1793,16 +2486,18 @@ Subtitle.Smi.setStyle = (attr, status) => {
 	attr.fs = (status.fs.length > 0) ? status.fs[status.fs.length - 1] : 0;
 	attr.fn = (status.fn.length > 0) ? status.fn[status.fn.length - 1] : "";
 	attr.fc = (status.fc.length > 0) ? status.fc[status.fc.length - 1] : "";
+	attr.ass = (status.ass.length > 0) ? status.ass[status.ass.length - 1] : null;
 	attr.fade = (status.fade.length > 0) ? status.fade[status.fade.length - 1] : 0;
 	attr.shake = (status.shake.length > 0) ? status.shake[status.shake.length - 1] : null;
 	attr.typing = (status.typing.length > 0) ? status.typing[status.typing.length - 1] : null;
 }
-Subtitle.Smi.setFurigana = (attr, furigana) => {
+Smi.setFurigana = (attr, furigana) => {
 	attr.furigana = furigana ? furigana : null;
 }
-Subtitle.Smi.toAttr = (text, keepTags=true) => {
-	const status = new Subtitle.Smi.Status();
-	let last = new Subtitle.Attr();
+Smi.toAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Smi.toAttrs = (text, keepTags=true) => {
+	const status = new Smi.Status();
+	let last = new Attr();
 	last.tagString = "";
 	const result = [last];
 	let ruby = null;
@@ -1815,47 +2510,54 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 	let attr = null;
 	let value = null;
 	
+	let isFirst = true;
 	function openTag() {
+		const hadAss = (typeof last.ass == "string");
 		switch (tag.name.toUpperCase()) {
 			case "B":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				// 원래 텍스트 비었으면 군더더기 없이 하려고 했는데
+				// 태그 여닫은 순서는 기억하는 게 좋을 것 같음
+				// ... 아닌가?
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setB(true));
+				Smi.setStyle(last, status.setB(true));
 				break;
 			case "I":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setI(true));
+				Smi.setStyle(last, status.setI(true));
 				break;
 			case "U":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setU(true));
+				Smi.setStyle(last, status.setU(true));
 				break;
 			case "S":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setS(true));
+				Smi.setStyle(last, status.setS(true));
 				break;
-			case "FONT":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+			case "FONT": {
+				let attrAdded = false;
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
+					attrAdded = true;
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -1864,33 +2566,46 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 					const attrs = [];
 					for (let name in tag.attrs) {
 						attrs.push([name, tag.attrs[name]]);
+						if (!attrAdded && name.toUpperCase() == "ASS") {
+							if (keepTags) {
+								last.tagString = last.tagString.substring(0, last.tagString.length - tagString.length);
+							}
+							if (!isFirst) {
+								result.push(last = new Attr());
+							}
+							if (keepTags) {
+								last.tagString = tagString;
+							}
+							attrAdded = true;
+						}
 					}
-					Subtitle.Smi.setStyle(last, status.setFont(attrs));
+					Smi.setStyle(last, status.setFont(attrs));
 				}
 				break;
+			}
 			case "RUBY":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status);
+				Smi.setStyle(last, status);
 				ruby = last;
 				break;
 			case "RT":
-				if (last.text.length > 0) {
-					last = new Subtitle.Attr();
+				if (hadAss || last.text.length > 0) {
+					last = new Attr(); // 후리가나는 상위 리스트에 넣지 않음
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status);
+				Smi.setStyle(last, status);
 				furigana = last;
 				break;
 			case "RP":
-				last = new Subtitle.Attr(); // 정크 데이터
-				Subtitle.Smi.setStyle(last, status);
+				last = new Attr(); // 후리가나는 상위 리스트에 넣지 않음
+				Smi.setStyle(last, status);
 				break;
 			case "BR":
 				last.text += "\n";
@@ -1898,66 +2613,68 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 		}
 		tag = null;
 		tagString = null;
+		isFirst = false;
 	}
 	function closeTag(tagName) {
+		const hadAss = (typeof last.ass == "string");
 		switch (tagName.toUpperCase()) {
 			case "B":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setB(false));
+				Smi.setStyle(last, status.setB(false));
 				break;
 			case "I":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setI(false));
+				Smi.setStyle(last, status.setI(false));
 				break;
 			case "U":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setU(false));
+				Smi.setStyle(last, status.setU(false));
 				break;
 			case "S":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setS(false));
+				Smi.setStyle(last, status.setS(false));
 				break;
 			case "FONT":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status.setFont(null));
+				Smi.setStyle(last, status.setFont(null));
 				break;
 			case "RUBY":
-				if (last.text.length > 0) {
-					result.push(last = new Subtitle.Attr());
+				if (hadAss || last.text.length > 0) {
+					result.push(last = new Attr());
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
 				}
-				Subtitle.Smi.setStyle(last, status);
+				Smi.setStyle(last, status);
 				break;
 			case "RT":
 				if (ruby) {
-					Subtitle.Smi.setFurigana(ruby, furigana);
+					Smi.setFurigana(ruby, furigana);
 					furigana = null;
 					last = ruby;
 				}
@@ -1971,6 +2688,7 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 		tagString = null;
 	}
 	
+	let commentStart = 0;
 	for (let pos = 0; pos < text.length; pos++) {
 		const c = text[pos];
 		if (tagString) tagString += c;
@@ -2044,6 +2762,7 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 					}
 					case '=': { // 속성값 시작
 						state = '=';
+						value = "";
 						break;
 					}
 					case ' ':
@@ -2160,6 +2879,12 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 			}
 			case '!': { // 주석
 				if ((pos + 3 <= text.length) && (text.substring(pos, pos+3) == "-->")) {
+					if (commentStart == 0) {
+						// 주석은 첫 항목이어야 함
+						last.comment = text.substring(0, pos + 3);
+						result.push(last = new Attr());
+						last.tagString = "";
+					}
 					state = null;
 					pos += 2;
 				}
@@ -2170,6 +2895,7 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 					case '<': {
 						if ((pos + 4 <= text.length) && (text.substring(pos, pos+4) == "<!--")) {
 							// 주석 시작
+							commentStart = pos;
 							state = '!';
 							pos += 3;
 						} else {
@@ -2189,236 +2915,708 @@ Subtitle.Smi.toAttr = (text, keepTags=true) => {
 			}
 		}
 	}
-	const a = $("<a>");
+	const a = Subtitle.$tmp;
 	for (let i = 0; i < result.length; i++) {
 		// &amp; 같은 문자 처리
 		result[i].text = a.html(result[i].text).text();
 	}
-	a.remove();
 	
 	return result;
 }
-Subtitle.Smi.prototype.toAttr = function(keepTags=true) {
-	return Subtitle.Smi.toAttr(this.text, keepTags);
+Smi.prototype.toAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Smi.prototype.toAttrs = function(keepTags=true) {
+	return Smi.toAttrs(this.text, keepTags);
 }
-Subtitle.Smi.prototype.fromAttr = function(attrs) {
-	this.text = Subtitle.Smi.fromAttr(attrs).split("\n").join("<br>");
+Smi.prototype.fromAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Smi.prototype.fromAttrs = function(attrs, forConvert=false) {
+	let text = "";
+	// 주석 살려야 되는지 확인
+	if (forConvert) {
+		// 주석에 줄바꿈 있을 수 있어서 따로 처리해줘야 함
+		for (let i = 0; i < attrs.length; i++) {
+			if (attrs[i].comment) {
+				text += attrs[i].comment;
+			} else {
+				break;
+			}
+		}
+	}
+	text += Smi.fromAttrs(attrs, 0, true, true, forConvert).split("\n").join("<br>");
+	this.text = text;
 	return this;
 }
-Subtitle.Smi.fromAttr = (attrs, fontSize=0) => { // fontSize를 넣으면 html로 % 크기 출력
+Smi.fromAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Smi.fromAttrs = (attrs, fontSize=0, checkRuby=true, checkFont=true, forConvert=false) => { // fontSize를 넣으면 html로 % 크기 출력
 	let text = "";
 	
-	const a = $("<a>");
-	let last = new Subtitle.Attr();
-	for (let i = 0; i < attrs.length; i++) {
+	// 후리가나 먼저 처리
+	let rubyEnd = 0;
+	if (checkRuby) {
+		for (let i = 0; i < attrs.length; i++) {
+			const attr = attrs[i];
+			
+			if (attr.furigana) {
+				// 후리가나 달리기 이전 부분 처리
+				text += Smi.fromAttrs(attrs.slice(rubyEnd, i), 0, true, true, forConvert);
+				
+				// 후리가나 처리
+				const subAttrs = [attr.clone()];
+				for (; i < attrs.length; i++) {
+					if (attr.furigana == attrs[i].furigana) {
+						const subAttr = attrs[i].clone();
+						subAttr.furigana = null;
+						subAttrs.push(subAttr);
+					} else {
+						rubyEnd = i;
+						i--; // 다음 루프에 ++ 됨
+						break;
+					}
+				}
+				text += "<RUBY>" + Smi.fromAttrs(subAttrs, fontSize, false, true, forConvert) + "<RT><RP>(</RP>" + Smi.fromAttrs([attr.furigana], fontSize, false, true, forConvert) + "<RP>)</RP></RT></RUBY>";
+			}
+		}
+	}
+	
+	// 후리가나 이후 나머지 (일반적으로 여기만 돌아감)
+	// <FONT> 태그 바깥 쪽 정크 덜 생기도록 잡아주기
+	// ...이게 아닌가? 필요 없나? 아래에 잘못 짠 게 문제였나?
+	if (checkFont && false) {
+		{
+			let fc = null;
+			let fAttrs = [];
+			let fLength = 0;
+			for (let i = rubyEnd; i < attrs.length; i++) {
+				const attr = attrs[i];
+				if (attr.fc != fc) {
+					if (fLength == 0) {
+						for (let j = 0; j < fAttrs.length; j++) {
+							fAttrs.fc = null;
+						}
+					}
+					fc = attr.fc;
+					fAttrs = [];
+					fLength = 0;
+				}
+				fAttrs.push(attr);
+				fLength += attr.text.length;
+			}
+		}
+	}
+	for (let i = rubyEnd; i < attrs.length; i++) {
 		const attr = attrs[i];
 		
-		//*
-		if (attr.tagString && attr.fade == 0 && attr.shake == null && attr.typing == null) {
-			// 원래 태그가 뭔지 알고 있을 경우 원본 복원
-			text += attr.tagString + attr.text;
-			
-		} else
-		//*/
-		if (attr.furigana) {
-			// <RUBY> 태그 적용 시 무조건 태그 닫고 열기
-			
-			if (last.s) text += "</S>";
-			if (last.u) text += "</U>";
-			if (last.i) text += "</I>";
-			if (last.b) text += "</B>";
-			
-			// 기존에 속성이 있었을 때 닫는 태그
-			if (last.fs > 0 || !last.fn == ("") || !last.fc == ("") || last.fade != 0 || last.shake != null || last.typing != null) {
-				text += "</FONT>";
-			}
-			let prev = "<RUBY>";
-			let next = "";
-			
-			if (attr.b) { prev += "<B>"; };
-			if (attr.i) { prev += "<I>"; };
-			if (attr.u) { prev += "<U>"; };
-			if (attr.s) { prev += "<S>"; next = "</S>" + next; };
-			if (attr.u) { next = "</U>" + next; };
-			if (attr.i) { next = "</I>" + next; };
-			if (attr.b) { next = "</B>" + next; };
-			
-			// 속성이 있을 때 여는 태그
-			let fontStart = "";
-			let fontEnd = "";
-			if (attr.fs > 0 || !attr.fn == ("") || !attr.fc == ("") || attr.fade != 0 || attr.shake != null || attr.typing != null) {
-				fontStart = "<FONT";
-				if (attr.fs > 0) {
-					if (fontSize)    fontStart += " style=\"font-size: " + (attr.fs / fontSize * 100) + "%;\"";
-					else             fontStart += " size=\"" + attr.fs + "\"";
+		// 가장 바깥에서 감쌀 수 있는 태그 찾기
+		let bLen      = 0; if (attr.b     ) for (bLen      = 1; i + bLen      < attrs.length; bLen++     ) { if (!attrs[i + bLen     ].b) break; }
+		let iLen      = 0; if (attr.i     ) for (iLen      = 1; i + iLen      < attrs.length; iLen++     ) { if (!attrs[i + iLen     ].i) break; }
+		let uLen      = 0; if (attr.u     ) for (uLen      = 1; i + uLen      < attrs.length; uLen++     ) { if (!attrs[i + uLen     ].u) break; }
+		let sLen      = 0; if (attr.s     ) for (sLen      = 1; i + sLen      < attrs.length; sLen++     ) { if (!attrs[i + sLen     ].s) break; }
+		let fsLen = 0;
+		if (attr.fs) {
+			fsLen = 1;
+			let tLen = 0;
+			for (let j = 0; i + j < attrs.length; j++) {
+				const sAttr = attrs[i + j];
+				if (!sAttr.fs) {
+					// 속성이 사라지면 끊기
+					if (tLen == 0) {
+						// 실제 쓰인 게 없으면 무시
+						fsLen = 0;
+					}
+					break;
 				}
-				if (attr.fn   != "") fontStart += " face=\"" + attr.fn + "\"";
-				if (attr.fc   != "") fontStart += " color=\""+ Subtitle.Smi.colorFromAttr(attr.fc) + "\"";
-				if (attr.fade != 0 ) fontStart += " fade=\"" + (attr.fade == 1 ? "in" : (attr.fade == -1 ? "out" : attr.fade)) + "\"";
-				if (attr.shake != null) fontStart += " shake=\"" + attr.shake.ms + "," + attr.shake.size + "\"";
-				if (attr.typing != null) fontStart += " typing=\"" + Typing.Mode.toString[attr.typing.mode] + "(" + attr.typing.start + "," + attr.typing.end + ") " + Typing.Cursor.toString[attr.typing.cursor] + "\"";
-				fontStart += ">";
-				fontEnd = "</FONT>";
-			}
-			next += "<RT><RP>(</RP>" + Subtitle.Smi.fromAttr([attr.furigana, new Subtitle.Attr()]) + "<RP>)</RP></RT></RUBY>";
-			
-			text += fontStart + prev + attr.text + next + fontEnd;
-			
-		} else if (last.furigana) {
-			// 앞쪽에 <RUBY> 태그 있었을 때
-			
-			// 속성이 있을 때 여는 태그
-			if (attr.fs > 0 || !attr.fn == ("") || !attr.fc == ("") || attr.fade != 0 || attr.shake != null || attr.typing != null) {
-				text += "<FONT";
-				if (attr.fs > 0) {
-					if (fontSize)    text += " style=\"font-size: " + (attr.fs / fontSize * 100) + "%;\"";
-					else             text += " size=\"" + attr.fs + "\"";
+				if (sAttr.fs == attr.fs) {
+					// 속성이 같은 게 있으면 감싸지는 걸로 처리
+					fsLen = j + 1;
 				}
-				if (attr.fn   != "") text += " face=\"" + attr.fn + "\"";
-				if (attr.fc   != "") text += " color=\""+ Subtitle.Smi.colorFromAttr(attr.fc) + "\"";
-				if (attr.fade != 0 ) text += " fade=\"" + (attr.fade == 1 ? "in" : (attr.fade == -1 ? "out" : attr.fade)) + "\"";
-				if (attr.shake != null) text += " shake=\"" + attr.shake.ms + "," + attr.shake.size + "\"";
-				if (attr.typing != null) text += " typing=\"" + Typing.Mode.toString[attr.typing.mode] + "(" + attr.typing.start + "," + attr.typing.end + ") " + Typing.Cursor.toString[attr.typing.cursor] + "\"";
-				text += ">";
+				// 실제로 해당 속성이 쓰인 문자열 길이 확인
+				tLen += sAttr.text.length;
+			}
+		}
+		let fnLen = 0;
+		if (attr.fn) {
+			fnLen = 1;
+			let tLen = 0;
+			for (let j = 0; i + j < attrs.length; j++) {
+				const sAttr = attrs[i + j];
+				if (!sAttr.fn) {
+					if (tLen == 0) fnLen = 0;
+					break;
+				}
+				if (sAttr.fn == attr.fn) fnLen = j + 1;
+				tLen += sAttr.text.length;
+			}
+		}
+		let fcLen = 0;
+		if (attr.fc) {
+			fcLen = 1;
+			let tLen = 0;
+			for (let j = 0; i + j < attrs.length; j++) {
+				const sAttr = attrs[i + j];
+				if (!sAttr.fc) {
+					if (tLen == 0) fcLen = 0;
+					break;
+				}
+				if (sAttr.fc == attr.fc) fcLen = j + 1;
+				tLen += sAttr.text.length;
+			}
+		}
+		let useAss = false;
+		let assLen = 0;
+		if (forConvert && (typeof attr.ass == "string")) {
+			useAss = true;
+			assLen = 1;
+			let tLen = 0;
+			for (let j = 0; i + j < attrs.length; j++) {
+				const sAttr = attrs[i + j];
+				if (!sAttr.ass) {
+					break;
+				}
+				if (sAttr.ass == attr.ass) assLen = j + 1;
+				tLen += sAttr.text.length;
+			}
+		}
+		/*
+		let fsLen     = 0; if (attr.fs    ) for (fsLen     = 1; i + fsLen     < attrs.length; fsLen++    ) { if (!attrs[i + fsLen    ].fs) break; }
+		let fnLen     = 0; if (attr.fn    ) for (fnLen     = 1; i + fnLen     < attrs.length; fnLen++    ) { if (!attrs[i + fnLen    ].fn) break; }
+		let fcLen     = 0; if (attr.fc    ) for (fcLen     = 1; i + fcLen     < attrs.length; fcLen++    ) { if (!attrs[i + fcLen    ].fc) break; }
+		*/
+		let fadeLen   = 0; if (attr.fade  ) for (fadeLen   = 1; i + fadeLen   < attrs.length; fadeLen++  ) { if (!attrs[i + fadeLen  ].fade) break; }
+		let shakeLen  = 0; if (attr.shake ) for (shakeLen  = 1; i + shakeLen  < attrs.length; shakeLen++ ) { if (!attrs[i + shakeLen ].shake) break; }
+		let typingLen = 0; if (attr.typing) for (typingLen = 1; i + typingLen < attrs.length; typingLen++) { if (!attrs[i + typingLen].typing) break; }
+		
+		let len = 0;
+		let limit = 1;
+		let tag = null;
+		let font = [];
+		if (sLen      >= limit) { limit = len = sLen     ; tag = "S"; }
+		if (uLen      >= limit) { limit = len = uLen     ; tag = "U"; }
+		if (iLen      >= limit) { limit = len = iLen     ; tag = "I"; }
+		if (bLen      >= limit) { limit = len = bLen     ; tag = "B"; }
+		if (fsLen     >= limit) { limit = len = fsLen    ; tag = "FONT"; font.push("fs") }
+		if (fnLen     >= limit) { tag = "FONT"; (fnLen     > len) ? (font = ["fn"    ]) : font.push("fn"    ); limit = len = fnLen    ; }
+		if (fcLen     >= limit) { tag = "FONT"; (fcLen     > len) ? (font = ["fc"    ]) : font.push("fc"    ); limit = len = fcLen    ; }
+		if (fadeLen   >= limit) { tag = "FONT"; (fadeLen   > len) ? (font = ["fade"  ]) : font.push("fade"  ); limit = len = fadeLen  ; }
+		if (shakeLen  >= limit) { tag = "FONT"; (shakeLen  > len) ? (font = ["shake" ]) : font.push("shake" ); limit = len = shakeLen ; }
+		if (typingLen >= limit) { tag = "FONT"; (typingLen > len) ? (font = ["typing"]) : font.push("typing"); limit = len = typingLen; }
+		if (len == 0) {
+			if (useAss) {
+				limit = len = assLen;
+				tag = "FONT";
+				(assLen > len) ? (font = ["ass"]) : font.push("ass");
+			} else {
+				len = 1;
+			}
+		}
+		
+		const subAttrs = [];
+		for (let j = 0; j < len; j++) {
+			subAttrs.push(attrs[i + j].clone());
+		}
+		
+		if (tag) {
+			let opener = "<" + tag + ">";
+			let closer = "</" + tag + ">";
+			
+			switch (tag) {
+				case "S": {
+					for (let j = 0; j < len; j++) { subAttrs[j].s = false; }
+					break;
+				}
+				case "U": {
+					for (let j = 0; j < len; j++) { subAttrs[j].u = false; }
+					break;
+				}
+				case "I": {
+					for (let j = 0; j < len; j++) { subAttrs[j].i = false; }
+					break;
+				}
+				case "B": {
+					for (let j = 0; j < len; j++) { subAttrs[j].b = false; }
+					break;
+				}
+				case "FONT": {
+					opener = "<FONT";
+
+					// TODO: 정말 <FONT> 태그를 생성해야 하는 유의미한 값인지 내용물 재확인 필요?
+
+					for (let k = 0; k < font.length; k++) {
+						const key = font[k];
+						switch (key) {
+							case "fs"    : {
+								if (fontSize) {
+									opener += " style=\"font-size: " + (attr.fs / fontSize * 100) + "%;\"";
+								} else {
+									opener += " size=\"" + attr.fs + "\"";
+								}
+								break;
+							}
+							case "fn"    : { opener += " face=\""   + attr.fn + "\""; break; }
+							case "fc"    : { opener += " color=\""  + Smi.colorFromAttr(attr.fc) + "\""; break; }
+							case "fade"  : { opener += " fade=\""   + (attr.fade == 1 ? "in" : (attr.fade == -1 ? "out" : attr.fade)) + "\""; break; }
+							case "shake" : { opener += " shake=\""  + attr.shake.ms + "," + attr.shake.size + "\""; break; }
+							case "typing": { opener += " typing=\"" + Typing.Mode.toString[attr.typing.mode] + "(" + attr.typing.start + "," + attr.typing.end + ") " + Typing.Cursor.toString[attr.typing.cursor] + "\""; break; }
+							case "ass"   : { opener += " ass=\""    + attr.ass + "\""; break; }
+						}
+					}
+					opener += ">";
+					
+					for (let j = 0; j < len; j++) {
+						for (let k = 0; k < font.length; k++) {
+							if (attr[font[k]] == subAttrs[j][font[k]]) {
+								subAttrs[j][font[k]] = null;
+							}
+						}
+					}
+					break;
+				}
 			}
 			
-			if (attr.b) text += "<B>";
-			if (attr.i) text += "<I>";
-			if (attr.u) text += "<U>";
-			if (attr.s) text += "<S>";
-			
-			text += attr.text;
+			text += opener + Smi.fromAttrs(subAttrs, fontSize, false, false, forConvert) + closer;
 			
 		} else {
-			if (last.s && !attr.s) text += "</S>";
-			if (last.u && !attr.u) text += "</U>";
-			if (last.i && !attr.i) text += "</I>";
-			if (last.b && !attr.b) text += "</B>";
-			
-			if ( last.fs   != attr.fs
-			 ||  last.fn   != attr.fn
-			 ||  last.fc   != attr.fc
-			 ||  last.fade != attr.fade
-			 || (last.shake  == null && attr.shake  != null)
-			 || (last.shake  != null && attr.shake  == null)
-			 || (last.typing == null && attr.typing != null)
-			 || (last.typing != null && attr.typing == null)
-			) {
-				// 기존에 속성이 있었을 때만 닫는 태그
-				if (last.fs > 0 || !last.fn == ("") || !last.fc == ("") || last.fade != 0 || last.shake != null || last.typing != null)
-					text += "</FONT>";
-				
-				// 신규 속성이 있을 때만 여는 태그
-				if (attr.fs > 0 || !attr.fn == ("") || !attr.fc == ("") || attr.fade != 0 || attr.shake != null || attr.typing != null) {
-					text += "<FONT";
-					if (attr.fs > 0) {
-						if (fontSize)    text += " style=\"font-size: " + (attr.fs / fontSize * 100) + "%;\"";
-						else             text += " size=\"" + attr.fs + "\"";
-					}
-					if (attr.fn   != "") text += " face=\"" + attr.fn + "\"";
-					if (attr.fc   != "") text += " color=\""+ Subtitle.Smi.colorFromAttr(attr.fc) + "\"";
-					if (attr.fade != 0 ) text += " fade=\"" + (attr.fade == 1 ? "in" : (attr.fade == -1 ? "out" : attr.fade)) + "\"";
-					if (attr.shake != null) text += " shake=\"" + attr.shake.ms + "," + attr.shake.size + "\"";
-					if (attr.typing != null) text += " typing=\"" + Typing.Mode.toString[attr.typing.mode] + "(" + attr.typing.start + "," + attr.typing.end + ") " + Typing.Cursor.toString[attr.typing.cursor] + "\"";
-					text += ">";
-				}
-			}
-			
-			// 특수태그 정규화 시 해당 태그는 안쪽에 들어간다고 가정하여 나중에 추가
-			if (!last.b && attr.b) text += "<B>";
-			if (!last.i && attr.i) text += "<I>";
-			if (!last.u && attr.u) text += "<U>";
-			if (!last.s && attr.s) text += "<S>";
-			
-			text += (attr.text == "\n") ? "<br>" : a.text(attr.text).html();
+			// 태그 모두 상위에서 처리하고 텍스트만 남음
+			text += attr.text;
 		}
-		last = attr;
+		
+		i = i + len - 1;
 	}
-	a.remove();
 	
 	return text;
 }
 
-Subtitle.Smi.prototype.toSync = function() {
-	return new Subtitle.SyncAttr(this.start, null, this.syncType, null, this.toAttr());
+Smi.prototype.toSync = function() {
+	return new SyncAttr(this.start, null, this.syncType, null, this.toAttrs(), this);
 }
-Subtitle.Smi.prototype.fromSync = function(sync) {
+Smi.prototype.fromSync = function(sync) {
 	this.start = sync.start;
 	this.syncType = sync.startType;
-	this.fromAttr(sync.text);
+	this.fromAttrs(sync.text);
 	return this;
 }
 
-Subtitle.Smi.getLineWidth = (text) => {
-	return Subtitle.Width.getWidth(Subtitle.Smi.toAttr(text));
+Smi.getLineWidth = (text) => {
+	return Subtitle.Width.getWidth(Smi.toAttrs(text));
 }
 
-Subtitle.Smi.Color = function(target, color, index=0) {
-	this.index = index; // 페이드 index가 아니라, 속성의 index를 변칙적으로 사용 중...
-	
-	if (color.length == 7 && color[0] == "#") {
-		color = color.substring(1);
-	}
-	// 16진수 맞는지 확인
-	if (isFinite("0x" + color)) {
-		this.r = this.tr = Subtitle.Smi.Color.v(color.substring(0, 2));
-		this.g = this.tg = Subtitle.Smi.Color.v(color.substring(2, 4));
-		this.b = this.tb = Subtitle.Smi.Color.v(color.substring(4, 6));
-	} else {
-		this.r = this.tr = 255;
-		this.g = this.tg = 255;
-		this.b = this.tb = 255;
+Smi.Color = Subtitle.Color;
+
+// 여기선 forConvert를 앞으로 가져옴
+Smi.prototype.normalize = function(end, forConvert=false, withComment=false, fps=null) {
+	if (fps == null) {
+		fps = Subtitle.video.FR / 1000;
 	}
 	
-	if (target == 1) {
-		this.r = this.g = this.b = 0;
-	} else if (target == -1) {
-		this.tr = this.tg = this.tb = 0;
-	} else {
-		if (target.length == 7 && target[0] == "#") {
-			target = target.substring(1);
-		}
-		// 16진수 맞는지 확인
-		if (isFinite("0x" + target)) {
-			this.tr = Subtitle.Smi.Color.v(target.substring(0, 2));
-			this.tg = Subtitle.Smi.Color.v(target.substring(2, 4));
-			this.tb = Subtitle.Smi.Color.v(target.substring(4, 6));
+	const smi = this;
+	const smiText = this.text;
+	const attrs = this.toAttrs();
+	
+	// 그라데이션 먼저 글자 단위 분해
+	let hasGradation = false;
+	for (let j = 0; j < attrs.length; j++) {
+		const attr = attrs[j];
+		
+		const gc = (attr.fc.length == 15)
+			&& (attr.fc[0] == '#')
+			&& (attr.fc[7] == '~')
+			&& (attr.fc[8] == '#');
+		const gf = (attr.fade.length == 15)
+			&& (attr.fade[0] == '#')
+			&& (attr.fade[7] == '~')
+			&& (attr.fade[8] == '#');
+		
+		if (gc || gf) {
+			hasGradation = true;
+			
+			const cFrom = gc ? attr.fc.substring(0,  7) : (attr.fc ? attr.fc : "#ffffff");
+			const cTo   = gc ? attr.fc.substring(8, 15) : (attr.fc ? attr.fc : "#ffffff");
+			const color = new Color(cTo, cFrom);
+			
+			const newAttrs = [];
+			for (let k = 0; k < attr.text.length; k++) {
+				const newAttr = new Attr(attr);
+				newAttr.fc = color.get(k, attr.text.length - 1);
+				newAttr.text = attr.text[k];
+				newAttrs.push(newAttr);
+			}
+			if (gf) {
+				const fFrom = attr.fade.substring(0,  7);
+				const fTo   = attr.fade.substring(8, 15);
+				const fColor = new Color(fTo, fFrom);
+				for (let k = 0; k < newAttrs.length; k++) {
+					newAttrs[k].fade = fColor.smi(k, newAttrs.length - 1);
+				}
+			}
+			const after = attrs.slice(j + 1);
+			
+			attrs.length = j;
+			attrs.push(...newAttrs);
+			attrs.push(...after);
+			j += newAttrs.length - 1;
+			smi.fromAttrs(attrs, forConvert);
 		}
 	}
-}
-Subtitle.Smi.Color.v = (c) => {
-	if (c.length == 1) {
-		if (c >= '0' && c <= '9')
-			return c.charCodeAt() - 48
-		if (c >= 'a' && c <= 'z')
-			return c.charCodeAt() - 87;
-		if (c >= 'A' && c <= 'Z')
-			return c.charCodeAt() - 55;
-		return 0;
+	
+	let hasFade = false;
+	let hasTyping = false;
+	let shakeRange = null;
+	for (let j = 0; j < attrs.length; j++) {
+		const attr = attrs[j];
+		if (attr.fade != 0) {
+			hasFade = true;
+		}
+		if (attr.typing) {
+			hasTyping = true;
+		}
+		if (attr.shake) {
+			// 흔들기는 연속된 그룹으로 처리
+			if (!shakeRange) {
+				shakeRange = [j, j+1];
+			} else if (shakeRange[1] == j) {
+				shakeRange[1]++;
+			}
+		}
+	}
+
+	const smis = [];
+	if (shakeRange) {
+		// 흔들기는 한 싱크에 하나만 가능
+		const shake = attrs[shakeRange[0]].shake;
+		for (let j = shakeRange[0]; j < shakeRange[1]; j++) {
+			attrs[j].shake = null;
+			if (attrs[j].furigana) {
+				attrs[j].furigana.shake = null;
+			}
+		}
+		// 줄 앞뒤에 {SL}, {SR}뿐만 아니라 Zero-Width-Space도 넣어줌
+		// 팟플 SMI에선 문제없었는데, ASS 변환 기능을 만들려니 공백문자가 무시당함...
+		attrs[shakeRange[0]  ].text = "​{SL}" + attrs[shakeRange[0]].text;
+		attrs[shakeRange[1]-1].text = attrs[shakeRange[1]-1].text + "{SR}​";
+		for (let j = shakeRange[0]; j < shakeRange[1]; j++) {
+			if (attrs[j].text.indexOf("\n") >= 0) {
+				attrs[j].text = attrs[j].text.split("\n").join("{SR}​\n​{\SL}");
+			}
+		}
+		
+		const start = smi.start;
+		const count = Math.floor(((end - start) / shake.ms) + 0.5);
+		
+		let j = shakeRange[0] - 1;
+		for (; j >= 0; j--) {
+			const text = attrs[j].text;
+			const brIndex = text.lastIndexOf("\n");
+			if (brIndex >= 0) {
+				attrs[j].text = text.substring(0, brIndex + 1) + "{ST}" + text.substring(brIndex + 1);
+				break;
+			}
+		}
+		if (j < 0) {
+			attrs[0].text = "{ST}" + attrs[0].text;
+		}
+		for (j = shakeRange[1]; j < attrs.length; j++) {
+			const text = attrs[j].text;
+			const brIndex = text.indexOf("\n");
+			if (brIndex >= 0) {
+				attrs[j].text = text.substring(0, brIndex) + "{SB}" + text.substring(brIndex);
+				break;
+			}
+		}
+		if (j >= attrs.length) {
+			attrs[attrs.length - 1].text = attrs[attrs.length - 1].text + "{SB}";
+		}
+		
+		// 페이드 효과 추가 처리
+		const fadeColors = [];
+		if (hasFade) {
+			for (let j = 0; j < attrs.length; j++) {
+				const attr = attrs[j];
+				attr.tagString = null;
+				if (attr.fade != 0) {
+					fadeColors.push(new Color(attr.fade, ((attr.fc.length == 6) ? attr.fc : "ffffff"), j));
+					attr.fade = 0;
+				}
+				if (attr.furigana) {
+					const furi = attr.furigana;
+					if (furi.fade != 0) {
+						fadeColors.push(new Color(furi.fade, ((furi.fc.length == 6) ? furi.fc : "ffffff"), -1-j));
+						furi.fade = 0;
+					}
+				}
+			}
+			if (fadeColors.length == 0) {
+				return [smi];
+			}
+		} else {
+			// 페이드 없어도 tagString은 빼줘야 함
+			for (let j = 0; j < attrs.length; j++) {
+				attrs[j].tagString = null;
+			}
+		}
+		
+		// 좌우로 흔들기
+		// 플레이어에서 사이즈 미지원해도 좌우로는 흔들리도록
+		const LRmin = "<font size=\"" + (3 * shake.size) + "\"></font>";
+		const LRmid = "<font size=\"" + (3 * shake.size) + "\"> </font>";
+		const LRmax = "<font size=\"" + (3 * shake.size) + "\">  </font>";
+		
+		// 상하로 흔들기
+		// 플레이어에서 사이즈 미지원하면 상하로 흔들리지 않음
+		// size 0은 리스크가 있으므로 +1
+		const TBmin = "<font size=\"" + (0 * shake.size + 1) + "\">　</font>";
+		const TBmid = "<font size=\"" + (1 * shake.size + 1) + "\">　</font>";
+		const TBmax = "<font size=\"" + (2 * shake.size + 1) + "\">　</font>";
+		
+		for (let j = 0; j < count; j++) {
+			/*
+			 * ５０３
+			 * ２※６
+			 * ７４１
+			 */
+			const step = j % 8;
+			
+			// 페이드 효과 추가 처리
+			for (let k = 0; k < fadeColors.length; k++) {
+				const color = fadeColors[k];
+				((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1 + 2 * j, 2 * count);
+			}
+			let text = Smi.fromAttrs(attrs).split("\n").join("<br>");
+			
+			// 좌우로 흔들기
+			switch (step) {
+				case 2:
+				case 5:
+				case 7:
+					text = text.split("{SL}").join(LRmin).split("{SR}").join(LRmax);
+					break;
+				case 0:
+				case 4:
+					text = text.split("{SL}").join(LRmid).split("{SR}").join(LRmid);
+					break;
+				default:
+					text = text.split("{SL}").join(LRmax).split("{SR}").join(LRmin);
+			}
+			
+			// 상하로 흔들기
+			switch (step) {
+				case 0:
+				case 3:
+				case 5:
+					text = text.split("{ST}").join(TBmin + "<br>").split("{SB}").join("<br>" + TBmax);
+					break;
+				case 2:
+				case 6:
+					text = text.split("{ST}").join(TBmid + "<br>").split("{SB}").join("<br>" + TBmid);
+					break;
+				default:
+					text = text.split("{ST}").join(TBmax + "<br>").split("{SB}").join("<br>" + TBmin);
+			}
+			
+			smis.push(new Smi((start * (count - j) + end * (j)) / count, (j == 0 ? smi.syncType : SyncType.inner), text));
+		}
+		if (withComment) {
+			smis[0].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[0].text;
+		}
+
+	} else if (hasTyping) {
+		// 타이핑은 한 싱크에 하나만 가능
+		let attrIndex = -1;
+		let attr = null;
+		let isLastAttr = false;
+		for (let j = 0; j < attrs.length; j++) {
+			if (!attr) {
+				// 타이핑 찾기 전
+				if (attrs[j].typing != null) {
+					attr = attrs[(attrIndex = j)];
+					let remains = "";
+					for (let k = j + 1; k < attrs.length; k++) {
+						remains += attrs[k].text;
+					}
+					isLastAttr = (remains.length == 0) || (remains[0] == "\n");
+					if (!isLastAttr) {
+						let length = 0;
+						for (let k = j + 1; k < attrs.length; k++) {
+							length += attrs[k].text.length;
+						}
+						isLastAttr = (length == 0);
+					}
+				}
+			} else {
+				// 타이핑 찾은 후 나머지에 대해 타이핑 제거
+				attrs[j].typing = null;
+			}
+			// 태그 원본도 신뢰할 수 없음
+			attrs[j].tagString = null;
+		}
+		if (attr == null) {
+			return [smi];
+		}
+		
+		const types = Typing.toType(attr.text, attr.typing.mode, attr.typing.cursor);
+		const widths = [];
+		{	const attrTexts = attr.text.split("\n");
+			for (let j = 0; j < attrTexts.length; j++) {
+				widths.push(Smi.getLineWidth(attrTexts[j]));
+			}
+		}
+
+		const start = smi.start;
+		const count = types.length - attr.typing.end - attr.typing.start;
+		
+		if (count < 1) {
+			return [smi];
+		}
+
+		const typingStart = attr.typing.start;
+		attr.typing = null;
+
+		// 페이드 효과 추가 처리
+		const fadeColors = [];
+		if (hasFade) {
+			for (let j = 0; j < attrs.length; j++) {
+				const attr = attrs[j];
+				if (attr.fade != 0) {
+					fadeColors.push(new Color(attr.fade, ((attr.fc.length == 6) ? attr.fc : "ffffff"), j));
+					attr.fade = 0;
+				}
+				if (attr.furigana) {
+					const furi = attr.furigana;
+					if (furi.fade != 0) {
+						fadeColors.push(new Color( furi.fade, ((furi.fc.length == 6) ? furi.fc : "ffffff"), -1-j));
+						furi.fade = 0;
+					}
+				}
+			}
+			if (fadeColors.length == 0) {
+				return [smi];
+			}
+		}
+		
+		// 10ms 미만 간격이면 팟플레이어에서 겹쳐서 나오므로 적절히 건너뛰기
+		// TODO: ... 현재는 holdsToText 거칠 경우 뭉치는 것 교정해줄 듯?
+		const countLimit = Math.min(count, Math.floor((end - start) / 10));
+		let realJ = 0;
+		
+		for (let j = 0; j < count; j++) {
+			const sync = (start * (count - j) + end * (j)) / count;
+			const limitSync = (countLimit < count) ? ((start * (countLimit - realJ) + end * (realJ)) / countLimit) : sync;
+			if (sync < limitSync) {
+				continue;
+			}
+			
+			const textLines = types[j + typingStart].split("\n");
+			const text = textLines.join("<br>");
+			{
+				const attrTextLines = [];
+				for (let k = 0; k < widths.length; k++) {
+					if (k < textLines.length - 1) {
+						// 건너뛰기
+					} else if (k == textLines.length - 1) {
+						attrTextLines.push(Subtitle.Width.getAppendToTarget(Smi.getLineWidth(textLines[k]), widths[k]));
+					} else {
+						attrTextLines.push(Subtitle.Width.getAppendToTarget(0, widths[k]));
+					}
+				}
+				attr.text = attrTextLines.join("​\n​");
+				if (isLastAttr) {
+					attr.text += "​";
+				}
+			}
+			const newAttrs = new Smi(null, null, text).toAttrs(false);
+			for (let k = 0; k < newAttrs.length; k++) {
+				newAttrs[k].b = attr.b;
+				newAttrs[k].i = attr.i;
+				newAttrs[k].s = attr.s;
+				newAttrs[k].fc = attr.fc;
+				newAttrs[k].fn = attr.fn;
+				newAttrs[k].fs = attr.fs;
+			}
+			
+			// 페이드 효과 추가 처리
+			for (let k = 0; k < fadeColors.length; k++) {
+				const color = fadeColors[k];
+				((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1 + 2 * j, 2 * count);
+			}
+			
+			const tAttrs = attrs.slice(0, attrIndex);
+			tAttrs.push(...newAttrs);
+			tAttrs.push(attr);
+			tAttrs.push(...attrs.slice(attrIndex + 1));
+			
+			smis.push(new Smi(limitSync, (j == 0 ? smi.syncType : SyncType.inner)).fromAttrs(tAttrs, forConvert));
+			if (j == 0) {
+				// 첫 항목에만 주석 넣고 나머지에선 제거
+				for (let k = 0; k < attrs.length; k++) {
+					if (attrs[k].comment) {
+						attrs[k].comment = null;
+					}
+				}
+			}
+			realJ++;
+		}
+		if (withComment) {
+			smis[0].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[0].text;
+		}
+		
+	} else if (!forConvert && hasFade) {
+		const start = smi.start;
+		const count = Math.round((end - start) * fps / 1000);
+		
+		const fadeColors = [];
+		for (let j = 0; j < attrs.length; j++) {
+			const attr = attrs[j];
+			attr.tagString = null;
+			if (attr.fade != 0) {
+				fadeColors.push(new Color(attr.fade, ((attr.fc.length == 6) ? attr.fc : "ffffff"), j));
+				attr.fade = 0;
+			}
+			if (attr.furigana) {
+				const furi = attr.furigana;
+				if (furi.fade != 0) {
+					fadeColors.push(new Color(furi.fade, ((furi.fc.length == 6) ? furi.fc : "ffffff"), -1-j));
+					furi.fade = 0;
+				}
+			}
+		}
+		if (fadeColors.length == 0) {
+			return [smi];
+		}
+		
+		for (let j = 0; j < fadeColors.length; j++) {
+			const color = fadeColors[j];
+			((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1, 2 * count);
+		}
+		smis.push(new Smi(start).fromAttrs(attrs));
+		
+		for (let j = 1; j < count; j++) {
+			for (let k = 0; k < fadeColors.length; k++) {
+				const color = fadeColors[k];
+				((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1 + 2 * j, 2 * count);
+			}
+			smis.push(new Smi((start * (count - j) + end * j) / count, SyncType.inner).fromAttrs(attrs));
+		}
+		if (withComment) {
+			smis[0].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[0].text;
+		}
 		
 	} else {
-		let v = 0;
-		for (let i = 0; i < c.length; i++) {
-			v = v * 16 + Subtitle.Smi.Color.v(c[i]);
+		if (hasGradation) {
+			// 주석 추가
+			if (withComment) {
+				this.text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + this.text;
+			}
 		}
-		return v;
+		smis.push(this);
 	}
+	
+	return smis;
 }
-Subtitle.Smi.Color.c = (v) => {
-	return v < 10 ? String.fromCharCode(v + 48) : String.fromCharCode(v + 55);
-}
-Subtitle.Smi.Color.hex = (v) => {
-	return "" + Subtitle.Smi.Color.c(v / 16) + Subtitle.Smi.Color.c(v % 16);
-}
-Subtitle.Smi.Color.prototype.get = function(value, total) {
-	return Subtitle.Smi.Color.hex(Math.ceil(((this.r * (total - value)) + (this.tr * value)) / total))
-	     + Subtitle.Smi.Color.hex(Math.ceil(((this.g * (total - value)) + (this.tg * value)) / total))
-	     + Subtitle.Smi.Color.hex(Math.ceil(((this.b * (total - value)) + (this.tb * value)) / total));
-}
-Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
-	const origin = new Subtitle.SmiFile();
+// 여기선 forConvert를 뒤로 뺌
+Smi.normalize = (smis, withComment=false, fps=null, forConvert=false) => {
+	if (fps == null) {
+		fps = Subtitle.video.FR / 1000;
+	}
+	const origin = new SmiFile();
 	origin.body = smis;
-	origin.fromTxt(origin.toTxt());
+	origin.fromText(origin.toText());
 	const result = {
 			origin: origin.body
 		,	result: smis
@@ -2429,7 +3627,7 @@ Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
 	// 중간 싱크 재계산
 	let startIndex = -1;
 	for (let i = 1; i < smis.length; i++) {
-		if (smis[i].syncType == Subtitle.SyncType.inner) {
+		if (smis[i].syncType == SyncType.inner) {
 			if (startIndex < 0) {
 				startIndex = i - 1;
 			}
@@ -2449,430 +3647,36 @@ Subtitle.Smi.normalize = (smis, withComment=false, fps=23.976) => {
 	}
 	
 	for (let i = 0; i < smis.length - 1; i++) {
-		const smi = smis[i];
-		const smiText = smi.text;
+		const start = smis[i].start;
+		const end = smis[i + 1].start;
+		const nSmis = smis[i].normalize(end, forConvert, withComment, fps);
 		
-		const attrs = smi.toAttr();
-		
-		// 그라데이션 먼저 글자 단위 분해
-		let hasGradation = false;
-		for (let j = 0; j < attrs.length; j++) {
-			const attr = attrs[j];
+		if (nSmis.length > 1) {
+			const nextSmis = smis.slice(i + 1);
+			smis.length = i;
+			smis.push(...nSmis);
+			smis.push(...nextSmis);
 			
-			const gc = (attr.fc.length == 15)
-				&& (attr.fc[0] == '#')
-				&& (attr.fc[7] == '~')
-				&& (attr.fc[8] == '#');
-			const gf = (attr.fade.length == 15)
-				&& (attr.fade[0] == '#')
-				&& (attr.fade[7] == '~')
-				&& (attr.fade[8] == '#');
-			
-			if (gc || gf) {
-				hasGradation = true;
-				
-				const cFrom = gc ? attr.fc.substring(0,  7) : (attr.fc ? attr.fc : "#ffffff");
-				const cTo   = gc ? attr.fc.substring(8, 15) : (attr.fc ? attr.fc : "#ffffff");
-				const color = new Subtitle.Smi.Color(cTo, cFrom);
-				
-				const newAttrs = [];
-				for (let k = 0; k < attr.text.length; k++) {
-					const newAttr = new Subtitle.Attr(attr);
-					newAttr.fc = color.get(k, attr.text.length - 1);
-					newAttr.text = attr.text[k];
-					newAttrs.push(newAttr);
-				}
-				if (gf) {
-					const fFrom = attr.fade.substring(0,  7);
-					const fTo   = attr.fade.substring(8, 15);
-					const fColor = new Subtitle.Smi.Color(fTo, fFrom);
-					for (let k = 0; k < newAttrs.length; k++) {
-						newAttrs[k].fade = "#" + fColor.get(k, newAttrs.length - 1);
-					}
-				}
-				const after = attrs.slice(j + 1);
-				
-				attrs.length = j;
-				attrs.push(...newAttrs);
-				attrs.push(...after);
-				j += newAttrs.length - 1;
-				smi.fromAttr(attrs);
-			}
-		}
-		
-		let hasFade = false;
-		let hasTyping = false;
-		let shakeRange = null;
-		for (let j = 0; j < attrs.length; j++) {
-			const attr = attrs[j];
-			if (attr.fade != 0) {
-				hasFade = true;
-			}
-			if (attr.typing) {
-				hasTyping = true;
-			}
-			if (attr.shake) {
-				// 흔들기는 연속된 그룹으로 처리
-				if (!shakeRange) {
-					shakeRange = [j, j+1];
-				} else if (shakeRange[1] == j) {
-					shakeRange[1]++;
-				}
-			}
-		}
-		
-		if (shakeRange) {
-			// 흔들기는 한 싱크에 하나만 가능
-			const shake = attrs[shakeRange[0]].shake;
-			for (let j = shakeRange[0]; j < shakeRange[1]; j++) {
-				attrs[j].shake = null;
-				if (attrs[j].furigana) {
-					attrs[j].furigana.shake = null;
-				}
-			}
-			attrs[shakeRange[0]  ].text = "{SL}" + attrs[shakeRange[0]].text;
-			attrs[shakeRange[1]-1].text = attrs[shakeRange[1]-1].text + "{SR}";
-			for (let j = shakeRange[0]; j < shakeRange[1]; j++) {
-				if (attrs[j].text.indexOf("\n") >= 0) {
-					attrs[j].text = attrs[j].text.split("\n").join("{SR}\n{\SL}");
-				}
-			}
-			
-			const start = smi.start;
-			const end = smis[i + 1].start;
-			const count = Math.floor(((end - start) / shake.ms) + 0.5);
-			
-			let j = shakeRange[0] - 1;
-			for (; j >= 0; j--) {
-				const text = attrs[j].text;
-				const brIndex = text.lastIndexOf("\n");
-				if (brIndex >= 0) {
-					attrs[j].text = text.substring(0, brIndex + 1) + "{ST}" + text.substring(brIndex + 1);
-					break;
-				}
-			}
-			if (j < 0) {
-				attrs[0].text = "{ST}" + attrs[0].text;
-			}
-			for (j = shakeRange[1]; j < attrs.length; j++) {
-				const text = attrs[j].text;
-				const brIndex = text.indexOf("\n");
-				if (brIndex >= 0) {
-					attrs[j].text = text.substring(0, brIndex) + "{SB}" + text.substring(brIndex);
-					break;
-				}
-			}
-			if (j >= attrs.length) {
-				attrs[attrs.length - 1].text = attrs[attrs.length - 1].text + "{SB}";
-			}
-			
-			// 페이드 효과 추가 처리
-			const fadeColors = [];
-			if (hasFade) {
-				for (let j = 0; j < attrs.length; j++) {
-					const attr = attrs[j];
-					attr.tagString = null;
-					if (attr.fade != 0) {
-						fadeColors.push(new Subtitle.Smi.Color(attr.fade, ((attr.fc.length == 6) ? attr.fc : "ffffff"), j));
-						attr.fade = 0;
-					}
-					if (attr.furigana) {
-						const furi = attr.furigana;
-						if (furi.fade != 0) {
-							fadeColors.push(new Subtitle.Smi.Color(furi.fade, ((furi.fc.length == 6) ? furi.fc : "ffffff"), -1-j));
-							furi.fade = 0;
-						}
-					}
-				}
-				if (fadeColors.length == 0) {
-					continue;
-				}
-			} else {
-				// 페이드 없어도 tagString은 빼줘야 함
-				for (let j = 0; j < attrs.length; j++) {
-					attrs[j].tagString = null;
-				}
-			}
-			
-			// 좌우로 흔들기
-			// 플레이어에서 사이즈 미지원해도 좌우로는 흔들리도록
-			const LRmin = "<font size=\"" + (3 * shake.size) + "\"></font>";
-			const LRmid = "<font size=\"" + (3 * shake.size) + "\"> </font>";
-			const LRmax = "<font size=\"" + (3 * shake.size) + "\">  </font>";
-			
-			// 상하로 흔들기
-			// 플레이어에서 사이즈 미지원하면 상하로 흔들리지 않음
-			// size 0은 리스크가 있으므로 +1
-			const TBmin = "<font size=\"" + (0 * shake.size + 1) + "\">　</font>";
-			const TBmid = "<font size=\"" + (1 * shake.size + 1) + "\">　</font>";
-			const TBmax = "<font size=\"" + (2 * shake.size + 1) + "\">　</font>";
-			
-			smis.splice(i, 1);
-			for (let j = 0; j < count; j++) {
-				/*
-				 * ５０３
-				 * ２※６
-				 * ７４１
-				 */
-				const step = j % 8;
-				
-				// 페이드 효과 추가 처리
-				for (let k = 0; k < fadeColors.length; k++) {
-					const color = fadeColors[k];
-					((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1 + 2 * j, 2 * count);
-				}
-				let text = Subtitle.Smi.fromAttr(attrs).split("\n").join("<br>");
-				
-				// 좌우로 흔들기
-				switch (step) {
-					case 2:
-					case 5:
-					case 7:
-						text = text.split("{SL}").join(LRmin).split("{SR}").join(LRmax);
-						break;
-					case 0:
-					case 4:
-						text = text.split("{SL}").join(LRmid).split("{SR}").join(LRmid);
-						break;
-					default:
-						text = text.split("{SL}").join(LRmax).split("{SR}").join(LRmin);
-				}
-				
-				// 상하로 흔들기
-				switch (step) {
-					case 0:
-					case 3:
-					case 5:
-						text = text.split("{ST}").join(TBmin + "<br>").split("{SB}").join("<br>" + TBmax);
-						break;
-					case 2:
-					case 6:
-						text = text.split("{ST}").join(TBmid + "<br>").split("{SB}").join("<br>" + TBmid);
-						break;
-					default:
-						text = text.split("{ST}").join(TBmax + "<br>").split("{SB}").join("<br>" + TBmin);
-				}
-				
-				smis.splice(i + j, 0, new Subtitle.Smi((start * (count - j) + end * (j)) / count, (j == 0 ? smi.syncType : Subtitle.SyncType.inner), text));
-			}
-			if (withComment) {
-				smis[i].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[i].text;
-			}
+			// TODO: 다시 보니 combine 작업 있으면 logs 날리나...?
+			// 이거 없어도 주석 처리는 해버리는 것 같은데...?
 			result.logs.push({
-					from: [i - added, i - added + 1]
-				,	to  : [i, i + count]
-				,	start: start
-				,	end: end
+				from: [i - added, i - added + 1]
+			,	to  : [i, i + nSmis.length]
+			,	start: start
+			,	end: end
 			});
-			const add = count - 1;
-			i += add;
-			added += add;
-
-		} else if (hasTyping) {
-			// 타이핑은 한 싱크에 하나만 가능
-			let attrIndex = -1;
-			let attr = null;
-			let isLastAttr = false;
-			for (let j = 0; j < attrs.length; j++) {
-				if (!attr) {
-					// 타이핑 찾기 전
-					if (attrs[j].typing != null) {
-						attr = attrs[(attrIndex = j)];
-						let remains = "";
-						for (let k = j + 1; k < attrs.length; k++) {
-							remains += attrs[k].text;
-						}
-						isLastAttr = (remains.length == 0) || (remains[0] == "\n");
-						if (!isLastAttr) {
-							let length = 0;
-							for (let k = j + 1; k < attrs.length; k++) {
-								length += attrs[k].text.length;
-							}
-							isLastAttr = (length == 0);
-						}
-					}
-				} else {
-					// 타이핑 찾은 후 나머지에 대해 타이핑 제거
-					attrs[j].typing = null;
-				}
-				// 태그 원본도 신뢰할 수 없음
-				attrs[j].tagString = null;
-			}
-			if (attr == null) {
-				continue;
-			}
-			
-			const types = Typing.toType(attr.text, attr.typing.mode, attr.typing.cursor);
-			const widths = [];
-			{	const attrTexts = attr.text.split("\n");
-				for (let j = 0; j < attrTexts.length; j++) {
-					widths.push(Subtitle.Smi.getLineWidth(attrTexts[j]));
-				}
-			}
-
-			const start = smi.start;
-			const end = smis[i + 1].start;
-			const count = types.length - attr.typing.end - attr.typing.start;
-			
-			if (count < 1) {
-				continue;
-			}
-
-			const typingStart = attr.typing.start;
-			attr.typing = null;
-
-			// 페이드 효과 추가 처리
-			const fadeColors = [];
-			if (hasFade) {
-				for (let j = 0; j < attrs.length; j++) {
-					const attr = attrs[j];
-					if (attr.fade != 0) {
-						fadeColors.push(new Subtitle.Smi.Color(attr.fade, ((attr.fc.length == 6) ? attr.fc : "ffffff"), j));
-						attr.fade = 0;
-					}
-					if (attr.furigana) {
-						const furi = attr.furigana;
-						if (furi.fade != 0) {
-							fadeColors.push(new Subtitle.Smi.Color( furi.fade, ((furi.fc.length == 6) ? furi.fc : "ffffff"), -1-j));
-							furi.fade = 0;
-						}
-					}
-				}
-				if (fadeColors.length == 0) {
-					continue;
-				}
-			}
-			
-			smis.splice(i, 1);
-			
-			// 10ms 미만 간격이면 팟플레이어에서 겹쳐서 나오므로 적절히 건너뛰기
-			const countLimit = Math.min(count, Math.floor((end - start) / 10));
-			let realJ = 0;
-			
-			for (let j = 0; j < count; j++) {
-				const sync = (start * (count - j) + end * (j)) / count;
-				const limitSync = (countLimit < count) ? ((start * (countLimit - realJ) + end * (realJ)) / countLimit) : sync;
-				if (sync < limitSync) {
-					continue;
-				}
-				
-				const textLines = types[j + typingStart].split("\n");
-				const text = textLines.join("<br>");
-				{
-					const attrTextLines = [];
-					for (let k = 0; k < widths.length; k++) {
-						if (k < textLines.length - 1) {
-							// 건너뛰기
-						} else if (k == textLines.length - 1) {
-							attrTextLines.push(Subtitle.Width.getAppendToTarget(Subtitle.Smi.getLineWidth(textLines[k]), widths[k]));
-						} else {
-							attrTextLines.push(Subtitle.Width.getAppendToTarget(0, widths[k]));
-						}
-					}
-					attr.text = attrTextLines.join("​\n​");
-					if (isLastAttr) {
-						attr.text += "​";
-					}
-				}
-				const newAttrs = new Subtitle.Smi(null, null, text).toAttr(false);
-				for (let k = 0; k < newAttrs.length; k++) {
-					newAttrs[k].b = attr.b;
-					newAttrs[k].i = attr.i;
-					newAttrs[k].s = attr.s;
-					newAttrs[k].fc = attr.fc;
-					newAttrs[k].fn = attr.fn;
-					newAttrs[k].fs = attr.fs;
-				}
-				
-				// 페이드 효과 추가 처리
-				for (let k = 0; k < fadeColors.length; k++) {
-					const color = fadeColors[k];
-					((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1 + 2 * j, 2 * count);
-				}
-				
-				const tAttrs = attrs.slice(0, attrIndex);
-				tAttrs.push(...newAttrs);
-				tAttrs.push(attr);
-				tAttrs.push(...attrs.slice(attrIndex + 1));
-				
-				smis.splice(i + realJ, 0, new Subtitle.Smi(limitSync, (j == 0 ? smi.syncType : Subtitle.SyncType.inner)).fromAttr(tAttrs));
-				realJ++;
-			}
-			if (withComment) {
-				smis[i].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[i].text;
-			}
-			result.logs.push({
-					from: [i - added, i - added + 1]
-				,	to  : [i, i + count]
-				,	start: start
-				,	end: end
-			});
-			const add = count - 1;
+			const add = nSmis.length - 1;
 			i += add;
 			added += add;
 			
-		} else if (hasFade) {
-			const start = smi.start;
-			const end = smis[i + 1].start;
-			const count = Math.round((end - start) * fps / 1000);
-			
-			const fadeColors = [];
-			for (let j = 0; j < attrs.length; j++) {
-				const attr = attrs[j];
-				attr.tagString = null;
-				if (attr.fade != 0) {
-					fadeColors.push(new Subtitle.Smi.Color(attr.fade, ((attr.fc.length == 6) ? attr.fc : "ffffff"), j));
-					attr.fade = 0;
-				}
-				if (attr.furigana) {
-					const furi = attr.furigana;
-					if (furi.fade != 0) {
-						fadeColors.push(new Subtitle.Smi.Color(furi.fade, ((furi.fc.length == 6) ? furi.fc : "ffffff"), -1-j));
-						furi.fade = 0;
-					}
-				}
-			}
-			if (fadeColors.length == 0) {
-				continue;
-			}
-			
-			for (let j = 0; j < fadeColors.length; j++) {
-				const color = fadeColors[j];
-				((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1, 2 * count);
-			}
-			smi.fromAttr(attrs);
-			for (let j = 1; j < count; j++) {
-				for (let k = 0; k < fadeColors.length; k++) {
-					const color = fadeColors[k];
-					((color.index < 0) ? attrs[-1 - color.index].furigana : attrs[color.index]).fc = color.get(1 + 2 * j, 2 * count);
-				}
-				smis.splice(i + j, 0, new Subtitle.Smi((start * (count - j) + end * j) / count, Subtitle.SyncType.inner).fromAttr(attrs));
-			}
-			if (withComment) {
-				smis[i].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[i].text;
-			}
-			result.logs.push({
-					from: [i - added, i - added + 1]
-				,	to  : [i, i + count]
-				,	start: start
-				,	end: end
-			});
-			const add = count - 1;
-			i += add;
-			added += add;
-			
-		} else if (hasGradation) {
-			// 주석 추가
-			if (withComment) {
-				const end = smis[i + 1].start;
-				smi.text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smi.text;
-			}
+		} else {
+			smis[i] = nSmis[0];
 		}
 	}
 	
 	return result;
 }
-Subtitle.Smi.fillEmptySync = (smis) => {
+Smi.fillEmptySync = (smis) => {
 	for (let i = 0; i < smis.length - 1; i++) {
 		const smi = smis[i];
 		
@@ -2888,42 +3692,44 @@ Subtitle.Smi.fillEmptySync = (smis) => {
 		
 		smi.text = lines[0];
 		for (let j = 1; j < length; j++) {
-			smis.splice(i + j, 0, new Subtitle.Smi((start * (length - j) + end * j) / length, Subtitle.SyncType.inner, lines[j]));
+			smis.splice(i + j, 0, new Smi((start * (length - j) + end * j) / length, SyncType.inner, lines[j]));
 		}
 	}
 }
-Subtitle.SmiFile = function(txt) {
+window.SmiFile = Subtitle.SmiFile = function(text) {
 	this.header = ""; // 세부적으로 나누려다가 주석도 있고 해서 일단 패스
 	this.footer = "";
 	this.body = [];
-	if (txt) {
-		this.fromTxt(this.text = txt);
+	if (text) {
+		this.fromText(this.text = text);
 	}
 }
-Subtitle.SmiFile.prototype.toTxt = function() {
+SmiFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SmiFile.prototype.toText = function() {
 	return this.text
 	   = ( this.header.split("\r\n").join("\n")
-	     + Subtitle.Smi.smi2txt(this.body)
+	     + Smi.smi2txt(this.body)
 	     + this.footer.split("\r\n").join("\n")
 	     ).trim();
 }
-Subtitle.Smi.getSyncType = function(syncLine) {
+Smi.getSyncType = function(syncLine) {
 	switch (syncLine[syncLine.length - 2]) {
 		case ' ':
 			if (syncLine[syncLine.length - 3] == ' ') {
-				return Subtitle.SyncType.split;
+				return SyncType.split;
 			} else {
-				return Subtitle.SyncType.frame;
+				return SyncType.frame;
 			}
 			break;
 		case '\t':
-			return Subtitle.SyncType.inner;
+			return SyncType.inner;
 			break;
 	}
-	return Subtitle.SyncType.normal;
+	return SyncType.normal;
 }
-Subtitle.SmiFile.prototype.fromTxt = function(txt) {
-	txt = (this.text = txt).split("\r\n").join("\n");
+SmiFile.prototype.fromTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SmiFile.prototype.fromText = function(text) {
+	text = (this.text = text).split("\r\n").join("\n");
 	this.header = "";
 	this.footer = "";
 	this.body = [];
@@ -2932,21 +3738,21 @@ Subtitle.SmiFile.prototype.fromTxt = function(txt) {
 	let pos = 0;
 	let last = null;
 	
-	while ((pos = txt.indexOf('<', index)) >= 0) {
-		if (txt.length > pos + 6 && txt.substring(pos, pos + 6).toUpperCase() == ("<SYNC ")) {
+	while ((pos = text.indexOf('<', index)) >= 0) {
+		if (text.length > pos + 6 && text.substring(pos, pos + 6).toUpperCase() == ("<SYNC ")) {
 			if (last == null) {
-				this.header = txt.substring(0, pos);
+				this.header = text.substring(0, pos);
 			} else {
-				last.text += txt.substring(index, pos);
+				last.text += text.substring(index, pos);
 			}
 
 			let start = 0;
-			index = txt.indexOf('>', pos + 6) + 1;
+			index = text.indexOf('>', pos + 6) + 1;
 			if (index == 0) {
-				index = txt.length;
+				index = text.length;
 				break;
 			}
-			const attrs = txt.substring(pos + 6, index - 1).toLowerCase().split(' ');
+			const attrs = text.substring(pos + 6, index - 1).toLowerCase().split(' ');
 			for (let i = 0; i < attrs.length; i++) {
 				const attr = attrs[i];
 				if (attr.substring(0, 6) == ("start=")) {
@@ -2955,49 +3761,49 @@ Subtitle.SmiFile.prototype.fromTxt = function(txt) {
 				}
 			}
 
-			this.body.push(last = new Subtitle.Smi(start));
+			this.body.push(last = new Smi(start));
 			
-		} else if (txt.length > pos + 4 && txt.substring(pos, pos + 3).toUpperCase() == ("<P ")) {
-			const endOfP = txt.indexOf('>', pos + 3) + 1;
+		} else if (text.length > pos + 4 && text.substring(pos, pos + 3).toUpperCase() == ("<P ")) {
+			const endOfP = text.indexOf('>', pos + 3) + 1;
 			if (last == null) {
-				this.header = txt.substring(0, pos);
+				this.header = text.substring(0, pos);
 			} else {
 				// last.text가 있음 -> <P> 태그가 <SYNC> 태그 바로 뒤에 붙은 게 아님 - 별도 텍스트로 삽입
-				last.text += txt.substring(index, last.text ? endOfP : pos);
+				last.text += text.substring(index, last.text ? endOfP : pos);
 			}
 			index = endOfP;
 			if (index == 0) {
-				index = txt.length;
+				index = text.length;
 				break;
 			}
-			last.syncType = Subtitle.Smi.getSyncType(txt.substring(pos, index));
+			last.syncType = Smi.getSyncType(text.substring(pos, index));
 			
-		} else if (txt.length > pos + 6 && txt.substring(pos, pos + 7).toUpperCase() == ("</BODY>")) {
+		} else if (text.length > pos + 6 && text.substring(pos, pos + 7).toUpperCase() == ("</BODY>")) {
 			if (last == null) {
-				this.header = txt.substring(0, pos);
+				this.header = text.substring(0, pos);
 				last = { text: "" }; // 아래에서 헤더에 중복으로 추가되지 않도록 함
 			} else {
-				last.text += txt.substring(index, pos);
+				last.text += text.substring(index, pos);
 			}
-			this.footer = txt.substring(pos);
-			index = txt.length;
+			this.footer = text.substring(pos);
+			index = text.length;
 			break;
 			
 		} else {
 			pos++;
 			if (last == null) {
-				this.header = txt.substring(0, pos);
+				this.header = text.substring(0, pos);
 			} else {
-				last.text += txt.substring(index, pos);
+				last.text += text.substring(index, pos);
 			}
 			index = pos;
 		}
 	}
 
 	if (last == null) {
-		this.header = txt.substring(0);
+		this.header = text.substring(0);
 	} else {
-		last.text += txt.substring(index);
+		last.text += text.substring(index);
 	}
 	
 	for (let i = 0; i < this.body.length; i++) {
@@ -3011,50 +3817,73 @@ Subtitle.SmiFile.prototype.fromTxt = function(txt) {
 			}
 		}
 	}
-
+	
 	return this;
 }
 
-Subtitle.SmiFile.prototype.toSync = function() {
+SmiFile.prototype.toSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SmiFile.prototype.toSyncs = function() {
 	const result = [];
 
 	if (this.body.length > 0) {
+		// TODO: normalize 작업 필요??
+		// 단순 페이드는 예외 처리
+		// origin은 어떻게?
+		
 		let i = 0;
 		let last = null;
 		for (; i + 1 < this.body.length; i++) {
-			if (this.body[i].text.split("&nbsp;").join("").length == 0) {
+			const item = this.body[i];
+			if (item.isEmpty() || item.skip) {
 				continue;
 			}
-
-			last = this.body[i].toSync();
-			last.end = (this.body[i + 1].start > 0 ? this.body[i + 1].start : 0);
-			last.endType = this.body[i + 1].syncType;
+			
+			const next = this.body[i + 1];
+			const end = (next.start) > 0 ? next.start : 0;
+			const normalized = item.normalize(end, true);
+			if (normalized.length > 1) {
+				for (let j = 0; j < normalized.length - 1; j++) {
+					const sync = normalized[j].toSync();
+					sync.end = normalized[j + 1].start;
+					sync.endType = normalized[j + 1].syncType;
+					sync.origin = this.body[i];
+					result.push(sync);
+				}
+			}
+			last = normalized[normalized.length - 1].toSync();
+			last.end = end;
+			last.endType = next.syncType;
 			result.push(last);
 		}
-		if (this.body[i].text.split("&nbsp;").join("").length > 0) {
-			result.push(last = this.body[i].toSync());
+		// 마지막 싱크
+		{
+			const item = this.body[i];
+			if (!item.skip && item.text.split("&nbsp;").join("").length > 0) {
+				result.push(last = item.toSync());
+			}
 		}
 	}
 
 	return result;
 }
-Subtitle.SmiFile.prototype.fromSync = function(syncs) {
+SmiFile.prototype.fromSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SmiFile.prototype.fromSyncs = function(syncs) {
 	const smis = [];
 
 	if (syncs.length > 0) {
 		let i = 0;
 		let last = null;
-		smis.push(new Subtitle.Smi().fromSync(syncs[i]));
-		smis.push(last = new Subtitle.Smi(syncs[i].end, syncs[i].endType, "&nbsp;"));
+		smis.push(new Smi().fromSync(syncs[i]));
+		smis.push(last = new Smi(syncs[i].end, syncs[i].endType, "&nbsp;"));
 		
 		for (i = 1; i < syncs.length; i++) {
 			if (last.start == syncs[i].start) {
-				last.fromAttr(syncs[i].text);
+				last.fromAttrs(syncs[i].text);
 			} else {
-				smis.push(new Subtitle.Smi().fromSync(syncs[i]));
+				smis.push(new Smi().fromSync(syncs[i]));
 			}
 
-			smis.push(last = new Subtitle.Smi(syncs[i].end, syncs[i].endType, "&nbsp;"));
+			smis.push(last = new Smi(syncs[i].end, syncs[i].endType, "&nbsp;"));
 		}
 	}
 
@@ -3062,7 +3891,195 @@ Subtitle.SmiFile.prototype.fromSync = function(syncs) {
 	return this;
 }
 
-Subtitle.SmiFile.prototype.normalize = function(withComment=false, fps=23.976) {
+const DefaultStyle = Subtitle.DefaultStyle = {
+		Fontname: ""
+	,	Fontsize: 80
+	,	PrimaryColour  : "#FFFFFF"
+	,	SecondaryColour: "#FF0000"
+	,	OutlineColour  : "#000000"
+	,	BackColour     : "#000000"
+	,	PrimaryOpacity  : 255
+	,	SecondaryOpacity: 255
+	,	OutlineOpacity  : 255
+	,	BackOpacity     : 255
+	,	Bold     : true
+	,	Italic   : false
+	,	Underline: false
+	,	StrikeOut: false
+	,	ScaleX: 100
+	,	ScaleY: 100
+	,	Spacing: 0
+	,	Angle: 0
+	,	BorderStyle: false
+	,	Outline: 4
+	,	Shadow: 0
+	,	Alignment: 2
+	,	MarginL: 64
+	,	MarginR: 64
+	,	MarginV: 40
+	,	output: 3 // 0b01: SMI / 0b10: ASS / 0b11: SMI+ASS
+};
+SmiFile.StyleFormat = ["Fontname", "Fontsize", "PrimaryColour", "SecondaryColour", "OutlineColour", "BackColour", "Bold", "Italic", "Underline", "StrikeOut", "ScaleX", "ScaleY", "Spacing", "Angle", "BorderStyle", "Outline", "Shadow", "Alignment", "MarginL", "MarginR", "MarginV"];
+SmiFile.toAssStyle = function(smiStyle, assStyle) {
+	if (!assStyle) assStyle = {};
+	assStyle.key = "Style";
+	assStyle.Encoding = 1;
+
+	smiStyle.Fontname = (!smiStyle.Fontname ? "맑은 고딕" : smiStyle.Fontname);
+	assStyle.Fontname = (smiStyle.Fontname);
+	assStyle.Fontsize = (smiStyle.Fontsize);
+	{ let fc = smiStyle.PrimaryColour   + (511 - smiStyle.PrimaryOpacity  ).toString(16).substring(1).toUpperCase(); assStyle.PrimaryColour   = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	{ let fc = smiStyle.SecondaryColour + (511 - smiStyle.SecondaryOpacity).toString(16).substring(1).toUpperCase(); assStyle.SecondaryColour = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	{ let fc = smiStyle.OutlineColour   + (511 - smiStyle.OutlineOpacity  ).toString(16).substring(1).toUpperCase(); assStyle.OutlineColour   = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	{ let fc = smiStyle.BackColour      + (511 - smiStyle.BackOpacity     ).toString(16).substring(1).toUpperCase(); assStyle.BackColour      = ("&H"+fc[7]+fc[8]+fc[5]+fc[6]+fc[3]+fc[4]+fc[1]+fc[2]); }
+	assStyle.Bold        = (smiStyle.Bold      ? -1 : 0);
+	assStyle.Italic      = (smiStyle.Italic    ? -1 : 0);
+	assStyle.Underline   = (smiStyle.Underline ? -1 : 0);
+	assStyle.StrikeOut   = (smiStyle.StrikeOut ? -1 : 0);
+	assStyle.ScaleX      = (smiStyle.ScaleX     );
+	assStyle.ScaleY      = (smiStyle.ScaleY     );
+	assStyle.Spacing     = (smiStyle.Spacing    );
+	assStyle.Angle       = (smiStyle.Angle      );
+	assStyle.BorderStyle = (smiStyle.BorderStyle ? 3 : 1);
+	assStyle.Outline     = (smiStyle.Outline    );
+	assStyle.Shadow      = (smiStyle.Shadow     );
+	assStyle.Alignment   = (smiStyle.Alignment  );
+	assStyle.MarginL     = (smiStyle.MarginL    );
+	assStyle.MarginR     = (smiStyle.MarginR    );
+	assStyle.MarginV     = (smiStyle.MarginV    );
+	return assStyle;
+}
+SmiFile.fromAssStyle = function(assStyle, smiStyle=null) {
+	if (!smiStyle) smiStyle = JSON.parse(JSON.stringify(DefaultStyle));
+	smiStyle.Fontname = (assStyle.Fontname == "맑은 고딕" ? "" : assStyle.Fontname);
+	smiStyle.Fontsize = assStyle.Fontsize;
+	{ let fc = assStyle.PrimaryColour  ; smiStyle.PrimaryColour   = '#'+fc[8]+fc[9]+fc[6]+fc[7]+fc[4]+fc[5]; smiStyle.PrimaryOpacity   = 255 - Number('0x'+fc[2]+fc[3]); }
+	{ let fc = assStyle.SecondaryColour; smiStyle.SecondaryColour = '#'+fc[8]+fc[9]+fc[6]+fc[7]+fc[4]+fc[5]; smiStyle.SecondaryOpacity = 255 - Number('0x'+fc[2]+fc[3]); }
+	{ let fc = assStyle.OutlineColour  ; smiStyle.OutlineColour   = '#'+fc[8]+fc[9]+fc[6]+fc[7]+fc[4]+fc[5]; smiStyle.OutlineOpacity   = 255 - Number('0x'+fc[2]+fc[3]); }
+	{ let fc = assStyle.BackColour     ; smiStyle.BackColour      = '#'+fc[8]+fc[9]+fc[6]+fc[7]+fc[4]+fc[5]; smiStyle.BackOpacity      = 255 - Number('0x'+fc[2]+fc[3]); }
+	smiStyle.Bold      = (assStyle.Bold      != 0);
+	smiStyle.Italic    = (assStyle.Italic    != 0);
+	smiStyle.Underline = (assStyle.Underline != 0);
+	smiStyle.StrikeOut = (assStyle.StrikeOut != 0);
+	smiStyle.ScaleX    = Number(assStyle.ScaleX   );
+	smiStyle.ScaleY    = Number(assStyle.ScaleY   );
+	smiStyle.Spacing   = Number(assStyle.Spacing  );
+	smiStyle.Angle     = Number(assStyle.Angle    );
+	smiStyle.BorderStyle = ((Number(assStyle.BorderStyle) & 2) != 0);
+	smiStyle.Outline   = Number(assStyle.Outline  );
+	smiStyle.Shadow    = Number(assStyle.Shadow   );
+	smiStyle.Alignment = Number(assStyle.Alignment);
+	smiStyle.MarginL   = Number(assStyle.MarginL  );
+	smiStyle.MarginR   = Number(assStyle.MarginR  );
+	smiStyle.MarginV   = Number(assStyle.MarginV  );
+	return smiStyle;
+}
+
+// TODO: 이렇게 두면 안 될 듯...? 결국 toSaveStyle 말곤 쓰는 데도 없음
+const styleForSmi = Subtitle.styleForSmi = ["Fontname","PrimaryColour","Italic","Underline","StrikeOut"];
+const styleForAss = Subtitle.styleForAss = ["Fontsize","SecondaryColour","OutlineColour","BackColour","PrimaryOpacity","SecondaryOpacity","OutlineOpacity","BackOpacity","Bold","ScaleX","ScaleY","Spacing","Angle","BorderStyle","Outline","Shadow","Alignment","MarginL","MarginR","MarginV"];
+
+SmiFile.toSaveStyle = function(style) {
+	if (!style) return "";
+	
+	let forSmi = false;
+	for (let i = 0; i < styleForSmi.length; i++) {
+		const name = styleForSmi[i];
+		if (style[name] != DefaultStyle[name]) {
+			forSmi = true;
+			break;
+		}
+	}
+	let forAss = false;
+	for (let i = 0; i < styleForAss.length; i++) {
+		const name = styleForAss[i];
+		if (style[name] != DefaultStyle[name]) {
+			if (name == "Fontsize" && style.Fontsize == 0) {
+				// 글씨크기 0은 ASS 출력 제외를 위한 속성
+				continue;
+			}
+			forAss = true;
+			break;
+		}
+	}
+	
+	const result = [];
+	if (forAss) {
+		const assStyle = SmiFile.toAssStyle(style);
+		for (let i = 0; i < SmiFile.StyleFormat.length; i++) {
+			result.push(assStyle[SmiFile.StyleFormat[i]]);
+		}
+		
+	} else if (forSmi) {
+		// 기본 스타일
+		result.push(style.Fontname); // TODO: SMI에선 빼는 게 좋을 듯함
+		result.push(style.PrimaryColour);
+		result.push(style.Italic    ? 1 : 0);
+		result.push(style.Underline ? 1 : 0);
+		result.push(style.StrikeOut ? 1 : 0);
+	}
+	
+	return result.join(",");
+}
+SmiFile.parseStyle = function(comment) {
+	const style = JSON.parse(JSON.stringify(DefaultStyle));
+	if (comment.startsWith("<")) {
+		// 홀드 스타일 초기 문법
+		const attr = Smi.toAttrs(comment)[0];
+		if (attr.fn) style.Fontname = attr.fn;
+		if (attr.fc) style.PrimaryColour = "#" + attr.fc;
+		if (attr.i) style.Italic = true;
+		if (attr.u) style.Underline = true;
+		if (attr.s) style.StrikeOut = true;
+	} else {
+		// 홀드 스타일 현행 문법
+		const infoStyle = comment.split(",");
+		if (infoStyle.length == 5) {
+			// 기본 스타일
+			style.Fontname      = infoStyle[0];
+			style.PrimaryColour = infoStyle[1];
+			style.Italic    = (infoStyle[2] == 1);
+			style.Underline = (infoStyle[3] == 1);
+			style.StrikeOut = (infoStyle[4] == 1);
+			
+		} else {
+			// ASS 변환용 스타일 포함
+			const assStyle = {};
+			for (let i = 0; i < SmiFile.StyleFormat.length; i++) {
+				assStyle[SmiFile.StyleFormat[i]] = infoStyle[i];
+			}
+			SmiFile.fromAssStyle(assStyle, style);
+		}
+	}
+	return style;
+}
+SmiFile.styleToSmi = function(style) {
+	let opener = "";
+	let closer = "";
+	
+	if (style) {
+		const font = [];
+		/* SMI에선 적용하지 않기로 함
+		if (style.Fontname) {
+			const fs = style.Fontname.startsWith("@") ? style.Fontname.substring(1) : style.Fontname;
+			font.push("face=\"" + fs + "\"");
+		}
+		*/
+		if (style.PrimaryColour != DefaultStyle.PrimaryColour && style.PrimaryColour != "#000000") {
+			font.push("color=\"" + style.PrimaryColour + "\"");
+		}
+		if (font.length) {
+			opener = "<font " + font.join(" ") + ">";
+			closer = "</font>";
+		}
+	}
+	if (style.Italic   ) { opener = opener + "<i>"; closer = "</i>" + closer; }
+	if (style.Underline) { opener = opener + "<u>"; closer = "</u>" + closer; }
+	if (style.StrikeOut) { opener = opener + "<s>"; closer = "</s>" + closer; }
+	
+	return [opener, closer];
+}
+SmiFile.prototype.normalize = function(withComment=false, fps=null) {
 	const smis = [];
 	smis.push(...this.body);
 
@@ -3072,18 +4089,7 @@ Subtitle.SmiFile.prototype.normalize = function(withComment=false, fps=23.976) {
 		if (lines.length >= 3
 		 && (lines[0] == "<!-- Style" || lines[0] == "<!-- Preset") // 처음 개발할 때 혼용함...
 		 && lines[2] == "-->") {
-			const comment = lines[1].trim();
-			preset = ["", ""];
-			let tags = comment.split("<");
-			for (let j = 1; j < tags.length; j++) {
-				const tag = tags[j];
-				if (tag.indexOf(">") > 0) {
-					const inTag = tag.substring(0, tag.indexOf(">"));
-					const tagName = inTag.split(" ")[0].split("\t")[0];
-					preset[0] += "<" + inTag + ">";
-					preset[1] = "</" + tagName + ">" + preset[1];
-				}
-			}
+			preset = SmiFile.styleToSmi(SmiFile.parseStyle(lines[1].trim()));
 		}
 	}
 	
@@ -3110,17 +4116,17 @@ Subtitle.SmiFile.prototype.normalize = function(withComment=false, fps=23.976) {
 				if (hasText) {
 					smi.text = preset.join(smi.text);
 					// 태그 재구성
-					smi.fromAttr(smi.toAttr(false));
+					smi.fromAttrs(smi.toAttrs(false));
 				}
 			}
 		}
 	}
 	
-	const result = Subtitle.Smi.normalize(smis, withComment, fps);
+	const result = Smi.normalize(smis, withComment, (fps ? fps : Subtitle.video.FR / 1000));
 	this.body = result.result;
 	return result;
 }
-Subtitle.SmiFile.prototype.antiNormalize = function() {
+SmiFile.prototype.antiNormalize = function() {
 	const result = [this];
 	
 	// 역정규화
@@ -3164,7 +4170,7 @@ Subtitle.SmiFile.prototype.antiNormalize = function() {
 				}
 			}
 			if (comment.length > 6 && comment.substring(0, 6).toUpperCase() == "<SYNC ") {
-				let newBody = new Subtitle.SmiFile(comment).body;
+				let newBody = new SmiFile(comment).body;
 				if (i > 0) {
 					if (!newBody  [0    ].text.split("&nbsp;").join("").trim()
 					 && !this.body[i - 1].text.split("&nbsp;").join("").trim()) {
@@ -3240,7 +4246,7 @@ Subtitle.SmiFile.prototype.antiNormalize = function() {
 				// 바로 다음이 공백 싱크면 내포 홀드에 포함
 				removeEnd++;
 			}
-			const hold = new Subtitle.SmiFile();
+			const hold = new SmiFile();
 			hold.body = this.body.splice(removeStart, removeEnd - removeStart);
 			hold.body[0].text = afterComment;
 			hold.antiNormalize();
@@ -3263,7 +4269,7 @@ Subtitle.SmiFile.prototype.antiNormalize = function() {
 					&& !!this.body[removeStart - 1].text.split("&nbsp;").join("").trim()) {
 				// 내포 홀드 분리 후 메인 홀드에 종료싱크 넣어줘야 하는 경우
 				const newBody = this.body.slice(0, removeStart);
-				newBody.push(new Subtitle.Smi(hold.body[0].start, hold.body[0].syncType, "&nbsp;"));
+				newBody.push(new Smi(hold.body[0].start, hold.body[0].syncType, "&nbsp;"));
 				newBody.push(...this.body.slice(removeStart));
 				this.body = newBody;
 			}
@@ -3281,39 +4287,43 @@ Subtitle.SmiFile.prototype.antiNormalize = function() {
 
 // TODO: SRT
 
-Subtitle.Srt = function(start, end, text) {
+window.Srt = Subtitle.Srt = function(start, end, text) {
 	this.start = start ? Math.round(start) : 0;
 	this.end   = end   ? Math.round(end  ) : 0;
 	this.text = text ? text : "";
 }
 
-Subtitle.Srt.prototype.toTxt = function() {
-	return Subtitle.Srt.int2Time(this.start) + "-->" + Subtitle.Srt.int2Time(this.end) + "\n" + this.text + "\n";
+Srt.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Srt.prototype.toText = function() {
+	return Srt.int2Time(this.start) + "-->" + Srt.int2Time(this.end) + "\n" + this.text + "\n";
 }
-Subtitle.Srt.srt2txt = (srts) => {
+Srt.srt2txt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Srt.srt2text = (srts) => {
 	let result = "";
 	for (let i = 0; i < srts.length; i++) {
-		result += srts[i].toTxt() + "\n";
+		result += srts[i].toText() + "\n";
 	}
 	return result;
 }
 // 팟플레이어에서 SRT 자막에서 태그 읽힌다고 SMI 태그 쓰는 경우가 있음
-Subtitle.Srt.colorToAttr   = Subtitle.Smi.colorToAttr;
-Subtitle.Srt.colorFromAttr = Subtitle.Smi.colorFromAttr
-Subtitle.Srt.prototype.toAttr = function() { return Subtitle.Smi.toAttr(this.text.split("\n").join("<br>")); };
-Subtitle.Srt.prototype.fromAttr = Subtitle.Smi.prototype.fromAttr
+Srt.colorToAttr   = Smi.colorToAttr;
+Srt.colorFromAttr = Smi.colorFromAttr
+Srt.prototype.toAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Srt.prototype.toAttrs = function() { return Smi.toAttrs(this.text.split("\n").join("<br>")); };
+Srt.prototype.fromAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+Srt.prototype.fromAttrs = Smi.prototype.fromAttrs;
 
-Subtitle.Srt.prototype.toSync = function() {
-	return new Subtitle.SyncAttr(this.start, this.end, null, null, this.toAttr());
+Srt.prototype.toSync = function() {
+	return new SyncAttr(this.start, this.end, null, null, this.toAttrs());
 }
-Subtitle.Srt.prototype.fromSync = function(sync) {
+Srt.prototype.fromSync = function(sync) {
 	this.start = sync.start;
 	this.end = sync.end;
-	this.fromAttr(sync.text);
+	this.fromAttrs(sync.text);
 	return this;
 }
 
-Subtitle.Srt.int2Time = (time) => {
+Srt.int2Time = (time) => {
 	const h = Math.floor(time / 3600000);
 	const m = Math.floor(time / 60000) % 60;
 	const s = Math.floor(time / 1000) % 60;
@@ -3321,22 +4331,24 @@ Subtitle.Srt.int2Time = (time) => {
 	return intPadding(h) + ":" + intPadding(m) + ":" + intPadding(s) + "," + intPadding(ms, 3);
 }
 
-Subtitle.SrtFile = function(txt) {
+window.SrtFile = Subtitle.SrtFile = function(text) {
 	this.body = [];
-	if (txt) {
-		this.fromTxt(txt);
+	if (text) {
+		this.fromText(text);
 	}
 }
-Subtitle.SrtFile.prototype.toTxt = function() {
+SrtFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SrtFile.prototype.toText = function() {
 	const items = [];
 	for (let i = 0; i < this.body.length; i++) {
-		items.push((i + 1) + "\n" + this.body[i].toTxt());
+		items.push((i + 1) + "\n" + this.body[i].toText());
 	}
 	return items.join("\n");
 }
-Subtitle.SrtFile.REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*$/;
-Subtitle.SrtFile.prototype.fromTxt = function(txt) {
-	const lines = txt.split("\r\n").join("\n").split("\n");
+SrtFile.REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*$/;
+SrtFile.prototype.fromTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SrtFile.prototype.fromText = function(text) {
+	const lines = text.split("\r\n").join("\n").split("\n");
 	const items = [];
 	let last = { start: 0, end: 0, lines: [], length: 0 };
 	let lastLength = 0;
@@ -3351,7 +4363,7 @@ Subtitle.SrtFile.prototype.fromTxt = function(txt) {
 				lastLength = last.lines.length;
 				
 			} else {
-				if (Subtitle.SrtFile.REG_SRT_SYNC.test(line)) {
+				if (SrtFile.REG_SRT_SYNC.test(line)) {
 					// 새 싱크 시작
 					last.lines.length = last.length;
 					items.push(last = { start: 0, end: 0, lines: [], length: 0 });
@@ -3390,13 +4402,14 @@ Subtitle.SrtFile.prototype.fromTxt = function(txt) {
 	this.body = [];
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
-		this.body.push(new Subtitle.Srt(item.start, item.end, item.lines.join("\n")));
+		this.body.push(new Srt(item.start, item.end, item.lines.join("\n")));
 	}
 	
 	return this;
 }
 
-Subtitle.SrtFile.prototype.toSync = function() {
+SrtFile.prototype.toSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SrtFile.prototype.toSyncs = function() {
 	const result = [];
 	for (let i = 0; i < this.body.length; i++) {
 		result.push(this.body[i].toSync());
@@ -3404,10 +4417,11 @@ Subtitle.SrtFile.prototype.toSync = function() {
 	return result;
 }
 
-Subtitle.SrtFile.prototype.fromSync = function(syncs) {
+SrtFile.prototype.fromSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
+SrtFile.prototype.fromSyncs = function(syncs) {
 	this.body = [];
 	for (let i = 0; i < syncs.length; i++) {
-		this.body.push(new Subtitle.Srt().fromSync(syncs[i]));
+		this.body.push(new Srt().fromSync(syncs[i]));
 	}
 	return this;
 }
