@@ -6,12 +6,7 @@
     , "출력위치 좌우 이동 기능 보완"
     , "정규화 및 재구성 동작 보완"
     ]
-  , "files":[
-      "view/addon/Device.html"
-    ]
-  }
-, { "version": "2025.07.30"
-  , "comment":
+  , "files":
     [ "view/addon/SyncManager.html"
     , "view/lib/AutoCompleteTextarea.js"
     , "view/lib/editor.js"
@@ -23,8 +18,17 @@
     , "view/setting.html"
     , "view/viewer.html"
     ]
-  , "files":[
-      "view/addon/Device.html"
+  }
+, { "version": "2025.07.30"
+  , "comment":
+    [ "ASS 자막 연동 지원"
+    , "SMI-ASS 관리 객체 재개발"
+    , "여러 SMI 파일에서 검색 기능"
+    , "파일명 유니코드일 때 프레임값 못 불러오던 문제 수정"
+    , "기타 버그 등 수정"
+    ]
+  , "files":
+    [ "view/addon/Device.html"
     , "view/addon/Nico.html"
     , "view/addon/Shake.html"
     , "view/addon/Speed.html"
