@@ -1,4 +1,4 @@
-let LH = 20; // LineHeight
+﻿let LH = 20; // LineHeight
 let SB = 16; // ScrollBarWidth ... TODO: 자동으로 구해지도록?
 
 // 배열로 개발했던 것들 레거시 지원
@@ -1911,7 +1911,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?250730"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?250805"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -2322,6 +2322,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 				prev: linePrev
 			,	text: lineText
 			,	next: lineNext
+			,	skip: (lineText.split("　").join("").split("&nbsp;").join(" ").trim().length == 0)
 		};
 	}
 	
@@ -2333,6 +2334,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 			// 모든 줄이 공백으로 끝나는지 확인
 			if (remained) {
 				for (let j = 0; j < textLines.length; j++) {
+					if (textLines[j].skip) continue;
 					if (!textLines[j].text.endsWith("　")) {
 						remained = false;
 						break;
@@ -2342,11 +2344,13 @@ SmiEditor.prototype.moveToSide = function(direction) {
 			if (remained) {
 				// 오른쪽 공백 제거
 				for (let j = 0; j < textLines.length; j++) {
+					if (textLines[j].skip) continue;
 					textLines[j].text = textLines[j].text.substring(0, textLines[j].text.length - 1);
 				}
 			} else {
 				// 왼쪽 공백 추가
 				for (let j = 0; j < textLines.length; j++) {
+					if (textLines[j].skip) continue;
 					textLines[j].text = "　" + textLines[j].text;
 				}
 				added = true;
@@ -2355,6 +2359,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 		// 모든 줄이 공백으로 끝나는지 확인
 		if (remained) {
 			for (let j = 0; j < textLines.length; j++) {
+				if (textLines[j].skip) continue;
 				if (!textLines[j].text.endsWith("　")) {
 					remained = false;
 					break;
@@ -2364,6 +2369,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 		if (!remained) {
 			// 오른쪽에 추가했던 공백을 다 없앴어도 원본에 공백 있을 수 있음
 			for (let i = 0; i < textLines.length; i++) {
+				if (textLines[i].skip) continue;
 				let textLine = textLines[i].text;
 				if (textLine.endsWith(" ") || textLine.endsWith("　")) {
 					textLines[i].text = textLine + "​";
@@ -2372,9 +2378,11 @@ SmiEditor.prototype.moveToSide = function(direction) {
 		}
 		for (let i = 0; i < textLines.length; i++) {
 			const line = textLines[i];
-			if ((i || line.prev) && (added || remained)) line.prev += "\n";
-			if (added   ) line.prev = line.prev + "​";
-			if (remained) line.next = "​" + line.next;
+			if (!line.skip) {
+				if ((i || line.prev) && (added || remained)) line.prev += "\n";
+				if (added   ) line.prev = line.prev + "​";
+				if (remained) line.next = "​" + line.next;
+			}
 			textLines[i] = line.prev + line.text + line.next;
 		}
 		textLines = textLines.join("<br>").split("\n");
@@ -2387,6 +2395,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 			// 모든 줄이 공백으로 시작하는지 확인
 			if (remained) {
 				for (let j = 0; j < textLines.length; j++) {
+					if (textLines[j].skip) continue;
 					if (!textLines[j].text.startsWith("　")) {
 						remained = false;
 						break;
@@ -2396,11 +2405,13 @@ SmiEditor.prototype.moveToSide = function(direction) {
 			if (remained) {
 				// 왼쪽 공백 제거
 				for (let j = 0; j < textLines.length; j++) {
+					if (textLines[j].skip) continue;
 					textLines[j].text = textLines[j].text.substring(1);
 				}
 			} else {
 				// 오른쪽 공백 추가
 				for (let j = 0; j < textLines.length; j++) {
+					if (textLines[j].skip) continue;
 					textLines[j].text = textLines[j].text + "　";
 				}
 				added = true;
@@ -2409,6 +2420,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 		// 모든 줄이 공백으로 시작하는지 확인
 		if (remained) {
 			for (let j = 0; j < textLines.length; j++) {
+				if (textLines[j].skip) continue;
 				if (!textLines[j].text.startsWith("　")) {
 					remained = false;
 					break;
@@ -2418,6 +2430,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 		if (!remained) {
 			// 왼쪽에 추가했던 공백을 다 없앴어도 원본에 공백 있을 수 있음
 			for (let i = 0; i < textLines.length; i++) {
+				if (textLines[i].skip) continue;
 				let textLine = textLines[i].text;
 				if (textLine.startsWith(" ") || textLine.startsWith("　")) {
 					textLines[i].text = "​" + textLine;
@@ -2426,9 +2439,11 @@ SmiEditor.prototype.moveToSide = function(direction) {
 		}
 		for (let i = 0; i < textLines.length; i++) {
 			const line = textLines[i];
-			if ((i || line.prev) && (added || remained)) line.prev += "\n";
-			if (remained) line.prev = line.prev + "​";
-			if (added   ) line.next = "​" + line.next;
+			if (!line.skip) {
+				if ((i || line.prev) && (added || remained)) line.prev += "\n";
+				if (remained) line.prev = line.prev + "​";
+				if (added   ) line.next = "​" + line.next;
+			}
 			textLines[i] = line.prev + line.text + line.next;
 		}
 		textLines = textLines.join("<br>").split("\n");
@@ -2462,7 +2477,7 @@ SmiEditor.Finder1 = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250730", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?250805", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2839,7 +2854,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250730", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?250805", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2970,7 +2985,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250730";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250805";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2983,7 +2998,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250730", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?250805", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -3487,7 +3502,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?250730", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?250805", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			

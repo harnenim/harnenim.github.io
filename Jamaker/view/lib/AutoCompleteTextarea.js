@@ -53,6 +53,7 @@ window.AutoCompleteTextarea = function(ta, sets, onSelect) {
 			if (!e.ctrlKey && !e.altKey) {
 				ta.ac.onCheck(e);
 			} else if (e.ctrlKey && (e.keyCode == 32)) { // Ctrl+SpaceBar
+				ta.ac.openedByCtrl = true;
 				ta.ac.onCheckWord();
 			}
 		}
@@ -106,6 +107,7 @@ AutoCompleteTextarea.prototype.open = function(list) {
 AutoCompleteTextarea.prototype.close = function() {
 	AutoCompleteTextarea.view.hide();
 	this.selected = -1;
+	this.openedByCtrl = false;
 };
 // 커서 위치에 선택기 이동
 AutoCompleteTextarea.prototype.setPos = function() {
@@ -161,7 +163,19 @@ AutoCompleteTextarea.prototype.onKeyup = function(e) {
 			}
 			break;
 		}
-		case 27: { // Esc
+		case 17: // Ctrl
+		{
+			if (this.openedByCtrl) {
+				// Ctrl+SpaceBar로 연 직후
+				e.preventDefault();
+				this.openedByCtrl = false;
+				break;
+			}
+			// Alt/Esc와 마찬가지로 끄기
+		}
+		case 18: // Alt
+		case 27: // Esc
+		{
 			e.preventDefault();
 			// 선택 취소
 			this.close();

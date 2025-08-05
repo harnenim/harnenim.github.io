@@ -269,7 +269,10 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	hold.owner = this;
 	hold.pos   = hold.savedPos   = info.pos;
 	
-	const style = hold.style = (info.style ? info.style : JSON.parse(JSON.stringify(DefaultStyle)));
+	const style = hold.style = (info.style ? info.style : JSON.parse(JSON.stringify(Subtitle.DefaultStyle)));
+	if (style.Fontname == Subtitle.DefaultStyle.Fontname) {
+		style.Fontname = "";
+	}
 	hold.savedStyle = SmiFile.toSaveStyle(style);
 	hold.savedAss = hold.ass = info.ass;
 	hold.tempSavedText = info.text;
@@ -393,7 +396,7 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	return hold;
 }
 SmiEditor.prototype.setStyle = function(style) {
-	if (style.Fontname == "맑은 고딕") {
+	if (style.Fontname == Subtitle.DefaultStyle.Fontname) {
 		style.Fontname = "";
 	}
 	this.style = style;
@@ -403,7 +406,7 @@ SmiEditor.prototype.setStyle = function(style) {
 	area.find("input[name=Italic]   ").prop("checked", style.Italic);
 	area.find("input[name=Underline]").prop("checked", style.Underline);
 	area.find("input[name=StrikeOut]").prop("checked", style.StrikeOut);
-
+	
 	area.find("input[name=Fontname]").val(style.Fontname);
 	area.find("input[name=output][value=" + style.output + "]").click();
 	area.find("input[name=Fontsize]").val(style.Fontsize);
@@ -431,9 +434,12 @@ SmiEditor.prototype.setStyle = function(style) {
 }
 SmiEditor.prototype.refreshStyle = function() {
 	const style = this.style;
+	if (style.Fontname == Subtitle.DefaultStyle.Fontname) {
+		style.Fontname = "";
+	}
 	
 	const css = {};
-	css.fontFamily = style.Fontname ? (style.Fontname.startsWith("@") ? style.Fontname.substring(1) : style.Fontname) : "맑은 고딕";
+	css.fontFamily = style.Fontname ? (style.Fontname.startsWith("@") ? style.Fontname.substring(1) : style.Fontname) : Subtitle.DefaultStyle.Fontname;
 	css.color = style.PrimaryColour + (256 + style.PrimaryOpacity).toString(16).substring(1);
 	css.fontStyle = style.Italic ? "italic" : "";
 	{	const deco = [];
@@ -1024,7 +1030,7 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 	for (let h = 0; h < holds.length; h++) {
 		const hold = holds[h];
 		const name = (h == 0) ? "Default" : hold.name;
-		const style = hold.style ? hold.style : DefaultStyle;
+		const style = hold.style ? hold.style : Subtitle.DefaultStyle;
 		
 		if ((style.output & 0b10) == 0) {
 			// ASS 변환 대상 제외
@@ -1212,9 +1218,36 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 			const usedLines = []; // 각 싱크에 사용된 줄 수
 			for (let h = 0; h < an2Holds.length; h++) {
 				const hold = an2Holds[h];
-				const useBottom = (!hold.style || hold.style.Alignment == 2); // ASS에서 중앙 하단일 경우만 pos 자동 조정
+				
 				for (let i = 0; i < hold.syncs.length; i++) {
 					const sync = hold.syncs[i];
+					
+					let useBottom = true; // a2Holds에 애초에 걸러진 것만 있음
+					for (let j = 0; j < sync.text.length; j++) {
+						const ass = sync.text[j].ass;
+						if (ass && (ass.indexOf("\\an") > 0)) {
+							const an = ass[ass.indexOf("\\an") + 3];
+							if (an % 3 != 2) {
+								// 개별적으로 좌우 구석에 밀었을 경우 제외
+								useBottom = false;
+								break;
+							}
+						}
+					}
+					if (!useBottom) {
+						// \pos를 지정했으면 좌우 구석이 아니므로 중앙 높이를 차지할 수 있음
+						for (let j = 0; j < sync.text.length; j++) {
+							const ass = sync.text[j].ass;
+							if (ass && (ass.indexOf("\\pos") > 0)) {
+								useBottom = true;
+								break;
+							}
+						}
+					}
+					if (!useBottom) {
+						continue;
+					}
+					
 					let used = 0;
 					
 					// 이미 확인된 줄과 비교
@@ -1245,9 +1278,7 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 						nextLines.push({ start: sync.end, used: 0 });
 					}
 					
-					if (useBottom) {
-						sync.bottom = used;
-					}
+					sync.bottom = used;
 					used += sync.getTextOnly().split("\n").length;
 					
 					nextLines.push(...usedLines.slice(k));
@@ -1363,6 +1394,9 @@ SmiEditor.prototype.isSaved = function() {
 	if (this.isAssHold) {
 		return this.assEditor.isSaved;
 	} else {
+		if (this.style.Fontname == Subtitle.DefaultStyle.Fontname) {
+			this.style.Fontname = "";
+		}
 		return (this.savedName  == this.name )
 			&& (this.savedPos   == this.pos  )
 			&& (this.savedStyle == SmiFile.toSaveStyle(this.style))
@@ -1660,6 +1694,12 @@ function init(jsonSetting, isBackup=true) {
 					}
 				}
 			}
+			if (!setting.defStyle) {
+				setting.defStyle = JSON.parse(JSON.stringify(DefaultStyle));
+				setting.defStyle.Fontname = "맑은 고딕";
+				count++;
+			}
+			Subtitle.DefaultStyle = setting.defStyle;
 			if (count) {
 				saveSetting();
 			}
@@ -1926,7 +1966,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?250730"
+		$.ajax({url: "lib/SmiEditor.color.css?250805"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -1957,7 +1997,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250730"
+		$.ajax({url: "lib/SmiEditor.size.css?250805"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -2055,7 +2095,11 @@ function setSetting(setting, initial=false) {
 	}
 	
 	Combine.css = setting.viewer.css;
-	DefaultStyle.Fontsize = Number(setting.viewer.size) / 18 * 80;
+	//	DefaultStyle.Fontsize = Number(setting.viewer.size) / 18 * 80;
+	Subtitle.DefaultStyle = setting.defStyle;
+	
+	$("input[name=Fontname]").attr({ placeholder: Subtitle.DefaultStyle.Fontname });
+	SmiEditor.stylePreset.find("input[name=Fontname]").attr({ placeholder: Subtitle.DefaultStyle.Fontname });
 	
 	binder.setMenus(setting.menu);
 	
@@ -2112,7 +2156,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250730", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250805", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2146,7 +2190,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250730";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250805";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
@@ -3133,7 +3177,9 @@ function loadAssFile(path, text, target=-1) {
 				let countMsg = [];
 				if (addCount) countMsg.push("추가 " + addCount + "건");
 				if (delCount) countMsg.push("삭제 " + addCount + "건");
-				msg = "스크립트/태그 " + countMsg.join(", ") + "이 있습니다. 적용하시겠습니까?\n\n자막에 맞는 동영상 파일이 열려있어야 정상적인 결과를 얻을 수 있습니다.";
+				msg = "스크립트/태그 " + countMsg.join(", ") + "이 있습니다. 적용하시겠습니까?\n"
+				    + "자막에 맞는 동영상 파일이 열려있어야 정상적인 결과를 얻을 수 있습니다.\n\n"
+				    + "수정되지 않은 부분에도 레이어 재계산 등이 있을 수 있습니다.";
 			}
 			confirm(msg, () => {
 				if (changedStyles.length) {
@@ -3388,7 +3434,7 @@ function loadAssFile(path, text, target=-1) {
 							}
 							body.push(...bodySkipped);
 							
-							if (toEmpty) {
+							{
 								// 종료 싱크 추가 필요
 								let syncType = SyncType.frame;
 								if (importSet.isDefault) {
@@ -3402,7 +3448,13 @@ function loadAssFile(path, text, target=-1) {
 										}
 									}
 								}
-								body.push(new Smi(end, syncType, "&nbsp;"));
+								if (toEmpty) {
+									body.push(new Smi(end, syncType, "&nbsp;"));
+									
+								} else if (syncType == SyncType.frame && bodyEnd.length) {
+									// 종료태그는 이미 일반 싱크로 추가됐을 수도 있음
+									bodyEnd[0].syncType = SyncType.frame;
+								}
 							}
 							body.push(...bodyEnd);
 							
@@ -3545,14 +3597,14 @@ function splitHold(tab, styleName) {
 	}
 	
 	// 홀드에 적용할 스타일 찾기
-	let style = DefaultStyle;
+	let style = Subtitle.DefaultStyle;
 	for (let i = 0; i < tab.holds.length; i++) {
 		const hold = tab.holds[i];
 		if (hold.name == styleName) {
 			style = JSON.parse(JSON.stringify(hold.style));
 		}
 	}
-	if (style == DefaultStyle) {
+	if (style == Subtitle.DefaultStyle) {
 		// ASS 추가 스크립트에서 찾기
 		const appendFile = new AssFile(tab.area.find(".tab-ass-appends textarea").val());
 		const styles = appendFile.getStyles();
@@ -3591,9 +3643,10 @@ function splitHold(tab, styleName) {
 		}
 		tab.area.find(".tab-ass-appends textarea").val(appendFile.toText());
 	}
-	if (style == DefaultStyle) {
+	if (style == Subtitle.DefaultStyle) {
 		// 못 찾았을 경우
 		style = JSON.parse(JSON.stringify(style));
+		style.Fontname = "";
 	}
 	
 	const hold = tab.addHold({
@@ -3612,7 +3665,10 @@ function splitHold(tab, styleName) {
 	const syncs = [];
 	for (let i = 0; i < list.length; i++) {
 		const event = list[i];
-		if (event.Style == styleName) {
+		if (event.Style == styleName
+		 || event.Style.startsWith(styleName)
+		 || styleName.startsWith(event.Style)
+		) {
 			if (syncs.indexOf(event.start) < 0) {
 				syncs.push(event.start);
 			}
@@ -3643,7 +3699,10 @@ function splitHold(tab, styleName) {
 			if (event.end   != tEvent.end  ) break;
 			targets.push(event);
 			
-			if (event.Style == styleName) {
+			if (event.Style == styleName
+			 || event.Style.startsWith(styleName)
+			 || styleName.startsWith(event.Style)
+			) {
 				hasStyle = true;
 			}
 		}
