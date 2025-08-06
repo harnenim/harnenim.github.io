@@ -1911,7 +1911,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?250805"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?250806"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -2477,7 +2477,7 @@ SmiEditor.Finder1 = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250805", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?250806", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2854,7 +2854,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250805", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?250806", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2985,7 +2985,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250805";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250806";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2998,7 +2998,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250805", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?250806", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -3502,7 +3502,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?250805", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?250806", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			

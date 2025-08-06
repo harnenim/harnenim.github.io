@@ -4,10 +4,10 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저</title>
-	<script src="../lib/jquery-3.2.1.min.js?250805"></script>
-	<script src="../lib/SubtitleObject.js?250805"></script>
-	<script src="../lib/popup.js?250805"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250805" />
+	<script src="../lib/jquery-3.2.1.min.js?250806"></script>
+	<script src="../lib/SubtitleObject.js?250806"></script>
+	<script src="../lib/popup.js?250806"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250806" />
 	<script>
 windowName = "addon";
 
@@ -28,13 +28,13 @@ $(() => {
 		window.close();
 		return;
 	}
-
+	
     if (!Subtitle.video.fs.length) {
         alert("동영상 프레임 분석이 끝나야 진행할 수 있습니다.");
         window.close();
         return;
 	}
-
+	
 	{
 		// 현재 선택된 홀드 기준
 		const hold = (opener && opener.SmiEditor) ? opener.SmiEditor.selected : null;

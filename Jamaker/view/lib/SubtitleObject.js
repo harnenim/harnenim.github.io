@@ -1495,7 +1495,8 @@ AssEvent.fromSync = function(sync, style=null) {
 			let moved = (texts.length > 1);
 			
 			// 다른 홀드랑 겹쳐서 기본적으로 올려야 하는 내용물
-			if (sync.bottom) {
+			// 스타일 자체에서 200 이상 띄운 경우엔 계산하지 않음
+			if (sync.bottom && style.MarginV < 200) {
 				y -= sync.bottom * style.Fontsize * 1.1;
 				moved = true;
 			}
@@ -1685,8 +1686,13 @@ AssEvent.fromSync = function(sync, style=null) {
 		text = text.split("{\\ass1}").join("").split("{\\ass0}").join("").split("}{").join("");
 		
 		if (text) {
-			// Default에 대해서 줄표 달린 것들 정렬 맞춰주기
-			if (AssEvent.useAlignDialogue && style && sync.style == "Default") {
+			// 메인(+유사메인) 홀드에 대해서 줄표 달린 것들 정렬 맞춰주기
+			if (AssEvent.useAlignDialogue
+			 && style
+			 && (   sync.style.startsWith("Default")
+				 || sync.style.startsWith("메인")
+			    )
+			) {
 				let frontTag = "";
 				let lines = text;
 				if (text.startsWith("{")) {
@@ -2520,7 +2526,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				// 태그 여닫은 순서는 기억하는 게 좋을 것 같음
 				// ... 아닌가?
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2529,7 +2536,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				break;
 			case "I":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2538,7 +2546,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				break;
 			case "U":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2547,7 +2556,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				break;
 			case "S":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2557,7 +2567,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 			case "FONT": {
 				let attrAdded = false;
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					attrAdded = true;
 					if (keepTags) last.tagString = tagString;
 				} else {
@@ -2572,7 +2583,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 								last.tagString = last.tagString.substring(0, last.tagString.length - tagString.length);
 							}
 							if (!isFirst) {
-								result.push(last = new Attr());
+								last = new Attr();
+								if (!ruby) result.push(last);
 							}
 							if (keepTags) {
 								last.tagString = tagString;
@@ -2621,7 +2633,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 		switch (tagName.toUpperCase()) {
 			case "B":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2630,7 +2643,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				break;
 			case "I":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2639,7 +2653,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				break;
 			case "U":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2648,7 +2663,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				break;
 			case "S":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2657,7 +2673,8 @@ Smi.toAttrs = (text, keepTags=true) => {
 				break;
 			case "FONT":
 				if (hadAss || last.text.length > 0) {
-					result.push(last = new Attr());
+					last = new Attr();
+					if (!ruby) result.push(last);
 					if (keepTags) last.tagString = tagString;
 				} else {
 					if (keepTags) last.tagString += tagString;
@@ -2672,6 +2689,7 @@ Smi.toAttrs = (text, keepTags=true) => {
 					if (keepTags) last.tagString += tagString;
 				}
 				Smi.setStyle(last, status);
+				ruby = null;
 				break;
 			case "RT":
 				if (ruby) {
@@ -4253,6 +4271,12 @@ SmiFile.prototype.antiNormalize = function() {
 			if (!comment.startsWith("Hold=")) {
 				continue;
 			}
+			comment = comment.split("\n");
+			let style = null;
+			if (comment.length > 1) {
+				style = SmiFile.parseStyle(comment[1]);
+			}
+			comment = comment[0];
 			
 			let removeEnd = i + (index < 0 ? 0 : 1);
 			for(; removeEnd < this.body.length; removeEnd++) {
@@ -4272,6 +4296,7 @@ SmiFile.prototype.antiNormalize = function() {
 			hold.body[0].text = afterComment;
 			hold.antiNormalize();
 			hold.next = this.body[removeStart];
+			if (style) hold.style = style;
 			
 			hold.name = comment = comment.substring(5);
 			hold.pos = 1;
