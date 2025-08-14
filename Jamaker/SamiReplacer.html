@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>SamiReplacer 샘플</title>
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250806" />
-<script src="view/lib/jquery-3.2.1.min.js?250806"></script>
-<script src="bridge/WinAPI.js?250806"></script>
-<script src="bridge/Binder.js?250806"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250814" />
+<script src="view/lib/jquery-3.2.1.min.js?250814"></script>
+<script src="bridge/WinAPI.js?250814"></script>
+<script src="bridge/Binder.js?250814"></script>
 <script>
 Binder.prototype.addFilesByDrag = function() {
 	this._.addFilesByDrag();
@@ -35,7 +35,7 @@ var main = new WebForm();
 			main.settingJson = settingJson;
 		}
 		
-		main.mainView.src = "view/SamiReplacer.html?250806";
+		main.mainView.src = "view/SamiReplacer.html?250814";
 		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;

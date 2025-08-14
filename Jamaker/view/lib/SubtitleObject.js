@@ -708,7 +708,7 @@ SyncAttr.prototype.getTextOnly = function () {
 	return text;
 }
 Subtitle.Width =
-{	DEFAULT_FONT: { fontFamily: "맑은 고딕", fontSize: "72px" }
+{	DEFAULT_FONT: { fontFamily: "맑은 고딕", fontSize: "72px", fontWeight: "bold" }
 ,	getWidth: function(input, font) {
 		if (typeof input == "string") {
 			if (!font) font = this.DEFAULT_FONT;
@@ -838,9 +838,10 @@ Attr.prototype.isEmpty = function () {
 }
 
 Attr.prototype.getWidth = function() {
-	const css = Subtitle.Width.DEFAULT_FONT;
+	const css = JSON.parse(JSON.stringify(Subtitle.Width.DEFAULT_FONT));
 	if (this.fs) css.fontSize   = this.fs;
 	if (this.fn) css.fontFamily = this.fn;
+	css.fontWeight = (this.b ? "bold" : null);
 	return Subtitle.Width.getWidth(this.text, css);
 }
 Attr.getWidths = (attrs) => {
@@ -1724,7 +1725,7 @@ AssEvent.fromSync = function(sync, style=null) {
 					}
 					// 줄표 달린 게 2개 이상일 때
 					if (pureLines.length >= 2) {
-						const wStyle = { fontFamily: style.Fontname, fontSize: style.Fontsize + "px" };
+						const wStyle = { fontFamily: style.Fontname, fontSize: style.Fontsize + "px", fontWeight: (style.Bold == 0 ? "normal" : "bold") };
 						const oneWidth = Subtitle.Width.getWidth("　", wStyle);
 						let maxWidth = 0;
 						for (let i = 0; i < pureLines.length; i++) {
@@ -3272,8 +3273,8 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false, fps
 			attrs.push(...newAttrs);
 			attrs.push(...after);
 			j += newAttrs.length - 1;
-
-			// this를 훼손하면 안 됨
+			
+			// this를 훼손하면 안 됨 - TODO: withComment=false 체크할까?
 			smi = new Smi(smi.start, smi.type);
 			smi.fromAttrs(attrs, forConvert);
 		}
@@ -3629,6 +3630,7 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false, fps
 		
 	} else {
 		if (hasGradation) {
+			this.text = smi.text;
 			// 주석 추가
 			if (withComment) {
 				this.text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + this.text;
@@ -4138,28 +4140,10 @@ SmiFile.prototype.normalize = function(withComment=false, fps=null) {
 	if (preset) {
 		for (let i = 0; i < smis.length; i++) {
 			const smi = smis[i];
-			const text = smi.text.split("&nbsp;").join("").trim();
-			if (text.length) {
-				let hasText = false;
-				const tags = text.split("<");
-				if (tags[0]) {
-					hasText = true;
-				} else {
-					for (let j = 1; j < tags.length; j++) {
-						const tag = tags[j];
-						if (tag.indexOf(">") > 0) {
-							if (tag.substring(tag.indexOf(">") + 1)) {
-								hasText = true;
-								break;
-							}
-						}
-					}
-				}
-				if (hasText) {
-					smi.text = preset.join(smi.text);
-					// 태그 재구성
-					smi.fromAttrs(smi.toAttrs(false));
-				}
+			if (Subtitle.$tmp.html(smi.text).text().split("　").join(" ").trim()) {
+				smi.text = preset.join(smi.text);
+				// 태그 재구성
+				smi.fromAttrs(smi.toAttrs(false));
 			}
 		}
 	}

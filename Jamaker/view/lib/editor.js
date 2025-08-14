@@ -1079,14 +1079,18 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 			}
 			
 			// ASS 주석에 [TEXT], [SMI] 있을 경우 넣을 내용물
-			const smiText = Subtitle.$tmp.html(smi.text.split(/<br>/gi).join("\\N")).text();
+			let smiText = Subtitle.$tmp.html(smi.text.split(/<br>/gi).join("\\N")).text();
+			while (smiText.indexOf("\\N　\\N") >= 0) { smiText = smiText.split("\\N　\\N").join("\\N"); }
+			while (smiText.indexOf("\\N\\N"  ) >= 0) { smiText = smiText.split("\\N\\N"  ).join("\\N"); }
 			const smiAss  = AssEvent.fromAttrs(smi.toAttrs())[0]; // RUBY 태그 같은 게 있으면 여러 줄 될 수 있지만 무시하는 쪽으로...
 			
 			// ASS 주석에서 복원
 			for (let j = 0; j < assTexts.length; j++) {
 				const assText = assTexts[j];
 				let ass = assText.split("[TEXT]").join(smiText)
-				                 .split("[SMI]").join(smiAss).split("}{").join("") // [SMI]는 태그 생겼을 수 있음
+				                 .split("[SMI]").join(smiAss)
+				                 .split("}{").join("") // [SMI]는 태그 만들었을 수 있음
+				                 .split("\n").join("") // 비태그 줄바꿈은 무시해야 함
 				                 .split(",");
 				
 				let layer = 0;
@@ -1188,7 +1192,11 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 		const an2Holds = [];
 		for (let h = 0; h < holds.length; h++) {
 			const hold = holds[h];
-			if (hold.style && (hold.style.Alignment % 3 != 2)) continue; // ASS에서 좌우 구석일 경우 계산하지 않음
+			if (hold.style
+			 && !(   hold.style.Alignment == 2
+			      || hold.style.Alignment == 5
+			     )
+			) continue; // ASS에서 정중앙 혹은 중앙 하단이 아니면 제외
 			an2Holds.push(hold);
 		}
 		// 아래인 것부터 정렬
@@ -1948,7 +1956,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?250806"
+		$.ajax({url: "lib/SmiEditor.color.css?250814"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -1979,7 +1987,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250806"
+		$.ajax({url: "lib/SmiEditor.size.css?250814"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -2138,7 +2146,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250806", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250814", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2172,7 +2180,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250806";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250814";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
@@ -3464,7 +3472,6 @@ function loadAssFile(path, text, target=-1) {
 					}
 					
 					// 홀드 SMI 재구성
-					console.log(currentTab.holds);
 					for (let i = 0; i < currentTab.holds.length; i++) {
 						const hold = currentTab.holds[i];
 						if (!hold.smiFile) continue;
