@@ -1,4 +1,26 @@
-[ { "version": "2025.08.14"
+[ { "version": "2025.08.23"
+  , "comment":
+    [ "fkf 경로 변경"
+    , "화면 싱크 매니저 ASS 관련 버그 수정"
+    , "특정 상황에서 ASS 역반영 버그 수정"
+    , "싱크 계산기 키프레임 옵션 삭제 등"
+    , ""
+    ]
+  , "files":
+    [ "view/addon/SyncManager.html"
+    , "view/lib/editor.js"
+    , "view/lib/setting.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/AutoSyncShift.html"
+    , "AssSyncOptimizer.exe"
+    , "AssSyncOptimizer.pdb"
+    , "AutoSyncShift.exe"
+    , "AutoSyncShift.pdb"
+    , "Jamaker.exe"
+    , "Jamaker.pdb"
+    ]
+  }
+, { "version": "2025.08.14"
   , "comment":
     [ "ASS pos 강제 기준 변경"
     , "ASS 줄표 정렬 계산식 수정"
