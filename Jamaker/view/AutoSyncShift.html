@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>Auto Sync Shift</title>
-	<script src="lib/jquery-3.2.1.min.js?250814"></script>
-	<script src="lib/SubtitleObject.js?250814"></script>
-	<script src="lib/Combine.js?250814"></script>
-	<script src="lib/webview.js?250814"></script>
-	<link rel="stylesheet" type="text/css" href="lib/webview.css?250814" />
+	<script src="lib/jquery-3.2.1.min.js?250823"></script>
+	<script src="lib/SubtitleObject.js?250823"></script>
+	<script src="lib/Combine.js?250823"></script>
+	<script src="lib/webview.js?250823"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css?250823" />
 	<script>
 let isProcessing = false;
 function showProcessing(text) {
@@ -1165,7 +1165,9 @@ h4 {
 		</div>
 		
 		<div class="file" title="화면 싱크가 있으면 가급적 키프레임에 맞춰줍니다.\nOTT 영상에선 맞지 않는 경우가 많습니다.\n체크할 경우 영상을 불러올 때 키프레임 분석이 함께 진행됩니다.">
-			<label style="width: auto; padding-left: 32px; "><input type="checkbox" id="chkTrustKfTarget" /> <span>키프레임 신뢰</span></label>
+			<label style="width: auto; padding-left: 32px;"><input type="checkbox" id="chkTrustKfTarget" disabled /> <span style="text-decoration: line-through;">키프레임 신뢰</span>
+				현실적으로 활용성이 떨어져 기능 삭제
+			</label>
 		</div>
 		
 		<div class="preview" id="viewTarget">

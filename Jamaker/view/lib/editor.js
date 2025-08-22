@@ -611,12 +611,22 @@ SmiEditor.prototype.setLine = function(text, selection) {
 }
 SmiEditor.prototype._inputText = SmiEditor.prototype.inputText;
 SmiEditor.prototype.inputText = function(text) {
-	if (this.area.hasClass("style")
-	 || this.area.hasClass("ass")) {
+	if (this.area.hasClass("ass")) {
 		alert("SMI 에디터 모드가 아닙니다.");
 		return;
 	}
-	this._inputText(text);
+	if (this.area.hasClass("style")) {
+		if (text.length == 7 && text.startsWith("#")) {
+			this.style.PrimaryColour = text;
+			this.area.find("input[name=PrimaryColour]").val(text).next().val(text);
+			this.refreshStyle();
+		} else {
+			alert("SMI 에디터 모드가 아닙니다.");
+			return;
+		}
+	} else {
+		this._inputText(text);
+	}
 }
 SmiEditor.prototype._tagging = SmiEditor.prototype.tagging;
 SmiEditor.prototype.tagging = function(input, standCursor) {
@@ -1956,7 +1966,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?250814"
+		$.ajax({url: "lib/SmiEditor.color.css?250823"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -1987,7 +1997,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250814"
+		$.ajax({url: "lib/SmiEditor.size.css?250823"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -2146,7 +2156,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250814", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250823", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2180,7 +2190,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250814";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250823";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
@@ -2664,7 +2674,7 @@ function setVideoInfo(w=1920, h=1080, fr=23976) {
 function loadFkf(fkfName) {
 	// C# 파일 객체를 js 쪽에 전달할 수 없으므로, 정해진 경로의 파일을 ajax 형태로 가져옴
 	const req = new XMLHttpRequest();
-	req.open("GET", "../temp/" + encodeURIComponent(fkfName));
+	req.open("GET", "../temp/fkf/" + encodeURIComponent(fkfName));
 	req.responseType = "arraybuffer";
 	req.onload = (e) => {
 		afterLoadFkfFile(req.response);
@@ -3478,6 +3488,9 @@ function loadAssFile(path, text, target=-1) {
 						
 						for (let j = 0; j < hold.smiFile.body.length; j++) {
 							const smi = hold.smiFile.body[j];
+							if (smi.origin) {
+								smi.text = smi.origin;
+							}
 							if (smi.assComments) {
 								smi.assComments.sort((a, b) => {
 									return Number(a.split(",")[0]) - Number(b.split(",")[0]);
