@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>맞춤법 검사기</title>
-	<script src="../lib/jquery-3.2.1.min.js?250823"></script>
-	<script src="../lib/popup.js?250823"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250823" />
+	<script src="../lib/jquery-3.2.1.min.js?250910"></script>
+	<script src="../lib/popup.js?250910"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?250910" />
 	<script>
 windowName = "addon";
 
@@ -252,10 +252,12 @@ CheckString.prototype.doReplace = function() {
 }
 
 //초기 상태 기억
-const origin = (opener && opener.SmiEditor && opener.SmiEditor.selected) ? opener.SmiEditor.selected.getText() : null;
+let origin = null;
 let operation = null;
 $(() => {
-	if (!origin) {
+	if (opener && opener.SmiEditor && opener.SmiEditor.selected) {
+		origin = opener.SmiEditor.selected.getText();
+	} else {
 		alert("작업 대상이 없습니다.");
 		window.close();
 		return false;

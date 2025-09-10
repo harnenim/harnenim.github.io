@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>AssSyncOptimizer 샘플</title>
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250823" />
-<script src="view/lib/jquery-3.2.1.min.js?250823"></script>
-<script src="bridge/WinAPI.js?250823"></script>
-<script src="bridge/Binder.js?250823"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250910" />
+<script src="view/lib/jquery-3.2.1.min.js?250910"></script>
+<script src="bridge/WinAPI.js?250910"></script>
+<script src="bridge/Binder.js?250910"></script>
 <script>
 Binder.prototype.dropFiles = function() {
 	this._.dropFiles();
@@ -18,7 +18,7 @@ Binder.prototype.saveFile = function(text) {
 	this._.saveFile(text);
 }
 </script>
-<script src="bridge/WebForm.js?250823"></script>
+<script src="bridge/WebForm.js?250910"></script>
 <script>
 const main = new WebForm();
 {	// main
@@ -32,7 +32,7 @@ const main = new WebForm();
 			main.settingJson = settingJson;
 		}
 		
-		main.mainView.src = "view/AssSyncOptimizer.html?250823";
+		main.mainView.src = "view/AssSyncOptimizer.html?250910";
 		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;

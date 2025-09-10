@@ -1966,7 +1966,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?250823"
+		$.ajax({url: "lib/SmiEditor.color.css?250910"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -1997,7 +1997,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?250823"
+		$.ajax({url: "lib/SmiEditor.size.css?250910"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -2096,6 +2096,36 @@ function setSetting(setting, initial=false) {
 	
 	Combine.css = setting.viewer.css;
 	//	DefaultStyle.Fontsize = Number(setting.viewer.size) / 18 * 80;
+	if (!setting.defStyle) {
+		setting.defStyle = {
+				"Fontname": "맑은 고딕"
+			,	"Fontsize": 80
+			,	"PrimaryColour"  : "#FFFFFF"
+			,	"SecondaryColour": "#FF0000"
+			,	"OutlineColour"  : "#000000"
+			,	"BackColour"     : "#000000"
+			,	"PrimaryOpacity"  : 255
+			,	"SecondaryOpacity": 255
+			,	"OutlineOpacity"  : 255
+			,	"BackOpacity"     : 255
+			,	"Bold"     : true
+			,	"Italic"   : false
+			,	"Underline": false
+			,	"StrikeOut": false
+			,	"ScaleX": 100
+			,	"ScaleY": 100
+			,	"Spacing": 0
+			,	"Angle": 0
+			,	"BorderStyle": false
+			,	"Outline": 4
+			,	"Shadow": 0
+			,	"Alignment": 2
+			,	"MarginL": 64
+			,	"MarginR": 64
+			,	"MarginV": 40
+			,	"output": 3
+		}
+	}
 	Subtitle.DefaultStyle = setting.defStyle;
 	
 	$("input[name=Fontname]").attr({ placeholder: Subtitle.DefaultStyle.Fontname });
@@ -2156,7 +2186,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?250823", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?250910", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2190,7 +2220,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250823";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?250910";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
