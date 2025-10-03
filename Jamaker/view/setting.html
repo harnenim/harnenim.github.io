@@ -73,7 +73,7 @@ $(() => {
 	const submitFuncs = {};
 	const refreshFuncs = {};
 	let refreshTableCommand = () => {};
-
+	
 	const saved = {};
 	function checkSaved(key, ok, no) {
 		if (saved[key].status) {
@@ -142,12 +142,12 @@ $(() => {
 	const fieldEditor = $("#fieldEditor");
 	const fieldViewer = $("#fieldViewer");
 	const fieldPlayer = $("#fieldPlayer");
-
+	
 	const tableCommand = $("#tableCommand");
 	const inputCommandName = $("#inputCommandName");
 	const inputCommandKey  = $("#inputCommandKey" );
 	const inputCommandFunc = $("#inputCommandFunc");
-
+	
 	{	// 창
 		(refreshFuncs["window"] = (setting) => {
 			refresh($("#window"), setting);
@@ -229,7 +229,7 @@ $(() => {
 				&& (JSON.stringify(setting.player.window) == JSON.stringify(opener.setting.player.window))
 			);
 		})(setting);
-	
+		
 		submitFuncs["window"] = () => {
 			setting.window.x             = Number($("input[name=window_x]"            ).val());
 			setting.window.y             = Number($("input[name=window_y]"            ).val());
@@ -281,17 +281,21 @@ $(() => {
 			// TODO: 프리셋 양식 오류 검증 필요?
 			// <Sync Start={sync}><P Class={lang}{type}>
 			
-			setting.sync.insert = Number($("input[name=sync_insert]").val());
-			setting.sync.update = Number($("input[name=sync_update]").val());
-			setting.sync.weight = Number($("input[name=sync_weight]").val());
-			setting.sync.unit   = Number($("input[name=sync_unit]"  ).val());
-			setting.sync.move   = Number($("input[name=sync_move]"  ).val());
-			setting.sync.lang   = $("input[name=sync_lang]"  ).val();
-			setting.sync.preset = preset;
-			setting.sync.frame  = $("input[name=sync_frame]" ).prop("checked");
-			setting.sync.kframe = $("input[name=sync_kframe]").prop("checked");
-			setting.sync.kLimit = Number($("input[name=sync_kLimit]").val());
-			setting.sync.holds  = $("input[name=sync_holds]").prop("checked");
+			setting.sync.insert   = Number($("input[name=sync_insert]").val());
+			setting.sync.update   = Number($("input[name=sync_update]").val());
+			setting.sync.weight   = Number($("input[name=sync_weight]").val());
+			setting.sync.unit     = Number($("input[name=sync_unit]"  ).val());
+			setting.sync.move     = Number($("input[name=sync_move]"  ).val());
+			setting.sync.lang     = $("input[name=sync_lang]"  ).val();
+			setting.sync.preset   = preset;
+			setting.sync.frame    = $("input[name=sync_frame]" ).prop("checked");
+			setting.sync.kframe   = $("input[name=sync_kframe]").prop("checked");
+			setting.sync.kLimit   = Number($("input[name=sync_kLimit]").val());
+			setting.sync.holds    = $("input[name=sync_holds]").prop("checked");
+			setting.sync.width    = Number($("input[name=sync_width]" ).val());
+			setting.sync.height   = Number($("input[name=sync_height]").val());
+			setting.sync.uiWidth  = Number($("input[name=sync_uiWidth]" ).val());
+			setting.sync.uiHeight = Number($("input[name=sync_uiHeight]").val());
 			opener.setSetting(setting);
 			opener.saveSetting();
 		};
@@ -435,7 +439,7 @@ $(() => {
 				inputCommandFunc.val(data.func);
 			});
 		});
-
+		
 		inputCommandKey.on("keydown", function(e) {
 			e.preventDefault();
 			e.stopPropagation();
@@ -503,7 +507,7 @@ $(() => {
 						}
 					}
 				}
-
+				
 				if (inputCommandKey.val() == keyName) {
 					// 현재 작업 중인 것
 					return;
@@ -550,7 +554,7 @@ $(() => {
 				inputCommandFunc.val("");
 			}
 		});
-
+		
 		$("#areaFunctions").on("click", "li", function() {
 			const func = inputCommandFunc.val();
 			inputCommandFunc.val((func ? func + "\n" : "") + $(this).data("input"));
@@ -558,7 +562,7 @@ $(() => {
 				setSaved("cmd", false);
 			}
 		});
-
+		
 		submitFuncs["cmd"] = () => {
 			const name = inputCommandName.val();
 			if (name) {
@@ -580,7 +584,7 @@ $(() => {
 			refresh($("#ac"), setting);
 			setSaved("ac", (JSON.stringify(setting.autoComplete) == JSON.stringify(opener.setting.autoComplete)));
 		})(setting);
-	
+		
 		submitFuncs["ac"] = () => {
 			$("#ac").find("textarea").each((_, el) => {
 				const textarea = $(el);
@@ -600,9 +604,9 @@ $(() => {
 	
 	{	// 자동치환
 		saved.replace = { status: true, name: "자동치환 설정" };
-	
+		
 		const replaceList = $("#replaceList");
-	
+		
 		function appendReplace(item) {
 			if (!item) {
 				item = { from: "", to: "", use: true };
@@ -634,7 +638,7 @@ $(() => {
 			appendReplace();
 			setSaved("replace", false);
 		});
-
+		
 		replaceList.on("click", "li > button.prev", function() {
 			const li = $(this).parent();
 			const prev = li.prev();
@@ -673,7 +677,7 @@ $(() => {
 					replaces.push(item);
 				}
 			});
-
+			
 			setting.saveWithNormalize = $("input[name=saveWithNormalize]").prop("checked");
 			setting.replace = replaces;
 			setSaved("replace", true);
@@ -787,7 +791,7 @@ $(() => {
 			editorNewFile.render();
 			refreshHighlight();
 		})(setting);
-
+		
 		let selectParser = $("select[name=highlight_parser]");
 		let selectStyle  = $("select[name=highlight_style]" );
 		let selectSize   = $("select[name=size]");
@@ -835,7 +839,7 @@ $(() => {
 			setting.highlight.color  = $("input[name=highlight_color]").prop("checked");
 			setting.highlight.sync   = Number($("input[name=highlight_sync]").val());
 			
-			setting.scrollMargin     = $("input[name=scrollMargin]").val();
+			setting.scrollMargin     = Number($("input[name=scrollMargin]").val());
 			
 			setting.viewer.useAlign  = $("input[name=viewer_useAlign]").prop("checked");
 //			setting.viewer.size      = $("input[name=viewer_size]").val();
@@ -882,7 +886,7 @@ $(() => {
 			setting.defStyle.BackColour      = $("input[name=defStyle_BackColour]"   ).val();
 			setting.defStyle.Shadow   = Number($("input[name=defStyle_Shadow]"       ).val());
 			setting.defStyle.MarginL = setting.defStyle.MarginR = Number($("input[name=defStyle_MarginL]").val());
-			setting.defStyle.MarginV         = $("input[name=defStyle_MarginV]"      ).val();
+			setting.defStyle.MarginV  = Number($("input[name=defStyle_MarginV]"      ).val());
 			if (!setting.defStyle.Fontname) {
 				$("input[name=defStyle_Fontname]").val(setting.defStyle.Fontname = "맑은 고딕");
 			}
@@ -908,7 +912,7 @@ $(() => {
 				&& (JSON.stringify(setting.player.control) == JSON.stringify(opener.setting.player.control))
 			);
 		})(setting);
-	
+		
 		const select = $("select[name=player_control_dll]");
 		if (opener.playerDlls) {
 			for (let i = 0; i < opener.playerDlls.length; i++) {
@@ -931,14 +935,14 @@ $(() => {
 			$("input[name=player_control_what_withRun]" ).prop("checked", dllSetting.withRun);
 			$("input[name=player_control_what_withExit]").prop("checked", dllSetting.withExit);
 		});
-	
+		
 		$("#btnPlayerPath").on("click", function() {
 			opener.binder.selectPlayerPath();
 		});
 		opener.afterSelectPlayerPath = (path) => {
 			$("input[name=player_control_what_path]").val(path);
 		};
-
+		
 		submitFuncs["player"] = () => {
 			setting.player.exts = $("input[name=player_exts]").val();
 			const dll = setting.player.control.dll = select.val();
@@ -958,9 +962,9 @@ $(() => {
 	
 	{	// 메뉴
 		saved.menu = { status: true, name: "메뉴 설정" };
-	
+		
 		const menuList = $("#menuList");
-	
+		
 		function appendMenu(menus) {
 			if (!menus) menus = [""];
 			
@@ -1017,7 +1021,7 @@ $(() => {
 			appendSubMenu($(this).parent().find("ol"));
 			setSaved("menu", false);
 		});
-
+		
 		menuList.on("click", "legend > button.prev", function() {
 			const menu = $(this).parents("li");
 			const prev = menu.prev();
@@ -1108,7 +1112,7 @@ $(() => {
 		const submitFunc = submitFuncs[opened];
 		if (submitFunc) submitFunc();
 	});
-
+	
 	$("form").each((_, el) => {
 		const form = $(el);
 		form.on("submit", function(e) {
@@ -1520,6 +1524,9 @@ body {
 		<br />
 		<label><input type="checkbox" name="sync_holds" /> 싱크 일괄 이동 시 다른 홀드에도 적용</label><br />
 		<p>※ 블록지정 영역에 대한 일괄 싱크 입력에는 적용되지 않습니다.</p>
+		<br />
+		<label>화면 싱크 매니저 섬네일 생성 크기: <input type="number" name="sync_width" />×<input type="number" name="sync_height" /></label><br />
+		<label>화면 싱크 매니저 섬네일 출력 크기: <input type="number" name="sync_uiWidth" />×<input type="number" name="sync_uiHeight" /></label><br />
 	</form>
 	
 	<form id="cmd">
