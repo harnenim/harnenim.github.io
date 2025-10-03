@@ -1,10 +1,44 @@
-[ { "version": "2025.08.23"
+[ { "version": "2025.10.03"
+  , "comment":
+    [ "특정 상황에서의 <RUBY> 태그 관련 버그 수정"
+    , "특정 영상에서의 FPS 계산 문제 수정"
+    , "플레이어 exe 경로에 없을 때 경고 추가"
+    , "화면 싱크 매니저 섬네일 생성 로직 개선"
+    , "라이브러리 업데이트 등"
+    ]
+  , "files":
+    [ "view/addon/Devide.html"
+    , "view/addon/SyncManager.html"
+    , "view/addon/SyncManager0.html"
+    , "view/help/aboutSync.html"
+    , "view/help/key.html"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/Frame.js"
+    , "view/lib/popup.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/AssSyncOptimizer.html"
+    , "view/setting.html"
+    , "AssSyncOptimizer.exe"
+    , "AssSyncOptimizer.pdb"
+    , "AutoSyncShift.exe"
+    , "AutoSyncShift.pdb"
+    , "Jamaker.exe"
+    , "Jamaker.pdb"
+    , "SamiReplacer.exe"
+    , "SamiReplacer.pdb"
+    , "TextReplacer.exe"
+    , "TextReplacer.pdb"
+    ]
+  }
+, { "version": "2025.08.23"
   , "comment":
     [ "fkf 경로 변경"
     , "화면 싱크 매니저 ASS 관련 버그 수정"
     , "특정 상황에서 ASS 역반영 버그 수정"
     , "싱크 계산기 키프레임 옵션 삭제 등"
-    , ""
     ]
   , "files":
     [ "view/addon/SyncManager.html"

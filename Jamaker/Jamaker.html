@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?250910" />
-<script src="view/lib/jquery-3.2.1.min.js?250910"></script>
-<script src="bridge/WinAPI.js?250910"></script>
-<script src="bridge/Binder.js?250910"></script>
-<script src="bridge/Bridge.js?250910"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251003" />
+<script src="view/lib/jquery-3.2.1.min.js?251003"></script>
+<script src="bridge/WinAPI.js?251003"></script>
+<script src="bridge/Binder.js?251003"></script>
+<script src="bridge/Bridge.js?251003"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -47,8 +47,8 @@ Binder.prototype.runPlayer = function(path) {
 	this._.runPlayer(path);
 }
 
-Binder.prototype.save = function(text, path, isSmi=true) {
-	this._.save(text, path, isSmi);
+Binder.prototype.save = function(tab, text, path, isSmi=true) {
+	this._.save(tab, text, path, isSmi);
 }
 Binder.prototype.saveTemp = function(text, path) {
 	this._.saveTemp(text, path);
@@ -71,6 +71,9 @@ Binder.prototype.loadVideoFile = function(path) {
 Binder.prototype.requestFrames = function(path) {
 	this._.requestFrames(path);
 }
+Binder.prototype.setThumbnailSize = function(width, height) {
+	// C#에서 동작
+}
 Binder.prototype.renderThumbnails = function(path, params) {
 	this._.renderThumbnails(path, params);
 }
@@ -79,6 +82,10 @@ Binder.prototype.openTempDir = function() {
 }
 Binder.prototype.doExit = function(resetPlayer, exitPlayer) {
 	this._.doExit(resetPlayer, exitPlayer);
+}
+
+Binder.prototype.log = function(msg) {
+	console.log(msg);
 }
 
 // 팝업 통신
@@ -116,7 +123,7 @@ Binder.prototype.moveTo  = function(time) { this._.player.moveTo(time); }
 // 부가기능
 Binder.prototype.runColorPicker = function() { this._.runColorPicker(); }
 </script>
-<script src="bridge/WebForm.js?250910"></script>
+<script src="bridge/WebForm.js?251003"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -164,7 +171,7 @@ const window_open = function(url, name, options, opener) {
 		this.initializeComponent();
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/editor.html?250910";
+			editor.mainView.src = "view/editor.html?251003";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -341,7 +348,9 @@ window.MB = 9;
 			return;
 		}
 		const hwnd = this.getHwnd(target);
-		WinAPI.SetForegroundWindow(hwnd);
+		if (hwnd) {
+			WinAPI.SetForegroundWindow(hwnd);
+		}
 	}
 	editor.setFollowWindow = function(follow) {
 		if (follow) {
@@ -562,7 +571,9 @@ window.MB = 9;
 	}
 
 	editor.setPlayer = function(dll, exe, withRun) {
-		this.player = new WebPlayerBridge(exe);
+		if (!this.player) {
+			this.player = new WebPlayerBridge(exe);
+		}
 		const offset = JSON.parse(editor.strSettingJson).player.window;
 		this.player.currentOffset.top    = offset.y - MT;
 		this.player.currentOffset.left   = offset.x - ML;
@@ -972,7 +983,7 @@ window.MB = 9;
         }).Start();
         //*/
 	}
-	editor.save = async function(text, path, isSmi) {
+	editor.save = async function(tab, text, path, isSmi) {
 		const paths = path.split(":");
 		if (paths[1]) {
 			const fileBuffer = fileBuffers[paths[0]];
@@ -980,15 +991,15 @@ window.MB = 9;
 			await stream.write("\ufeff" + text); // BOM 넣어줌
 			await stream.close();
 			if (isSmi) {
-				editor.script("afterSaveFile", [path]);
+				editor.script("afterSaveFile", [tab, path]);
 			} else {
-				editor.script("afterSaveAssFile", [path]);
+				editor.script("afterSaveAssFile", [tab, path]);
 			}
 		} else {
-			editor.saveWithDialog(text, isSmi);
+			editor.saveWithDialog(tab, text, isSmi);
 		}
 	}
-	editor.saveWithDialog = async function(text, isSmi) {
+	editor.saveWithDialog = async function(tab, text, isSmi) {
 		const fileBuffer = await window.showSaveFilePicker({
 			types: [
 				{ description: "SAMI", accept: (isSmi ? { "text/sami": [".smi"] } : { "text/ass": [".ass"] }) }
@@ -998,7 +1009,7 @@ window.MB = 9;
 			const index = fileBuffers.length;
 			fileBuffers.push(fileBuffer);
 			const file = await fileBuffer.getFile();
-			editor.save(text, index + ":" + file.name, isSmi);
+			editor.save(tab, text, index + ":" + file.name, isSmi);
 		}
 	}
 	editor.saveTemp = function(text, path) {
@@ -1014,7 +1025,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("bridge/tempDir.html?250910", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("bridge/tempDir.html?251003", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

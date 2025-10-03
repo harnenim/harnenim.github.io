@@ -171,15 +171,25 @@ window.Combine = {
 	}
 	function getAttrWidth(attrs, checker, withFs=false) {
 		const cAttrs = [];
-		for (let i = 0; i < attrs.length; i++) {
-			const attr = new Attr(attrs[i], attrs[i].text.split("&nbsp;").join(" "), true);
-			attr.fs = ((withFs && attr.fs) ? attr.fs : Combine.defaultSize);
-			if (attr.fn && attr.fn != "맑은 고딕") {
+		function append(attr) {
+			const cAttr = new Attr(attr, attr.text.split("&nbsp;").join(" "), true);
+			cAttr.fs = ((withFs && cAttr.fs) ? cAttr.fs : Combine.defaultSize);
+			if (cAttr.fn && cAttr.fn != "맑은 고딕") {
 				// 팟플레이어 폰트 크기 보정
-				attr.fs = attr.fs * 586 / 456;
+				cAttr.fs = cAttr.fs * 586 / 456;
 			}
-			attr.furigana = null;
-			cAttrs.push(attr);
+			cAttr.furigana = null;
+			cAttrs.push(cAttr);
+		}
+		for (let i = 0; i < attrs.length; i++) {
+			if (attrs[i].attrs) {
+				const subAttrs = attrs[i].attrs;
+				for (let j = 0; j < subAttrs.length; j++) {
+					append(subAttrs[j]);
+				}
+			} else {
+				append(attrs[i]);
+			}
 		}
 		const width = checker.html(Smi.fromAttr(cAttrs, Combine.defaultSize).split("\n").join("<br>")).width();
 		if (LOG) console.log(width, attrs);
@@ -242,6 +252,8 @@ window.Combine = {
 	}
 	
 	Combine.combine = (inputUpper, inputLower) => {
+		const funcFrom = window.log ? log("combine start") : 0;
+		
 		// 결합 로직 돌아갈 때 문법 하이라이트가 있으면 성능 저하됨
 		// ... 지금은 개선해서 큰 저하 없을지도?
 		const hljs = $(".hljs").hide();
@@ -368,7 +380,24 @@ window.Combine = {
 						let maxFs = 0;
 						for (let k = 0; k < attrs.length; k++) {
 							const attr = attrs[k];
-							if (attr.text) {
+							if (attr.attrs) {
+								const subAttrs = attr.attrs;
+								for (let ki = 0; ki < subAttrs.length; ki++) {
+									const subAttr = subAttrs[ki];
+									if (subAttr.text) {
+										if (!subAttr.text.split("　").join("").split("​").join("").trim()) {
+											continue;
+										}
+										if (attr.fs) {
+											maxFs = Math.max(maxFs, subAttr.fs);
+										} else {
+											maxFs = Combine.defaultSize;
+											break;
+										}
+									}
+								}
+								
+							} else if (attr.text) {
 								if (!attr.text.split("　").join("").split("​").join("").trim()) {
 									continue;
 								}
@@ -411,9 +440,30 @@ window.Combine = {
 							let trimedLine = { attrs: [], isEmpty: true };
 							const trimedLines = [trimedLine];
 							for (let k = 0; k < attrs.length; k++) {
+								if (attrs[k].attrs) {
+									const subAttrs = attrs[k].attrs;
+									for (let ki = 0; ki < subAttrs.length; ki++) {
+										const attrText = subAttrs[ki].text.split("​").join("");
+										let attr = new Attr(subAttrs[ki], attrText, true);
+										
+										if (attrText.length == 0) {
+											// 내용물 없는 속성 무시
+											continue;
+										}
+
+										if (attr.text) {
+											trimedLine.attrs.push(attr);
+										}
+										wasClear = isClear(attr, br);
+										if (trimedLine.isEmpty && attr.text.split("　").join("").trim().length) {
+											trimedLine.isEmpty = isEmpty = false;
+										}
+									}
+									continue;
+								}
 								const attrText = attrs[k].text.split("​").join("");
 								let attr = new Attr(attrs[k], attrText, true);
-									
+								
 								if (attrText.length == 0) {
 									// 내용물 없는 속성 무시
 									if (k < attrs.length - 1) {
@@ -740,12 +790,16 @@ window.Combine = {
 		if (lastSync) {
 			lines.push("&nbsp;");
 		}
+		if (window.log) log("combine end", funcFrom);
+		
 		return lines;
 	}
 }
 
 if (SmiFile) {
 	SmiFile.textToHolds = (text) => {
+		const funcFrom = window.log ? log("textToHolds start") : 0;
+		
 		const texts = text.split("\r\n").join("\n").split("\n<!-- Hold=");
 		let holds = [{ text: texts[0] }];
 		for (let i = 1; i < texts.length; i++) {
@@ -886,6 +940,9 @@ if (SmiFile) {
 			}
 			holds[i].text = text;
 		}
+
+		if (window.log) log("textToHolds end", funcFrom);
+		
 		return holds;
 	}
 	
@@ -895,6 +952,8 @@ if (SmiFile) {
 		return match && (match[0].indexOf("split") > 0);
 	}
 	SmiFile.holdsToTexts = (origHolds, withNormalize=true, withCombine=true, withComment=true, fps=23.976) => {
+		const funcFrom = window.log ? log("holdsToTexts start") : 0;
+		
 		const result = [];
 		let logs = [];
 		let originBody = [];
@@ -1435,6 +1494,7 @@ if (SmiFile) {
 				}
 			}
 		}
+		
 		if (withComment) {
 			result[0] = main.toText();
 			for (let i = 1; i < result.length; i++) {
@@ -1442,14 +1502,17 @@ if (SmiFile) {
 					result.splice(i--, 1);
 				}
 			}
-			return result;
 			
 		} else {
 			for (let i = 0; i < main.body.length; i++) {
 				main.body[i].text = main.body[i].text.split("\n").join("");
 			}
-			return [main.toText()];
+			result[0] = main.toText();
+			result.length = 1;
 		}
+		if (window.log) log("holdsToTexts end", funcFrom);
+		
+		return result;
 	}
 	SmiFile.holdsToText = (origHolds, withNormalize=true, withCombine=true, withComment=true, fps=23.976) => {
 		return SmiFile.holdsToTexts(origHolds, withNormalize, withCombine, withComment, fps).join("\n");

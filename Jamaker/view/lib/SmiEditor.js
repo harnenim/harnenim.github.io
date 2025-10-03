@@ -1,4 +1,6 @@
-﻿let LH = 20; // LineHeight
+﻿const LOG = true; // 배포 시 false
+
+let LH = 20; // LineHeight
 let SB = 16; // ScrollBarWidth ... TODO: 자동으로 구해지도록?
 
 // 배열로 개발했던 것들 레거시 지원
@@ -307,6 +309,18 @@ window.SmiEditor = function(text) {
 	}, 1);
 };
 
+SmiEditor.log = window.log = (msg, since=0) => {
+	if (typeof binder === "undefined" || !LOG) {
+		SmiEditor.log = window.log = () => {};
+	} else {
+		(SmiEditor.log = window.log = (msg, since=0) => {
+			const time = new Date().getTime();
+			binder.log(time + "\t" + msg + (since ? (": " + (time - since)) : ""));
+			return time;
+		})(msg, since);
+	}
+};
+
 SmiEditor.setSetting = (setting) => {
 	if (setting.sync) {
 		SmiEditor.sync = setting.sync;
@@ -461,8 +475,10 @@ SmiEditor.prototype.isSaved = function() {
 	return (this.saved == this.input.val());
 };
 SmiEditor.prototype.afterSave = function() {
+	const funcSince = log("afterSave start");
 	this.saved = this.input.val();
 	this.afterChangeSaved(true);
+	log("afterSave end", funcSince);
 };
 SmiEditor.prototype.afterChangeSaved = function(saved) {
 	if (this.onChangeSaved) {
@@ -659,6 +675,7 @@ SmiEditor.keyEventActivated = false;
 SmiEditor.activateKeyEvent = function() {
 	if (SmiEditor.keyEventActivated) return;
 	SmiEditor.keyEventActivated = true;
+	const funcSince = log("activateKeyEvent start");
 	
 	let lastKeyDown = 0;
 	$(document).on("keydown", function(e) {
@@ -1149,12 +1166,16 @@ SmiEditor.activateKeyEvent = function() {
 						}
 					}
 					
+					const funcSince = log("단축키 실행 start");
 					const type = typeof f;
 					if (type == "function") {
+						log(String.fromCharCode(e.keyCode) + " / func: " + f.name);
 						f();
 					} else if (type == "string") {
+						log(String.fromCharCode(e.keyCode) + " / func: " + f.split("\n")[0]);
 						eval("(() => { " + f + "// */\n})()"); // 내용물이 주석으로 끝날 수도 있음
 					}
+					log("단축키 실행 end", funcSince);
 				}
 			}
 		}
@@ -1171,6 +1192,7 @@ SmiEditor.activateKeyEvent = function() {
 			}
 		}
 	});
+	log("activateKeyEvent end", funcSince);
 };
 
 SmiEditor.prototype.historyForward = function() {
@@ -1770,6 +1792,8 @@ SmiEditor.prototype.render = function(range=null) {
 
 	const self = this;
 	function thread() {
+		const funcSince = log("render start");
+		
 		const lines = self.lines;
 		const newText = self.input.val();
 		const newTextLines = newText.split("\n");
@@ -1850,6 +1874,8 @@ SmiEditor.prototype.render = function(range=null) {
 		
 		self.afterChangeSaved(self.isSaved());
 		
+		log("render end", funcSince);
+		
 		setTimeout(() => {
 			{
 				const ta = self.input[0];
@@ -1911,7 +1937,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?250910"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?251003"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -2075,6 +2101,8 @@ SmiEditor.prototype.renderByResync = function(range) {
 	// 프로세스 분리할 필요가 있나?
 	const self = this;
 	setTimeout(() => {
+		const funcSince = log("renderByResync start");
+		
 		const syncLines = [];
 		
 		// 줄 수 변동량
@@ -2121,6 +2149,8 @@ SmiEditor.prototype.renderByResync = function(range) {
 		}
 		self.isRendering = false;
 		self.afterChangeSaved(self.isSaved());
+		
+		log("renderByResync end", funcSince);
 		
 		setTimeout(() => {
 			if (self.needToRender) {
@@ -2477,7 +2507,7 @@ SmiEditor.Finder1 = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?250910", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?251003", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2854,7 +2884,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?250910", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?251003", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2985,7 +3015,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?250910";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?251003";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -2998,7 +3028,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?250910", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?251003", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -3094,12 +3124,15 @@ function extSubmit(method, url, values, withoutTag=true) {
 				Subtitle.$tmp.html(value.split(/<br>/gi).join(" "));
 				Subtitle.$tmp.find("style").html(""); // <STYLE> 태그 내의 주석은 innerText로 잡힘
 				value = Subtitle.$tmp.text();
-				value = value.split("​").join("").split("　").join(" ");
+				value = value.split("​").join("").split("　").join(" ").split(" ").join(" ");
 				while (value.indexOf("  ") >= 0) {
 					value = value.split("  ").join(" ");
 				}
+				while (value.indexOf("  ") >= 0) { // &nbsp;에서 만들어진 건 이쪽으로 옴
+					value = value.split("  ").join(" ");
+				}
 			}
-
+			
 			const params = {};
 			params[name] = value;
 			SmiEditor.Addon.openExtSubmit(method, url, params);
@@ -3157,13 +3190,16 @@ function extSubmitSpeller() {
 		// 태그 탈출 처리
 		value = $("<p>").html(value.split(/<br>/gi).join(" ")).text();
 		
-		// TODO: 신버전용으로 해보려고 했는데 잘 안 됨...
+		// 신버전용으로 시도 중
 		SmiEditor.Addon.openExt("https://nara-speller.co.kr/speller"
-			, "$('textarea')[0].value = " + JSON.stringify(value) + ";\n"
-			+ "{	const $btn = $('button[type=submit]');\n"
-			+ "	$btn.disabled = false;\n"
-			+ "	$btn.clikc();\n"
-			+ "}"
+			,	"const chekcer = setInterval(() => {\n"
+			+	"	const $ta = document.getElementsByTagName('textarea')[0];\n"
+			+	"	if ($ta) clearInterval(checker);\n"
+			+	"	else return;\n"
+			+	"	$ta.value = " + JSON.stringify(value) + ";\n"
+			+	"	$ta.dispatchEvent(new Event('input', { bubbles: true }));\n"
+			+	"	setTimeout(() => { document.getElementByTagName('button')[3].click(); });\n"
+			+	"}, 100);"
 		);
 	}
 }
@@ -3502,7 +3538,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?250910", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?251003", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			

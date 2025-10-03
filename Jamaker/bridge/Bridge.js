@@ -42,8 +42,8 @@ function WebPlayerBridge() {
 			WinAPI.MoveWindow(this.hwnd, this.initialOffset.left, this.initialOffset.top, this.initialOffset.right - this.initialOffset.left, this.initialOffset.bottom - this.initialOffset.top), true;
 		}
 	}
-	WebPlayerBridge.prototype.moveWindow = function(x, y) {
-		if (x == null || y == null) {
+	WebPlayerBridge.prototype.moveWindow = function(x=-11111, y=-111111) {
+		if (x == -11111 || y == -11111) {
 			// 프로그램 설정에 따른 위치로
 			WinAPI.MoveWindow(this.hwnd
 					, this.currentOffset.left
@@ -93,7 +93,7 @@ function WebPlayerBridge() {
 					if (this.window && this.window.name) {
 						return;
 					}
-					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?250910", "player", "scrollbars=no,location=no");
+					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?251003", "player", "scrollbars=no,location=no");
 					if (this.window) {
 						if (this.window.document) {
 							this.window.document.title = "플레이어";
