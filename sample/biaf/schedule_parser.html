@@ -4,7 +4,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-	<script src="/sample/keikenchi/jquery-3.7.1.min.js"></script>
+	<script src="../keikenchi/jquery-3.7.1.min.js"></script>
 
 	<script>
 $(function() {
@@ -79,7 +79,9 @@ $(function() {
 			
 			var max = 0;
 			for (var k = 0; k < places.length; k++) {
-				var length = lists[places[k]][date].length;
+				const placeDate = lists[places[k]][date];
+				if (!placeDate) continue;
+				var length = placeDate.length;
 				if (length > max) {
 					max = length;
 				}
@@ -88,6 +90,8 @@ $(function() {
 			for (var j = 0; j < max; j++) {
 				line = date + "일 " + (j+1) + "회차";
 				for (var k = 0; k < places.length; k++) {
+					const placeDate = lists[places[k]][date];
+					if (!placeDate) continue;
 					line += "\t";
 					var item = lists[places[k]][date][j];
 					if (item) {
