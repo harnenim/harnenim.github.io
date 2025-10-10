@@ -38,7 +38,10 @@ function init(schedule) {
 			line = date + "일 " + (j+1) + "회차";
 			for (var k = 0; k < schedule.places.length; k++) {
 				line += "\t";
-				var item = schedule.lists[schedule.places[k]][date][j];
+				const placeDate = schedule.lists[schedule.places[k]][date];
+				if (!placeDate) continue;
+				
+				var item = placeDate[j];
 				if (item) {
 					var begin = item.begin.split(":");
 					begin = (Number(begin[0])-9.5)*60 + Number(begin[1]);
@@ -308,6 +311,9 @@ div.item div.add {
 .place3 { left: calc(3 * 200px + 50px); }
 .place4 { left: calc(4 * 200px + 50px); }
 .place5 { left: calc(5 * 200px + 50px); }
+.place6 { left: calc(6 * 200px + 50px); }
+.place7 { left: calc(7 * 200px + 50px); }
+.place8 { left: calc(8 * 200px + 50px); }
 .step1 { background: #ffd; } div.item.step1:hover { background: #eec; }
 .step2 { background: #fa6; } div.item.step2:hover { background: #ea6; }
 .step3 { background: #fda; } div.item.step3:hover { background: #eca; }
