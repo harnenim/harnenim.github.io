@@ -1,0 +1,14 @@
+const tbody = $(".table_01 tbody");
+const trs = [];
+tbody.find("tr").each(function(i) {
+	if (i == 0) return;
+	trs.push($(this));
+});
+trs.sort(function(a, b) {
+	const at = a.find("td:eq(0)").text();
+	const bt = b.find("td:eq(0)").text();
+	return (at < bt ? -1 : at > bt ? 1 : 0);
+});
+for (let i = 0; i < trs.length; i++) {
+	tbody.append(trs[i]);
+}
