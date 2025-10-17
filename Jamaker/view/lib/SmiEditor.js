@@ -858,27 +858,39 @@ SmiEditor.activateKeyEvent = function() {
 								const cursor = editor.getCursor();
 								if (cursor[0] > 0 && cursor[0] == cursor[1]) {
 									const text = editor.input.val();
-									if (text[cursor[0] - 1] == '>') {
-										const prev = text.substring(0, cursor[0]);
-										const index = prev.lastIndexOf('<');
-										if (index >= 0) {
-											const tag = prev.substring(index, prev.length - 1);
-											if ((tag.indexOf('\n') < 0) && (tag.indexOf('>') < 0)) {
-												editor.setCursor(index);
-												editor.scrollToCursor();
-												e.preventDefault();
+									const c = text[cursor[0] - 1];
+									switch (c) {
+										case '>': {
+											const prev = text.substring(0, cursor[0]);
+											const index = prev.lastIndexOf('<');
+											if (index >= 0) {
+												const tag = prev.substring(index, prev.length - 1);
+												if ((tag.indexOf('\n') < 0) && (tag.indexOf('>') < 0)) {
+													editor.setCursor(index);
+													editor.scrollToCursor();
+													e.preventDefault();
+												}
 											}
+											break;
 										}
-									} else if (text[cursor[0] - 1] == ';') {
-										const prev = text.substring(0, cursor[0]);
-										const index = prev.lastIndexOf('&');
-										if (index >= 0) {
-											const tag = prev.substring(index, prev.length - 1);
-											if ((tag.indexOf('\n') < 0) && (tag.indexOf(';') < 0)) {
-												editor.setCursor(index);
-												editor.scrollToCursor();
-												e.preventDefault();
+										case ';': {
+											const prev = text.substring(0, cursor[0]);
+											const index = prev.lastIndexOf('&');
+											if (index >= 0) {
+												const tag = prev.substring(index, prev.length - 1);
+												if ((tag.indexOf('\n') < 0) && (tag.indexOf(';') < 0)) {
+													editor.setCursor(index);
+													editor.scrollToCursor();
+													e.preventDefault();
+												}
 											}
+											break;
+										}
+										case '\n': {
+											editor.setCursor(cursor[0] - 1);
+											editor.scrollToCursor();
+											e.preventDefault();
+											break;
 										}
 									}
 								}
@@ -923,27 +935,33 @@ SmiEditor.activateKeyEvent = function() {
 								if (cursor[0] == cursor[1]) {
 									const text = editor.input.val();
 									if (text.length > cursor[0]) {
-										if (text[cursor[0]] == '<') {
-											const next = text.substring(cursor[0]);
-											const index = next.indexOf('>') + 1;
-											if (index > 0) {
-												const tag = next.substring(1, index);
-												if ((tag.indexOf('\n') < 0)) {
-													editor.setCursor(cursor[0] + index);
-													editor.scrollToCursor();
-													e.preventDefault();
+										const c = text[cursor[0]];
+										switch (c) {
+											case '<': {
+												const next = text.substring(cursor[0]);
+												const index = next.indexOf('>') + 1;
+												if (index > 0) {
+													const tag = next.substring(1, index);
+													if ((tag.indexOf('\n') < 0)) {
+														editor.setCursor(cursor[0] + index);
+														editor.scrollToCursor();
+														e.preventDefault();
+													}
 												}
+												break;
 											}
-										} else if (text[cursor[0]] == '&') {
-											const next = text.substring(cursor[0]);
-											const index = next.indexOf(';') + 1;
-											if (index > 0) {
-												const tag = next.substring(1, index);
-												if ((tag.indexOf('\n') < 0) && (tag.indexOf('&') < 0)) {
-													editor.setCursor(cursor[0] + index);
-													editor.scrollToCursor();
-													e.preventDefault();
+											case '&': {
+												const next = text.substring(cursor[0]);
+												const index = next.indexOf(';') + 1;
+												if (index > 0) {
+													const tag = next.substring(1, index);
+													if ((tag.indexOf('\n') < 0) && (tag.indexOf('&') < 0)) {
+														editor.setCursor(cursor[0] + index);
+														editor.scrollToCursor();
+														e.preventDefault();
+													}
 												}
+												break;
 											}
 										}
 									}
@@ -1937,7 +1955,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?251003"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?251018"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -1990,7 +2008,7 @@ SmiEditor.prototype.moveLine = function(toNext) {
 	if (this.isRendering) return;
 	this.history.log();
 	
-	const text = this.input.val();
+	let text = this.input.val();
 	const range = this.getCursor();
 	const lineRange = [text.substring(0, range[0]).split("\n").length - 1, text.substring(0, range[1]).split("\n").length - 1];
 	const lines = text.split("\n");
@@ -1998,27 +2016,46 @@ SmiEditor.prototype.moveLine = function(toNext) {
 	
 	if (toNext) {
 		if (lineRange[1] == lines.length - 1) {
+			// 더 이상 내릴 수 없음
 			return;
 		}
-		this.input.val(lines.slice(0, lineRange[0]).concat(lines[lineRange[1]+1], lines.slice(lineRange[0], lineRange[1]+1), lines.slice(lineRange[1]+2)).join("\n"));
+		text =	lines.slice(0, lineRange[0]) // 그대로인 범위
+		.concat(
+				lines      [lineRange[1]+1] // 선택 범위 아랫줄을 위로 올림
+			,	lines.slice(lineRange[0],
+				            lineRange[1]+1) // 선택 범위를 아래로 내림
+			,	lines.slice(lineRange[1]+2) // 그대로인 범위
+		).join("\n");
 		
+		// 이동 후 커서 위치에 따른 스크롤
 		const targetTop = (lineRange[1]+2) * LH - this.input.css("height").split("px")[0] + SB;
 		if (targetTop > this.input.scrollTop()) {
 			this.input.scrollTop(targetTop);
 		}
+		// 이동 후 커서 위치 = 위로 내린 줄 길이만큼 더하기
 		addLine = lines[lineRange[1]+1].length + 1;
 	} else {
 		if (lineRange[0] == 0) {
+			// 더 이상 올릴 수 없음
 			return;
 		}
-		this.input.val(lines.slice(0, lineRange[0]-1).concat(lines.slice(lineRange[0], lineRange[1]+1), lines[lineRange[0]-1], lines.slice(lineRange[1]+1)).join("\n"));
+		text =	lines.slice(0, lineRange[0]-1) // 그대로인 범위
+		.concat(
+				lines.slice(lineRange[0],
+				            lineRange[1]+1) // 선택 범위를 위로 올림
+			,	lines      [lineRange[0]-1] // 선택 범위 윗줄을 아래로 내림
+			,	lines.slice(lineRange[1]+1) // 그대로인 범위
+		).join("\n");
 		
+		// 이동 후 커서 위치에 따른 스크롤
 		const targetTop = (lineRange[1]-1) * LH;
 		if (targetTop < this.input.scrollTop()) {
 			this.input.scrollTop(targetTop);
 		}
+		// 이동 후 커서 위치 = 아래로 내린 줄 길이만큼 빼기
 		addLine = -(lines[lineRange[0]-1].length + 1);
 	}
+	this.input.val(text);
 	this.setCursor(range[0]+addLine, range[1]+addLine);
 	this.history.log();
 	this.render([Math.max(0, lineRange[0]-1), Math.min(lineRange[1]+2, lines.length)]);
@@ -2507,7 +2544,7 @@ SmiEditor.Finder1 = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?251003", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?251018", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2884,7 +2921,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?251003", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?251018", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -3015,7 +3052,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?251003";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?251018";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -3028,7 +3065,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?251003", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?251018", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -3538,7 +3575,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?251003", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?251018", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			

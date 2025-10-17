@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?251003"></script>
-<script src="lib/popup.js?251003"></script>
-<script src="lib/History.js?251003"></script>
-<script src="lib/SubtitleObject.js?251003"></script>
-<script src="lib/SmiEditor.js?251003"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?251003" />
-<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?251003" />
+<script src="lib/jquery-3.2.1.min.js?251018"></script>
+<script src="lib/popup.js?251018"></script>
+<script src="lib/History.js?251018"></script>
+<script src="lib/SubtitleObject.js?251018"></script>
+<script src="lib/SmiEditor.js?251018"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?251018" />
+<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?251018" />
 <script>
 windowName = "setting";
 
@@ -32,6 +32,8 @@ $(() => {
 	styleColorAppendPreset = $("#styleColorAppend").html();
 	setColor(setting.color);
 	
+	let lastFocus = null;
+	
 	// 전역에서 접근 가능해야 함
 	window.show = function(index) {
 		$("#settingNav > a.selected").removeClass("selected");
@@ -40,8 +42,12 @@ $(() => {
 		opened = $("#settingArea > form:eq(" + index + ")").addClass("selected").attr("id");
 		// 지역변수 setting도 건드려야 함
 		opener.setting.show = setting.show = index;
+		lastFocus = null;
 	}
-	$(document).on("keydown", function(e) {
+	$(document).on("focus", "input,textarea", function(e) {
+		lastFocus = $(this);
+		
+	}).on("keydown", function(e) {
 		if (e.ctrlKey) {
 			switch (e.keyCode) {
 				case 9: {
@@ -67,6 +73,11 @@ $(() => {
 					show(e.keyCode - 49);
 				}
 			}
+		}
+	}).on("keyup", function(e) {
+		if (e.altKey && e.keyCode == 83) {
+			// Alt+S 했을 땐 포커스 원위치
+			lastFocus.focus();
 		}
 	});
 	let opened = null;
@@ -1659,7 +1670,7 @@ body {
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?251003")</h4>
+					<h4>openAddon("~~.html?251018")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>

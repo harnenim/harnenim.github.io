@@ -4,10 +4,10 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저</title>
-	<script src="../lib/jquery-3.2.1.min.js?251003"></script>
-	<script src="../lib/SubtitleObject.js?251003"></script>
-	<script src="../lib/popup.js?251003"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251003" />
+	<script src="../lib/jquery-3.2.1.min.js?251018"></script>
+	<script src="../lib/SubtitleObject.js?251018"></script>
+	<script src="../lib/popup.js?251018"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251018" />
 	<script>
 windowName = "addon";
 
@@ -324,7 +324,7 @@ $(() => {
 				const imgIndex = data.frameIndex + j;
 				const cName = "img" + imgIndex + data.flag;
 				if (data.$frames.find("." + cName).length == 0) {
-					const $img = $("<img>").addClass("frame " + cName).css({ left: (j * 98) }).data({ index: imgIndex, offset: j });
+					const $img = $("<img>").addClass("frame " + cName).css({ left: (j * (TX + 2)) }).data({ index: imgIndex, offset: j });
 					if (trustKeyFrame && Subtitle.findSync(fs[imgIndex], kfs, false)) {
 						$img.addClass("keyframe");
 					}

@@ -705,6 +705,16 @@ Tab.prototype.updateHoldSelector = function() {
 	const posStatus = {};
 	for (let i = 0; i < timers.length; i++) {
 		const timer = timers[i];
+		
+		// 종료된 홀드를 먼저 빼주지 않으면 과잉 보정 발생
+		timer.holds.sort((a, b) => {
+			if (a.type < b.type)
+				return -1;
+			if (a.type > b.type)
+				return 1;
+			return 0;
+		});
+		
 		const rate = (timer.rate / (timers.length + add - 1) * 100);
 		for (let j = 0; j < timer.holds.length; j++) {
 			const selector = timer.holds[j];
@@ -1971,7 +1981,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?251003"
+		$.ajax({url: "lib/SmiEditor.color.css?251018"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -2002,7 +2012,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?251003"
+		$.ajax({url: "lib/SmiEditor.size.css?251018"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -2096,7 +2106,7 @@ function setSetting(setting, initial=false) {
 		if (dll) {
 			const playerSetting = setting.player.control[dll];
 			if (playerSetting) {
-				binder.setPlayer(dll, playerSetting.path, playerSetting.withRun);
+				binder.setPlayer(dll, playerSetting.path, playerSetting.withRun, setting.player.window.use);
 			}
 		}
 	}
@@ -2197,7 +2207,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?251003", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?251018", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2231,7 +2241,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?251003";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?251018";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
