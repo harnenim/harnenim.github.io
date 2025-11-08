@@ -41,7 +41,7 @@ let checkVersion;
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.10.18.v1"
+{	version: "2025.11.08.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -261,7 +261,7 @@ window.DEFAULT_SETTING =
 		,	'<RUBY>쓰기<RT><RP>(</RP>읽기<RP>)</RP></RT></RUBY>'
 		,	'<font color="#cccccc">'
 		,	'<font fade="in">'
-		,	'<font keyboard="typing">'
+		,	'<font typing="keyboard">'
 		]]
 	,	"190": ['>', ['>>>|…']]
 	}
@@ -312,8 +312,9 @@ window.DEFAULT_SETTING =
 	, color : true
 	, sync  : 0.5
 	}
-,	scrollMargin: 3.5
 ,	size: 1
+,	scrollMargin: 3.5
+,	scrollShow: 1
 ,	color:
 	{ background: "#f0f0f0"
 	, selector  : "#c1c1c1"

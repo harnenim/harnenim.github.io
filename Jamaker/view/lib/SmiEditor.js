@@ -1,4 +1,4 @@
-﻿const LOG = true; // 배포 시 false
+﻿const LOG = false; // 배포 시 false
 
 let LH = 20; // LineHeight
 let SB = 16; // ScrollBarWidth ... TODO: 자동으로 구해지도록?
@@ -281,7 +281,8 @@ window.SmiEditor = function(text) {
 		}
 		
 		this.input.val(text);
-		this.setCursor(0)
+//		this.setCursor(0) // history 선언되기 전
+		this.input[0].setSelectionRange(0, 0);
 		this.saved = text;
 	} else {
 		this.saved = "";
@@ -330,6 +331,7 @@ SmiEditor.setSetting = (setting) => {
 		SmiEditor.showColor = setting.highlight.color;
 		SmiEditor.showEnter = setting.highlight.enter;
 	}
+	SmiEditor.scrollShow = setting.scrollShow;
 	
 	{	// AutoComplete
 		for (let key in SmiEditor.autoComplete) {
@@ -401,6 +403,7 @@ SmiEditor.setSetting = (setting) => {
 		}
 	}
 }
+SmiEditor.scrollShow = 1;
 
 SmiEditor.sync = {
 	insert: 1 // 싱크 입력 시 커서 이동
@@ -602,6 +605,18 @@ SmiEditor.prototype.bindEvent = function() {
 			for (let i = 0; i < toAppendViews.length; i++) {
 				editor.hview.append(toAppendViews[i]);
 			}
+		}
+		
+		{
+			if (!editor.lastScroll) {
+				editor.input.addClass("scrolling");
+			}
+			const now = editor.lastScroll = new Date().getTime();
+			setTimeout(function() {
+				if (editor.lastScroll != now) return;
+				editor.input.removeClass("scrolling");
+				editor.lastScroll = null;
+			}, SmiEditor.scrollShow * 1000);
 		}
 		
 	}).on("blur", function() {
@@ -1225,6 +1240,7 @@ SmiEditor.prototype.getCursor = function() {
 }
 SmiEditor.prototype.setCursor = function(start, end) {
 	this.input[0].setSelectionRange(start, end ? end : start);
+	this.history.log(null, true);
 }
 SmiEditor.scrollMargin = 3.5;
 SmiEditor.prototype.scrollToCursor = function(lineNo) {
@@ -1340,15 +1356,21 @@ SmiEditor.prototype.setLine = function(text, selection) {
 	this.history.log();
 	this.render();
 }
-SmiEditor.inputText = (text) => {
+SmiEditor.inputText = (input) => {
 	if (SmiEditor.selected) {
-		SmiEditor.selected.inputText(text);
+		SmiEditor.selected.inputText(input);
 	}
 }
 SmiEditor.prototype.inputText = function(input, standCursor) {
 	const text = this.input.val();
 	const selection = this.getCursor();
 	const cursor = selection[0] + (standCursor ? 0 : input.length);
+	if (input.length == 7 && input[0] == "#"
+		&& selection[0] > 0 && text[selection[0] - 1] == "&"
+		&& selection[1] < text.length && text[selection[1]] == "&") {
+		// ASS 색상코드 입력
+		input = "H" + input.substring(5,7) + input.substring(3,5) + input.substring(1,3);
+	}
 	this.setText(text.substring(0, selection[0]) + input + text.substring(selection[1]), [cursor, cursor]);
 	this.scrollToCursor();
 }
@@ -1955,7 +1977,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?251018"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?251108"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -2544,7 +2566,7 @@ SmiEditor.Finder1 = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?251018", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?251108", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2921,7 +2943,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?251018", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?251108", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -3052,7 +3074,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?251018";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?251108";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -3065,7 +3087,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?251018", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?251108", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -3575,7 +3597,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?251018", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?251108", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			

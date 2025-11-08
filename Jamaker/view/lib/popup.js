@@ -117,7 +117,7 @@ if (opener) {
 }
 
 function setColor(color) {
-	$.ajax({url: "lib/popup.color.css?251018"
+	$.ajax({url: "lib/popup.color.css?251108"
 		,	dataType: "text"
 		,	success: (preset) => {
 				for (let name in color) {
@@ -135,4 +135,5 @@ function setColor(color) {
 
 $(() => {
 	$("textarea").attr({ spellcheck: false });
+	$("input").attr({ autocomplete: "off" });
 });

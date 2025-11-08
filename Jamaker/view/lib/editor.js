@@ -1111,18 +1111,15 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 				}
 			}
 			
-			// ASS 주석에 [TEXT], [SMI] 있을 경우 넣을 내용물
+			// ASS 주석에 [TEXT] 있을 경우 넣을 내용물 ([SMI]는 후처리 필요해서 빼둠)
 			let smiText = Subtitle.$tmp.html(smi.text.split(/<br>/gi).join("\\N")).text();
 			while (smiText.indexOf("\\N　\\N") >= 0) { smiText = smiText.split("\\N　\\N").join("\\N"); }
 			while (smiText.indexOf("\\N\\N"  ) >= 0) { smiText = smiText.split("\\N\\N"  ).join("\\N"); }
-			const smiAss  = AssEvent.fromAttrs(smi.toAttrs())[0]; // RUBY 태그 같은 게 있으면 여러 줄 될 수 있지만 무시하는 쪽으로...
 			
 			// ASS 주석에서 복원
 			for (let j = 0; j < assTexts.length; j++) {
 				const assText = assTexts[j];
 				let ass = assText.split("[TEXT]").join(smiText)
-				                 .split("[SMI]").join(smiAss)
-				                 .split("}{").join("") // [SMI]는 태그 만들었을 수 있음
 				                 .split("\n").join("") // 비태그 줄바꿈은 무시해야 함
 				                 .split(",");
 				
@@ -1216,6 +1213,14 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 			event.owner = item[5];
 			event.comment = item[6];
 			assEvents.body.push(event);
+			
+			// [SMI]는 후처리 결과를 반영해야 함
+			if (event.comment.indexOf("[SMI]") >= 0) {
+				if (!event.owner.preAss) {
+					event.owner.preAss = [];
+				}
+				event.owner.preAss.push(event);
+			}
 		}
 		
 		// SMI 기반 스크립트
@@ -1344,6 +1349,7 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 					const item = eventsBody[i];
 					item.Start = AssEvent.toAssTime((item.start = Subtitle.findSync(item.start)) - 15);
 					item.End   = AssEvent.toAssTime((item.end   = Subtitle.findSync(item.end  )) - 15);
+					if (item.start == 0) item.start = 1;
 				}
 			} else {
 				const FL = Subtitle.video.FL;
@@ -1943,7 +1949,14 @@ function setSetting(setting, initial=false) {
 	}
 	
 	SmiEditor.setSetting(setting);
-	if (initial || (oldSetting.size != setting.size) || (JSON.stringify(oldSetting.color) != JSON.stringify(setting.color))) {
+	if (initial && oldSetting.scrollShow == undefined) {
+		setting.scrollShow = 0; // 기존 사용자는 0초로 초기화
+	}
+	if (initial
+	 || (               oldSetting.size       !=                setting.size      )
+	 || (               oldSetting.scrollShow !=                setting.scrollShow)
+	 || (JSON.stringify(oldSetting.color)     != JSON.stringify(setting.color)    )
+	) {
 		// 스타일 바뀌었을 때만 재생성
 		if (setting.css) {
 			delete(setting.css);
@@ -1952,7 +1965,7 @@ function setSetting(setting, initial=false) {
 		// 스크롤바 버튼 새로 그려야 함
 		let button = "";
 		let disabled = "";
-		{
+		if (setting.scrollShow == 0) {
 			let canvas = SmiEditor.canvas;
 			if (!canvas) canvas = SmiEditor.canvas = document.createElement("canvas");
 			canvas.width = canvas.height = ((SB = (16 * setting.size)) + 1) * 2;
@@ -1981,17 +1994,17 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?251018"
+		$.ajax({url: "lib/SmiEditor.color.css?251108"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
 						preset = preset.split("[" + name + "]").join(setting.color[name]);
 					}
-					if (button) {
+					if (button.length) {
 						preset = preset.split("[button]").join(button).split("[buttonDisabled]").join(disabled);
-						$("body").addClass("custom-scrollbar");
+						$("body").addClass("classic-scrollbar");
 					} else {
-						$("body").removeClass("custom-scrollbar");
+						$("body").removeClass("classic-scrollbar");
 					}
 					
 					let $style = $("#styleColor");
@@ -2012,7 +2025,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?251018"
+		$.ajax({url: "lib/SmiEditor.size.css?251108"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -2207,7 +2220,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?251018", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?251108", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2241,7 +2254,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?251018";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?251108";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)

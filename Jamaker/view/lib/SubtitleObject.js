@@ -1031,11 +1031,30 @@ window.AssEvent = Subtitle.AssEvent = function(start, end, style, text, layer=0)
 	this.Text = text;
 }
 AssEvent.toAssTime = (time=0, fromFrameSync=false) => {
+	/*
 	if (fromFrameSync) {
-		time -= 15; // TODO: 15ms는 경험적 값이라서, 정확한 계산식을 만드는 게 좋을 듯함
+		// TODO: 15ms는 경험적 값이라서, 정확한 계산식을 만드는 게 좋을 듯함
+		// 24fps에선 15ms로 문제없는데, 30fps에선 오차 발생 확인
 		// time = Math.floor((time - 5) / 10) * 10; // 저번에 이게 실패했었나?
+		time -= 15;
 	}
+	*/
 	if (time < 0) time = 0;
+	if (Subtitle.video.fs.length) {
+		const index = Subtitle.findSyncIndex(time);
+		if (index > 0) {
+			// 팟플레이어에서 ASS 자막의 경우
+			// 전후 프레임의 ⅔ 타이밍에 찍은 싱크부터 다음 프레임에 표시하는 것으로 보임
+			// fkf 파일 정수값이 반올림된 상태여서, 커트라인 잘못 넘어가지 않도록 1을 빼줌
+			time = Math.floor(((Subtitle.video.fs[index - 1] + Subtitle.video.fs[index] * 2) / 3 - 1) / 10) * 10;
+		} else {
+			time = Subtitle.video.fs[0];
+		}
+	} else {
+		if (fromFrameSync) {
+			time -= 15;
+		}
+	}
 	const h = Math.floor( time / 3600000);
 	const m = Math.floor( time /   60000) % 60;
 	const s = Math.floor( time /    1000) % 60;
@@ -1047,7 +1066,6 @@ AssEvent.fromAssTime = (assTime, toFrameSync=false) => {
 	const vs = assTime.split(':');
 	let time = ((Number(vs[0]) * 360000) + (Number(vs[1]) * 6000) + (Number(vs[2].split(".").join("")))) * 10;
 	if (toFrameSync) {
-//		time = Subtitle.findSync(time + 15);
 		time = AssEvent.optimizeSync(time);
 	}
 	return time;
@@ -1245,25 +1263,28 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 				let countHide = 0;
 				const fadeAttrs = [Attr.junkAss("{\\fade([FADE_LENGTH],0)}")];
 				let wasFade = false;
+				let isFirst = true;
 				for (let i = 0; i < attrs.length; i++) {
 					const attr = new Attr(attrs[i], attrs[i].text);
 					const base = baseAttrs[i];
 					if (attr.fade == 1) {
 						count++;
+						isFirst = false;
 						if (!wasFade) {
 							// 페이드 대상 원본 투명화
 							base.hide = true;
 							// 페이드 대상 활성화
 							if (countHide > 0) {
-								fadeAttrs.push(Attr.junkAss("{\\1a\\bord}"));
+								fadeAttrs.push(Attr.junkAss("{\\1a\\bord\\shad}"));
 							}
 							wasFade = true;
 						}
 
 					} else if (!attr.isEmpty()) {
-						if (wasFade || i == 0) {
+						if (wasFade || isFirst) {
 							// 페이드 비대상 비활성화
-							fadeAttrs.push(Attr.junkAss("{\\bord0\\1a&HFF&}"));
+							isFirst = false;
+							fadeAttrs.push(Attr.junkAss("{\\shad0\\bord0\\1a&HFF&}"));
 							wasFade = false;
 							countHide++;
 						}
@@ -1282,25 +1303,28 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 				let countHide = 0;
 				const fadeAttrs = [Attr.junkAss("{\\fade(0,[FADE_LENGTH])}")];
 				let wasFade = false;
+				let isFirst = true;
 				for (let i = 0; i < attrs.length; i++) {
 					const attr = new Attr(attrs[i], attrs[i].text);
 					const base = baseAttrs[i];
 					if (attr.fade == -1) {
 						count++;
+						isFirst = false;
 						if (!wasFade) {
 							// 페이드 대상 원본 투명화
 							base.hide = true;
 							// 페이드 대상 활성화
 							if (countHide > 0) {
-								fadeAttrs.push(Attr.junkAss("{\\1a\\bord}"));
+								fadeAttrs.push(Attr.junkAss("{\\1a\\bord\\shad}"));
 							}
 							wasFade = true;
 						}
 
 					} else if (!attr.isEmpty()) {
-						if (wasFade || i == 0) {
+						if (wasFade || isFirst) {
 							// 페이드 비대상 비활성화
-							fadeAttrs.push(Attr.junkAss("{\\bord0\\1a&HFF&}"));
+							isFirst = false;
+							fadeAttrs.push(Attr.junkAss("{\\shad0\\bord0\\1a&HFF&}"));
 							wasFade = false;
 							countHide++;
 						}
@@ -1315,25 +1339,40 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 			}
 
 			if (countHides) {
-				// 페이드와 무관하게 보이는 내용물
+				// 페이드인/아웃와 무관하게 보이는 내용물
 				let wasHide = false;
 				for (let i = 0; i < baseAttrs.length; i++) {
-					const attr = baseAttrs[i];
-					if (!wasHide && attr.hide) {
-						attr.text = "{\\bord0\\1a&HFF&}" + attr.text;
+					const base = baseAttrs[i];
+					let tag = "";
+					if (!wasHide && base.hide) {
+						tag = "{\\shad0\\bord0\\1a&HFF&}";
 						wasHide = true;
-					} else if (wasHide && !attr.hide) {
-						attr.text = "{\\1a\\bord}" + attr.text;
+					} else if (wasHide && !base.hide) {
+						tag = "{\\1a\\bord\\shad}";
 						wasHide = false;
 					}
+					if (!wasHide) {
+						const attr = attrs[i];
+						if (typeof attr.fade == "string" && attr.fade[0] == "#") {
+							if (attr.fade.length == 7) {
+								// 색상 페이드 최종 색
+								base.fc = attr.fade.substring(1);
+
+							} else if (attr.fade.length == 15 && attr.fade[7] == "~" && attr.fade[8] == "#") {
+								// 그라데이션 페이드 최종 색
+								base.fc = attr.fade;
+							}
+						}
+					}
+					base.text = tag + base.text;
 				}
 
 				texts.push(...AssEvent.inFromAttrs(baseAttrs, false, false));
 			}
 
-			{	// 색상 페이드는 위를 덮어야 해서 더 나중에 추가함
+			{	// 색상 페이드 원본 색 페이드아웃
 				count = 0;
-				const fadeAttrs = [Attr.junkAss("{\\fade([FADE_LENGTH],0)\\bord0}")];
+				const fadeAttrs = [Attr.junkAss("{\\fade(0, [FADE_LENGTH])\\bord0}")];
 				let wasFade = false;
 				for (let i = 0; i < attrs.length; i++) {
 					const attr = new Attr(attrs[i], attrs[i].text);
@@ -1342,12 +1381,10 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 						if (attr.fade.length == 7) {
 							// 색상 페이드
 							isFade = true;
-							attr.fc = attr.fade.substring(1);
 
 						} else if (attr.fade.length == 15 && attr.fade[7] == "~" && attr.fade[8] == "#") {
 							// 그라데이션 페이드
 							isFade = true;
-							attr.fc = attr.fade;
 						}
 					}
 					if (isFade) {
@@ -1487,6 +1524,11 @@ AssEvent.prototype.clearEnds = function() {
 }
 
 AssEvent.fromSync = function(sync, style=null) {
+	if (sync.origin && sync.origin.skip && !sync.origin.preAss) {
+		// ASS 변환 제외 대상
+		return [];
+	}
+	
 	const events = sync.events = [];
 	const start = sync.start;
 	const end   = sync.end;
@@ -1689,8 +1731,12 @@ AssEvent.fromSync = function(sync, style=null) {
 			} while (false);
 			
 			if (moved) {
-				if (text.indexOf("\\pos(") > 0 || text.indexOf("\\move(") > 0) {
+				if (text.indexOf("\\pos(") > 0
+				 || text.indexOf("\\move(") > 0
+				 || text.indexOf("\\an") > 0
+				) {
 					// 강제로 pos 태그 잡혀있으면 추가 적용하지 않음
+					// an 태그로 정렬 바꾼 경우에도 적용하지 않음
 				} else {
 					text = "{\\pos(" + x + "," + y + ")}" + text;
 				}
@@ -1762,10 +1808,33 @@ AssEvent.fromSync = function(sync, style=null) {
 				}
 			}
 			
-			// SMI와 공통인 건 레이어 200 부여
-			const ass = new AssEvent(start, end, sync.style, text, 200);
-			ass.origin = sync;
-			events.push(ass);
+			if (sync.origin && sync.origin.skip) {
+				// 이쪽으로 빠진 경우 주석 기반 생성물만 있고, 완전 자동 생성물은 사용하지 않음
+			} else {
+				// 변환을 통한 생성물은 레이어 200 부여
+				const event = new AssEvent(start, end, sync.style, text, 200);
+				event.origin = sync;
+				events.push(event);
+			}
+		}
+		
+		texts[i] = text;
+	}
+	if (sync.origin && sync.origin.preAss) {
+		for (let j = 0; j < sync.origin.preAss.length; j++) {
+			const ass = sync.origin.preAss[j];
+			const origin = ass.Text;
+			for (let i = 0; i < texts.length; i++) {
+				const text = texts[i];
+				if (i == 0) {
+					ass.Text = origin.split("[SMI]").join(text).split("}{").join("");
+				} else {
+					const event = new AssEvent(ass.start, ass.end, ass.Style, origin.split("[SMI]").join(text).split("}{").join(""), ass.Layer);
+					event.owner = ass.owner;
+					event.comment = ass.comment;
+					events.push(event);
+				}
+			}
 		}
 	}
 	return events;
@@ -1980,7 +2049,7 @@ AssFile.prototype.addFromSyncs = function(syncs, styleName) {
 			case "PlayResY": playResY = Number(info.value); break;
 		}
 	}
-
+	
 	const style = (typeof styleName == "string") ? this.getStyle(styleName) : styleName;
 	if (style) {
 		let x = 0;
@@ -2566,7 +2635,7 @@ Smi.toAttrs = (text) => {
 				break;
 			case "FONT": {
 				let attrAdded = false;
-				if (hadAss || last.text.length > 0) {
+				{ // <font> 태그는 텍스트 없어도 다른 속성 필요할 수 있음
 					attrs.push(last = new Attr());
 					attrAdded = true;
 				}
@@ -3199,50 +3268,6 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false, fps
 	
 	// 그라데이션 먼저 글자 단위 분해
 	let hasGradation = false;
-	/*
-	for (let j = 0; j < attrs.length; j++) {
-		const attr = attrs[j];
-		
-		const gc = (attr.fc.length == 15)
-			&& (attr.fc[0] == '#')
-			&& (attr.fc[7] == '~')
-			&& (attr.fc[8] == '#');
-		const gf = (attr.fade.length == 15)
-			&& (attr.fade[0] == '#')
-			&& (attr.fade[7] == '~')
-			&& (attr.fade[8] == '#');
-		
-		if (gc || gf) {
-			hasGradation = true;
-			
-			const cFrom = gc ? attr.fc.substring(0,  7) : (attr.fc ? attr.fc : "#ffffff");
-			const cTo   = gc ? attr.fc.substring(8, 15) : (attr.fc ? attr.fc : "#ffffff");
-			const color = new Color(cTo, cFrom);
-			
-			const newAttrs = [];
-			for (let k = 0; k < attr.text.length; k++) {
-				const newAttr = new Attr(attr);
-				newAttr.fc = color.get(k, attr.text.length - 1);
-				newAttr.text = attr.text[k];
-				newAttrs.push(newAttr);
-			}
-			if (gf) {
-				const fFrom = attr.fade.substring(0,  7);
-				const fTo   = attr.fade.substring(8, 15);
-				const fColor = new Color(fTo, fFrom);
-				for (let k = 0; k < newAttrs.length; k++) {
-					newAttrs[k].fade = fColor.smi(k, newAttrs.length - 1);
-				}
-			}
-			const after = attrs.slice(j + 1);
-			
-			attrs.length = j;
-			attrs.push(...newAttrs);
-			attrs.push(...after);
-			j += newAttrs.length - 1;
-		}
-	}
-	*/
 	{
 		function checkGradation(attr) {
 			const gAttrs = [];
@@ -3581,8 +3606,11 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false, fps
 		}
 		
 		// 10ms 미만 간격이면 팟플레이어에서 겹쳐서 나오므로 적절히 건너뛰기
-		// TODO: ... 현재는 holdsToText 거칠 경우 뭉치는 것 교정해줄 듯?
-		const countLimit = Math.min(count, Math.floor((end - start) / 10));
+		// 프레임 정보 있으면 fps 기반으로 카운트
+		let countLimit = Math.min(count, Math.floor((end - start) / 10));
+		if (Subtitle.video.fs.length) {
+			countLimit = Subtitle.findSyncIndex(end) - Subtitle.findSyncIndex(start);
+		}
 		let realJ = 0;
 		
 		for (let j = 0; j < count; j++) {
@@ -3698,7 +3726,11 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false, fps
 			}
 		}
 		if (withComment) {
-			smis[0].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[0].text;
+			if (smis.length) {
+				smis[0].text = "<!-- End=" + end + "\n" + smiText.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smis[0].text;
+			} else {
+				// 싱크 길이가 1프레임 미만이면 변환결과가 없을 수도 있음
+			}
 		}
 		
 	} else {
@@ -3775,13 +3807,13 @@ Smi.normalize = (smis, withComment=false, fps=null, forConvert=false) => {
 			i += add;
 			added += add;
 			
-		} else {
+		} else if (nSmis.length == 1) {
 			smis[i] = nSmis[0];
 		}
 	}
 	if (smis.length) {
 		// 마지막 하나도 색상 그라데이션은 계산해야 함
-		smis[smis.length - 1].normalize(-1, forConvert, withComment);
+		smis[smis.length - 1] = smis[smis.length - 1].normalize(-1, forConvert, withComment)[0];
 	}
 	
 	return result;
@@ -3944,7 +3976,7 @@ SmiFile.prototype.toSyncs = function() {
 		let last = null;
 		for (; i + 1 < this.body.length; i++) {
 			const item = this.body[i];
-			if (item.isEmpty() || item.skip) {
+			if (item.isEmpty()) { // skip은 ASS 변환 과정에서 따로 처리
 				continue;
 			}
 			
@@ -3956,13 +3988,14 @@ SmiFile.prototype.toSyncs = function() {
 					const sync = normalized[j].toSync();
 					sync.end = normalized[j + 1].start;
 					sync.endType = normalized[j + 1].syncType;
-					sync.origin = this.body[i];
+					sync.origin = item;
 					result.push(sync);
 				}
 			}
 			last = normalized[normalized.length - 1].toSync();
 			last.end = end;
 			last.endType = next.syncType;
+			last.origin = item;
 			result.push(last);
 		}
 		// 마지막 싱크
@@ -3970,6 +4003,7 @@ SmiFile.prototype.toSyncs = function() {
 			const item = this.body[i];
 			if (!item.skip && item.text.split("&nbsp;").join("").length > 0) {
 				result.push(last = item.toSync());
+				last.origin = item;
 			}
 		}
 	}
