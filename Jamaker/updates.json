@@ -1,4 +1,28 @@
-[ { "version": "2025.10.18"
+[ { "version": "2025.11.08"
+  , "comment":
+    [ "스크롤바 스타일 변경"
+    , "(주로 ASS 변환 관련) 일부 마이너한 버그 등 수정"
+    ]
+  , "files":
+    [ "view/addon/SyncManager.html"
+    , "view/help/img/ass2.png"
+    , "view/lib/Combine.js"
+    , "view/lib/editor.js"
+    , "view/lib/History.js"
+    , "view/lib/Jamaker.css"
+    , "view/lib/popup.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.color.css"
+    , "view/lib/SmiEditor.size.css"
+    , "view/lib/SubtitleObject.js"
+    , "view/lib/webview.js"
+    , "view/SamiReplacer.html"
+    , "view/setting.html"
+    ]
+  }
+, { "version": "2025.10.18"
   , "comment":
     [ "끄트머리 연속 내포 홀드 관련 저장 문제 수정"
     , "화면 싱크 매니저 사이즈 설정에 따른 추가 렌더링 UI 문제 수정"
