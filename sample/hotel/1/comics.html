@@ -1,0 +1,1072 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Comics Viewer</title>
+<script>
+const json =
+[ { "url": "Vol1_Booklet_15.jpg"
+  , "items": 
+    [ { "top": 10
+      , "left": 72.5
+      , "width": 9.7
+      , "height": 13.8
+      , "size": 1.9
+      , "text": "이전에도\n말씀\n드렸지만"
+      , "css": "background: #f1f1f3dd;"
+      }
+    , { "top": 26.6
+      , "left": 58.7
+      , "width": 14.1
+      , "height": 11.6
+      , "size": 1.9
+      , "text": "호텔을\n운영하려면\n운영 자금이\n필요합니다"
+      , "css": "background: #f1f1f3dd;"
+      }
+    , { "top": 54.9
+      , "left": 53.1
+      , "width": 11.9
+      , "height": 11
+      , "size": 1.9
+      , "text": "돈 말이죠\n머니\n말이죠"
+      , "css": "background: #f1f1f3dd;"
+      }
+    , { "top": 63.1
+      , "left": 21.8
+      , "width": 20.8
+      , "height": 17.7
+      , "size": 1.9
+      , "text": "손님이 적은\n본 호텔 은하루의\n가장 큰 문제가\n그 부분이었는데요"
+      , "css": "background: #f1f1f3dd;"
+      }
+    ]
+  }
+, { "url": "Vol1_Booklet_16.jpg"
+  , "items": 
+    [ { "top": 57.1
+      , "left": 34.5
+      , "width": 10.7
+      , "height": 3.3
+      , "size": 1.9
+      , "css": "background: #f1f1f3dd;"
+      }
+    , { "top": 60.4
+      , "left": 15.2
+      , "width": 31
+      , "height": 17.8
+      , "text": "지폐는 대량으로\n떨어져 있지만\n그건 어디까지나 유실물이지\n저희 것이 아닙니다"
+      , "css": "background: #f1f1f3dd;"
+      }
+    ]
+  }
+, { "url": "Vol1_Booklet_17.jpg"
+  , "items": 
+    [ { "top": 38.7
+      , "left": 20.9
+      , "width": 12.2
+      , "height": 12.3
+      , "css": "background: #f1f1f3dd;"
+      }
+    , { "top": 41.9
+      , "left": 16.2
+      , "width": 18.3
+      , "height": 3
+      , "size": 2.3
+      , "text": "떠올랐습니다"
+      }
+    ]
+  }
+, { "url": "Vol1_Booklet_18.jpg"
+  , "items": 
+    [ { "top": 11.8
+      , "left": 66.8
+      , "width": 15.4
+      , "height": 15.2
+      , "size": 1.8
+      , "text": "이렇게\n떨어져 있는\n지폐를\n쓱쓱\n주워 모아"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 12
+      , "left": 43.4
+      , "width": 10
+      , "height": 18.8
+      , "size": 1.8
+      , "text": "그걸\n은하루\n맞은편\n파출소에\n가져가"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 47.7
+      , "left": 41.2
+      , "width": 15.7
+      , "height": 14.3
+      , "text": "경찰 아저씨\n분실물\n주워왔어요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    ]
+  }
+, { "url": "Vol1_Booklet_19.jpg"
+  , "items": 
+    [ { "top": 8.9
+      , "left": 67.9
+      , "width": 12.6
+      , "height": 12.8
+      , "size": 2.3
+      , "text": "안 계신가\n보네요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 9.3
+      , "left": 15.5
+      , "width": 15.4
+      , "height": 13.4
+      , "size": 1.9
+      , "text": "일단\n신고서만\n적어둡시다"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 32.2
+      , "left": 66.4
+      , "width": 16.2
+      , "height": 12.5
+      , "size": 1.9
+      , "text": "이제\n5%에서\n20%의 사례를\n받게 됩니다"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 31.6
+      , "left": 14.1
+      , "width": 17.4
+      , "height": 16.9
+      , "size": 1.9
+      , "text": "20% 주시는\n대인배\n주인님이라면\n좋겠는데요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 63.8
+      , "left": 71.7
+      , "width": 7.3
+      , "height": 3.6
+      , "size": 1.9
+      , "text": "그래서"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 58.2
+      , "left": 37.9
+      , "width": 12.2
+      , "height": 16.4
+      , "size": 1.9
+      , "text": "보자\n\n반년이\n지났습니다"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 60.6
+      , "left": 13.4
+      , "width": 10
+      , "height": 18.6
+      , "size": 1.9
+      , "text": "분실물\n주인은\n나타났\n을까요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    ]
+  }
+, { "url": "Vol1_Booklet_20.jpg"
+  , "items": 
+    [ { "top": 8.6
+      , "left": 74.8
+      , "width": 16
+      , "height": 16.9
+      , "size": 1.9
+      , "text": "경찰 아저씨\n또\n안 계시네요"
+      , "css": "background: radial-gradient(\n#f1f1f3dd,\n#f1f1f3dd 60%,\n#f1f1f300 80%\n);\nfont-weight: bold;"
+      }
+    , { "top": 10.6
+      , "left": 45.3
+      , "width": 13.1
+      , "height": 13.6
+      , "size": 1.9
+      , "text": "이건\n직무 태만에\n해당하지\n않을까요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 9.4
+      , "left": 25.6
+      , "width": 10
+      , "height": 13.7
+      , "size": 1.9
+      , "text": "주인은\n나타나지\n않았네요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 49.5
+      , "left": 66
+      , "width": 18.5
+      , "height": 17.9
+      , "size": 1.9
+      , "text": "─그렇게\n되었으니\n이 현금은 모두\n제 것인 셈이죠"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 50.6
+      , "left": 17
+      , "width": 15.6
+      , "height": 14.7
+      , "size": 1.8
+      , "text": "호텔 은하루의\n운영 자금으로\n쓰기로 합시다"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 74.8
+      , "left": 74.7
+      , "width": 12.4
+      , "height": 15.9
+      , "size": 1.9
+      , "text": "영수증\n적어둘게요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 74.8
+      , "left": 15.8
+      , "width": 22.6
+      , "height": 17.4
+      , "size": 1.9
+      , "text": "참고로 이쪽은\n이번에 주워온\n분량입니다\n\n신고서를\n적도록 하죠"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    ]
+  }
+, { "url": "Vol1_Booklet_21.jpg"
+  , "items": 
+    [ { "top": 8.5
+      , "left": 56.2
+      , "width": 22.7
+      , "height": 17.3
+      , "size": 1.9
+      , "text": "호텔 비품 매입처에\n두고 온 차용증을\n마침내\n회수할 수 있어요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 34.4
+      , "left": 73.9
+      , "width": 10
+      , "height": 14.3
+      , "size": 1.9
+      , "text": "차입\n경영과도\n작별"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 38.5
+      , "left": 54.7
+      , "width": 13.3
+      , "height": 12.7
+      , "size": 1.9
+      , "text": "자칫하면\n오너에게\n꾸중을 들을\n참이었어요"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 38.2
+      , "left": 52
+      , "width": 3.6
+      , "height": 6.5
+      , "css": "background: #f1f1f3dd;"
+      }
+    , { "top": 63.8
+      , "left": 72.3
+      , "width": 13.7
+      , "height": 16.9
+      , "size": 1.9
+      , "text": "호텔 경영을\n오래도록\n본궤도에\n오르게\n하려면"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 66.4
+      , "left": 58.3
+      , "width": 13.4
+      , "height": 13.5
+      , "size": 1.9
+      , "text": "건전한\n재무 상황이\n불가결하죠"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 71.7
+      , "left": 16.2
+      , "width": 14.5
+      , "height": 11.7
+      , "size": 1.9
+      , "text": "차입 경영인\n상태로는\n주주에게\n소송을─"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 61.7
+      , "left": 45
+      , "width": 9.5
+      , "height": 13
+      , "size": 1.9
+      , "text": "어서\n와라\n야치요"
+      , "css": "background: radial-gradient(\n#f1f1f3dd,\n#f1f1f3dd 60%,\n#f1f1f300 80%\n);\nfont-weight: bold;"
+      }
+    ]
+  }
+, { "url": "Vol1_Booklet_22.jpg"
+  , "items": 
+    [ { "top": 5.9
+      , "left": 72.7
+      , "width": 10
+      , "height": 9.1
+      , "size": 2.2
+      , "text": "응?"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 19.5
+      , "left": 82.2
+      , "width": 4.9
+      , "height": 4.4
+      , "size": 1.9
+      , "text": "삐"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 8.6
+      , "left": 28
+      , "width": 17
+      , "height": 15.9
+      , "size": 1.9
+      , "text": "주식 과반수는\n오너가\n가지고\n있으려나"
+      , "css": "background: #f1f1f3dd;\ntext-align: center;\nfont-size: 1.9vh;\nfont-weight: bold;"
+      }
+    , { "top": 17
+      , "left": 15.3
+      , "width": 13.6
+      , "height": 11.5
+      , "size": 1.9
+      , "text": "그렇다면\n문제\n없으려나요?"
+      , "css": "background: #f1f1f3dd;\ntext-align: center;\nfont-size: 1.9vh;\nfont-weight: bold;"
+      }
+    , { "top": 37.1
+      , "left": 25.5
+      , "width": 10
+      , "height": 10
+      , "size": 1.9
+      , "text": "그렇게\n되어"
+      , "css": "background: #f1f1f3dd;"
+      }
+    , { "top": 54.5
+      , "left": 63.3
+      , "width": 18.2
+      , "height": 17
+      , "size": 1.9
+      , "text": "반년마다\n분실물 현금을\n파출소에\n전달하기를\n수십 년 이어간\n어느 날\n"
+      , "css": "background: linear-gradient(#696d6aaa, #b2b5b4aa);\ntext-shadow: -0.2vh -0.2vh #CFCCC8\n           , -0.2vh  0.2vh #CFCCC8\n           ,  0.2vh  0.2vh #CFCCC8\n           ,  0.2vh -0.2vh #CFCCC8\n           ,  0.0vh -0.3vh #CFCCC8\n           ,  0.0vh  0.3vh #CFCCC8\n           ,  0.3vh  0.0vh #CFCCC8\n           , -0.3vh -0.0vh #CFCCC8;"
+      }
+    , { "top": 54.3
+      , "left": 29.6
+      , "width": 22.9
+      , "height": 17.4
+      , "size": 1.9
+      , "text": "분실물 주인이\n나타나지 않는 경우\n반년이 아니라\n3개월이면\n챙길 수 있단 걸\n깨달았습니다"
+      , "css": "background: linear-gradient(#696d6aaa, #b2b5b4aa);\ntext-shadow: -0.2vh -0.2vh #CFCCC8\n           , -0.2vh  0.2vh #CFCCC8\n           ,  0.2vh  0.2vh #CFCCC8\n           ,  0.2vh -0.2vh #CFCCC8\n           ,  0.0vh -0.3vh #CFCCC8\n           ,  0.0vh  0.3vh #CFCCC8\n           ,  0.3vh  0.0vh #CFCCC8\n           , -0.3vh -0.0vh #CFCCC8;"
+      }
+    , { "top": 59
+      , "left": 14
+      , "width": 6.8
+      , "height": 13.1
+      , "size": 2.3
+      , "text": "아\n아\n아\n아"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    , { "top": 82.9
+      , "left": 21
+      , "width": 9.5
+      , "height": 10.1
+      , "size": 1.7
+      , "text": "언제\n법률이\n바뀐 거지?"
+      , "css": "background: #f1f1f3dd;\ntransform: rotate(-23deg);\npadding-top: 1vh"
+      }
+    , { "top": 95.1
+      , "left": 14.7
+      , "width": 12
+      , "height": 3.9
+      , "size": 2.4
+      , "text": "계 속"
+      , "css": "background: #f1f1f3dd;\nfont-weight: bold;"
+      }
+    ]
+  }
+]
+;
+</script>
+<script>
+//JSON.stringify 보기 좋게 커스터마이징
+function stringify(obj, depth=0, pad=2, isChild=false) {
+	var str = "";
+	if (typeof obj == "object") {
+		var padLine = "";
+		for (var i = 0; i < pad * depth; i++) {
+			padLine += " ";
+		}
+		
+		if (Array.isArray(obj)) {
+			for (var i = 0; i < obj.length; i++) {
+				str += (i == 0 ? (isChild ? "\n" + padLine + "[" : "[") : "\n" + padLine + ",");
+				for (var j = 1; j < pad; j++) str += " ";
+				str += stringify(obj[i], depth + 1, pad);
+			}
+			if (str.length > 0) {
+				str += "\n" + padLine + "]";
+			} else {
+				str = "[]";
+			}
+		} else {
+			for (var key in obj) {
+				str += (str.length == 0 ? ((isChild ? "\n" + padLine : "") + "{") : "\n" + padLine + ",");
+				for (var j = 1; j < pad; j++) str += " ";
+				str += "\"" + key + "\": " + stringify(obj[key], depth + 1, pad, true);
+			}
+			if (str.length > 0) {
+				str += "\n" + padLine + "}";
+			} else {
+				str = "{}";
+			}
+		}
+	} else {
+		str = JSON.stringify(obj);
+	}
+	return str;
+}
+</script>
+<script>
+window.pages = {};
+window.items = {};
+window.pIndex = 0;
+window.iIndex = 0;
+window.views;
+window.forms;
+
+function addPage(info=null) {
+	const view = document.createElement("div"     ); view.classList.add("page"); view.setAttribute("data-key", pIndex);
+	const form = document.createElement("fieldset"); form.classList.add("page"); form.setAttribute("data-key", pIndex);
+	form.innerHTML = '<legend><label>이미지: <input name="url" /></label><button type="button" class="del-page">×</button></legend><ol></ol><button type="button" class="add">추가</button>';
+	const page = pages[pIndex++] = { view: view, info: form };
+	
+	views.append(view);
+	forms.append(form);
+
+	if (info) {
+		view.style.backgroundImage = 'url("' + info.url + '")';
+		form.querySelector('input[name=url]').value = info.url;
+		if (info.items) {
+			for (let i = 0; i < info.items.length; i++) {
+				addItem(page, info.items[i]);
+			}
+		}
+	}
+	refreshPages();
+}
+function delPage(page) {
+	delete pages[page.view.getAttribute("data-key")];
+	page.view.remove();
+	page.info.remove();
+	scrollView(Math.round(views.scrollTop / window.innerHeight));
+	refreshPages();
+}
+function refreshPages() {
+	views.childNodes.forEach((view, index) => {
+		pages[view.getAttribute("data-key")].page = index;
+	});
+}
+function addItem(page, info=null) {
+	const view = document.createElement("div"); view.setAttribute("data-key", iIndex);
+	const form = document.createElement("li" ); form.setAttribute("data-key", iIndex);
+	view.innerHTML
+		= '<span></span>'
+		+ '<div class="n "></div>'
+		+ '<div class="ne"></div>'
+		+ '<div class=" e"></div>'
+		+ '<div class="se"></div>'
+		+ '<div class="s "></div>'
+		+ '<div class="sw"></div>'
+		+ '<div class=" w"></div>'
+		+ '<div class="nw"></div>';
+	form.innerHTML
+		= '<label><span>top:    </span><input type="number" step="0.1" name="top"    />%</label>'
+		+ '<label><span>left:   </span><input type="number" step="0.1" name="left"   />%</label><br />'
+		+ '<label><span>width:  </span><input type="number" step="0.1" name="width"  />%</label>'
+		+ '<label><span>height: </span><input type="number" step="0.1" name="height" />%</label><br />'
+		+ '<label><span>폰트:   </span><input type="text"              name="family" placeholder="맑은 고딕" /></label>'
+		+ '<label><span>크기:   </span><input type="number" step="0.1" name="size"   placeholder="2" />vh</label><br />'
+		+ '<label class="ta"><span>텍스트: </span><textarea name="text"></textarea></label><br />'
+		+ '<label class="ta"><span>기타:   </span><textarea name="css"></textarea></label>'
+		+ '<button type="button" class="del">×</button>';
+	items[iIndex++] = { view: view, info: form };
+	
+	page.view.append(view);
+	page.info.querySelector("ol").append(form);
+	
+	form.querySelectorAll("input, textarea").forEach((el) => {
+		el.onfocus = onFocusItem;
+		el.onblur  = onBlurItem;
+	});
+	
+	if (info) {
+		let css = "";
+		css += "top: "    + info.top    + "%; ";
+		css += "left: "   + info.left   + "%; ";
+		css += "width: "  + info.width  + "%; ";
+		css += "height: " + info.height + "%; ";
+		if (info.family) css += 'font-family: "' + info.family + '"; ';
+		if (info.size  ) css += 'font-size: '    + info.size + 'vh; ';
+		if (info.css   ) css += info.css;
+		view.setAttribute("style", css);
+		view.querySelector("span").innerText = info.text ? info.text : "";
+		
+		form.querySelector('input[name=top]'    ).value = info.top   ;
+		form.querySelector('input[name=left]'   ).value = info.left  ;
+		form.querySelector('input[name=width]'  ).value = info.width ;
+		form.querySelector('input[name=height]' ).value = info.height;
+		form.querySelector('input[name=family]' ).value = info.family ? info.family : '맑은 고딕';
+		form.querySelector('input[name=size]'   ).value = info.size ? info.size : 2;
+		form.querySelector('textarea[name=text]').value = info.text ? info.text : "";
+		form.querySelector('textarea[name=css]' ).value = info.css  ? info.css  : "";
+	}
+}
+function onFocusItem(e) {
+	const item = items[e.target.parentNode.parentNode.getAttribute("data-key")];
+	item.view.classList.add("focus");
+}
+function onBlurItem(e) {
+	const item = items[e.target.parentNode.parentNode.getAttribute("data-key")];
+	item.view.classList.remove("focus");
+}
+function delItem(page, item) {
+	item.view.remove();
+	item.info.remove();
+}
+
+function scrollView(page) {
+	views.scroll({
+			behavior: "smooth"
+		,	top: (page * window.innerHeight)
+		,	left: 0
+	});
+	forms.querySelectorAll(".page").forEach((form, i) => {
+		if (form.classList.contains("focus")) {
+			if (page == i) return;
+			form.style.height = 0;
+			setTimeout(function() {
+				form.classList.remove("focus");
+			}, 300);
+			
+		} else {
+			if (page != i) return;
+			form.style.height = "auto";
+			const height = form.clientHeight;
+			form.style.height = 0;
+			form.classList.add("focus");
+			setTimeout(function() {
+				form.style.height = height + "px";
+			}, 1);
+			setTimeout(function() {
+				form.style.height = "auto";
+			}, 300);
+		}
+	});
+}
+
+window.onload = () => {
+	views = document.getElementById("pages");
+	forms = document.querySelectorAll("#editor .pages")[0];
+	let scroll = 0;
+	
+	views.addEventListener("wheel", (e) => {
+		if (e.deltaY > 0) {
+			scrollView(Math.floor(views.scrollTop / window.innerHeight) + 1);
+		} else if (e.deltaY < 0) {
+			scrollView(Math.floor(views.scrollTop / window.innerHeight) - 1);
+		}
+	});
+	views.addEventListener("scroll", (e) => {
+		const index = ++scroll;
+		setTimeout(function() {
+			if (index != scroll) return;
+			scrollView(Math.round(views.scrollTop / window.innerHeight));
+		}, 1000);
+	});
+	
+	document.getElementById("btnEditor").addEventListener("click", (e) => {
+		document.getElementsByTagName("body")[0].classList.toggle("edit");
+	});
+
+	document.getElementById("addImg").addEventListener("click", (e) => {
+		addPage();
+	});
+	
+	const editor = document.getElementById("editor");
+	editor.addEventListener("input", (e) => {
+		if (e.target.closest("input[name=url]")) {
+			const page = pages[e.target.parentNode.parentNode.parentNode.getAttribute("data-key")];
+			page.view.style.backgroundImage = 'url("' + e.target.value + '")';
+			
+		} else if (e.target.closest("li input, li textarea")) {
+			const item = items[e.target.parentNode.parentNode.getAttribute("data-key")];
+			if (e.target.getAttribute("name") == "text") {
+				item.view.querySelector("span").innerText = e.target.value;
+				
+			} else {
+				let css = "";
+				css += "top: "    + item.info.querySelector("input[name=top]"   ).value + "%; ";
+				css += "left: "   + item.info.querySelector("input[name=left]"  ).value + "%; ";
+				css += "width: "  + item.info.querySelector("input[name=width]" ).value + "%; ";
+				css += "height: " + item.info.querySelector("input[name=height]").value + "%; ";
+				
+				const family = item.info.querySelector("input[name=family]").value;
+				const size   = item.info.querySelector("input[name=size]"  ).value;
+				if (family) css += 'font-family: "' + family + '"; ';
+				if (size  ) css += 'font-size: '    + size + 'vh; ';
+				
+				css += item.info.querySelector("textarea[name=css]").value;
+				item.view.setAttribute("style", css);
+			}
+		}
+	});
+	
+	editor.addEventListener("click", (e) => {
+		if (e.target.closest(".page button.add")) {
+			addItem(pages[e.target.parentNode.getAttribute("data-key")], {
+					top: 40
+				,	left: 40
+				,	width: 10
+				,	height: 10
+				,	css: "background: radial-gradient(\n#fffe,\n#fffe 60%,\n#fff0 80%\n);"
+				,	text: "텍스트"
+			});
+			
+		} else if (e.target.closest("button.del")) {
+			const item = items[e.target.parentNode.getAttribute("data-key")];
+			const page = pages[e.target.parentNode.parentNode.parentNode.getAttribute("data-key")];
+			delItem(page, item);
+			
+		} else if (e.target.closest("button.del-page")) {
+			delPage(pages[e.target.parentNode.parentNode.getAttribute("data-key")]);
+			
+		} else {
+			const page = e.target.closest(".page:not(.focus)");
+			if (page) {
+				scrollView(pages[page.getAttribute("data-key")].page);
+			}
+		}
+	});
+	document.getElementById("inputColor").addEventListener("input", (e) => {
+		document.getElementById("showColor").value = e.target.value;
+	});
+	
+	const move = { mode: 0 };
+	views.addEventListener("mousedown", (e) => {
+		if (!document.getElementsByTagName("body")[0].classList.contains("edit")) {
+			return;
+		}
+		
+		let target = e.target;
+		
+		if (target.closest(".page > div > span")) {
+			// 상위 객체에서 동작해야 함
+			target = target.parentNode;
+			
+		} else if (target.closest(".page > div > div")) {
+			const direction = target.getAttribute("class").trim();
+			switch (direction) {
+				case "n" : move.mode = 1; break;
+				case "ne": move.mode = 2; break;
+				case  "e": move.mode = 3; break;
+				case "se": move.mode = 4; break;
+				case "s" : move.mode = 5; break;
+				case "sw": move.mode = 6; break;
+				case  "w": move.mode = 7; break;
+				case "nw": move.mode = 8; break;
+			}
+			target = target.parentNode;
+			
+		}
+		if (target.closest(".page > div")) {
+			const item = items[target.getAttribute("data-key")];
+			const page = pages[target.parentNode.getAttribute("data-key")];
+			
+			(move.item = item).view.classList.add("focus");
+			
+			let css = "";
+			const family = item.info.querySelector("input[name=family]").value;
+			const size   = item.info.querySelector("input[name=size]"  ).value;
+			if (family) css += 'font-family: "' + family + '"; ';
+			if (size  ) css += 'font-size: '    + size + 'vh; ';
+			css += item.info.querySelector("textarea[name=css]").value;
+			
+			move.from = {
+					size: page.view.clientHeight
+				,	top : Number(item.view.offsetTop)
+				,	left: Number(item.view.offsetLeft)
+				,	width : item.view.clientWidth
+				,	height: item.view.clientHeight
+				,	css: css
+				,	x: e.screenX
+				,	y: e.screenY
+			};
+		}
+	});
+	window.addEventListener("mousemove", (e) => {
+		if (!move.item) return;
+		
+		const moveX = e.screenX - move.from.x;
+		const moveY = e.screenY - move.from.y;
+		let top    = move.from.top   ;
+		let left   = move.from.left  ;
+		let width  = move.from.width ;
+		let height = move.from.height;
+		
+		switch (move.mode) {
+			case 1: {
+				top    += moveY;
+				height -= moveY;
+				break;
+			}
+			case 2: {
+				top    += moveY;
+				width  += moveX;
+				height -= moveY;
+				break;
+			}
+			case 3: {
+				width  += moveX;
+				break;
+			}
+			case 4: {
+				width  += moveX;
+				height += moveY;
+				break;
+			}
+			case 5: {
+				height += moveY;
+				break;
+			}
+			case 6: {
+				left   += moveX;
+				width  -= moveX;
+				height += moveY;
+				break;
+			}
+			case 7: {
+				left   += moveX;
+				width  -= moveX;
+				break;
+			}
+			case 8: {
+				top    += moveY;
+				left   += moveX;
+				width  -= moveX;
+				height -= moveY;
+				break;
+			}
+			default: {
+				top    += moveY;
+				left   += moveX;
+			}
+		}
+		move.item.info.querySelector("input[name=top]"   ).value = (top    = Math.round(top    * 1000 / move.from.size) / 10);
+		move.item.info.querySelector("input[name=left]"  ).value = (left   = Math.round(left   * 1250 / move.from.size) / 10);
+		move.item.info.querySelector("input[name=width]" ).value = (width  = Math.round(width  * 1250 / move.from.size) / 10);
+		move.item.info.querySelector("input[name=height]").value = (height = Math.round(height * 1000 / move.from.size) / 10);
+		
+		let css = "";
+		css += "top: "    + top    + "%; ";
+		css += "left: "   + left   + "%; ";
+		css += "width: "  + width  + "%; ";
+		css += "height: " + height + "%; ";
+		css += move.from.css;
+		move.item.view.setAttribute("style", css);
+		
+	});
+	window.addEventListener("mouseup", (e) => {
+		if (!move.item) return;
+		
+		move.item.view.classList.remove("focus");
+		move.item = null;
+		move.mode = 0;
+		
+	});
+	window.addEventListener("keydown", (e) => {
+		if (e.keyCode == 27) { // ESC
+			if (!move.item) return;
+			
+			let top    = move.from.top   ;
+			let left   = move.from.left  ;
+			let width  = move.from.width ;
+			let height = move.from.height;
+			
+			move.item.info.querySelector("input[name=top]"   ).value = (top    = Math.round(top    * 1000 / move.from.size) / 10);
+			move.item.info.querySelector("input[name=left]"  ).value = (left   = Math.round(left   * 1250 / move.from.size) / 10);
+			move.item.info.querySelector("input[name=width]" ).value = (width  = Math.round(width  * 1250 / move.from.size) / 10);
+			move.item.info.querySelector("input[name=height]").value = (height = Math.round(height * 1000 / move.from.size) / 10);
+			
+			let css = "";
+			css += "top: "    + top    + "%; ";
+			css += "left: "   + left   + "%; ";
+			css += "width: "  + width  + "%; ";
+			css += "height: " + height + "%; ";
+			css += move.from.css;
+			move.item.view.setAttribute("style", css);
+			
+			move.item.view.classList.remove("focus");
+			move.item = null;
+			move.mode = 0;
+		}
+	});
+	
+	document.getElementById("editor").onsubmit = function() {
+		const json = [];
+		
+		try {
+		
+		forms.childNodes.forEach(function(form) {
+			const page = {
+					url: form.querySelector("input[name=url]").value
+				,	items: []
+			};
+			form.querySelectorAll("li").forEach(function(info) {
+				const item = {
+						top   : Number(info.querySelector("input[name=top]"   ).value)
+					,	left  : Number(info.querySelector("input[name=left]"  ).value)
+					,	width : Number(info.querySelector("input[name=width]" ).value)
+					,	height: Number(info.querySelector("input[name=height]").value)
+				};
+				const family = info.querySelector("input[name=family]" ).value;
+				const size   = info.querySelector("input[name=size]"   ).value;
+				const text   = info.querySelector("textarea[name=text]").value
+				const css    = info.querySelector("textarea[name=css]" ).value
+				if (family && family != "맑은 고딕") item.family = family;
+				if (size   && size   != 2) item.size = Number(size);
+				if (text) item.text = text;
+				if (css ) item.css  = css ;
+				page.items.push(item);
+			});
+			json.push(page);
+		});
+		
+		} catch (e) { console.log(e); }
+		
+		document.querySelector("#jsonview textarea").value = stringify(json);
+		document.getElementById("jsonview").style.display = "block";
+		
+		return false;
+	};
+	
+	document.getElementById("btnCloseJson").addEventListener("click", function() {
+		document.getElementById("jsonview").style.display = "none";
+	});
+	
+	for (let i = 0; i < json.length; i++) {
+		addPage(json[i]);
+	}
+	scrollView(0);
+};
+</script>
+<style>
+html, body {
+	width: 100%;
+	height: 100%;
+}
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+#pages  {
+	width: 100%;
+	height: 100%;
+	overflow-y: scroll;
+	transition: 0.3s;
+} 
+#editor {
+	position: fixed;
+	top: 0;
+	right: -400px;
+	width: 400px;
+	height: 100%;
+	border-left: 1px solid #000;
+	transition: 0.3s;
+}
+#editor > div {
+	width: 100%;
+	height: 100%;
+}
+body.edit #pages  { width: calc(100% - 400px); } 
+body.edit #editor { right: 0; }
+#pages .page {
+	position: relative;
+	margin: 0 auto;
+	width: 80vh;
+	height: 100vh;
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+#pages .page > div {
+	position: absolute;
+	user-select: none;
+	font-family: '맑은 고딕';
+	font-size: 2vh;
+	text-align: center;
+}
+#pages .page > div > span {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	height: 100%;
+}
+body.edit 
+#pages .page > div {
+	cursor: move;
+}
+#pages .page > div > div { position: absolute; background: #f008; display: none; }
+body.edit #pages .page > div:hover > div,
+#pages .page > div.focus > div { display: block; }
+#pages .page > div > div.n  { top   : -6px; left :  0  ; width: 100%; height:  6px; cursor:  n-resize; }
+#pages .page > div > div.ne { top   : -6px; right: -6px; width:  6px; height:  6px; cursor: ne-resize; }
+#pages .page > div > div.e  { top   :  0  ; right: -6px; width:  6px; height: 100%; cursor:  e-resize; }
+#pages .page > div > div.se { bottom: -6px; right: -6px; width:  6px; height:  6px; cursor: se-resize; }
+#pages .page > div > div.s  { bottom: -6px; left :  0  ; width: 100%; height:  6px; cursor:  s-resize; }
+#pages .page > div > div.sw { bottom: -6px; left : -6px; width:  6px; height:  6px; cursor: sw-resize; }
+#pages .page > div > div.w  { top   :  0  ; left : -6px; width:  6px; height: 100%; cursor:  w-resize; }
+#pages .page > div > div.nw { top   : -6px; left : -6px; width:  6px; height:  6px; cursor: nw-resize; }
+
+input, textarea {
+	border: 1px solid #aaa;
+}
+#editor .pages {
+	margin: 2px;
+	height: calc(100% - 75px);
+	overflow-y: scroll;
+}
+#editor .page {
+	border: 1px solid #664;
+	height: 22px;
+	overflow: hidden;
+	opacity: 0.5;
+}
+#editor .page.focus {
+	transition: 0.3s;
+	opacity: 1;
+}
+#editor #btnEditor {
+	position: absolute;
+	top: calc(50% - 20px);
+	left: -20px;
+	width: 20px;
+	height: 40px;
+	border: 1px solid #888;
+	border-right-color: #aaa;
+	border-radius: 8px 0 0 8px;
+}
+button.del-page {
+	width: 16px;
+	height: 17px;
+	border: 1px solid #aaa;
+	border-left: 0;
+}
+legend {
+	margin: 0 4px;
+}
+ol, li {
+	list-style: none;
+}
+li {
+	position: relative;
+	margin: 2px;
+	border: 1px solid #aaa;
+}
+li label {
+	display: inline-block;
+	width: 160px;
+}
+li label.ta {
+	width: 100%;
+}
+label span {
+	display: block;
+	float: left;
+	width: 60px;
+}
+label input[type=number] { width: 50px; }
+label input[type=text],
+label textarea { width: calc(100% - 62px); }
+label textarea {
+	height: 100px;
+	resize: vertical;
+}
+button.del {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 16px;
+	height: 16px;
+	border: 1px solid #aaa;
+	border-width: 0 0 1px 1px;
+}
+button.add,
+#btnToJson {
+	margin: 0 2px 2px;
+	width: calc(100% - 4px);
+	border: 1px solid #aaa;
+}
+#colorPicker {
+}
+#colorPicker > * {
+	height: 24px;
+	line-height: 22px;
+}
+#colorPicker span { width: 110px; }
+#inputColor { width: 50px; vertical-align: middle; }
+#showColor  { width: 70px; }
+#jsonview {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #8888;
+	display: none;
+}
+.popup {
+	position: fixed;
+	top: 10%;
+	left: calc(50% - 300px);
+	width: 600px;
+	height: 80%;
+	background: #fff;
+	border: 1px solid #aaa;
+	border-radius: 8px;
+}
+#btnCloseJson {
+	position: fixed;
+	top: calc(10% + 8px);
+	left: calc(50% + 272px);
+	width: 20px;
+	height: 20px;
+	border: 0;
+	background: transparent;
+	font-size: 40px;
+	line-height: 20px;
+	cursor: pointer;
+}
+#jsonview textarea {
+	position: fixed;
+	top: calc(10% + 32px);
+	left: calc(50% - 290px);
+	width: 580px;
+	height: calc(80% - 42px);
+	resize: none;
+}
+</style>
+</head>
+<body>
+	<div id="pages"></div>
+	<form id="editor">
+		<button type="button" id="btnEditor">||</button>
+		<div>
+			<button type="submit" id="btnToJson">JSON 보기</button>
+			<div class="pages"></div>
+			<button type="button" class="add" id="addImg">이미지 추가</button>
+			<label id="colorPicker">
+				<span>색상코드 생성</span>
+				<input type="color" id="inputColor" value="#abcdef" />
+				<input type="text"  id="showColor"  value="#abcdef" readonly />
+			</label>
+		</div>
+	</form>
+	<div id="jsonview">
+		<div class="popup">
+			<button type="button" id="btnCloseJson">×</button>
+			<textarea></textarea>
+		</div>
+	</div>
+</body>
+</html>
