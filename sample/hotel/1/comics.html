@@ -457,7 +457,7 @@ function delPage(page) {
 	delete pages[page.view.getAttribute("data-key")];
 	page.view.remove();
 	page.info.remove();
-	scrollView(Math.round(views.scrollTop / window.innerHeight));
+	scrollView(Math.round(views.scrollTop / innerWin.innerHeight));
 	refreshPages();
 }
 function refreshPages() {
@@ -537,7 +537,7 @@ function delItem(item) {
 function scrollView(page) {
 	views.scroll({
 			behavior: "smooth"
-		,	top: (page * window.innerHeight)
+		,	top: (page * innerWin.innerHeight)
 		,	left: views.scrollLeft
 	});
 	forms.querySelectorAll(".page").forEach((form, i) => {
@@ -601,16 +601,16 @@ window.onload = () => {
 	
 	views.addEventListener("wheel", (e) => {
 		if (e.deltaY > 0) {
-			scrollView(Math.floor(views.scrollTop / window.innerHeight) + 1);
+			scrollView(Math.floor(views.scrollTop / innerWin.innerHeight) + 1);
 		} else if (e.deltaY < 0) {
-			scrollView(Math.floor(views.scrollTop / window.innerHeight) - 1);
+			scrollView(Math.floor(views.scrollTop / innerWin.innerHeight) - 1);
 		}
 	});
 	views.addEventListener("scroll", (e) => {
 		const index = ++scroll;
 		setTimeout(function() {
 			if (index != scroll) return;
-			scrollView(Math.round(views.scrollTop / window.innerHeight));
+			scrollView(Math.round(views.scrollTop / innerWin.innerHeight));
 		}, 1000);
 	});
 	
