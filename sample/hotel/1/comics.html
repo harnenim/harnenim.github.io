@@ -416,6 +416,8 @@ function stringify(obj, depth=0, pad=2, isChild=false) {
 }
 </script>
 <script>
+window.innerDoc;
+window.innerWin;
 window.pages = {};
 window.items = {};
 window.pIndex = 0;
@@ -426,7 +428,7 @@ window.forms;
 function addPage(info=null) {
 	const view = document.createElement("div"     ); view.classList.add("page"); view.setAttribute("data-key", pIndex);
 	const form = document.createElement("fieldset"); form.classList.add("page"); form.setAttribute("data-key", pIndex);
-	form.innerHTML = '<legend><label>이미지: <input name="url" /></label><button type="button" class="del-page">×</button></legend><ol></ol><button type="button" class="add">추가</button>';
+	form.innerHTML = '<legend><label>이미지: <input name="url" /></label><button type="button" class="del-page">×</button></legend><ol></ol><button type="button" class="add">말풍선 추가</button>';
 	const page = pages[pIndex++] = { view: view, info: form };
 	
 	views.append(view);
@@ -444,6 +446,14 @@ function addPage(info=null) {
 	refreshPages();
 }
 function delPage(page) {
+	page.view.childNodes.forEach((child) => {
+		const key = child.getAttribute("data-key");
+		const item = items[key];
+		delete items[key];
+		item.view.remove();
+		item.info.remove();
+	});
+	
 	delete pages[page.view.getAttribute("data-key")];
 	page.view.remove();
 	page.info.remove();
@@ -518,7 +528,8 @@ function onBlurItem(e) {
 	const item = items[e.target.parentNode.parentNode.getAttribute("data-key")];
 	item.view.classList.remove("focus");
 }
-function delItem(page, item) {
+function delItem(item) {
+	delete items[item.view.getAttribute("data-key")];
 	item.view.remove();
 	item.info.remove();
 }
@@ -527,7 +538,7 @@ function scrollView(page) {
 	views.scroll({
 			behavior: "smooth"
 		,	top: (page * window.innerHeight)
-		,	left: 0
+		,	left: views.scrollLeft
 	});
 	forms.querySelectorAll(".page").forEach((form, i) => {
 		if (form.classList.contains("focus")) {
@@ -553,9 +564,39 @@ function scrollView(page) {
 	});
 }
 
+function refresh(json) {
+	views.childNodes.forEach((child) => {
+		delete pages[child.getAttribute("data-key")];
+	});
+	views.innerHTML = "";
+	forms.innerHTML = "";
+	pIndex = 0;
+	iIndex = 0;
+	
+	for (let i = 0; i < json.length; i++) {
+		console.log("addPage", json[i]);
+		addPage(json[i]);
+	}
+	scrollView(0);
+}
+
 window.onload = () => {
-	views = document.getElementById("pages");
-	forms = document.querySelectorAll("#editor .pages")[0];
+	const body = document.getElementsByTagName("body")[0];
+	const bodyHTML = body.innerHTML;
+	body.innerHTML = "";
+	
+	const iframe = document.createElement("iframe");
+	body.append(iframe);
+	innerDoc = iframe.contentDocument;
+	innerWin = iframe.contentWindow;
+	
+	const style = innerDoc.createElement("style");
+	style.innerHTML = document.getElementsByTagName("style")[0].innerHTML;
+	innerDoc.getElementsByTagName("head")[0].append(style);
+	innerDoc.getElementsByTagName("body")[0].innerHTML = bodyHTML;
+	
+	views = innerDoc.getElementById("pages");
+	forms = innerDoc.querySelectorAll("#editor .pages")[0];
 	let scroll = 0;
 	
 	views.addEventListener("wheel", (e) => {
@@ -573,15 +614,15 @@ window.onload = () => {
 		}, 1000);
 	});
 	
-	document.getElementById("btnEditor").addEventListener("click", (e) => {
-		document.getElementsByTagName("body")[0].classList.toggle("edit");
+	innerDoc.getElementById("btnEditor").addEventListener("click", (e) => {
+		innerDoc.getElementsByTagName("body")[0].classList.toggle("edit");
 	});
 
-	document.getElementById("addImg").addEventListener("click", (e) => {
+	innerDoc.getElementById("addImg").addEventListener("click", (e) => {
 		addPage();
 	});
 	
-	const editor = document.getElementById("editor");
+	const editor = innerDoc.getElementById("editor");
 	editor.addEventListener("input", (e) => {
 		if (e.target.closest("input[name=url]")) {
 			const page = pages[e.target.parentNode.parentNode.parentNode.getAttribute("data-key")];
@@ -617,14 +658,12 @@ window.onload = () => {
 				,	left: 40
 				,	width: 10
 				,	height: 10
-				,	css: "background: radial-gradient(\n#fffe,\n#fffe 60%,\n#fff0 80%\n);"
+				,	css: "background: radial-gradient(\n[color]ee,\n[color]ee 60%,\n[color]00 80%\n);".split("[color]").join(innerDoc.getElementById("inputColor").value)
 				,	text: "텍스트"
 			});
 			
 		} else if (e.target.closest("button.del")) {
-			const item = items[e.target.parentNode.getAttribute("data-key")];
-			const page = pages[e.target.parentNode.parentNode.parentNode.getAttribute("data-key")];
-			delItem(page, item);
+			delItem(items[e.target.parentNode.getAttribute("data-key")]);
 			
 		} else if (e.target.closest("button.del-page")) {
 			delPage(pages[e.target.parentNode.parentNode.getAttribute("data-key")]);
@@ -636,13 +675,13 @@ window.onload = () => {
 			}
 		}
 	});
-	document.getElementById("inputColor").addEventListener("input", (e) => {
-		document.getElementById("showColor").value = e.target.value;
+	innerDoc.getElementById("inputColor").addEventListener("input", (e) => {
+		innerDoc.getElementById("showColor").value = e.target.value;
 	});
 	
 	const move = { mode: 0 };
 	views.addEventListener("mousedown", (e) => {
-		if (!document.getElementsByTagName("body")[0].classList.contains("edit")) {
+		if (!innerDoc.getElementsByTagName("body")[0].classList.contains("edit")) {
 			return;
 		}
 		
@@ -692,7 +731,7 @@ window.onload = () => {
 			};
 		}
 	});
-	window.addEventListener("mousemove", (e) => {
+	innerWin.addEventListener("mousemove", (e) => {
 		if (!move.item) return;
 		
 		const moveX = e.screenX - move.from.x;
@@ -764,7 +803,7 @@ window.onload = () => {
 		move.item.view.setAttribute("style", css);
 		
 	});
-	window.addEventListener("mouseup", (e) => {
+	innerWin.addEventListener("mouseup", (e) => {
 		if (!move.item) return;
 		
 		move.item.view.classList.remove("focus");
@@ -772,7 +811,7 @@ window.onload = () => {
 		move.mode = 0;
 		
 	});
-	window.addEventListener("keydown", (e) => {
+	innerWin.addEventListener("keydown", (e) => {
 		if (e.keyCode == 27) { // ESC
 			if (!move.item) return;
 			
@@ -800,7 +839,7 @@ window.onload = () => {
 		}
 	});
 	
-	document.getElementById("editor").onsubmit = function() {
+	innerDoc.getElementById("editor").onsubmit = function() {
 		const json = [];
 		
 		try {
@@ -832,31 +871,44 @@ window.onload = () => {
 		
 		} catch (e) { console.log(e); }
 		
-		document.querySelector("#jsonview textarea").value = stringify(json);
-		document.getElementById("jsonview").style.display = "block";
+		innerDoc.querySelector("#jsonview textarea").value = stringify(json);
+		innerDoc.getElementById("jsonview").style.display = "block";
 		
 		return false;
 	};
+	innerDoc.getElementById("jsonview").onsubmit = function() {
+		refresh(JSON.parse(innerDoc.querySelector("#jsonview textarea").value));
+		innerDoc.getElementById("jsonview").style.display = "none";
+		return false;
+	}
 	
-	document.getElementById("btnCloseJson").addEventListener("click", function() {
-		document.getElementById("jsonview").style.display = "none";
+	innerDoc.getElementById("btnCloseJson").addEventListener("click", function() {
+		innerDoc.getElementById("jsonview").style.display = "none";
 	});
 	
-	for (let i = 0; i < json.length; i++) {
-		addPage(json[i]);
-	}
-	scrollView(0);
+	refresh(json);
 };
 </script>
 <style>
 html, body {
 	width: 100%;
 	height: 100%;
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	overflow: hidden;
 }
 * {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
+}
+
+iframe {
+	border: 0;
+	width: 100%;
+	height: min(100%, 120vw);
+	outline: 1px solid #000;
 }
 
 #pages  {
@@ -1042,8 +1094,21 @@ button.add,
 	top: calc(10% + 32px);
 	left: calc(50% - 290px);
 	width: 580px;
-	height: calc(80% - 42px);
+	height: calc(80% - 64px);
 	resize: none;
+}
+#jsonview button[type=submit] {
+	position: fixed;
+	top: calc(90% - 32px);
+	left: calc(50% - 290px);
+	width: 580px;
+	height: 22px;
+	border: 1px solid #aaa;
+	border-top: 0;
+}
+
+@media (max-width: 800px) {
+	#editor #btnEditor { display: none; }
 }
 </style>
 </head>
@@ -1062,11 +1127,12 @@ button.add,
 			</label>
 		</div>
 	</form>
-	<div id="jsonview">
+	<form id="jsonview">
 		<div class="popup">
 			<button type="button" id="btnCloseJson">×</button>
 			<textarea></textarea>
+			<button type="submit">적용</button>
 		</div>
-	</div>
+	</form>
 </body>
 </html>
