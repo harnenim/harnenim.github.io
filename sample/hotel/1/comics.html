@@ -574,7 +574,6 @@ function refresh(json) {
 	iIndex = 0;
 	
 	for (let i = 0; i < json.length; i++) {
-		console.log("addPage", json[i]);
 		addPage(json[i]);
 	}
 	scrollView(0);
@@ -582,7 +581,7 @@ function refresh(json) {
 
 window.onload = () => {
 	const body = document.getElementsByTagName("body")[0];
-	const bodyHTML = body.innerHTML;
+	window.bodyHTML = body.innerHTML;
 	body.innerHTML = "";
 	
 	const iframe = document.createElement("iframe");
@@ -839,10 +838,8 @@ window.onload = () => {
 		}
 	});
 	
-	innerDoc.getElementById("editor").onsubmit = function() {
+	function getJson() {
 		const json = [];
-		
-		try {
 		
 		forms.childNodes.forEach(function(form) {
 			const page = {
@@ -869,11 +866,11 @@ window.onload = () => {
 			json.push(page);
 		});
 		
-		} catch (e) { console.log(e); }
-		
-		innerDoc.querySelector("#jsonview textarea").value = stringify(json);
+		return stringify(json);
+	}
+	innerDoc.getElementById("editor").onsubmit = function() {
+		innerDoc.querySelector("#jsonview textarea").value = getJson();
 		innerDoc.getElementById("jsonview").style.display = "block";
-		
 		return false;
 	};
 	innerDoc.getElementById("jsonview").onsubmit = function() {
@@ -881,9 +878,102 @@ window.onload = () => {
 		innerDoc.getElementById("jsonview").style.display = "none";
 		return false;
 	}
+	innerDoc.getElementById("btnToSave").addEventListener("click", (e) => {
+		const head = document.getElementsByTagName("head")[0];
+		head.querySelector("script").innerHTML = '\nconst json =\n' + getJson() + ';\n';
+		
+		let html = '<!doctype html>\n<html>\n<head>';
+		html += head.innerHTML + '</head>\n<body>' + bodyHTML + "</body>\n</html>";
+		
+		save(html);
+	});
+	async function save(html) {
+		const fb = await window.showSaveFilePicker({types:[{description:'HTML',accept:{'text/html':['.html']}}]});
+		if (fb) {
+			const file = await fb.getFile();
+			const stream = await fb.createWritable();
+			await stream.write(html);
+			await stream.close();
+		}
+	}
 	
-	innerDoc.getElementById("btnCloseJson").addEventListener("click", function() {
-		innerDoc.getElementById("jsonview").style.display = "none";
+	let showDrag = false;
+	let dropLayer = null;
+	function showDragging() {
+		if (!showDrag) {
+			if (!dropLayer) {
+				dropLayer = document.createElement("div");
+				dropLayer.style.position = "fixed";
+				dropLayer.style.top = 0;
+				dropLayer.style.left = 0;
+				dropLayer.style.width = "100%";
+				dropLayer.style.height = "100%";
+				dropLayer.style.background = "#8888";
+				document.getElementsByTagName("body")[0].append(dropLayer);
+				
+				dropLayer.addEventListener("dragover", (e) => {
+					e.preventDefault();
+				});
+				dropLayer.addEventListener("drop", (e) => {
+					e.preventDefault();
+					if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+						const targets = innerDoc.getElementById("fileTargets").value.split("\n");
+						if (targets.length == 1 && targets[0] == "") targets.pop();
+						
+						for (let i = 0; i < e.dataTransfer.files.length; i++) {
+							targets.push(e.dataTransfer.files[i].name);
+						}
+						innerDoc.getElementById("fileTargets").value = targets.join("\n");
+						
+					} else {
+						innerDoc.getElementById("editFiles").style.display = "none";
+					}
+					dropLayer.style.display = "none";
+					showDrag = false;
+				});
+			}
+			
+			const origins = [];
+			forms.childNodes.forEach((form) => {
+				origins.push(form.querySelector("input[name=url]").value);
+			});
+			innerDoc.getElementById("fileOrigins").value = origins.join("\n");
+			
+			innerDoc.getElementById("editFiles").style.display = "block";
+			dropLayer.style.display = "block";
+			showDrag = true;
+		}
+	}
+	innerDoc.addEventListener("dragover", showDragging);
+	document.addEventListener("dragover", showDragging);
+	
+	innerDoc.getElementById("editFiles").onsubmit = function() {
+		const origins = innerDoc.getElementById("fileOrigins").value.split("\n");
+		const targets = innerDoc.getElementById("fileTargets").value.split("\n");
+		if (origins.length != targets.length) {
+			alert("개수가 맞지 않습니다.");
+		}
+		
+		let dir = innerDoc.getElementById("inputDir").value;
+		if (dir) {
+			if (!(dir = dir.split("\\").join("/")).endsWith("/")) {
+				dir += "/";
+			}
+		}
+		
+		forms.childNodes.forEach((form, i) => {
+			const input = form.querySelector("input[name=url]");
+			input.value = dir + targets[i];
+			input.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+		innerDoc.getElementById("editFiles").style.display = "none";
+		return false;
+	}
+	
+	innerDoc.addEventListener("click", (e) => {
+		if (e.target.closest("button.close-popup")) {
+			e.target.closest(".popup-cover").style.display = "none";
+		}
 	});
 	
 	refresh(json);
@@ -998,6 +1088,11 @@ input, textarea {
 	border: 1px solid #888;
 	border-right-color: #aaa;
 	border-radius: 8px 0 0 8px;
+	opacity: 0.3;
+	transition: 0.3s;
+}
+#editor #btnEditor:hover {
+	opacity: 1;
 }
 button.del-page {
 	width: 16px;
@@ -1045,12 +1140,16 @@ button.del {
 	border-width: 0 0 1px 1px;
 }
 button.add,
-#btnToJson {
+#btnToJson,
+#btnToSave {
 	margin: 0 2px 2px;
 	width: calc(100% - 4px);
 	border: 1px solid #aaa;
 }
-#colorPicker {
+#btnToJson,
+#btnToSave {
+	margin-right: 0;
+	width: calc(50% - 3px);
 }
 #colorPicker > * {
 	height: 24px;
@@ -1059,7 +1158,7 @@ button.add,
 #colorPicker span { width: 110px; }
 #inputColor { width: 50px; vertical-align: middle; }
 #showColor  { width: 70px; }
-#jsonview {
+.popup-cover {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -1078,8 +1177,11 @@ button.add,
 	border: 1px solid #aaa;
 	border-radius: 8px;
 }
-#btnCloseJson {
+.popup > * {
 	position: fixed;
+	resize: none;
+}
+button.close-popup {
 	top: calc(10% + 8px);
 	left: calc(50% + 272px);
 	width: 20px;
@@ -1090,22 +1192,38 @@ button.add,
 	line-height: 20px;
 	cursor: pointer;
 }
-#jsonview textarea {
-	position: fixed;
+.popup textarea {
 	top: calc(10% + 32px);
 	left: calc(50% - 290px);
 	width: 580px;
 	height: calc(80% - 64px);
-	resize: none;
+	border-bottom: 0;
 }
-#jsonview button[type=submit] {
-	position: fixed;
+.popup button[type=submit] {
 	top: calc(90% - 32px);
 	left: calc(50% - 290px);
 	width: 580px;
 	height: 22px;
 	border: 1px solid #aaa;
-	border-top: 0;
+}
+
+#editFiles label {
+	top: calc(10% + 32px);
+	left: calc(50% - 122px);
+}
+#editFiles label input {
+	width: 280px;
+}
+#editFiles textarea {
+	top: calc(10% + 62px);
+	height: calc(80% - 94px);
+	width: 280px;
+}
+#fileOrigins {
+	left: calc(50% - 290px);
+}
+#fileTargets {
+	left: calc(50% + 10px);
 }
 
 @media (max-width: 800px) {
@@ -1118,7 +1236,7 @@ button.add,
 	<form id="editor">
 		<button type="button" id="btnEditor">||</button>
 		<div>
-			<button type="submit" id="btnToJson">JSON 보기</button>
+			<button type="submit" id="btnToJson">JSON 보기</button><button type="button" id="btnToSave">HTML 저장</button>
 			<div class="pages"></div>
 			<button type="button" class="add" id="addImg">이미지 추가</button>
 			<label id="colorPicker">
@@ -1128,10 +1246,21 @@ button.add,
 			</label>
 		</div>
 	</form>
-	<form id="jsonview">
+	<form class="popup-cover" id="jsonview">
 		<div class="popup">
-			<button type="button" id="btnCloseJson">×</button>
+			<button type="button" class="close-popup">×</button>
 			<textarea></textarea>
+			<button type="submit">적용</button>
+		</div>
+	</form>
+	<form class="popup-cover" id="editFiles">
+		<div class="popup">
+			<button type="button" class="close-popup">×</button>
+			<label>이미지 폴더 경로:
+				<input type="text" id="inputDir" placeholder="html 파일과 같은 폴더" />
+			</label>
+			<textarea id="fileOrigins" readonly></textarea>
+			<textarea id="fileTargets"></textarea>
 			<button type="submit">적용</button>
 		</div>
 	</form>
