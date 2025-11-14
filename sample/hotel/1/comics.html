@@ -586,239 +586,210 @@ window.onload = () => {
 	
 	const iframe = document.createElement("iframe");
 	body.append(iframe);
-	innerDoc = iframe.contentDocument;
-	innerWin = iframe.contentWindow;
-	
-	const style = innerDoc.createElement("style");
-	style.innerHTML = document.getElementsByTagName("style")[0].innerHTML;
-	innerDoc.getElementsByTagName("head")[0].append(style);
-	innerDoc.getElementsByTagName("body")[0].innerHTML = bodyHTML;
-	
-	views = innerDoc.getElementById("pages");
-	forms = innerDoc.querySelectorAll("#editor .pages")[0];
-	let scroll = 0;
-	
-	views.addEventListener("wheel", (e) => {
-		if (e.deltaY > 0) {
-			scrollView(Math.floor(views.scrollTop / innerWin.innerHeight) + 1);
-		} else if (e.deltaY < 0) {
-			scrollView(Math.floor(views.scrollTop / innerWin.innerHeight) - 1);
-		}
-	});
-	views.addEventListener("scroll", (e) => {
-		const index = ++scroll;
-		setTimeout(function() {
-			if (index != scroll) return;
-			scrollView(Math.round(views.scrollTop / innerWin.innerHeight));
-		}, 1000);
-	});
-	
-	innerDoc.getElementById("btnEditor").addEventListener("click", (e) => {
-		innerDoc.getElementsByTagName("body")[0].classList.toggle("edit");
-	});
 
-	innerDoc.getElementById("addImg").addEventListener("click", (e) => {
-		addPage();
-	});
+	setTimeout(() => {
+		innerDoc = iframe.contentDocument;
+		innerWin = iframe.contentWindow;
+		
+		const style = innerDoc.createElement("style");
+		style.innerHTML = document.getElementsByTagName("style")[0].innerHTML;
+		innerDoc.getElementsByTagName("head")[0].append(style);
+		innerDoc.getElementsByTagName("body")[0].innerHTML = bodyHTML;
+		
+		views = innerDoc.getElementById("pages");
+		forms = innerDoc.querySelectorAll("#editor .pages")[0];
+		let scroll = 0;
+		
+		views.addEventListener("wheel", (e) => {
+			if (e.deltaY > 0) {
+				scrollView(Math.floor(views.scrollTop / innerWin.innerHeight) + 1);
+			} else if (e.deltaY < 0) {
+				scrollView(Math.floor(views.scrollTop / innerWin.innerHeight) - 1);
+			}
+		});
+		views.addEventListener("scroll", (e) => {
+			const index = ++scroll;
+			setTimeout(function() {
+				if (index != scroll) return;
+				scrollView(Math.round(views.scrollTop / innerWin.innerHeight));
+			}, 1000);
+		});
+		
+		innerDoc.getElementById("btnEditor").addEventListener("click", (e) => {
+			innerDoc.getElementsByTagName("body")[0].classList.toggle("edit");
+		});
 	
-	const editor = innerDoc.getElementById("editor");
-	editor.addEventListener("input", (e) => {
-		if (e.target.closest("input[name=url]")) {
-			const page = pages[e.target.parentNode.parentNode.parentNode.getAttribute("data-key")];
-			page.view.style.backgroundImage = 'url("' + e.target.value + '")';
-			
-		} else if (e.target.closest("li input, li textarea")) {
-			const item = items[e.target.parentNode.parentNode.getAttribute("data-key")];
-			if (e.target.getAttribute("name") == "text") {
-				item.view.querySelector("span").innerText = e.target.value;
+		innerDoc.getElementById("addImg").addEventListener("click", (e) => {
+			addPage();
+		});
+		
+		const editor = innerDoc.getElementById("editor");
+		editor.addEventListener("input", (e) => {
+			if (e.target.closest("input[name=url]")) {
+				const page = pages[e.target.parentNode.parentNode.parentNode.getAttribute("data-key")];
+				page.view.style.backgroundImage = 'url("' + e.target.value + '")';
+				
+			} else if (e.target.closest("li input, li textarea")) {
+				const item = items[e.target.parentNode.parentNode.getAttribute("data-key")];
+				if (e.target.getAttribute("name") == "text") {
+					item.view.querySelector("span").innerText = e.target.value;
+					
+				} else {
+					let css = "";
+					css += "top: "    + item.info.querySelector("input[name=top]"   ).value + "%; ";
+					css += "left: "   + item.info.querySelector("input[name=left]"  ).value + "%; ";
+					css += "width: "  + item.info.querySelector("input[name=width]" ).value + "%; ";
+					css += "height: " + item.info.querySelector("input[name=height]").value + "%; ";
+					
+					const family = item.info.querySelector("input[name=family]").value;
+					const size   = item.info.querySelector("input[name=size]"  ).value;
+					if (family) css += 'font-family: "' + family + '"; ';
+					if (size  ) css += 'font-size: '    + size + 'vh; ';
+					
+					css += item.info.querySelector("textarea[name=css]").value;
+					item.view.setAttribute("style", css);
+				}
+			}
+		});
+		
+		editor.addEventListener("click", (e) => {
+			if (e.target.closest(".page button.add")) {
+				addItem(pages[e.target.parentNode.getAttribute("data-key")], {
+						top: 40
+					,	left: 40
+					,	width: 10
+					,	height: 10
+					,	css: "background: radial-gradient(\n[color]ee,\n[color]ee 60%,\n[color]00 80%\n);".split("[color]").join(innerDoc.getElementById("inputColor").value)
+					,	text: "텍스트"
+				});
+				
+			} else if (e.target.closest("button.del")) {
+				delItem(items[e.target.parentNode.getAttribute("data-key")]);
+				
+			} else if (e.target.closest("button.del-page")) {
+				delPage(pages[e.target.parentNode.parentNode.getAttribute("data-key")]);
 				
 			} else {
-				let css = "";
-				css += "top: "    + item.info.querySelector("input[name=top]"   ).value + "%; ";
-				css += "left: "   + item.info.querySelector("input[name=left]"  ).value + "%; ";
-				css += "width: "  + item.info.querySelector("input[name=width]" ).value + "%; ";
-				css += "height: " + item.info.querySelector("input[name=height]").value + "%; ";
+				const page = e.target.closest(".page:not(.focus)");
+				if (page) {
+					scrollView(pages[page.getAttribute("data-key")].page);
+				}
+			}
+		});
+		innerDoc.getElementById("inputColor").addEventListener("input", (e) => {
+			innerDoc.getElementById("showColor").value = e.target.value;
+		});
+		
+		const move = { mode: 0 };
+		views.addEventListener("mousedown", (e) => {
+			if (!innerDoc.getElementsByTagName("body")[0].classList.contains("edit")) {
+				return;
+			}
+			
+			let target = e.target;
+			
+			if (target.closest(".page > div > span")) {
+				// 상위 객체에서 동작해야 함
+				target = target.parentNode;
 				
+			} else if (target.closest(".page > div > div")) {
+				const direction = target.getAttribute("class").trim();
+				switch (direction) {
+					case "n" : move.mode = 1; break;
+					case "ne": move.mode = 2; break;
+					case  "e": move.mode = 3; break;
+					case "se": move.mode = 4; break;
+					case "s" : move.mode = 5; break;
+					case "sw": move.mode = 6; break;
+					case  "w": move.mode = 7; break;
+					case "nw": move.mode = 8; break;
+				}
+				target = target.parentNode;
+				
+			}
+			if (target.closest(".page > div")) {
+				const item = items[target.getAttribute("data-key")];
+				const page = pages[target.parentNode.getAttribute("data-key")];
+				
+				(move.item = item).view.classList.add("focus");
+				
+				let css = "";
 				const family = item.info.querySelector("input[name=family]").value;
 				const size   = item.info.querySelector("input[name=size]"  ).value;
 				if (family) css += 'font-family: "' + family + '"; ';
 				if (size  ) css += 'font-size: '    + size + 'vh; ';
-				
 				css += item.info.querySelector("textarea[name=css]").value;
-				item.view.setAttribute("style", css);
+				
+				move.from = {
+						size: page.view.clientHeight
+					,	top : Number(item.view.offsetTop)
+					,	left: Number(item.view.offsetLeft)
+					,	width : item.view.clientWidth
+					,	height: item.view.clientHeight
+					,	css: css
+					,	x: e.screenX
+					,	y: e.screenY
+				};
 			}
-		}
-	});
-	
-	editor.addEventListener("click", (e) => {
-		if (e.target.closest(".page button.add")) {
-			addItem(pages[e.target.parentNode.getAttribute("data-key")], {
-					top: 40
-				,	left: 40
-				,	width: 10
-				,	height: 10
-				,	css: "background: radial-gradient(\n[color]ee,\n[color]ee 60%,\n[color]00 80%\n);".split("[color]").join(innerDoc.getElementById("inputColor").value)
-				,	text: "텍스트"
-			});
-			
-		} else if (e.target.closest("button.del")) {
-			delItem(items[e.target.parentNode.getAttribute("data-key")]);
-			
-		} else if (e.target.closest("button.del-page")) {
-			delPage(pages[e.target.parentNode.parentNode.getAttribute("data-key")]);
-			
-		} else {
-			const page = e.target.closest(".page:not(.focus)");
-			if (page) {
-				scrollView(pages[page.getAttribute("data-key")].page);
-			}
-		}
-	});
-	innerDoc.getElementById("inputColor").addEventListener("input", (e) => {
-		innerDoc.getElementById("showColor").value = e.target.value;
-	});
-	
-	const move = { mode: 0 };
-	views.addEventListener("mousedown", (e) => {
-		if (!innerDoc.getElementsByTagName("body")[0].classList.contains("edit")) {
-			return;
-		}
-		
-		let target = e.target;
-		
-		if (target.closest(".page > div > span")) {
-			// 상위 객체에서 동작해야 함
-			target = target.parentNode;
-			
-		} else if (target.closest(".page > div > div")) {
-			const direction = target.getAttribute("class").trim();
-			switch (direction) {
-				case "n" : move.mode = 1; break;
-				case "ne": move.mode = 2; break;
-				case  "e": move.mode = 3; break;
-				case "se": move.mode = 4; break;
-				case "s" : move.mode = 5; break;
-				case "sw": move.mode = 6; break;
-				case  "w": move.mode = 7; break;
-				case "nw": move.mode = 8; break;
-			}
-			target = target.parentNode;
-			
-		}
-		if (target.closest(".page > div")) {
-			const item = items[target.getAttribute("data-key")];
-			const page = pages[target.parentNode.getAttribute("data-key")];
-			
-			(move.item = item).view.classList.add("focus");
-			
-			let css = "";
-			const family = item.info.querySelector("input[name=family]").value;
-			const size   = item.info.querySelector("input[name=size]"  ).value;
-			if (family) css += 'font-family: "' + family + '"; ';
-			if (size  ) css += 'font-size: '    + size + 'vh; ';
-			css += item.info.querySelector("textarea[name=css]").value;
-			
-			move.from = {
-					size: page.view.clientHeight
-				,	top : Number(item.view.offsetTop)
-				,	left: Number(item.view.offsetLeft)
-				,	width : item.view.clientWidth
-				,	height: item.view.clientHeight
-				,	css: css
-				,	x: e.screenX
-				,	y: e.screenY
-			};
-		}
-	});
-	innerWin.addEventListener("mousemove", (e) => {
-		if (!move.item) return;
-		
-		const moveX = e.screenX - move.from.x;
-		const moveY = e.screenY - move.from.y;
-		let top    = move.from.top   ;
-		let left   = move.from.left  ;
-		let width  = move.from.width ;
-		let height = move.from.height;
-		
-		switch (move.mode) {
-			case 1: {
-				top    += moveY;
-				height -= moveY;
-				break;
-			}
-			case 2: {
-				top    += moveY;
-				width  += moveX;
-				height -= moveY;
-				break;
-			}
-			case 3: {
-				width  += moveX;
-				break;
-			}
-			case 4: {
-				width  += moveX;
-				height += moveY;
-				break;
-			}
-			case 5: {
-				height += moveY;
-				break;
-			}
-			case 6: {
-				left   += moveX;
-				width  -= moveX;
-				height += moveY;
-				break;
-			}
-			case 7: {
-				left   += moveX;
-				width  -= moveX;
-				break;
-			}
-			case 8: {
-				top    += moveY;
-				left   += moveX;
-				width  -= moveX;
-				height -= moveY;
-				break;
-			}
-			default: {
-				top    += moveY;
-				left   += moveX;
-			}
-		}
-		move.item.info.querySelector("input[name=top]"   ).value = (top    = Math.round(top    * 1000 / move.from.size) / 10);
-		move.item.info.querySelector("input[name=left]"  ).value = (left   = Math.round(left   * 1250 / move.from.size) / 10);
-		move.item.info.querySelector("input[name=width]" ).value = (width  = Math.round(width  * 1250 / move.from.size) / 10);
-		move.item.info.querySelector("input[name=height]").value = (height = Math.round(height * 1000 / move.from.size) / 10);
-		
-		let css = "";
-		css += "top: "    + top    + "%; ";
-		css += "left: "   + left   + "%; ";
-		css += "width: "  + width  + "%; ";
-		css += "height: " + height + "%; ";
-		css += move.from.css;
-		move.item.view.setAttribute("style", css);
-		
-	});
-	innerWin.addEventListener("mouseup", (e) => {
-		if (!move.item) return;
-		
-		move.item.view.classList.remove("focus");
-		move.item = null;
-		move.mode = 0;
-		
-	});
-	innerWin.addEventListener("keydown", (e) => {
-		if (e.keyCode == 27) { // ESC
+		});
+		innerWin.addEventListener("mousemove", (e) => {
 			if (!move.item) return;
 			
+			const moveX = e.screenX - move.from.x;
+			const moveY = e.screenY - move.from.y;
 			let top    = move.from.top   ;
 			let left   = move.from.left  ;
 			let width  = move.from.width ;
 			let height = move.from.height;
 			
+			switch (move.mode) {
+				case 1: {
+					top    += moveY;
+					height -= moveY;
+					break;
+				}
+				case 2: {
+					top    += moveY;
+					width  += moveX;
+					height -= moveY;
+					break;
+				}
+				case 3: {
+					width  += moveX;
+					break;
+				}
+				case 4: {
+					width  += moveX;
+					height += moveY;
+					break;
+				}
+				case 5: {
+					height += moveY;
+					break;
+				}
+				case 6: {
+					left   += moveX;
+					width  -= moveX;
+					height += moveY;
+					break;
+				}
+				case 7: {
+					left   += moveX;
+					width  -= moveX;
+					break;
+				}
+				case 8: {
+					top    += moveY;
+					left   += moveX;
+					width  -= moveX;
+					height -= moveY;
+					break;
+				}
+				default: {
+					top    += moveY;
+					left   += moveX;
+				}
+			}
 			move.item.info.querySelector("input[name=top]"   ).value = (top    = Math.round(top    * 1000 / move.from.size) / 10);
 			move.item.info.querySelector("input[name=left]"  ).value = (left   = Math.round(left   * 1250 / move.from.size) / 10);
 			move.item.info.querySelector("input[name=width]" ).value = (width  = Math.round(width  * 1250 / move.from.size) / 10);
@@ -832,151 +803,183 @@ window.onload = () => {
 			css += move.from.css;
 			move.item.view.setAttribute("style", css);
 			
+		});
+		innerWin.addEventListener("mouseup", (e) => {
+			if (!move.item) return;
+			
 			move.item.view.classList.remove("focus");
 			move.item = null;
 			move.mode = 0;
-		}
-	});
-	
-	function getJson() {
-		const json = [];
-		
-		forms.childNodes.forEach(function(form) {
-			const page = {
-					url: form.querySelector("input[name=url]").value
-				,	items: []
-			};
-			form.querySelectorAll("li").forEach(function(info) {
-				const item = {
-						top   : Number(info.querySelector("input[name=top]"   ).value)
-					,	left  : Number(info.querySelector("input[name=left]"  ).value)
-					,	width : Number(info.querySelector("input[name=width]" ).value)
-					,	height: Number(info.querySelector("input[name=height]").value)
-				};
-				const family = info.querySelector("input[name=family]" ).value;
-				const size   = info.querySelector("input[name=size]"   ).value;
-				const text   = info.querySelector("textarea[name=text]").value
-				const css    = info.querySelector("textarea[name=css]" ).value
-				if (family && family != "맑은 고딕") item.family = family;
-				if (size   && size   != 2) item.size = Number(size);
-				if (text) item.text = text;
-				if (css ) item.css  = css ;
-				page.items.push(item);
-			});
-			json.push(page);
+			
 		});
-		
-		return stringify(json);
-	}
-	innerDoc.getElementById("editor").onsubmit = function() {
-		innerDoc.querySelector("#jsonview textarea").value = getJson();
-		innerDoc.getElementById("jsonview").style.display = "block";
-		return false;
-	};
-	innerDoc.getElementById("jsonview").onsubmit = function() {
-		refresh(JSON.parse(innerDoc.querySelector("#jsonview textarea").value));
-		innerDoc.getElementById("jsonview").style.display = "none";
-		return false;
-	}
-	innerDoc.getElementById("btnToSave").addEventListener("click", (e) => {
-		const head = document.getElementsByTagName("head")[0];
-		head.querySelector("script").innerHTML = '\nconst json =\n' + getJson() + ';\n';
-		
-		let html = '<!doctype html>\n<html>\n<head>';
-		html += head.innerHTML + '</head>\n<body>' + bodyHTML + "</body>\n</html>";
-		
-		save(html);
-	});
-	async function save(html) {
-		const fb = await window.showSaveFilePicker({types:[{description:'HTML',accept:{'text/html':['.html']}}]});
-		if (fb) {
-			const file = await fb.getFile();
-			const stream = await fb.createWritable();
-			await stream.write(html);
-			await stream.close();
-		}
-	}
-	
-	let showDrag = false;
-	let dropLayer = null;
-	function showDragging() {
-		if (!showDrag) {
-			if (!dropLayer) {
-				dropLayer = document.createElement("div");
-				dropLayer.style.position = "fixed";
-				dropLayer.style.top = 0;
-				dropLayer.style.left = 0;
-				dropLayer.style.width = "100%";
-				dropLayer.style.height = "100%";
-				dropLayer.style.background = "#8888";
-				document.getElementsByTagName("body")[0].append(dropLayer);
+		innerWin.addEventListener("keydown", (e) => {
+			if (e.keyCode == 27) { // ESC
+				if (!move.item) return;
 				
-				dropLayer.addEventListener("dragover", (e) => {
-					e.preventDefault();
-				});
-				dropLayer.addEventListener("drop", (e) => {
-					e.preventDefault();
-					if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-						const targets = innerDoc.getElementById("fileTargets").value.split("\n");
-						if (targets.length == 1 && targets[0] == "") targets.pop();
-						
-						for (let i = 0; i < e.dataTransfer.files.length; i++) {
-							targets.push(e.dataTransfer.files[i].name);
-						}
-						innerDoc.getElementById("fileTargets").value = targets.join("\n");
-						
-					} else {
-						innerDoc.getElementById("editFiles").style.display = "none";
-					}
-					dropLayer.style.display = "none";
-					showDrag = false;
-				});
+				let top    = move.from.top   ;
+				let left   = move.from.left  ;
+				let width  = move.from.width ;
+				let height = move.from.height;
+				
+				move.item.info.querySelector("input[name=top]"   ).value = (top    = Math.round(top    * 1000 / move.from.size) / 10);
+				move.item.info.querySelector("input[name=left]"  ).value = (left   = Math.round(left   * 1250 / move.from.size) / 10);
+				move.item.info.querySelector("input[name=width]" ).value = (width  = Math.round(width  * 1250 / move.from.size) / 10);
+				move.item.info.querySelector("input[name=height]").value = (height = Math.round(height * 1000 / move.from.size) / 10);
+				
+				let css = "";
+				css += "top: "    + top    + "%; ";
+				css += "left: "   + left   + "%; ";
+				css += "width: "  + width  + "%; ";
+				css += "height: " + height + "%; ";
+				css += move.from.css;
+				move.item.view.setAttribute("style", css);
+				
+				move.item.view.classList.remove("focus");
+				move.item = null;
+				move.mode = 0;
 			}
-			
-			const origins = [];
-			forms.childNodes.forEach((form) => {
-				origins.push(form.querySelector("input[name=url]").value);
-			});
-			innerDoc.getElementById("fileOrigins").value = origins.join("\n");
-			
-			innerDoc.getElementById("editFiles").style.display = "block";
-			dropLayer.style.display = "block";
-			showDrag = true;
-		}
-	}
-	innerDoc.addEventListener("dragover", showDragging);
-	document.addEventListener("dragover", showDragging);
-	
-	innerDoc.getElementById("editFiles").onsubmit = function() {
-		const origins = innerDoc.getElementById("fileOrigins").value.split("\n");
-		const targets = innerDoc.getElementById("fileTargets").value.split("\n");
-		if (origins.length != targets.length) {
-			alert("개수가 맞지 않습니다.");
-		}
-		
-		let dir = innerDoc.getElementById("inputDir").value;
-		if (dir) {
-			if (!(dir = dir.split("\\").join("/")).endsWith("/")) {
-				dir += "/";
-			}
-		}
-		
-		forms.childNodes.forEach((form, i) => {
-			const input = form.querySelector("input[name=url]");
-			input.value = dir + targets[i];
-			input.dispatchEvent(new Event("input", { bubbles: true }));
 		});
-		innerDoc.getElementById("editFiles").style.display = "none";
-		return false;
-	}
-	
-	innerDoc.addEventListener("click", (e) => {
-		if (e.target.closest("button.close-popup")) {
-			e.target.closest(".popup-cover").style.display = "none";
+		
+		function getJson() {
+			const json = [];
+			
+			forms.childNodes.forEach(function(form) {
+				const page = {
+						url: form.querySelector("input[name=url]").value
+					,	items: []
+				};
+				form.querySelectorAll("li").forEach(function(info) {
+					const item = {
+							top   : Number(info.querySelector("input[name=top]"   ).value)
+						,	left  : Number(info.querySelector("input[name=left]"  ).value)
+						,	width : Number(info.querySelector("input[name=width]" ).value)
+						,	height: Number(info.querySelector("input[name=height]").value)
+					};
+					const family = info.querySelector("input[name=family]" ).value;
+					const size   = info.querySelector("input[name=size]"   ).value;
+					const text   = info.querySelector("textarea[name=text]").value
+					const css    = info.querySelector("textarea[name=css]" ).value
+					if (family && family != "맑은 고딕") item.family = family;
+					if (size   && size   != 2) item.size = Number(size);
+					if (text) item.text = text;
+					if (css ) item.css  = css ;
+					page.items.push(item);
+				});
+				json.push(page);
+			});
+			
+			return stringify(json);
 		}
-	});
-	
-	refresh(json);
+		innerDoc.getElementById("editor").onsubmit = function() {
+			innerDoc.querySelector("#jsonview textarea").value = getJson();
+			innerDoc.getElementById("jsonview").style.display = "block";
+			return false;
+		};
+		innerDoc.getElementById("jsonview").onsubmit = function() {
+			refresh(JSON.parse(innerDoc.querySelector("#jsonview textarea").value));
+			innerDoc.getElementById("jsonview").style.display = "none";
+			return false;
+		}
+		innerDoc.getElementById("btnToSave").addEventListener("click", (e) => {
+			const head = document.getElementsByTagName("head")[0];
+			head.querySelector("script").innerHTML = '\nconst json =\n' + getJson() + ';\n';
+			
+			let html = '<!doctype html>\n<html>\n<head>';
+			html += head.innerHTML + '</head>\n<body>' + bodyHTML + "</body>\n</html>";
+			
+			save(html);
+		});
+		async function save(html) {
+			const fb = await window.showSaveFilePicker({types:[{description:'HTML',accept:{'text/html':['.html']}}]});
+			if (fb) {
+				const file = await fb.getFile();
+				const stream = await fb.createWritable();
+				await stream.write(html);
+				await stream.close();
+			}
+		}
+		
+		let showDrag = false;
+		let dropLayer = null;
+		function showDragging() {
+			if (!showDrag) {
+				if (!dropLayer) {
+					dropLayer = document.createElement("div");
+					dropLayer.style.position = "fixed";
+					dropLayer.style.top = 0;
+					dropLayer.style.left = 0;
+					dropLayer.style.width = "100%";
+					dropLayer.style.height = "100%";
+					dropLayer.style.background = "#8888";
+					document.getElementsByTagName("body")[0].append(dropLayer);
+					
+					dropLayer.addEventListener("dragover", (e) => {
+						e.preventDefault();
+					});
+					dropLayer.addEventListener("drop", (e) => {
+						e.preventDefault();
+						if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+							const targets = innerDoc.getElementById("fileTargets").value.split("\n");
+							if (targets.length == 1 && targets[0] == "") targets.pop();
+							
+							for (let i = 0; i < e.dataTransfer.files.length; i++) {
+								targets.push(e.dataTransfer.files[i].name);
+							}
+							innerDoc.getElementById("fileTargets").value = targets.join("\n");
+							
+						} else {
+							innerDoc.getElementById("editFiles").style.display = "none";
+						}
+						dropLayer.style.display = "none";
+						showDrag = false;
+					});
+				}
+				
+				const origins = [];
+				forms.childNodes.forEach((form) => {
+					origins.push(form.querySelector("input[name=url]").value);
+				});
+				innerDoc.getElementById("fileOrigins").value = origins.join("\n");
+				
+				innerDoc.getElementById("editFiles").style.display = "block";
+				dropLayer.style.display = "block";
+				showDrag = true;
+			}
+		}
+		innerDoc.addEventListener("dragover", showDragging);
+		document.addEventListener("dragover", showDragging);
+		
+		innerDoc.getElementById("editFiles").onsubmit = function() {
+			const origins = innerDoc.getElementById("fileOrigins").value.split("\n");
+			const targets = innerDoc.getElementById("fileTargets").value.split("\n");
+			if (origins.length != targets.length) {
+				alert("개수가 맞지 않습니다.");
+			}
+			
+			let dir = innerDoc.getElementById("inputDir").value;
+			if (dir) {
+				if (!(dir = dir.split("\\").join("/")).endsWith("/")) {
+					dir += "/";
+				}
+			}
+			
+			forms.childNodes.forEach((form, i) => {
+				const input = form.querySelector("input[name=url]");
+				input.value = dir + targets[i];
+				input.dispatchEvent(new Event("input", { bubbles: true }));
+			});
+			innerDoc.getElementById("editFiles").style.display = "none";
+			return false;
+		}
+		
+		innerDoc.addEventListener("click", (e) => {
+			if (e.target.closest("button.close-popup")) {
+				e.target.closest(".popup-cover").style.display = "none";
+			}
+		});
+		
+		refresh(json);
+	}, 1);
 };
 </script>
 <style>
