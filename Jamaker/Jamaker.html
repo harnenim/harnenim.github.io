@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251108" />
-<script src="view/lib/jquery-3.2.1.min.js?251108"></script>
-<script src="bridge/WinAPI.js?251108"></script>
-<script src="bridge/Binder.js?251108"></script>
-<script src="bridge/Bridge.js?251108"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251115" />
+<script src="view/lib/jquery-3.2.1.min.js?251115"></script>
+<script src="bridge/WinAPI.js?251115"></script>
+<script src="bridge/Binder.js?251115"></script>
+<script src="bridge/Bridge.js?251115"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -40,15 +40,15 @@ Binder.prototype.saveSetting = function(setting) {
 Binder.prototype.setVideoExts = function(exts) {
 	this._.setVideoExts(exts);
 }
-Binder.prototype.setPlayer = function(dll, exe, withRun) {
-	this._.setPlayer(dll, exe, withRun);
+Binder.prototype.setPlayer = function(dll, exe, withRun, useMove) {
+	this._.setPlayer(dll, exe, withRun, useMove);
 }
 Binder.prototype.runPlayer = function(path) {
 	this._.runPlayer(path);
 }
 
 Binder.prototype.save = function(tab, text, path, isSmi=true) {
-	this._.save(tab, text, path, isSmi);
+	this._.requestSave(tab, text, path, isSmi);
 }
 Binder.prototype.saveTemp = function(text, path) {
 	this._.saveTemp(text, path);
@@ -123,7 +123,7 @@ Binder.prototype.moveTo  = function(time) { this._.player.moveTo(time); }
 // 부가기능
 Binder.prototype.runColorPicker = function() { this._.runColorPicker(); }
 </script>
-<script src="bridge/WebForm.js?251108"></script>
+<script src="bridge/WebForm.js?251115"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -138,6 +138,7 @@ const window_open = function(url, name, options, opener) {
 
 {	// editor
 	editor.player = null;
+	editor.useMovePlayer = false;
 	editor.strSettingJson = "불러오기 실패 예제";
 	editor.strBridgeList = "NoPlayer: (없음)";
 	editor.strHighlights = "eclipse: Eclipse \n vs: Visual Studio";
@@ -170,8 +171,18 @@ const window_open = function(url, name, options, opener) {
 	editor.run = function() {
 		this.initializeComponent();
 		
+		let offset = localStorage.getItem("offset.Jamaker");
+		if (offset) {
+			offset = offset.split(",");
+			const top = Number(offset[0]);
+			const left = Number(offset[1]);
+			const width = Number(offset[2]);
+			const height = Number(offset[3]);
+			WinAPI.MoveWindow(window, left, top, width, height);
+		}
+		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/editor.html?251108";
+			editor.mainView.src = "view/editor.html?251115";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -262,6 +273,15 @@ const window_open = function(url, name, options, opener) {
 		e.Cancel = true;
 		Script("beforeExit");
 		*/
+		
+		WinAPI.GetWindowRect(window, this.offset);
+		localStorage.setItem("offset.Jamaker", [
+				editor.offset.top
+			,	editor.offset.left
+			,	editor.offset.right - editor.offset.left
+			,	editor.offset.bottom - editor.offset.top
+		].join(","));
+		
 		const viewer = editor.mainView.contentWindow.SmiEditor.Viewer;
 		if (viewer && viewer.window) viewer.window.close();
 		
@@ -570,7 +590,7 @@ window.MB = 9;
 		this.videoExts = exts.split(','); // C#에서만 필요
 	}
 
-	editor.setPlayer = function(dll, exe, withRun) {
+	editor.setPlayer = function(dll, exe, withRun, useMove) {
 		if (!this.player) {
 			this.player = new WebPlayerBridge(exe);
 		}
@@ -582,11 +602,12 @@ window.MB = 9;
 		if (withRun) {
 			this.runPlayer(exe);
 		}
+		this.useMovePlayer = useMove;
 	}
 	editor.runPlayer = function(path) {
 		if (this.player && this.player.hwnd) this.player.hwnd.run();
 		// C#에선 플레이어 실행되면 브리지의 타이머에서 잡아서 크기 조절함
-		if (JSON.parse(editor.strSettingJson).player.window.use) {
+		if (this.useMovePlayer) {
 			this.player.moveWindow();
 		}
 	}
@@ -983,33 +1004,101 @@ window.MB = 9;
         }).Start();
         //*/
 	}
-	editor.save = async function(tab, text, path, isSmi) {
-		const paths = path.split(":");
-		if (paths[1]) {
-			const fileBuffer = fileBuffers[paths[0]];
-			const stream = await fileBuffer.createWritable();
-			await stream.write("\ufeff" + text); // BOM 넣어줌
-			await stream.close();
-			if (isSmi) {
-				editor.script("afterSaveFile", [tab, path]);
-			} else {
-				editor.script("afterSaveAssFile", [tab, path]);
-			}
+	const SaveOrder = function(tab, text, path, isSmi) {
+		this.tab = tab;
+		this.text = text;
+		this.path = path;
+		this.isSmi = isSmi;
+	}
+	editor.saveOrders = [];
+	editor.saveIndex = 0;
+	
+	editor.requestSave = async function(tab, text, path, isSmi) {
+		const order = new SaveOrder(tab, text, path, isSmi);
+		
+		if (editor.saveOrders.length == 0) {
+			// 저장 대기열 없으면 그냥 진행
+			editor.saveOrders.push(order);
+			editor.save();
+			
 		} else {
-			editor.saveWithDialog(tab, text, isSmi);
+			let updated = false;
+			for (let i = editor.saveIndex + 1; i < editor.saveOrders.length; i++) {
+				const item = editor.saveOrders[i];
+				if (item.tab == tab && item.isSmi == isSmi) {
+					// 저장 대기열 중복이면 내용물 교체
+					item.text = text;
+					item.path = path;
+					item.isSmi = isSmi;
+					updated = true;
+					break;
+				}
+			}
+			if (!updated) {
+				// 저장 대기열 추가
+				editor.saveOrders.push(order);
+			}
 		}
 	}
-	editor.saveWithDialog = async function(tab, text, isSmi) {
-		const fileBuffer = await window.showSaveFilePicker({
-			types: [
-				{ description: "SAMI", accept: (isSmi ? { "text/sami": [".smi"] } : { "text/ass": [".ass"] }) }
-			]
-		});
+	editor.save = async function() {
+		const order = editor.saveOrders[editor.saveIndex];
+		
+		const tab = order.tab;
+		const path = order.path;
+		const text = order.text;
+		const isSmi = order.isSmi;
+		
+		const paths = path.split(":");
+		if (!paths[1]) {
+			// 저장 경로 없으면 대화상자 열어야 함
+			editor.saveWithDialog(order);
+			return;
+		}
+		
+		const fileBuffer = fileBuffers[paths[0]];
+		const stream = await fileBuffer.createWritable();
+		await stream.write("\ufeff" + order.text); // BOM 넣어줌
+		await stream.close();
+		
+		if (isSmi) {
+			editor.script("afterSaveFile", [tab, path]);
+		} else {
+			editor.script("afterSaveAssFile", [tab, path]);
+		}
+		editor.afterSave();
+	}
+	editor.afterSave = function() {
+		if (++editor.saveIndex < editor.saveOrders.length) {
+			// 저장 대기열 있으면 다음 순서 진행
+			editor.save();
+		} else {
+			// 저장 끝났으면 대기열 초기화
+			editor.saveOrders.length = editor.saveIndex = 0;
+		}
+	}
+	editor.saveWithDialog = async function(order) {
+		let fileBuffer = null;
+		try  {
+			fileBuffer = await window.showSaveFilePicker({
+				types: [
+					{ description: "SAMI", accept: (order.isSmi ? { "text/sami": [".smi"] } : { "text/ass": [".ass"] }) }
+				]
+			});
+		} catch (e) {
+			console.log(e);
+		}
 		if (fileBuffer) {
 			const index = fileBuffers.length;
 			fileBuffers.push(fileBuffer);
 			const file = await fileBuffer.getFile();
-			editor.save(tab, text, index + ":" + file.name, isSmi);
+			
+			// 현재 저장 명령 갱신 후 재실행
+			order.path = index + ":" + file.name;
+			editor.save();
+			
+		} else {
+			// 저장 취소
+			editor.afterSave();
 		}
 	}
 	editor.saveTemp = function(text, path) {
@@ -1025,7 +1114,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("bridge/tempDir.html?251108", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("bridge/tempDir.html?251115", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

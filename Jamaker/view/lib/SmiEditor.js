@@ -1,4 +1,4 @@
-﻿const LOG = false; // 배포 시 false
+﻿const LOG = true; // 배포 시 false
 
 let LH = 20; // LineHeight
 let SB = 16; // ScrollBarWidth ... TODO: 자동으로 구해지도록?
@@ -1977,7 +1977,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?251108"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?251115"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -2558,6 +2558,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 SmiEditor.Finder1 = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
+			// TODO: 근데... 전역변수 setting 값 가져오는 건 editor.js에서 구현하는 게 맞나...?
 			const ratio = DPI ? DPI : 1;
 			const w = 440 * ratio;
 			const h = 220 * ratio;
@@ -2566,7 +2567,7 @@ SmiEditor.Finder1 = {
 		
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
 			
-			this.window = window.open("finder.html?251108", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
+			this.window = window.open("finder.html?251115", "finder", "scrollbars=no,location=no,width="+w+",height="+h);
 			binder.moveWindow("finder", x, y, w, h, false);
 			binder.focus("finder");
 		}
@@ -2943,7 +2944,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			this.window = window.open("viewer.html?251108", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			this.window = window.open("viewer.html?251115", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			this.moveWindowToSetting();
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2953,6 +2954,7 @@ SmiEditor.Viewer = {
 		}
 	,	moveWindowToSetting: function() {
 			// CefSharp 쓴 경우 window.moveTo 같은 걸로 못 움직임. 네이티브로 해야 함
+			// TODO: 근데... 전역변수 setting 값 가져오는 건 editor.js에서 구현하는 게 맞나...?
 			binder.moveWindow("viewer"
 					, setting.viewer.window.x
 					, setting.viewer.window.y
@@ -3074,7 +3076,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?251108";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html?251115";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -3087,7 +3089,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?251108", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?251115", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -3120,11 +3122,27 @@ SmiEditor.Addon = {
 				}
 			}
 			for (let i = 0; i < targets.length; i++) {
+				// TODO: 근데... 전역변수 setting 값 가져오는 건 editor.js에서 구현하는 게 맞나...?
+				let x1 = setting.player.window.x;
+				let y1 = setting.player.window.y;
+				let x2 = x1 + setting.player.window.width;
+				let y2 = y1 + setting.player.window.height;
+				
+				do {
+					// 플레이어와 미리보기 창의 x축 위치가 유사할 경우 y축 확장
+					if (Math.abs(setting.viewer.window.x - x1) > margin) break;
+					if (Math.abs(setting.viewer.window.x + setting.viewer.window.width - x2) > margin) break;
+					
+					y1 = Math.min(y1, setting.viewer.window.y);
+					y2 = Math.max(y2, setting.viewer.window.y + setting.viewer.window.height);
+					
+				} while(false);
+				
 				binder.moveWindow(targets[i]
-						, setting.player.window.x + margin
-						, setting.player.window.y + margin
-						, setting.player.window.width  - (margin * 2)
-						, setting.player.window.height - (margin * 2)
+						, x1 + margin
+						, y1 + margin
+						, (x2 - x1) - (margin * 2)
+						, (y2 - y1) - (margin * 2)
 						, true);
 			}
 		}
@@ -3597,7 +3615,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?251108", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?251115", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			

@@ -222,9 +222,6 @@ window.Tab = function(text, path) {
 	this.area.on("click", ".btn-hold-style", function(e) {
 		const hold = $(this).data("hold");
 		hold.area.addClass("style");
-	}).on("click", ".btn-hold-ass", function(e) {
-		const hold = $(this).data("hold");
-		hold.area.addClass("ass");
 	});
 };
 window.getCurrentTab = function() {
@@ -291,7 +288,6 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	}
 	{
 		hold.area.append($("<button type='button' class='btn-hold-style' title='홀드 공통 스타일 설정'>").text("스타일").data({ hold: hold }));
-		hold.area.append($("<button type='button' class='btn-hold-ass' title='ASS 저장에만 쓰이는 추가 스크립트'>").text("ASS용").data({ hold: hold }));
 		
 		hold.area.append(hold.styleArea = $("<div class='hold-style-area'>"));
 		{
@@ -354,6 +350,9 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 				const text = $main.text();
 				$preview.find(".hold-style-preview-outline, .hold-style-preview-shadow").text(text);
 				if ($main.children().length) $main.text(text);
+				
+			}).on("click", "button.hold-style-preview-toggle", function() {
+				$preview.toggleClass("script");
 			});
 			$preview.find(".hold-style-preview-outline, .hold-style-preview-shadow").text($preview.find(".hold-style-preview-main").text());
 			
@@ -445,6 +444,17 @@ SmiEditor.prototype.refreshStyle = function() {
 	css["-webkit-text-stroke"] = (style.Outline * 3) + "px " + style.BackColour + (256 + style.BackOpacity).toString(16).substring(1);
 	css.top = css.left = "calc(50% + " + style.Shadow + "px)";
 	this.$preview.find(".hold-style-preview-shadow").css(css);
+	
+	{	// ASS 스크립트 미리보기
+		if (!this.assStyle) {
+			this.assStyle = new AssPart("V4+ Styles", AssPart.StylesFormat);
+			this.assStyle.body.push({});
+		}
+		const style = SmiFile.toAssStyle(this.style);
+		style.Name = this.name;
+		this.assStyle.body[0] = style;
+		this.$preview.find("textarea[name=script]").val(this.assStyle.toText() + "\n"); // 블록지정 편의성을 위해 줄바꿈 추가
+	}
 	
 	this.afterChangeSaved(this.isSaved());
 }
@@ -1588,12 +1598,6 @@ function init(jsonSetting, isBackup=true) {
 		SmiEditor.stylePreset.attr({ id: null });
 		holdStylePreset.remove();
 	}
-	if (!SmiEditor.assPreset) {
-		const holdAssPreset = $("#holdAssPreset");
-		SmiEditor.assPreset = holdAssPreset.clone();
-		SmiEditor.assPreset.attr({ id: null });
-		holdAssPreset.remove();
-	}
 	
 	try {
 		setting = JSON.parse(jsonSetting);
@@ -1994,7 +1998,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/SmiEditor.color.css?251108"
+		$.ajax({url: "lib/SmiEditor.color.css?251115"
 			,	dataType: "text"
 			,	success: (preset) => {
 					for (let name in setting.color) {
@@ -2025,7 +2029,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/SmiEditor.size.css?251108"
+		$.ajax({url: "lib/SmiEditor.size.css?251115"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.split("20px").join((LH = (20 * setting.size)) + "px");
@@ -2220,7 +2224,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?251108", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?251115", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2254,7 +2258,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?251108";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html?251115";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
@@ -3286,6 +3290,7 @@ function loadAssFile(path, text, target=-1) {
 		funcSince = log("loadAssFile - 비교 완료", funcSince);
 		
 		if (changedStyles.length + addCount + delCount > 0) {
+			console.log(changedStyles);
 			let msg = "스타일 수정 내역이 " + changedStyles.length + "건 있습니다. 적용하시겠습니까?";
 			if (addCount + delCount) {
 				let countMsg = [];
@@ -3315,8 +3320,8 @@ function loadAssFile(path, text, target=-1) {
 									break;
 								}
 							}
-							// 여기서 없을 수는 없음
 							if (holdStyle) {
+								// 홀드 스타일 수정
 								// output은 유지
 								SmiFile.fromAssStyle(style, holdStyle);
 								
@@ -3326,6 +3331,15 @@ function loadAssFile(path, text, target=-1) {
 									const hold = currentTab.holds[h];
 									if (hold.name == styleName) {
 										hold.setStyle(holdStyle);
+									}
+								}
+								
+							} else {
+								// 비홀드 스타일 수정
+								for (let j = 0; j < stylePart.body.length; j++) {
+									const extendStyle = stylePart.body[j];
+									if (extendStyle.Name == styleName) {
+										stylePart.body[j] = style;
 									}
 								}
 							}

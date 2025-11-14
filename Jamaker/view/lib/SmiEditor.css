@@ -60,9 +60,12 @@ textarea,
 }
 .highlight-textarea > div {
 	right: 0;
-	bottom: 17px;
+	bottom: 0; /* 스크롤바에 가려지는 영역까지 확장 */
 	overflow: hidden;
 	pointer-events: none;
+}
+body.classic-scrollbar .highlight-textarea > div {
+	bottom: 17px;
 }
 .highlight-textarea > div * {
 	font-weight: normal; /* 굵게 하면 글자폭이 달라짐 */
@@ -160,24 +163,21 @@ textarea,
 	border-style: dotted;
 }
 
-.btn-hold-style,
-.btn-hold-ass {
+.btn-hold-style {
 	position: absolute;
 	top: 0;
+	right: 0;
 	opacity: 0.3;
 	transition: 0.2s;
 }
 .hold.main .btn-hold-style,
-.btn-hold-ass,
 .hold.main .hold-style-ass .hold-style-output {
 	display: none;
 }
-.tab.ass .hold.main .btn-hold-style /*,
-.tab.ass .btn-hold-ass */ {
+.tab.ass .hold.main .btn-hold-style {
 	display: block;
 }
-.btn-hold-style:hover,
-.btn-hold-ass:hover {
+.btn-hold-style:hover {
 	opacity: 1;
 }
 
@@ -263,8 +263,7 @@ textarea,
 	height: 20px;
 }
 
-#holdStylePreset,
-#holdAssPreset {
+#holdStylePreset {
 	display: none;
 }
 .hold-style-preview {
@@ -286,9 +285,27 @@ textarea,
 	line-height: 100px;
 	margin: -50px -500%;
 }
+.hold-style-preview > textarea[name=script] {
+	display: none;
+	top: 0;
+	left: 0;
+	width: 100%;
+	border-width: 0 0 1px;
+	resize: none;
+}
+.hold-style-preview.script > div {
+	display: none;
+}
+.hold-style-preview.script > textarea[name=script] {
+	display: block;
+}
 .hold-style-preview-color {
+	bottom: 0;
+}
+.hold-style-preview-toggle {
 	right: 0;
 	bottom: 0;
+	padding: 0;
 }
 .hold-style-setting {
 	height: calc(100% - 150px);
@@ -327,6 +344,7 @@ textarea,
 .hold-style .hold-style-alignment label {
 	min-width: 0;
 }
+.hold-style input { vertical-align: middle; }
 .hold-style input[type=number] { text-align: right; }
 .hold-style input[type=range]  { width: 300px; }
 /*
@@ -425,10 +443,10 @@ textarea,
 	
 }
 .tab-ass-appends {
-	height: 30%;
+	height: 40%;
 }
 .tab-ass-script {
-	height: 70%;
+	height: 60%;
 }
 /*
 .tab-ass-area > div {

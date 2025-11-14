@@ -1,4 +1,21 @@
-[ { "version": "2025.11.08"
+[ { "version": "2025.11.15"
+  , "comment":
+    [ "ASS 기능 관련 UI 조정"
+    , "ASS 기능 관련 버그 등 수정"
+    ]
+  , "files":
+    [ "view/addon/SyncManager.html"
+    , "view/lib/editor.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.color.css"
+    , "view/lib/SmiEditor.size.css"
+    , "view/lib/SubtitleObject.js"
+    , "view/editor.html"
+    ]
+  }
+, { "version": "2025.11.08"
   , "comment":
     [ "스크롤바 스타일 변경"
     , "(주로 ASS 변환 관련) 일부 마이너한 버그 등 수정"
