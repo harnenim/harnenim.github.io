@@ -1309,6 +1309,7 @@ WithTarget.fromBitmap = async function(bmp, possibility, shift=0, xors=[]) {
 <script>
 let inputUrl;
 let ivTarget;
+let cbJamaker;
 let viewFileList;
 let preview;
 let popup;
@@ -1350,48 +1351,6 @@ input.onload = async function() {
 		
 		preview.style.display = "";
 		showTargetImage(parsed.targetImage);
-		{
-			const labelJamaker = document.createElement("label");
-			labelJamaker.style.display = "block";
-			labelJamaker.style.top = "auto";
-			labelJamaker.style.left = "4px";
-			labelJamaker.style.bottom = "4px";
-			ivTarget.append(labelJamaker);
-			
-			const cbJamaker = document.createElement("input");
-			cbJamaker.setAttribute("type", "checkbox");
-			labelJamaker.append(cbJamaker);
-			labelJamaker.append(" Jamaker 생성 주석 삭제");
-			labelJamaker.setAttribute("title", "MPC-HC, VLC 등 smi 파일의 주석이 노출되는 플레이어를 이용하는 경우에 필요합니다.");
-			
-			cbJamaker.addEventListener("click", () => {
-				if (cbJamaker.checked) {
-					for (let i = 0; i < viewFileList.children.length; i++) {
-						const a = viewFileList.children[i];
-						const cleared = a.getAttribute("data-cleared");
-						if (cleared) {
-							a.href = cleared;
-						}
-					}
-				} else {
-					for (let i = 0; i < viewFileList.children.length; i++) {
-						const a = viewFileList.children[i];
-						a.href = a.getAttribute("data-href");
-					}
-				}
-			});
-		}
-		{
-			const btnAll = document.createElement("a");
-			btnAll.href = "javascript:downloadZip()";
-			btnAll.innerText = "[ZIP으로 받기]";
-			btnAll.style.display = "block";
-			btnAll.style.top = "auto";
-			btnAll.style.left = "auto";
-			btnAll.style.right = "4px";
-			btnAll.style.bottom = "4px";
-			ivTarget.append(btnAll);
-		}
 		
 		parsed.containers.sort((cont1, cont2) => {
 			return compare(cont1.path, cont2.path);
@@ -1401,14 +1360,14 @@ input.onload = async function() {
 		}
 		let minWidth = 0;
 		for (let i = 0; i < viewFileList.children.length; i++) {
-			let aWidth = 2;
+			let aWidth = 3;
 			const a = viewFileList.children[i];
 			for (let j = 0; j < a.children.length; j++) {
 				aWidth += a.children[j].offsetWidth;
 			}
 			minWidth = Math.max(minWidth, aWidth);
 		}
-		viewFileList.style.minWidth = Math.ceil(minWidth) + "px";
+		viewFileList.style.minWidth = minWidth + "px";
 		
 	} catch (e) {
 		console.error(e);
@@ -1526,6 +1485,10 @@ function addFile(cont) {
 				const clearedFile = new File([new Blob([text], { type: "text/plain" })], filename);
 				const clearedUrl = URL.from(clearedFile);
 				a.setAttribute("data-cleared", clearedUrl);
+				
+				if (cbJamaker.checked) {
+					a.href = clearedUrl;
+				}
 			});
 		}
 		case "txt":
@@ -1744,6 +1707,33 @@ async function onload() {
 				preview.style.display = "";
 			}
 		});
+		
+		cbJamaker = document.getElementById("cbJamaker");
+		cbJamaker.addEventListener("click", () => {
+			if (cbJamaker.checked) {
+				for (let i = 0; i < viewFileList.children.length; i++) {
+					const a = viewFileList.children[i];
+					const cleared = a.getAttribute("data-cleared");
+					if (cleared) {
+						a.href = cleared;
+					}
+				}
+			} else {
+				for (let i = 0; i < viewFileList.children.length; i++) {
+					const a = viewFileList.children[i];
+					a.href = a.getAttribute("data-href");
+				}
+			}
+			document.cookie = "cbJamaker=" + cbJamaker.checked;
+		});
+		const cookies = document.cookie.split(";");
+		for (let i = 0; i < cookies.length; i++) {
+			const cookie = cookies[i].split("=");
+			if (cookie[0] == "cbJamaker") {
+				cbJamaker.checked = (cookie[1] == "true");
+				break;
+			}
+		}
 	}
 
 	if (location.search.length) {
@@ -1904,6 +1894,18 @@ fieldset button[type=submit] {
 	line-height: 24px;
 	text-align: center;
 }
+#areaSetting {
+	width: 100%;
+	height: 30px;
+	line-height: 30px;
+	background: linear-gradient(#fff, #eee);
+    border-bottom: 1px solid #ccc;
+}
+#areaSetting a {
+    display: block;
+    float: right;
+    inset: auto 4px 4px auto;
+}
 #areaFileList {
 	width: 100%;
 	height: calc(100% - 260px);
@@ -1911,7 +1913,7 @@ fieldset button[type=submit] {
 	background: #eee;
 }
 form.offline #areaFileList {
-	height: calc(100% - 240px);
+	height: calc(100% - 270px);
 }
 #viewFileList a {
 	display: block;
@@ -1997,7 +1999,7 @@ form.offline #areaFileList {
 </style>
 </head>
 <body onload="onload();" onbeforeunload="if(popup)popup.close();">
-<!-- 이미지 to base64
+<!-- 이미지 to base64: 아이콘 생성용으로 사용
 <input type="file" onchange="getImage(event)" />
 <script>
 const reader = new FileReader();
@@ -2023,6 +2025,10 @@ function getImage(e) {
 	</fieldset>
 	<div id="ivTarget">
 		<div id="comment">이미지를 드래그하거나<br />Ctrl+V 하셔도 됩니다.</div>
+	</div>
+	<div id="areaSetting">
+		<label title="MPC-HC, VLC 등 smi 파일의 주석이 노출되는 플레이어를 이용하는 경우에 필요합니다."><input type="checkbox" id="cbJamaker"> Jamaker 생성 주석 삭제</label>
+		<a href="javascript:downloadZip()">[ZIP으로 받기]</a>
 	</div>
 	<div id="areaFileList">
 		<div id="viewFileList"></div>
