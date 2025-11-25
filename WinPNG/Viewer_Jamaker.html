@@ -1545,8 +1545,12 @@ function showTargetImage(bmp) {
 	bmp.canvas.style.margin = (-height / 2) + "px " + (-width / 2) + "px";
 }
 function downloadZip() {
-	const zip = new JSZip();
 	const as = document.getElementById("viewFileList").children;
+	if (!as.length) {
+		alert("PNG 파일을 열지 않았습니다.");
+		return;
+	}
+	const zip = new JSZip();
 	for (let i = 0; i < as.length; i++) {
 		const a = as[i];
 		const spans = a.children;
