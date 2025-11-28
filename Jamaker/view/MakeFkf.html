@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>Make FKF</title>
-	<script src="lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="lib/webview.js?251115"></script>
-	<script src="lib/ListView.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="lib/webview.css?251115" />
-	<link rel="stylesheet" type="text/css" href="lib/ListView.css?251115" />
+	<script src="lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="lib/webview.js?251129"></script>
+	<script src="lib/ListView.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css?251129" />
+	<link rel="stylesheet" type="text/css" href="lib/ListView.css?251129" />
 	<script>
 function setTextareaHeight(obj) {
 	const lineCount = obj.val().split("\n").length;
@@ -37,7 +37,7 @@ function addFile(file) {
 	 || ext.endsWith(".mkv")
 	 || ext.endsWith(".ts")
 	 || ext.endsWith(".m2ts")
-			) {
+	) {
 		listFiles.add(file, true);
 	}
 }
@@ -74,7 +74,7 @@ $(() => {
 	$("#cover").on("click", function(e) {
 		binder.hideDragging();
 	});
-
+	
 	$("#btnMakeFkfs").on("click", function() {
 		const files = [];
 		for (let i = 0; i < listFiles.list.length; i++) {
@@ -86,7 +86,7 @@ $(() => {
 		}
 		listFiles.area.find(".progress-bar").css({ width: 0 });
 		listFiles.area.scrollLeft(0);
-		binder.makeFkfs(files);
+		binder.makeFkfs(JSON.stringify(files));
 	});
 });
 	</script>

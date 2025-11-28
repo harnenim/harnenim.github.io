@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>Auto Sync Shift</title>
-	<script src="lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="lib/SubtitleObject.js?251115"></script>
-	<script src="lib/Combine.js?251115"></script>
-	<script src="lib/webview.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="lib/webview.css?251115" />
+	<script src="lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="lib/SubtitleObject.js?251129"></script>
+	<script src="lib/Combine.js?251129"></script>
+	<script src="lib/webview.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css?251129" />
 	<script>
 let isProcessing = false;
 function showProcessing(text) {
@@ -195,19 +195,22 @@ function setOriginSubtitleFile(path, text) {
 		}, 1);
 	}
 	
-	{	const ext = path.substring(path.length - 4);
-		if (ext == ".smi") {
-			operation.type = "smi";
+	{	const ext = path.toLowerCase();
+		if (ext.endsWith(".smi")
+		 || ext.endsWith(".sami")
+		 || ext.endsWith(".jmk")
+		) {
+			operation.type = (ext.endsWith(".jmk") ? "jmk" : "smi");
 			operation.origin = new SmiFile(text);
 			operation.input = SmiFile.textToHolds(text);
 			operation.target = new SmiFile();
 			
-		} else if (ext == ".srt") {
+		} else if (ext.endsWith(".srt")) {
 			operation.type = "srt";
 			operation.origin = new SrtFile(text);
 			operation.target = new SrtFile();
 			
-		} else if (ext == ".ass") {
+		} else if (ext.endsWith(".ass")) {
 			operation.type = "ass";
 			operation.origin = (operation.originFile = new AssFile(text)).getEvents();
 			operation.target = (operation.targetFile = new AssFile()).getEvents();
@@ -223,7 +226,7 @@ function setOriginSubtitleFile(path, text) {
 		const item = sortedBody[i];
 		if (range[0] <= 0) {
 			// 새로운 범위를 시작해야 함
-			if (operation.type == "smi" && item.text.split("&nbsp;").join(" ").trim().length == 0) {
+			if ((operation.type == "smi" || operation.type == "jmk") && item.text.split("&nbsp;").join(" ").trim().length == 0) {
 				// 공백 싱크일 경우 넘기기
 				continue;
 			}
@@ -243,7 +246,7 @@ function setOriginSubtitleFile(path, text) {
 			range = [-1, 0];
 		}
 	}
-
+	
 	$("#rangeList .list-body").empty();
 	for (let j = 0; j < ranges.length; j++) {
 		const range = ranges[j];
@@ -270,7 +273,8 @@ function refreshPreview(isTarget=false) {
 	let lastSync = 0;
 	let errCount = 0;
 	switch (operation.type) {
-		case "smi": {
+		case "smi":
+		case "jmk": {
 			const originBody = body;
 			body = [];
 			let last = {};
@@ -338,7 +342,7 @@ function refreshPreview(isTarget=false) {
 				const item = body[i];
 				const $line = getLine(item, item.start, item.text.split("\n").join("<br />"));
 				item.previewText = $line.text();
-
+				
 				// ms 단위 표현
 				item.ms = item.start;
 				item.me = item.end;
@@ -410,6 +414,7 @@ function init(setting) {
 //	$("#chkTrustKfTarget").prop("checked", setting.saveSkf.withKf);
 	$("#inputSeparator").val(setting.separators);
 	$("#inputMaxBlank").val(isFinite(setting.maxBlank) ? setting.maxBlank : 30);
+	binder.initOriginFiles(setting.saveSkf.origin);
 }
 function addRange(range=[0,0]) {
 	let body = $("#rangeList .list-body");
@@ -512,7 +517,7 @@ function apply() {
 		addShift();
 		shifts.push({ start: 0, shift: 0 });
 	}
-
+	
 	const withKf = kfs.length > 2 && $("#chkTrustKfTarget").prop("checked");
 	
 	function getShiftIndex(sync) {
@@ -531,7 +536,8 @@ function apply() {
 	}
 	
 	switch (operation.type) {
-		case "smi": {
+		case "smi":
+		case "jmk": {
 			const origin = operation.origin;
 			const target = operation.target = new SmiFile();
 			target.header = origin.header;
@@ -543,7 +549,7 @@ function apply() {
 					const smi = hold.body[i];
 					const index = getShiftIndex(smi.start);
 					smi.start = shiftSync(smi.start, index);
-
+					
 					if (withKf && (smi.syncType == SyncType.frame)) {
 						const shift =	shifts[index];
 						if (shift.skipped == null || shift.fCount == 0 || shift.skipped.length == 0) {
@@ -576,7 +582,7 @@ function apply() {
 						if (commentEnd > 0) {
 							let comment = item.text.substring(9, commentEnd).trim().split("<​").join("<").split("​>").join(">");
 							afterComment = item.text.substring(commentEnd + 3).trim();
-	
+							
 							const index = comment.indexOf("\n");
 							if (index > 0) {
 								let syncEnd = Number(index < 0 ? comment : comment.substring(0, index));
@@ -598,7 +604,7 @@ function apply() {
 					// 화면 싱크 키프레임 대조
 					if (withKf && (smi.syncType == SyncType.frame)) {
 						console.log("withKf: " + smi.start);
-	
+						
 						const shift = shifts[shiftIndex];
 						if (shift.skipped == null) {
 							shift.fCount = 0;
@@ -1239,7 +1245,7 @@ h4 {
 			<label title="일부 홀드만 따로 빼서 작업하는 용도일 때 주로 사용"><input type="checkbox" id="chkCombine" /> <span>홀드 결합 생략</span></label>
 		</div>
 	</div>
-
+	
 	<div id="processing" style="display: none;">
 		<span>작업 중…</span>
 		<div id="selectAudio" style="display: none;">

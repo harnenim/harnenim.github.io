@@ -4,12 +4,12 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>재생 속도 조절</title>
-	<script src="../lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="../lib/popup.js?251115"></script>
-	<script src="../lib/setting.js?251115"></script>
-	<script src="../lib/SubtitleObject.js?251115"></script>
-	<script src="../lib/SmiEditor.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251115" />
+	<script src="../lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="../lib/popup.js?251129"></script>
+	<script src="../lib/setting.js?251129"></script>
+	<script src="../lib/SubtitleObject.js?251129"></script>
+	<script src="../lib/SmiEditor.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251129" />
 	<script>
 windowName = "addon";
 
@@ -53,7 +53,7 @@ function convert() {
 			while ((k = line.indexOf("<", j)) >= 0) {
 				// 태그 열기
 				j = k + 1;
-	
+				
 				// 태그 닫힌 곳까지 탐색
 				const closeIndex = line.indexOf(">", j);
 				if (j < closeIndex) {
@@ -189,7 +189,7 @@ $(() => {
 		alert("작업 대상이 없습니다.");
 		return;
 	}
-
+	
 	setSetting(setting);
 	
 	start = 0;

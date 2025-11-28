@@ -26,7 +26,7 @@ function WebPlayerBridge() {
 		// 샘플에선 플레이어 값 무조건 존재
 		return true;
 	}
-
+	
 	WebPlayerBridge.prototype.getWindowInitialPosition = function() {
 		WinAPI.GetWindowRect(this.hwnd, this.initialOffset);
 		return (this.initialOffset.top + 100 < this.initialOffset.bottom) ? this.initialOffset : null;
@@ -93,7 +93,7 @@ function WebPlayerBridge() {
 					if (this.window && this.window.name) {
 						return;
 					}
-					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?251115", "player", "scrollbars=no,location=no");
+					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/player.html?251129", "player", "scrollbars=no,location=no");
 					if (this.window) {
 						if (this.window.document) {
 							this.window.document.title = "플레이어";

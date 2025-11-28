@@ -4,10 +4,10 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저</title>
-	<script src="../lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="../lib/SubtitleObject.js?251115"></script>
-	<script src="../lib/popup.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251115" />
+	<script src="../lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="../lib/SubtitleObject.js?251129"></script>
+	<script src="../lib/popup.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251129" />
 	<script>
 windowName = "addon";
 
@@ -35,7 +35,11 @@ $(() => {
         return;
 	}
     
-	if (opener && opener.binder && opener.binder._) {
+	if (opener
+	 && opener.binder
+	 && opener.binder._
+	 && (typeof opener.binder._ != "function") // WebView2에서는 선언 안 했어도 function을 반환함
+	) {
 		alert("웹샘플에서는 실제 렌더링이 진행되지 않습니다.\n필요 시 SyncManager 대신 구버전 SyncManager0을 활용할 수 있습니다.");
 	}
     
@@ -80,7 +84,7 @@ $(() => {
 	if (origins.length) {
 		// 선택된 홀드만 작업
 		const origin = origins[0];
-
+		
 		const lines = origin.lines.slice(origin.start, origin.end);
 		for (let i = 0; i < lines.length; i++) {
 			lines[i] = lines[i].TEXT;
@@ -113,7 +117,7 @@ $(() => {
 			origins.push(origin);
 		}
 	}
-
+	
 	if (!count) {
 		alert("작업 대상이 없습니다.");
 		window.close();
@@ -129,7 +133,7 @@ $(() => {
 	const $tbody = $("#editor tbody").empty();
 	const $framesStorage = $("<div>"); // 객체 remove 하면 data가 날아가서 여기에 보관함
 	const frameSyncs = [];
-
+	
 	function setFrames($frames, frameIndex, flag) {
 		for (let j = -RANGE; j < RANGE; j++) {
 			const imgIndex = frameIndex + j;
@@ -182,7 +186,7 @@ $(() => {
 					$framesStorage.append($frames);
 					$tr.addClass("fs").append($("<td>")).append($sync);
 					frameSyncs.push($tr);
-	
+					
 					let flag = "";
 					if (fade == 1) {
 						// 페이드인 시작 이미지 밝게
@@ -201,13 +205,13 @@ $(() => {
 					count = 0;
 					
 					setFrames($frames, frameIndex, flag);
-	
+					
 				} else {
 					$tr.append($("<td>")).append($("<td>").addClass("sync").text(smi.syncType == Subtitle.SyncType.inner ? "~" : smi.start));
 					$tr.data({ index: (frameSyncs.length - 1) + (++count / 10000) }); // 10000개를 넘어갈 일은 없을 것
 				}
 				$tbody.append($tr.append($("<td>").text(smi.text.split("\n").join("")).attr("title", smi.text)));
-	
+				
 				lastFade = fade;
 			}
 		}
@@ -248,7 +252,7 @@ $(() => {
 				
 				{	// end
 					const $tr = $("<tr>").data({ ass: ass, type: "end", origin: end });
-	
+					
 					if (ass.checkEnd.prop("checked")) {
 						const frameIndex = Subtitle.findSyncIndex(end, fs);
 						const $frames = $("<div>").addClass("frames");
@@ -292,7 +296,7 @@ $(() => {
 		
 		for (let i = 0; i < datas.length; i++) {
 			const data = datas[i];
-
+			
 			const begin = data.offset + (data.frameIndex < RANGE ? 0 : data.frameIndex - RANGE);
 			const end   = data.offset + (data.frameIndex + RANGE > fs.length ? fs.length : data.frameIndex + RANGE);
 			
@@ -314,7 +318,7 @@ $(() => {
 			} else {
 				renderList.push(renderGroup = {
 						flag: data.flag
-					,	time: fs0 + 2 // 반올림되거나 한 경우 고려해서 +2ms
+					,	time: fs0 // 다시 테스트해보니 여긴 반올림 대신 버림 하는 게 맞음
 					,	begin: begin
 					,	end: end
 				});
@@ -346,13 +350,13 @@ $(() => {
 		if (renderList.length == 0) {
 			return false;
 		}
-
+		
 		// 이미지 렌더링 요청
 		let params = [];
 		for (let i = 0; i < renderList.length; i++) {
 			const group = renderList[i];
-			// [ 시작시간, 종료시간, 시작인덱스, 종료인덱스, 플래그 ]
-			params.push([group.time, fs[group.end] + 1 - group.time, group.begin, group.end, group.flag].join(","));
+			// [ 시작시간, 길이, 시작인덱스, 종료인덱스, 플래그 ]
+			params.push([group.time, fs[group.end] - group.time, group.begin, group.end, group.flag].join(","));
 		}
 		opener.binder.renderThumbnails(Subtitle.video.path, params.join("\n"));
 		return true;
@@ -367,7 +371,7 @@ $(() => {
 	opener.setThumbnailsFileSeq = function(thumbnailsFileSeq) {
 		fileSeq = thumbnailsFileSeq;
 	}
-
+	
 	// 렌더링 중일 때 색깔 넣어줌
 	opener.startRenderThumbnails = function(begin, end, flag) {
 		for (let i = begin; i < end; i++) {
@@ -487,23 +491,27 @@ $(() => {
 		}
 		
 		// 중간 싱크 재계산
-		let startIndex = -1;
-		for (let i = 1; i < smis.length; i++) {
-			if (smis[i].syncType == Subtitle.SyncType.inner) {
-				if (startIndex < 0) {
-					startIndex = i - 1;
-				}
-			} else {
-				if (startIndex >= 0) {
-					const endIndex = i;
-					const startSync = smis[startIndex].start;
-					const endSync   = smis[endIndex  ].start;
-					const count = endIndex - startIndex;
-
-					for (let j = 1; j < count; j++) {
-						smis[startIndex + j].start = Math.round(((count - j) * startSync + j * endSync) / count);
+		for (let oi = 0; oi < origins.length; oi++) {
+			const hold = smis[oi];
+			
+			let startIndex = -1;
+			for (let i = 1; i < hold.length; i++) {
+				if (hold[i].syncType == Subtitle.SyncType.inner) {
+					if (startIndex < 0) {
+						startIndex = i - 1;
 					}
-					startIndex = -1;
+				} else {
+					if (startIndex >= 0) {
+						const endIndex = i;
+						const startSync = hold[startIndex].start;
+						const endSync   = hold[endIndex  ].start;
+						const count = endIndex - startIndex;
+						
+						for (let j = 1; j < count; j++) {
+							hold[startIndex + j].start = Math.round(((count - j) * startSync + j * endSync) / count);
+						}
+						startIndex = -1;
+					}
 				}
 			}
 		}

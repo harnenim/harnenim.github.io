@@ -4,12 +4,12 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>ASS 자막으로 변환</title>
-	<script src="../lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="../lib/popup.js?251115"></script>
-	<script src="../lib/SubtitleObject.js?251115"></script>
-	<script src="../lib/Combine.js?251115"></script>
-	<script src="../lib/SmiEditor.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251115" />
+	<script src="../lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="../lib/popup.js?251129"></script>
+	<script src="../lib/SubtitleObject.js?251129"></script>
+	<script src="../lib/Combine.js?251129"></script>
+	<script src="../lib/SmiEditor.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251129" />
 	<script>
 windowName = "addon";
 
@@ -51,7 +51,7 @@ $(() => {
 			const hold = holds[h];
 			const name = h == 0 ? "Default" : hold.name;
 			const style = hold.style ? hold.style : DefaultStyle;
-
+			
 			if (style.Fontsize == 0) {
 				// 크기 0은 ASS 변환 대상 제외
 				continue;

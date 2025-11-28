@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251115" />
-<script src="view/lib/jquery-3.2.1.min.js?251115"></script>
-<script src="bridge/WinAPI.js?251115"></script>
-<script src="bridge/Binder.js?251115"></script>
-<script src="bridge/Bridge.js?251115"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251129" />
+<script src="view/lib/jquery-3.2.1.min.js?251129"></script>
+<script src="bridge/WinAPI.js?251129"></script>
+<script src="bridge/Binder.js?251129"></script>
+<script src="bridge/Bridge.js?251129"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -24,7 +24,7 @@ Binder.prototype.setFollowWindow = function(follow) {
 	this._.setFollowWindow(follow);
 }
 Binder.prototype.setMenus = function(menus) {
-	this._.setMenus(menus);
+	this._.setMenus(JSON.parse(menus));
 }
 
 Binder.prototype.focusToMenu = function(keyCode) {
@@ -47,8 +47,8 @@ Binder.prototype.runPlayer = function(path) {
 	this._.runPlayer(path);
 }
 
-Binder.prototype.save = function(tab, text, path, isSmi=true) {
-	this._.requestSave(tab, text, path, isSmi);
+Binder.prototype.save = function(tab, text, path, type=0) { // type 0: jmk / 1: smi / 2: ass / 3: srt
+	this._.requestSave(tab, text, path, type);
 }
 Binder.prototype.saveTemp = function(text, path) {
 	this._.saveTemp(text, path);
@@ -59,11 +59,18 @@ Binder.prototype.openFile = function() {
 Binder.prototype.openFileForVideo = function() {
 	this._.openFileForVideo();
 }
+Binder.prototype.afterInit = function() {
+	this._.afterInit();
+}
 Binder.prototype.loadAssFile = function(path, tab) {
 	// 웹버전에선 바로 같이 열리도록 연동 불가능
 }
-Binder.prototype.checkLoadVideoFile = function(smiPath) {
-	this._.checkLoadVideoFile(smiPath);
+Binder.prototype.setPath = function(smiPath) {
+	this._.setPath(smiPath);
+}
+Binder.prototype.setPathAndCheckLoadVideoFile = function(smiPath) {
+	this._.setPath(smiPath);
+	this._.checkLoadVideoFile();
 }
 Binder.prototype.loadVideoFile = function(path) {
 	this._.loadVideoFile(path);
@@ -94,7 +101,7 @@ Binder.prototype.sendMsg = function(target, msg) {
 }
 
 // setting.html
-Binder.prototype.getWindows = function(targets) { this._.getWindows(targets); }
+Binder.prototype.getWindows = function(targets) { this._.getWindows(JSON.parse(targets)); }
 Binder.prototype.selectPlayerPath = function() { alert("C#에서 동작합니다."); }
 
 // addon 설정 용
@@ -122,8 +129,13 @@ Binder.prototype.moveTo  = function(time) { this._.player.moveTo(time); }
 
 // 부가기능
 Binder.prototype.runColorPicker = function() { this._.runColorPicker(); }
+
+// 웹샘플용
+Binder.prototype.openTempDir = function() { this._.openTempDir() };
+Binder.prototype.exportSetting = function() { this._.exportSetting() };
+Binder.prototype.importSetting = function() { this._.importSetting() };
 </script>
-<script src="bridge/WebForm.js?251115"></script>
+<script src="bridge/WebForm.js?251129"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -142,29 +154,22 @@ const window_open = function(url, name, options, opener) {
 	editor.strSettingJson = "불러오기 실패 예제";
 	editor.strBridgeList = "NoPlayer: (없음)";
 	editor.strHighlights = "eclipse: Eclipse \n vs: Visual Studio";
-
+	
 	// override
 	editor.drop = async function(x, y) {
 		const file = this.droppedFiles[0];
-		const ext = file.name.substring(file.name.length - 4);
-		switch (ext.toLowerCase()) {
-			case ".smi":
-			case ".srt":
-			case ".ass":
-			case ".txt": {
-				await editor.loadFile(file);
-				break;
-			}
-			/*
-			case ".ass": {
-				await editor.loadAssFile(file);
-				break;
-			}
-			*/
-			case ".fkf": {
-				await editor.script("loadFkfFile", [file]);
-				break;
-			}
+		const ext = file.name.toLowerCase();
+		if (ext.endsWith(".smi")
+		 || ext.endsWith(".sami")
+		 || ext.endsWith(".srt")
+		 || ext.endsWith(".ass")
+		 || ext.endsWith(".jmk")
+		 || ext.endsWith(".txt")
+		) {
+			await editor.loadFile(file);
+			
+		} else if (ext.endsWith(".fkf")) {
+			await editor.script("loadFkfFile", file);
 		}
 	}
 	
@@ -182,7 +187,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/editor.html?251115";
+			editor.mainView.src = "view/editor.html?251129";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -200,15 +205,17 @@ const window_open = function(url, name, options, opener) {
 					editor.mainView.contentWindow.binder.initAfterLoad();
 				}, 1000);
 				*/
-
+				
 				const cd = editor.mainView.contentDocument;
 				cd.addEventListener("dragenter", (e) => {
 					e.preventDefault();
 					editor.showDragging();
 				});
+				/*
 				$(cd).on("click", "*", function() {
 					$(".submenu.open").removeClass("open");
 				}).on("keydown", editor.keyDownForMenu);
+				*/
 			};
 			
 			setTimeout(() => {
@@ -233,7 +240,7 @@ const window_open = function(url, name, options, opener) {
 		//FormClosing += new FormClosingEventHandler(BeforeExit);
 		//FormClosed += new FormClosedEventHandler(WebFormClosed);
 	}
-
+	
 	this.loaded = false;
 	editor.initAfterLoad = function() {
 		if (this.loaded) return;
@@ -241,21 +248,21 @@ const window_open = function(url, name, options, opener) {
 		
 		this.windows[this.mainView.contentWindow.windowName] = window;
 		
-		this.script("init", [this.strSettingJson, false]); // C#에서 객체 그대로 못 보내주므로 json string 만드는 걸로
-		this.script("setPlayerDlls", [this.strBridgeList]);
-		this.script("setHighlights", [this.strHighlights]);
-
+		this.script("init", this.strSettingJson, false); // C#에서 객체 그대로 못 보내주므로 json string 만드는 걸로
+		this.script("setPlayerDlls", this.strBridgeList);
+		this.script("setHighlights", this.strHighlights);
+		
 		// 세팅 확인
 		WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
 		editor.useFollowWindow = true;
 		
 		// 실행 5초 후 동영상 불러온 것처럼 실행
 		setTimeout(() => {
-			this.script("setVideoInfo", [1920,1080,23976]);
-			this.script("eval", ["for (let i = 0; i < 200000; i++) { SmiEditor.video.fs.push(Math.round(i * SmiEditor.video.FL)); }"]);
+			this.script("setVideoInfo", 1920, 1080, 23976);
+			this.script("eval", "for (let i = 0; i < 200000; i++) { SmiEditor.video.fs.push(Math.round(i * SmiEditor.video.FL)); }");
 		}, 2000);
 	};
-
+	
 	editor.refreshPlayer = function() {
 		if (this.player) {
 			// 플레이어 살아있음
@@ -263,7 +270,7 @@ const window_open = function(url, name, options, opener) {
 			 * C#에선 초기화 여부 체크하는 등의 코드가 들어감
 			 */
 			const time = this.player.getTime();
-			editor.script("refreshTime", [time]);
+			editor.script("refreshTime", time);
 			editor.updateViewerTime(time);
 		}
 	}
@@ -295,7 +302,7 @@ const window_open = function(url, name, options, opener) {
 	}
 	/*
 	public void DoExit(bool resetPlayer, bool exitPlayer)
-
+	
 	public void WebFormClosed(object sender, FormClosedEventArgs e)
 	*/
 }
@@ -338,7 +345,7 @@ window.MB = 9;
 			if (hwnd) {
 				WinAPI.MoveWindow(hwnd, x - ML, y - MT, width + ML + MR, height + MB);
 				if (target == "editor") {
-					//this.script("setDpiBy", [width]);
+					//this.script("setDpiBy", width);
 				}
 				
 				// TODO C#: OnBeforePopup
@@ -385,12 +392,13 @@ window.MB = 9;
 			if (hwnd) {
 				const targetOffset = new RECT();
 				WinAPI.GetWindowRect(hwnd, targetOffset);
-				this.script("afterGetWindow", [ target
+				this.script("afterGetWindow"
+					, target
 					, targetOffset.left + ML
 					, targetOffset.top  + MT
 					, targetOffset.right - targetOffset.left - ML - MR
 					, targetOffset.bottom - targetOffset.top - MB
-				]);
+				);
 			}
 		}
 	}
@@ -429,7 +437,7 @@ window.MB = 9;
 				}
 				WinAPI.MoveWindow(viewer, vMoveX, vMoveY, this.viewerOffset);
 			}
-
+			
 			if (this.player.hwnd && this.player.hwnd.window && this.player.hwnd.window.name) {
 				let pMoveX = moveX;
 				let pMoveY = moveY;
@@ -458,34 +466,34 @@ window.MB = 9;
 		} else if (this.saveSettingAfter > 0) {
 			if (--this.saveSettingAfter == 0) {
 				WinAPI.GetWindowRect(this.getHwnd("editor"), this.offset);
-				this.script("eval", [
+				this.script("eval",
 					"setting.window.x = " + (this.offset.left + ML) + ";"
 				+	"setting.window.y = " + (this.offset.top  + MT) + ";"
 				+	"setting.window.width = "  + (this.offset.right  - this.offset.left - ML - MR) + ";"
 				+	"setting.window.height = " + (this.offset.bottom - this.offset.top  - MB) + ";"
-				]);
-
+				);
+				
 				const viewer = this.getHwnd("viewer");
 				if (viewer) {
 					WinAPI.GetWindowRect(viewer, this.viewerOffset);
-					this.script("eval", [
+					this.script("eval",
 						"setting.viewer.window.x = " + (this.viewerOffset.left + ML) + ";"
 					+	"setting.viewer.window.y = " + (this.viewerOffset.top  + MT) + ";"
 					+	"setting.viewer.window.width = "  + (this.viewerOffset.right  - this.viewerOffset.left - ML - MR) + ";"
 					+	"setting.viewer.window.height = " + (this.viewerOffset.bottom - this.viewerOffset.top  - MB) + ";"
-					]);
+					);
 				}
-
+				
 				const player = this.getHwnd("player");
 				if (player) {
 					const playerOffset = this.player.currentOffset;
 					WinAPI.GetWindowRect(player, playerOffset);
-					this.script("eval", [
+					this.script("eval",
 						"setting.player.window.x = " + (playerOffset.left + ML) + ";"
 					+	"setting.player.window.y = " + (playerOffset.top  + MT) + ";"
 					+	"setting.player.window.width = "  + (playerOffset.right  - playerOffset.left - ML - MR) + ";"
 					+	"setting.player.window.height = " + (playerOffset.bottom - playerOffset.top  - MB) + ";"
-					]);
+					);
 				}
 				this.script("saveSetting");
 			}
@@ -510,7 +518,7 @@ window.MB = 9;
 	editor.runFind       = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runFind      (params); };	
 	editor.runReplace    = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runReplace   (params); };	
 	editor.runReplaceAll = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runReplaceAll(params); };
-
+	
 	editor.updateViewerSetting = function() {
 		let viewer = this.getHwnd("viewer");
 		if (viewer) {
@@ -580,7 +588,7 @@ window.MB = 9;
 				this.strSettingJson = setting;
 			}
 		}
-		this.script("init", [this.strSettingJson, true]);
+		this.script("init", this.strSettingJson, true);
 	}
 	editor.saveSetting = function(setting) {
 		localStorage.setItem("setting", (this.strSettingJson = setting));
@@ -589,7 +597,7 @@ window.MB = 9;
 	editor.setVideoExts = function(exts) {
 		this.videoExts = exts.split(','); // C#에서만 필요
 	}
-
+	
 	editor.setPlayer = function(dll, exe, withRun, useMove) {
 		if (!this.player) {
 			this.player = new WebPlayerBridge(exe);
@@ -634,57 +642,6 @@ window.MB = 9;
 {	// 메뉴
 	editor.menuKeys = {};
 	
-	editor.setMenus = function(menus) {
-		const body = $("body");
-		body.find(".submenu").remove();
-		this.menustrip.view.empty();
-		editor.menuKeys = {};
-		
-		menus = menus.concat([["샘플용"
-			, "GitHub실행|window.open('https://github.com/harnenim/Jamaker')"
-			, "플레이어 실행|binder.runPlayer()"
-			, "임시 저장 파일 확인하기|Jamaker.openTempDir()"
-			, "설정 export|Jamaker.exportSetting()"
-			, "설정 import|Jamaker.importSetting()"
-			, "가상 프레임 시간 생성|prompt('fps 값을 입력해 주세요.', (fps) => {"
-				+ "if (isFinite(fps)) {"
-				+ "    Subtitle.video.FL = 1000000 / (Subtitle.video.FR = Math.round(fps * 1000));"
-				+ "    Subtitle.video.fs.length = 0;"
-				+ "    for (let i = 0; i < 200000; i++) {"
-				+ "        Subtitle.video.fs.push(Math.round(i * Subtitle.video.FL));"
-				+ "    }"
-				+ "    afterSetFkf();"
-				+ "} else {"
-				+ "    alert('올바른 값이 아닙니다.');"
-				+ "}"
-			+ "}, Subtitle.video.FR / 1000);"
-			]]);
-		editor.mainView.contentWindow.Jamaker = editor;
-		
-		for (let i = 0; i < menus.length; i++) {
-			const list = menus[i];
-			const li = $("<li>").text(list[0]);
-			let menuKey = null;
-			if (list[0][list[0].length-4]=="(" && list[0][list[0].length-3]=="&" && list[0][list[0].length-1]==")") {
-				menuKey = list[0][list[0].length-2];
-				li.html(list[0].substring(0, list[0].length - 3) + "<u>"+menuKey+"</u>)");
-				editor.menuKeys[menuKey] = li;
-			}
-			const ol = $("<ol>").addClass("submenu").data("menu", li);
-			for (let j = 1; j < list.length; j++) {
-				const menu = list[j].split("|");
-				
-				ol.append($("<li tabindex='1'>").html(menu[0]).data("func", menu[1]).on("click", function() {
-					$(".submenu.open").removeClass("open");
-					const func = $(this).data("func");
-					editor.mainView.contentWindow.eval(func);
-				}));
-			}
-			body.append(ol);
-			li.data("submenu", ol);
-			this.menustrip.view.append(li);
-		}
-	}
 	editor.exportSetting = async function() {
 		const fb = await window.showSaveFilePicker({types:[{description:'JSON',accept:{'text/json':['.json']}}]});
 		if (fb) {
@@ -700,7 +657,7 @@ window.MB = 9;
 			const file = await fb[0].getFile();
 			const text = await file.text();
 			this.saveSetting(text);
-			this.script("init", [this.strSettingJson]);
+			this.script("init", this.strSettingJson);
 		}
 	};
 	$(() => {
@@ -729,7 +686,7 @@ window.MB = 9;
 				}
 			}
 		});
-
+		
 		$(document).on("keydown", editor.keyDownForMenu);
 	});
 	editor.keyDownForMenu = function(e) {
@@ -748,9 +705,19 @@ window.MB = 9;
 	let afterGetString = () => {};
 	
 	editor.openFile = async function() {
-		const fileBuffer = await window.showOpenFilePicker({ types: [ { description: "지원되는 자막 파일", accept:{ "text/sami": [".smi"], "text/srt" : [".srt"], "text/ass" : [".ass"] } } ] });
+		const fileBuffer = await window.showOpenFilePicker({
+			types: [
+				{	description: "지원되는 자막 파일"
+				,	accept: {
+							"text/sami": [".smi", ".sami", ".jmk"]
+						,	"text/srt" : [".srt"]
+						,	"text/ass" : [".ass"]
+					}
+				}
+			]
+		});
 		if (fileBuffer && fileBuffer[0]) {
-			editor.loadFile(fileBuffer[0]);
+			editor.loadFile(fileBuffer[0], true);
 		}
 	}
 	editor.openFileForVideo = function() {
@@ -760,18 +727,40 @@ window.MB = 9;
 		editor.player.getFileName();
 	}
 	editor.openFileAfterGetVideoFileName = function(path) { /* Native */ }
-	editor.loadFile = async function(fb) {
+	editor.loadFile = async function(fb, confirmed=false) {
 		if (fb.createWritable) {
 			const index = fileBuffers.length;
 			fileBuffers.push(fb);
 			const file = await fb.getFile();
 			const text = await file.text();
-			editor.script("openFile", [index + ":" + file.name, text, false]);
+			editor.script("openFile", index + ":" + file.name, text, false, confirmed);
 		} else {
 			const file = fb;
 			const text = await file.text();
-			editor.script("openFile", [file.name, text, false]);
+			editor.script("openFile", file.name, text, false, confirmed);
 		}
+	}
+	editor.afterInit = function(limit=1) {
+		/*
+		C#에서 args 처리
+		let count = 0;
+		for (let i = 0; (i < args.length) && (count < limit); i++) {
+			const path = args[i];
+			const ext = path.toLowerCase();
+			if (ext.endsWith(".smi") || ext.endsWith(".sami")) {
+				loadFile(path);
+				count++;
+			} else if (ext.endsWith(".srt")) {
+				loadFile(path);
+				count++;
+			} else if (ext.endsWith(".jmk")) {
+				loadFile(path);
+				count++;
+			}
+		}
+		
+		check ffmpeg도 돌림
+		*/
 	}
 	editor.loadAssFile = async function(fb) {
 		if (fb.createWritable) {
@@ -779,12 +768,21 @@ window.MB = 9;
 			fileBuffers.push(fb);
 			const file = await fb.getFile();
 			const text = await file.text();
-			editor.script("loadAssFile", [index + ":" + file.name, text]);
+			editor.script("loadAssFile", index + ":" + file.name, text);
 		} else {
 			const file = fb;
 			const text = await file.text();
-			editor.script("loadAssFile", [file.name, text]);
+			editor.script("loadAssFile", file.name, text);
 		}
+	}
+	editor.setPath = function(path) {
+		this.smiPath = path;
+		let title = "";
+		if (path) {
+			const paths = path.split("\\").join("/").split("/");
+			title += " - " + paths[paths.length - 1];
+		}
+		$("title").text("Jamaker" + title);
 	}
 	editor.checkLoadVideoFile = function() { /* native */ }
 	editor.loadVideoFile = function(path) { /* native */ }
@@ -828,193 +826,24 @@ window.MB = 9;
 					const cmdRen = "ren \"{from}\" \"{to}\"".split("{from}").join(from).split("{to}").join(to);
 				}
 				
-				editor.script("startRenderThumbnails", [begin, end, flag]);
+				editor.script("startRenderThumbnails", begin, end, flag);
 				setTimeout(() => {
-					editor.script("startCompareThumbnails", [begin, end, flag]);
-					//editor.script("afterRenderThumbnails", [begin, end, flag]);
+					editor.script("startCompareThumbnails", begin, end, flag);
 				}, 100);
 			}
 		}, 1);
-		
-		/*
-        Console.WriteLine($"RenderThumbnails: {paramsStr}");
-        string[] list = paramsStr.Split('\n');
-        new Thread(() =>
-        {
-            string exePath = Path.Combine(Directory.GetCurrentDirectory(), "ffmpeg");
-            string exeFile = Path.Combine(exePath, "ffmpeg.exe");
-
-            string dir = "temp/thumbnails";
-            DirectoryInfo di = new DirectoryInfo(dir);
-            if (!di.Exists)
-            {
-                di.Create();
-            }
-
-            int didread;
-            int offset = 0;
-            byte[] buffer = new byte[sizeof(float) * (1024 + 1)];
-
-            foreach (string paramStr in list)
-            {
-                string[] param = paramStr.Split(',');
-                int time  = int.Parse(param[0]);
-                double length = double.Parse(param[1]) / 1000;
-                int begin = int.Parse(param[2]);
-                int end   = int.Parse(param[3]);
-                string flag = param[4];
-
-                int ms = time % 60000;
-                int m = time / 60000;
-                int h = m / 60;
-                m %= 60;
-                string timeStr = ((100 + h) * 100 + m) * 100000 + ms + "";
-                timeStr = timeStr.Substring(1, 2) + ":" + timeStr.Substring(3, 2) + ":" + timeStr.Substring(5, 2) + "." + timeStr.Substring(7, 3);
-
-                string vf = "";
-                //if (flag == "b") vf = "-vf \"curves=r='0/0 0.1/0.9 1/1'\" ";
-                //else
-                //if (flag == "d") vf = "-vf \"curves=r='0/0 0.9/0.1 1/1'\" ";
-                
-                string args = $"-ss {timeStr} -t {length} -i \"{path}\" -s 96x54 -qscale:v 2 {vf}-f image2 \"{dir}/{begin}{flag}_%d.jpg\"";
-
-                try
-                {
-                    Process proc = new Process();
-                    proc.StartInfo.UseShellExecute = false;
-                    proc.StartInfo.CreateNoWindow = true;
-                    proc.StartInfo.RedirectStandardOutput = true;
-                    proc.StartInfo.RedirectStandardError = true;
-                    proc.StartInfo.FileName = exeFile;
-                    proc.StartInfo.Arguments = args;
-                    proc.Start();
-                    proc.BeginErrorReadLine();
-
-                    Stream stream = proc.StandardOutput.BaseStream;
-
-                    while ((didread = stream.Read(buffer, offset, sizeof(float) * 1024)) != 0)
-                    {
-                        Console.WriteLine(didread);
-                    }
-					
-                    Bitmap bLast = null;
-                    for (int index = 0; index < (end - begin); index++)
-                    {
-                    	// 위에서 만든 이미지 경로
-                    	string img0 = $"{dir}/{begin}{flag}_{index + 1}.jpg";
-                    	
-                    	// 실제 필요한 이미지 경로
-                        string img1 = $"{dir}/{begin + index}{flag}.jpg";
-                        if (File.Exists(img1)) File.Delete(img1);
-                        File.Move(img0, img1);
-
-                        // 프레임 간 차이 이미지 경로
-                        string img2 = $"{dir}/{begin + index}{flag}_.jpg";
-                        if (File.Exists(img2)) File.Delete(img2);
-                        
-                        // 밝기 변화 이미지 경로
-                        string img3 = $"{dir}/{begin + index}{flag}~.jpg";
-                        if (File.Exists(img3)) File.Delete(img3);
-                        
-                        if (bLast != null)
-                        {
-                            // 라이브러리 써보려고 했는데 결과물이 별로임
-                            // 96x54 정도는 직접 돌릴 만한 크기
-                            Bitmap bPrev = bLast;
-                            Bitmap bTrgt = bLast = new Bitmap(img1);
-                            
-                            new Thread(() =>
-                            {
-                                bool isFade = (flag != "");
-                                int sum = 0;
-                                int dMax = 1; // 0이면 문제 생김
-                                
-                                // 각 픽셀 비교
-                                int[][][] aDiff = new int[54][][];
-                                for (int y = 0; y < 54; y++)
-                                {
-                                    aDiff[y] = new int[96][];
-                                    for (int x = 0; x < 96; x++)
-                                    {
-                                        Color p = bPrev.GetPixel(x, y);
-                                        Color t = bTrgt.GetPixel(x, y);
-                                        int r = p.R - t.R;
-                                        int g = p.G - t.G;
-                                        int b = p.B - t.B;
-                                        aDiff[y][x] = new int[] { r, g, b };
-                                        sum += r + g + b;
-                                        if (isFade) {
-                                            dMax = Math.Max(dMax, Math.Abs(r));
-                                            dMax = Math.Max(dMax, Math.Abs(g));
-                                            dMax = Math.Max(dMax, Math.Abs(b));
-                                        }
-                                    }
-                                }
-
-                                // 페이드 효과에 대해선 더 잘 보이도록
-                                double a = isFade ? 12 : 4;
-                                //double a = isFade ? Math.Max(8, 255.0 / dMax) : 4;
-                                int avg = sum / (96 * 54);
-
-                                Bitmap b2 = new Bitmap(96, 54);
-                                Bitmap b3 = new Bitmap(96, 54);
-                                
-                                for (int y = 0; y < 54; y++)
-                                {
-                                    for (int x = 0; x < 96; x++)
-                                    {
-                                    	// 이전 프레임과 차이
-                                        b2.SetPixel(x, y, Color.FromArgb(255
-                                            , Math.Min((int) (Math.Abs(aDiff[y][x][0]) * a), 255)
-                                            , Math.Min((int) (Math.Abs(aDiff[y][x][1]) * a), 255)
-                                            , Math.Min((int) (Math.Abs(aDiff[y][x][2]) * a), 255)
-                                        ));
-                                        
-                                        // 밝기 변화
-                                        int v = Math.Min((int) ((aDiff[y][x][0] + aDiff[y][x][1] + aDiff[y][x][2]) * a), 255);
-                                        b3.SetPixel(x, y, (v > 0)
-                                        	?	Color.FromArgb(255, v, diffAvg, 0)
-                                        	:	Color.FromArgb(255, 0, diffAvg, v)
-                                        );
-                                    }
-                                }
-
-                                b2.Save(img2, System.Drawing.Imaging.ImageFormat.Jpeg);
-                                b3.Save(img3, System.Drawing.Imaging.ImageFormat.Jpeg);
-                                
-                                Script("setDiff", new object[] { $"{begin + index}{flag}", sum });
-                                
-                            }).Start();
-                        }
-                        else
-                        {
-                        	// 앞 프레임이 없음 = 첫 번째 이미지, 그냥 복사
-                            File.Copy(img1, img2);
-                            File.Copy(img1, img3);
-                        }
-                    }
-
-                    Script("afterRenderThumbnails", new object[] { begin, end, flag });
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-            }
-        }).Start();
-        //*/
 	}
-	const SaveOrder = function(tab, text, path, isSmi) {
+	const SaveOrder = function(tab, text, path, type) {
 		this.tab = tab;
 		this.text = text;
 		this.path = path;
-		this.isSmi = isSmi;
+		this.type = type;
 	}
 	editor.saveOrders = [];
 	editor.saveIndex = 0;
 	
-	editor.requestSave = async function(tab, text, path, isSmi) {
-		const order = new SaveOrder(tab, text, path, isSmi);
+	editor.requestSave = async function(tab, text, path, type) {
+		const order = new SaveOrder(tab, text, path, type);
 		
 		if (editor.saveOrders.length == 0) {
 			// 저장 대기열 없으면 그냥 진행
@@ -1025,11 +854,11 @@ window.MB = 9;
 			let updated = false;
 			for (let i = editor.saveIndex + 1; i < editor.saveOrders.length; i++) {
 				const item = editor.saveOrders[i];
-				if (item.tab == tab && item.isSmi == isSmi) {
+				if (item.tab == tab && item.type == type) {
 					// 저장 대기열 중복이면 내용물 교체
 					item.text = text;
 					item.path = path;
-					item.isSmi = isSmi;
+					item.type = type;
 					updated = true;
 					break;
 				}
@@ -1046,7 +875,7 @@ window.MB = 9;
 		const tab = order.tab;
 		const path = order.path;
 		const text = order.text;
-		const isSmi = order.isSmi;
+		const type = order.type;
 		
 		const paths = path.split(":");
 		if (!paths[1]) {
@@ -1060,10 +889,12 @@ window.MB = 9;
 		await stream.write("\ufeff" + order.text); // BOM 넣어줌
 		await stream.close();
 		
-		if (isSmi) {
-			editor.script("afterSaveFile", [tab, path]);
-		} else {
-			editor.script("afterSaveAssFile", [tab, path]);
+		switch (type) {
+			case 0: editor.setPath(paths[1]);
+			        editor.script("afterSaveFile"   , tab, path); break;
+			case 1: editor.script("afterSaveSmiFile", tab, path); break;
+			case 2: editor.script("afterSaveAssFile", tab, path); break;
+			case 3: editor.script("afterSaveSrtFile", tab, path); break;
 		}
 		editor.afterSave();
 	}
@@ -1079,11 +910,17 @@ window.MB = 9;
 	editor.saveWithDialog = async function(order) {
 		let fileBuffer = null;
 		try  {
-			fileBuffer = await window.showSaveFilePicker({
-				types: [
-					{ description: "SAMI", accept: (order.isSmi ? { "text/sami": [".smi"] } : { "text/ass": [".ass"] }) }
-				]
-			});
+			const types = [];
+			switch (order.type) {
+				case 0:
+				case 1: types.push({ description: "SAMI 자막", accept: { "text/sami": [".smi", ".sami"] } }); break;
+				case 2: types.push({ description: "ASS 자막" , accept: { "text/ass" : [".ass"] } }); break;
+				case 3: types.push({ description: "SRT 자막" , accept: { "text/srt" : [".srt"] } }); break;
+			}
+			if (order.type == 0) {
+				types.push({ description: "자막 프로젝트", accept: { "text/sami": [".jmk"] } });
+			}
+			fileBuffer = await window.showSaveFilePicker({ types: types });
 		} catch (e) {
 			console.log(e);
 		}
@@ -1114,14 +951,14 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("bridge/tempDir.html?251115", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?251129", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
 	
 	editor.runColorPicker = function() {
 		const color = prompt("색상 입력 테스트", "#ABCDEF");
-		editor.script("SmiEditor.inputText", [color]);
+		editor.script("SmiEditor.inputText", color);
 	}
 }
 {	// Designer
@@ -1133,10 +970,11 @@ window.MB = 9;
 			,	textAlign: "center"
 			,	fontSize: 20
 		}).html("웹 간이 버전에서 드래그로 열 경우<br />저장 파일을 재지정해줘야 합니다.");
-		
+		/*
 		$("body").append((this.menustrip = new MenuStrip()).view);
 		this.mainView.style.top = "20px";
 		this.mainView.style.height = "calc(100% - 20px)";
+		*/
 	}
 }
 $(() => {

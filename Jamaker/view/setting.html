@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/jquery-3.2.1.min.js?251115"></script>
-<script src="lib/popup.js?251115"></script>
-<script src="lib/History.js?251115"></script>
-<script src="lib/SubtitleObject.js?251115"></script>
-<script src="lib/SmiEditor.js?251115"></script>
-<link rel="stylesheet" type="text/css" href="lib/popup.css?251115" />
-<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?251115" />
+<script src="lib/jquery-3.2.1.min.js?251129"></script>
+<script src="lib/popup.js?251129"></script>
+<script src="lib/History.js?251129"></script>
+<script src="lib/SubtitleObject.js?251129"></script>
+<script src="lib/SmiEditor.js?251129"></script>
+<link rel="stylesheet" type="text/css" href="lib/popup.css?251129" />
+<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css?251129" />
 <script>
 windowName = "setting";
 
@@ -267,7 +267,7 @@ $(() => {
 		};
 		
 		$("#btnGetWindows").on("click", function() {
-			opener.binder.getWindows(["editor", "viewer", "player"]);
+			opener.binder.getWindows(JSON.stringify(["editor", "viewer", "player"]));
 		});
 		// C#에서 Script("afterGetWindow", object[] { "editor", x, y, w, h });
 		opener.afterGetWindow = (id, x, y, w, h) => {
@@ -1684,7 +1684,7 @@ body {
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?251115")</h4>
+					<h4>openAddon("~~.html?251129")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1850,7 +1850,7 @@ body {
 		</fieldset>
 		<span>※ 다른 플레이어를 연동하고 싶으신 분은 "프로그램 폴더\bridge\readme.txt"를 참고하시기 바랍니다.</span>
 	</form>
-
+	
 	<form id="menu">
 		<ol id="menuList"></ol>
 		<button type="button" class="add-menu">추가</button>

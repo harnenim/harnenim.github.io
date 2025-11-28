@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>싱크 유지 텍스트 대체</title>
-	<script src="../lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="../lib/popup.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251115" />
+	<script src="../lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="../lib/popup.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251129" />
 	<script>
 windowName = "addon";
 
@@ -29,7 +29,7 @@ function init() {
 	}
 	origin.start = 0;
 	origin.end = 0;
-
+	
 	// 선택 범위만 작업
 	if (origin.selection[0] != origin.selection[1]) {
 		origin.start = origin.text.substring(0, origin.selection[0]).split("\n").length - 1;
@@ -37,7 +37,7 @@ function init() {
 	} else {
 		origin.end = origin.text.split("\n").length;
 	}
-
+	
 	$("#inputSync").val(origin.text.split("\n").slice(origin.start, origin.end).join("\n"));
 	resizeTextarea();
 }

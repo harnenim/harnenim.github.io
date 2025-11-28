@@ -4,12 +4,12 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>니코동 효과</title>
-	<script src="../lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="../lib/popup.js?251115"></script>
-	<script src="../lib/setting.js?251115"></script>
-	<script src="../lib/SubtitleObject.js?251115"></script>
-	<script src="../lib/SmiEditor.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251115" />
+	<script src="../lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="../lib/popup.js?251129"></script>
+	<script src="../lib/setting.js?251129"></script>
+	<script src="../lib/SubtitleObject.js?251129"></script>
+	<script src="../lib/SmiEditor.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251129" />
 	<style>
 body > * {
 	position: absolute;
@@ -349,7 +349,7 @@ $(() => {
 			
 			for (let i = 0; i < item.syncs.length; i++) {
 				const sync = item.syncs[i];
-
+				
 				if (!syncLines[sync.time]) {
 					syncLines[sync.time] = { type: sync.type, lines: [] };
 					syncLines[sync.time].lines.length = lineCount;

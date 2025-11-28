@@ -4,13 +4,13 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>SAMI 자막 내용 일괄 치환</title>
-	<script src="lib/jquery-3.2.1.min.js?251115"></script>
-	<script src="lib/webview.js?251115"></script>
-	<script src="lib/ListView.js?251115"></script>
-	<script src="lib/SubtitleObject.js?251115"></script>
-	<script src="lib/Combine.js?251115"></script>
-	<link rel="stylesheet" type="text/css" href="lib/webview.css?251115" />
-	<link rel="stylesheet" type="text/css" href="lib/ListView.css?251115" />
+	<script src="lib/jquery-3.2.1.min.js?251129"></script>
+	<script src="lib/webview.js?251129"></script>
+	<script src="lib/ListView.js?251129"></script>
+	<script src="lib/SubtitleObject.js?251129"></script>
+	<script src="lib/Combine.js?251129"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css?251129" />
+	<link rel="stylesheet" type="text/css" href="lib/ListView.css?251129" />
 	<script>
 let listFiles;
 
@@ -29,7 +29,7 @@ function drop(x, y) {
 }
 
 function addFile(file) {
-	if (/^.*\.smi$/.test(file.toLowerCase())) {
+	if (/^.*\.(smi|sami|jmk)$/.test(file.toLowerCase())) {
 		listFiles.add(file, true);
 	}
 }
@@ -60,7 +60,7 @@ function replace(index, text) {
 		const hold = holds[hi];
 		const originSmi = new SmiFile(hold.text);
 		let isChanged = false;
-	
+		
 		let i = 0;
 		let shiftIndex = 0;
 		let shiftTime = 0;
@@ -68,13 +68,13 @@ function replace(index, text) {
 			if (originSmi.body[i].text == originRange[0].text) {
 				shiftTime = originSmi.body[i].start - originRange[0].start;
 				let isCorrect = true;
-	
+				
 				for (shiftIndex = 0; shiftIndex < originRange.length; shiftIndex++) {
 					if (!originSmi.body[i + shiftIndex].text == originRange[shiftIndex].text) {
 						isCorrect = false;
 						break;
 					}
-	
+					
 					if ((originSmi.body[i + shiftIndex].syncType == SyncType.normal) &&
 						(originSmi.body[i + shiftIndex].start != originRange[shiftIndex].start + shiftTime)
 					) {
@@ -82,28 +82,26 @@ function replace(index, text) {
 						break;
 					}
 				}
-	
+				
 				if (isCorrect) {
 					isChanged = true;
 					break;
 				}
 			}
 		}
-	
+		
 		if (isChanged) {
 			changed++;
 			
 			const targetSmi = new SmiFile();
 			targetSmi.header = originSmi.header;
 			targetSmi.footer = originSmi.footer;
-	
+			
 			for (let k = 0; k < i; k++) {
 				targetSmi.body.push(originSmi.body[k]);
 			}
 			for (let k = 0; k < targetRange.length; k++) {
 				if (targetRange[k].syncType == SyncType.frame && matches[k] >= 0) {
-					console.log([i, k, matches[k]].join(","));
-					console.log((i + matches[k]) + " / " + originSmi.body.length)
 					targetSmi.body.push(new Smi(
 							originSmi.body[i + matches[k]].start
 						,	targetRange[k].syncType
@@ -117,11 +115,11 @@ function replace(index, text) {
 					));
 				}
 			}
-	
+			
 			for (let k = i + shiftIndex; k < originSmi.body.length; k++) {
 				targetSmi.body.push(originSmi.body[k]);
 			}
-	
+			
 			hold.text = targetSmi.toText();
 		}
 	}
@@ -177,17 +175,16 @@ $(() => {
 		let i = 0;
 		for (let j = 0; j < targetRange.length; j++) {
 			if (targetRange[j].syncType != SyncType.frame) continue;
-
+			
 			while (i < originRange.length && originRange[i].start < targetRange[j].start) i++;
-
+			
 			if (i >= originRange.length) break;
-
+			
 			if (originRange[i].syncType != SyncType.frame) {
 				// 목표 화면 싱크가 원본 화면 싱크와 겹치지 않으면 -1
 				matches[j] = -1;
 				hasNewFrameSync = true;
 				break;
-
 			}
 			if (originRange[i].start == targetRange[j].start) {
 				// 목표 화면 싱크가 원본 화면 싱크와 겹치는 경우
@@ -198,7 +195,7 @@ $(() => {
 				hasNewFrameSync = true;
 			}
 		}
-		binder.startReplace(files);
+		binder.startReplace(JSON.stringify(files));
 	});
 	
 	document.addEventListener("dragenter", function(e) {
