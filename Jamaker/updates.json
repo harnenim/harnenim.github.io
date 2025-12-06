@@ -1,4 +1,16 @@
-[ { "version": "2025.12.06"
+[ { "version": "2025.12.06v2"
+  , "comment":
+    [ "스크롤바 색상 버그 수정 등"
+    ]
+  , "files":
+    [ "view/help/update.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/Jamaker.color.css"
+    , "view/lib/MenuStrip.js"
+    , "view/lib/SmiEditor.js"
+    ]
+  }
+, { "version": "2025.12.06"
   , "comment":
     [ "MenuStrip 동작 보완 및 우클릭 메뉴 추가"
     , "아규먼트 기반 실행 시 프레임 분석 버그 수정"
