@@ -187,7 +187,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/editor.html?251206";
+			editor.mainView.src = "view/Jamaker.html?251206";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -248,6 +248,37 @@ const window_open = function(url, name, options, opener) {
 		
 		this.windows[this.mainView.contentWindow.windowName] = window;
 		
+		// 찾기/바꾸기 창 항상 위에 - 웹샘플에서만 작동
+		this.mainView.contentWindow.SmiEditor.Finder1.useFocus = true;
+		
+		// 웹샘플 전용 메뉴 추가
+		{	const MenuStrip = this.mainView.contentWindow.MenuStrip;
+			MenuStrip.prototype._setMenus = MenuStrip.prototype.setMenus;
+			MenuStrip.prototype.setMenus = function(menus) {
+				this._setMenus(menus.concat([["샘플용"
+					, "플레이어 실행|binder.runPlayer()"
+					, ""
+					, "임시 저장 파일 확인하기|binder.openTempDir()"
+					, "설정 export|binder.exportSetting()"
+					, "설정 import|binder.importSetting()"
+					, "가상 프레임 시간 생성|prompt('fps 값을 입력해 주세요.', (fps) => {"
+						+ "if (isFinite(fps)) {"
+						+ "    Subtitle.video.FL = 1000000 / (Subtitle.video.FR = Math.round(fps * 1000));"
+						+ "    Subtitle.video.fs.length = 0;"
+						+ "    for (let i = 0; i < 200000; i++) {"
+						+ "        Subtitle.video.fs.push(Math.round(i * Subtitle.video.FL));"
+						+ "    }"
+						+ "    afterSetFkf();"
+						+ "} else {"
+						+ "    alert('올바른 값이 아닙니다.');"
+						+ "}"
+					+ "}, Subtitle.video.FR / 1000);"
+					, ""
+					, "GitHub 열기|window.open('https://github.com/harnenim/Jamaker')"
+				]]));
+			};
+		}
+		
 		this.script("init", this.strSettingJson, false); // C#에서 객체 그대로 못 보내주므로 json string 만드는 걸로
 		this.script("setPlayerDlls", this.strBridgeList);
 		this.script("setHighlights", this.strHighlights);
@@ -259,7 +290,7 @@ const window_open = function(url, name, options, opener) {
 		// 실행 5초 후 동영상 불러온 것처럼 실행
 		setTimeout(() => {
 			this.script("setVideoInfo", 1920, 1080, 23976);
-			this.script("eval", "for (let i = 0; i < 200000; i++) { SmiEditor.video.fs.push(Math.round(i * SmiEditor.video.FL)); }");
+			this.script("eval", "for (let i = 0; i < 200000; i++) { Subtitle.video.fs.push(Math.round(i * Subtitle.video.FL)); }");
 		}, 2000);
 	};
 	
@@ -330,7 +361,7 @@ window.MB = 9;
 			WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
 		}
 		if (!resizable) {
-			// TODO: 안 됨.............
+			// 웹샘플에서는 안 됨.............
 			//WinAPI.DisableResize(hwnd);
 		}
 		if (target == "player") {
@@ -348,7 +379,6 @@ window.MB = 9;
 					//this.script("setDpiBy", width);
 				}
 				
-				// TODO C#: OnBeforePopup
 				//hwnd.binder = editor.binder;
 				hwnd.onload = function() {
 					//hwnd.binder = editor.binder;
@@ -501,7 +531,7 @@ window.MB = 9;
 	};
 }
 {
-	// TODO C#
+	// C#에서 별도 구현
 	editor.sendMsg = function(target, msg) {
 		this.getHwnd(target).sendMsg(msg);
 	}
@@ -578,7 +608,7 @@ window.MB = 9;
 		// 백지 상태에서 시작
 		this.strSettingJson = "";
 		
-		// TODO: 설정 파일 존재하면 삭제
+		// 설정 파일 존재하면 삭제: C#에서만 구현
 		
 		// 백업 파일 존재하는지 확인
 		if (true) {
@@ -628,7 +658,7 @@ window.MB = 9;
 		$.ajax({"url" : "setting/addon_" + path
 			,	"dataType": "text"
 			,	"success": (setting) => {
-					editor.mainView.contentWindow.afterLoadAddonSetting(setting.split("\r\n").join("\n"));
+					editor.mainView.contentWindow.afterLoadAddonSetting(setting.replaceAll("\r\n", "\n"));
 				}
 			,	"error": () => {
 					editor.mainView.contentWindow.afterLoadAddonSetting("");
@@ -777,12 +807,12 @@ window.MB = 9;
 	}
 	editor.setPath = function(path) {
 		this.smiPath = path;
-		let title = "";
+		let title = "Jamaker";
 		if (path) {
-			const paths = path.split("\\").join("/").split("/");
-			title += " - " + paths[paths.length - 1];
+			const paths = path.replaceAll("\\", "/").split("/");
+			title = paths[paths.length - 1] + " - Jamaker";
 		}
-		$("title").text("Jamaker" + title);
+		$("title").text(title);
 	}
 	editor.checkLoadVideoFile = function() { /* native */ }
 	editor.loadVideoFile = function(path) { /* native */ }
@@ -810,11 +840,11 @@ window.MB = 9;
 				let timeStr = ((100 + h) * 100 + m) * 100000 + ms + "";
 				timeStr = timeStr.substring(1, 3) + ":" + timeStr.substring(3, 5) + ":" + timeStr.substring(5, 7) + "." + timeStr.substring(7, 10);
 				const args = "-ss {ss} -t {length} -i \"{path}\" -s 96x54 -f image2 \"tmp/thumbnails/{begin}{flag}_%d.jpg\""
-				.split("{ss}"    ).join(timeStr)
-				.split("{length}").join(length / 1000)
-				.split("{path}"  ).join("~")
-				.split("{begin}" ).join(begin)
-				.split("{flag}"  ).join(flag)
+				.replaceAll("{ss}"    , timeStr)
+				.replaceAll("{length}", length / 1000)
+				.replaceAll("{path}"  , "~")
+				.replaceAll("{begin}" , begin)
+				.replaceAll("{flag}"  , flag)
 				;
 				console.log(args);
 				await sleep(0.1);
@@ -822,8 +852,8 @@ window.MB = 9;
 				for (let index = 0; index < (end - begin); index++) {
 					const from = "tmp/thumbnails/" + begin + flag + "_" + (index + 1) + ".jpg";
 					const to = "tmp/thumbnails/" + (begin + index) + flag + ".jpg";
-					const cmdDel = "del \"{to}\"".split("{to}").join(to);
-					const cmdRen = "ren \"{from}\" \"{to}\"".split("{from}").join(from).split("{to}").join(to);
+					const cmdDel = "del \"{to}\"".replaceAll("{to}", to);
+					const cmdRen = "ren \"{from}\" \"{to}\"".replaceAll("{from}", from).replaceAll("{to}", to);
 				}
 				
 				editor.script("startRenderThumbnails", begin, end, flag);
@@ -969,7 +999,7 @@ window.MB = 9;
 				padding: 80
 			,	textAlign: "center"
 			,	fontSize: 20
-		}).html("웹 간이 버전에서 드래그로 열 경우<br />저장 파일을 재지정해줘야 합니다.");
+		}).html("웹 간이 버전에서 드래그로 열 경우<br />저장 파일을 재지정해 줘야 합니다.");
 		/*
 		$("body").append((this.menustrip = new MenuStrip()).view);
 		this.mainView.style.top = "20px";
