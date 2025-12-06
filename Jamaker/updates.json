@@ -1,5 +1,12 @@
 [ { "version": "2025.12.06"
   , "comment":
+    [ "MenuStrip 동작 보완 및 우클릭 메뉴 추가"
+    , "아규먼트 기반 실행 시 프레임 분석 버그 수정"
+    , "내부 파일 구성 일부 변경"
+    , "스크립트 문법 등 정리"
+    , "ffmpeg 배포 분리"
+    ]
+  , "files":
     [ "ffmpeg/readme.txt"
     , "view/addon/Combine.html"
     , "view/addon/Devide.html"
@@ -39,13 +46,6 @@
     , "view/viewer.html"
     , "Jamaker.exe"
     , "VideoInfo.dll"
-    ]
-  , "files":
-    [ "MenuStrip 동작 보완 및 우클릭 메뉴 추가"
-    , "아규먼트 기반 실행 시 프레임 분석 버그 수정"
-    , "내부 파일 구성 일부 변경"
-    , "스크립트 문법 등 정리"
-    , "ffmpeg 배포 분리"
     ]
   }
 , { "version": "2025.11.29"
