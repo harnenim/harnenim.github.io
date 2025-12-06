@@ -143,7 +143,7 @@ window.Combine = {
 	
 	function toText(html, checker) {
 		// RUBY태그 없애고 계산
-		return checker.html(html.split("<RT").join("<!--RT").split("</RT>").join("</RT-->")).text();
+		return checker.html(html.replaceAll("<RT", "<!--RT").replaceAll("</RT>", "</RT-->")).text();
 	}
 	function isClear(attr, br=null) {
 		// 공백문자가 들어가도 무관한 속성
@@ -172,7 +172,7 @@ window.Combine = {
 	function getAttrWidth(attrs, checker, withFs=false) {
 		const cAttrs = [];
 		function append(attr) {
-			const cAttr = new Attr(attr, attr.text.split("&nbsp;").join(" "), true);
+			const cAttr = new Attr(attr, attr.text.replaceAll("&nbsp;", " "), true);
 			cAttr.fs = ((withFs && cAttr.fs) ? cAttr.fs : Combine.defaultSize);
 			if (cAttr.fn && cAttr.fn != "맑은 고딕") {
 				// 팟플레이어 폰트 크기 보정
@@ -191,7 +191,7 @@ window.Combine = {
 				append(attrs[i]);
 			}
 		}
-		const width = checker.html(Smi.fromAttr(cAttrs, Combine.defaultSize).split("\n").join("<br>")).width();
+		const width = checker.html(Smi.fromAttr(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>")).width();
 		if (LOG) console.log(width, attrs);
 		return width;
 	}
@@ -239,7 +239,7 @@ window.Combine = {
 					smi.text = smi.text.substring(commentEnd + 4);
 				}
 			}
-			if (smi.text.split("&nbsp;").join("").trim()) {
+			if (smi.text.replaceAll("&nbsp;", "").trim()) {
 				const lineCount = smi.text.split(/<br>/gi).length;
 				
 				const attrs = smi.toAttrs(false);
@@ -385,7 +385,7 @@ window.Combine = {
 								for (let ki = 0; ki < subAttrs.length; ki++) {
 									const subAttr = subAttrs[ki];
 									if (subAttr.text) {
-										if (!subAttr.text.split("　").join("").split("​").join("").trim()) {
+										if (!subAttr.text.replaceAll("　", "").replaceAll("​", "").trim()) {
 											continue;
 										}
 										if (attr.fs) {
@@ -398,7 +398,7 @@ window.Combine = {
 								}
 								
 							} else if (attr.text) {
-								if (!attr.text.split("　").join("").split("​").join("").trim()) {
+								if (!attr.text.replaceAll("　", "").replaceAll("​", "").trim()) {
 									continue;
 								}
 								if (attr.fs) {
@@ -419,7 +419,7 @@ window.Combine = {
 								if (sync[WIDTH] > groupMaxWidth) {
 									// 크기 조절 안 했을 때의 폭을 이미 넘어섰으면 작업 안 함
 									if (LOG) console.log("width over");
-									sync[TEXT] = Smi.fromAttr(attrs).split("\n").join("<br>");
+									sync[TEXT] = Smi.fromAttr(attrs).replaceAll("\n", "<br>");
 									continue;
 								}
 								*/
@@ -441,7 +441,7 @@ window.Combine = {
 								if (attrs[k].attrs) {
 									const subAttrs = attrs[k].attrs;
 									for (let ki = 0; ki < subAttrs.length; ki++) {
-										const attrText = subAttrs[ki].text.split("​").join("");
+										const attrText = subAttrs[ki].text.replaceAll("​", "");
 										let attr = new Attr(subAttrs[ki], attrText, true);
 										
 										if (attrText.length == 0) {
@@ -453,13 +453,13 @@ window.Combine = {
 											trimedLine.attrs.push(attr);
 										}
 										wasClear = isClear(attr, br);
-										if (trimedLine.isEmpty && attr.text.split("　").join("").trim().length) {
+										if (trimedLine.isEmpty && attr.text.replaceAll("　", "").trim().length) {
 											trimedLine.isEmpty = isEmpty = false;
 										}
 									}
 									continue;
 								}
-								const attrText = attrs[k].text.split("​").join("");
+								const attrText = attrs[k].text.replaceAll("​", "");
 								let attr = new Attr(attrs[k], attrText, true);
 								
 								if (attrText.length == 0) {
@@ -489,13 +489,13 @@ window.Combine = {
 										wasClear = false;
 									}
 									
-									if (trimedLine.isEmpty && attr.text.split("　").join("").trim().length) {
+									if (trimedLine.isEmpty && attr.text.replaceAll("　", "").trim().length) {
 										trimedLine.isEmpty = isEmpty = false;
 									}
 									
 									for (let l = 1; l < attrLines.length; l++) {
 										attr = new Attr(attr, attrLines[l], true);
-										const isEmptyAttr = (attr.text.split("​").join("").trim().length == 0);
+										const isEmptyAttr = (attr.text.replaceAll("​", "").trim().length == 0);
 										if ((l == attrLines.length - 1) && isEmptyAttr) {
 											// 마지막 줄바꿈 후에 내용 없으면 건너뜀
 											trimedLines.push(trimedLine = { attrs: [], isEmpty: true });
@@ -513,7 +513,7 @@ window.Combine = {
 										trimedLine.attrs.push(attr);
 									}
 									wasClear = isClear(attr, br);
-									if (trimedLine.isEmpty && attr.text.split("　").join("").trim().length) {
+									if (trimedLine.isEmpty && attr.text.replaceAll("　", "").trim().length) {
 										trimedLine.isEmpty = isEmpty = false;
 									}
 								}
@@ -661,10 +661,10 @@ window.Combine = {
 								if (LOG) console.log(padsAttrs, width);
 							}
 							
-							sync[TEXT] = Smi.fromAttr(padsAttrs).split("\n").join("<br>");
+							sync[TEXT] = Smi.fromAttr(padsAttrs).replaceAll("\n", "<br>");
 							
 						} else {
-							sync[TEXT] = Smi.fromAttr(attrs).split("\n").join("<br>");
+							sync[TEXT] = Smi.fromAttr(attrs).replaceAll("\n", "<br>");
 						}
 					}
 				}
@@ -755,7 +755,6 @@ window.Combine = {
 		for (let gi = 0; gi < groups.length; gi++) {
 			const group = groups[gi];
 			const forEmpty = [[], []];
-			// TODO: 윗줄은 안 채워주는 게 나으려나?
 			for (let i = 0; i < 2; i++) {
 				for (let j = 0; j < group.maxLines[i]; j++) {
 					forEmpty[i].push("<b>　</b>");
@@ -829,7 +828,7 @@ if (SmiFile) {
 	SmiFile.textToHolds = (text) => {
 		const funcFrom = window.log ? log("textToHolds start") : 0;
 		
-		const texts = text.split("\r\n").join("\n").split("\n<!-- Hold=");
+		const texts = text.replaceAll("\r\n", "\n").split("\n<!-- Hold=");
 		let holds = [{ text: texts[0] }];
 		for (let i = 1; i < texts.length; i++) {
 			const hold = texts[i];
@@ -857,7 +856,7 @@ if (SmiFile) {
 			holds.push({
 					pos: pos
 				,	name: name
-				,	text: hold.substring(begin, end).trim().split("<​").join("<").split("​>").join(">")
+				,	text: hold.substring(begin, end).trim().replaceAll("<​", "<").replaceAll("​>", ">")
 			});
 		}
 		
@@ -871,17 +870,6 @@ if (SmiFile) {
 		holds[0] = normalized[0];
 		holds.push(...normalized.slice(1));
 		
-		if (holds[0].isWithSplit()) {
-			// 대사 사이 1프레임 공백 싱크 제거
-			const body = holds[0].body;
-			for (let i = 1; i < body.length; i++) {
-				const smi = body[i];
-				if (smi.syncType == SyncType.split) {
-					body[i - 1].text = smi.text;
-					body.splice(i, 1);
-				}
-			}
-		}
 		{	// 메인 홀드 ASS 변환용 스타일: footer 확인
 			let footer = holds[0].footer.split("\n<!-- Style\n"); // <!-- Style이 두 번 있는 경우는 오류로, 상정하지 않음
 			if (footer.length > 1) {
@@ -975,11 +963,6 @@ if (SmiFile) {
 		return holds;
 	}
 	
-	// TODO: <BODY split> 형식일 때 동작 - 기능이 필요할까...? 일단 개발 보류
-	SmiFile.prototype.isWithSplit = function() {
-		const match = /<body( [^>]*)*>/gi.exec(this.header);
-		return match && (match[0].indexOf("split") > 0);
-	}
 	SmiFile.holdsToTexts = (origHolds, withNormalize=true, withCombine=true, withComment=1, fps=23.976) => {
 		// withComment: 원래 true/false였는데, 1: true / 0: false / -1: Jamaker 전용 싱크 표시 같은 것까지 제거하도록 변경
 		
@@ -991,54 +974,6 @@ if (SmiFile) {
 		
 		// .text 동기화 안 끝났을 가능성 고려, 현재 값 다시 불러옴
 		const main = new SmiFile(origHolds[0].input ? origHolds[0].input.val() : origHolds[0].text);
-		if (main.isWithSplit()) { // 메인 홀드 이외에도 지원이 필요한가...?
-			// 대사 사이 1프레임 공백 싱크 생성
-			const body = main.body;
-			const add = Math.round(1000 / fps);
-			let before = null;
-			for (let i = 0; i < body.length; i++) {
-				const smi = body[i];
-				if (smi.isEmpty()) {
-					before = null;
-				} else {
-					if (smi.text.indexOf(" fade=") > 0) {
-						before = null;
-						// 페이드인일 경우 끊기지 않도록 다음 싱크도 건너뛰기
-						i++;
-						continue;
-					}
-					
-					// TODO: 설정에 따른 예외처리 넣기? 정규식으로?
-					if (smi.text.indexOf("harne") >= 0) {
-						before = null;
-						continue;
-					}
-					if (smi.text.startsWith("[")) {
-						before = null;
-						continue;
-					}
-					
-					if (before) {
-						// 대사끼리 붙어있을 때 1프레임 공백 싱크 생성
-						const splitted = new Smi((smi.start + add), SyncType.split, (before = smi.text));
-						body.splice(++i, 0, splitted);
-						smi.text = "&nbsp;";
-						/*
-					} else if (smi.syncType == SyncType.frame) { // TODO: 설정으로 on/off? <BODY> 태그 플래그로?
-						// 대사 사이 싱크가 화면 싱크일 때
-						const splitted = new Smi((smi.start + add), SyncType.split, (before = smi.text));
-						body.splice(++i, 0, splitted);
-						smi.text = "&nbsp;";
-						
-						// TODO: 여기서 작업한 결과는 아래에 주석 생성 없도록 만들어야 함
-						//*/
-					} else {
-						before = smi.text;
-					}
-				}
-			}
-		}
-		//console.log(JSON.parse(JSON.stringify(body)));
 		{	// 메인 홀드 스타일 저장
 			const style = SmiFile.toSaveStyle(origHolds[0].style);
 			if (style) {
@@ -1071,7 +1006,7 @@ if (SmiFile) {
 						hold.exportName += "|" + hold.style.output;
 					}
 				}
-				result[hold.resultIndex = (hi + 1)] = "<!-- Hold=" + hold.pos + "|" + hold.exportName + "\n" + text.split("<").join("<​").split(">").join("​>") + "\n-->";
+				result[hold.resultIndex = (hi + 1)] = "<!-- Hold=" + hold.pos + "|" + hold.exportName + "\n" + text.replaceAll("<", "<​").replaceAll(">", "​>") + "\n-->";
 				hold.imported = false;
 				hold.afterMain = false;
 				
@@ -1277,7 +1212,7 @@ if (SmiFile) {
 								syncText = syncText.substring(endComment + 3).trim();
 							}
 						}
-						if (syncText.split("&nbsp;").join("").trim().length == 0) {
+						if (syncText.replaceAll("&nbsp;", "").trim().length == 0) {
 							smi.body[i].text = "&nbsp;";
 						}
 					}
@@ -1523,7 +1458,7 @@ if (SmiFile) {
 					origin.body = originBody.slice(log.from[0], log.from[1]);
 					let comment = origin.toText().trim();
 					
-					main.body[log.to[0]].text = "<!-- End=" + log.end + "\n" + (comment.split("<").join("<​").split(">").join("​>")) + "\n-->\n" + main.body[log.to[0]].text;
+					main.body[log.to[0]].text = "<!-- End=" + log.end + "\n" + (comment.replaceAll("<", "<​").replaceAll(">", "​>")) + "\n-->\n" + main.body[log.to[0]].text;
 				}
 			}
 		}
@@ -1546,7 +1481,7 @@ if (SmiFile) {
 				}
 			}
 			for (let i = 0; i < main.body.length; i++) {
-				main.body[i].text = main.body[i].text.split("\n").join("");
+				main.body[i].text = main.body[i].text.replaceAll("\n", "");
 			}
 			result[0] = main.toText();
 			result.length = 1;

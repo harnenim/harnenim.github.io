@@ -37,17 +37,17 @@ let checkVersion;
 	const lastNotifyForCommand = "2025.07.30.v1";
 	const lastNotifyForAutoComplete = "2025.04.19.v1";
 	const lastNotifyForStyle = "2025.03.07.v1";
-	const lastNotifyForMenu = "2025.11.22.v1";
+	const lastNotifyForMenu = "2025.12.06.v1";
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.11.29.v1"
+{	version: "2025.12.06.v1"
 ,	menu:
-	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
 		,	"열기(&O)...|openFile()"
 		,	"현재 동영상의 자막 열기|openFileForVideo()"
+		,	""
 		,	"저장(&S)|saveFile()"
 		,	"다른 이름으로 저장(&A)...|saveFile(true)"
 		,	"내보내기(&E)...|saveFile(true, true)"
@@ -55,15 +55,18 @@ window.DEFAULT_SETTING =
 	,	[	"편집(&E)"
 		,	"찾기/바꾸기(&F)|SmiEditor.Finder.open()"
 		,	"색상코드 입력(&C)|binder.runColorPicker()"
+		,	""
 		,	"특수태그 정규화|SmiEditor.selected && SmiEditor.selected.normalize()"
 		,	"중간 싱크 생성|SmiEditor.selected && SmiEditor.selected.fillSync()"
 		,	"ASS 기반 SMI 텍스트 생성|generateSmiFromAss()"
+		,	""
 		,	"미리보기창 실행|SmiEditor.Viewer.open()"
 		,	"설정(&S)|openSetting()"
 		]
 	,	[	"부가기능(&A)"
 		,	"화면 싱크 매니저(&M)|openAddon('SyncManager')"
 		,	"여러 SMI 파일에서 찾기(&G)|openAddon('SearchFiles')"
+		,	""
 		,	"겹치는 대사 결합(&C)|openAddon('Combine');"
 		,	"겹치는 대사 분리(&D)|openAddon('Devide');"
 		,	"싱크 유지 텍스트 대체(&F)|openAddon('Fusion');"
@@ -71,17 +74,20 @@ window.DEFAULT_SETTING =
 		,	"흔들기 효과(&S)|openAddon('Shake');"
 		,	"니코동 효과(&N)|openAddon('Nico');"
 		,	"재생 속도 조절|openAddon('Speed');"
+		,	""
 		,	"맞춤법 검사기|extSubmit(\"post\", \"https://nara-speller.co.kr/old_speller/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
 		]
 	,	[	"도움말(&H)"
 		,	"프로그램 정보|openHelp('info')"
 		,	"기본 단축키|openHelp('key')"
+		,	""
 		,	"홀드에 대하여|openHelp('aboutHold')"
 		,	"싱크 표현에 대하여|openHelp('aboutSync')"
 		,	"특수 태그에 대하여|openHelp('aboutTag')"
 		,	"ASS 변환에 대하여|openHelp('aboutAss')"
 		,	"프로젝트 파일에 대하여|openHelp('aboutJmk')"
+		,	""
 		,	"업데이트 확인|openHelp('update')"
 		]
 	]
