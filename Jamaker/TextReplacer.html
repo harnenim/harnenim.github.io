@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>TextReplacer 샘플</title>
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251211" />
-<script src="view/lib/jquery-3.2.1.min.js?251211"></script>
-<script src="bridge/WinAPI.js?251211"></script>
-<script src="bridge/Binder.js?251211"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251211v2" />
+<script src="view/lib/jquery-3.2.1.min.js?251211v2"></script>
+<script src="bridge/WinAPI.js?251211v2"></script>
+<script src="bridge/Binder.js?251211v2"></script>
 <script>
 Binder.prototype.addFilesByDrag = function() {
 	this._.addFilesByDrag();
@@ -30,7 +30,7 @@ Binder.prototype.exitAfterSaveSetting = function(setting) {
 	this._.exitAfterSaveSetting(setting);
 }
 </script>
-<script src="bridge/WebForm.js?251211"></script>
+<script src="bridge/WebForm.js?251211v2"></script>
 <script>
 window.main = new WebForm();
 {	// main
@@ -54,7 +54,7 @@ window.main = new WebForm();
 			main.settingJson = settingJson;
 		}
 		
-		main.mainView.src = "view/TextReplacer.html?251211";
+		main.mainView.src = "view/TextReplacer.html?251211v2";
 		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;

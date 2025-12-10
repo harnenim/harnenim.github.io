@@ -2044,7 +2044,7 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/Jamaker.color.css?251211"
+		$.ajax({url: "lib/Jamaker.color.css?251211v2"
 			,	dataType: "text"
 			,	success: (preset) => {
 					let $style = $("#styleColor");
@@ -2125,7 +2125,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/Jamaker.size.css?251211"
+		$.ajax({url: "lib/Jamaker.size.css?251211v2"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.replaceAll("20px", (LH = (20 * setting.size)) + "px");
@@ -2305,7 +2305,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?251211", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?251211v2", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2339,7 +2339,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251211";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251211v2";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
@@ -4543,7 +4543,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251211";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251211v2";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -4556,7 +4556,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?251211", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?251211v2", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
