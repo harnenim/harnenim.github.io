@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>맞춤법 검사기</title>
-	<script src="../lib/jquery-3.2.1.min.js?251206v2"></script>
-	<script src="../lib/popup.js?251206v2"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251206v2" />
+	<script src="../lib/jquery-3.2.1.min.js?251211"></script>
+	<script src="../lib/popup.js?251211"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251211" />
 	<script>
 windowName = "addon";
 
@@ -176,7 +176,7 @@ CheckString.prototype.getParam = function() {
 	for (let i = 0; i < this.parts.length; i++) {
 		text += this.parts[i].param.text;
 	}
-	return text.split("\n").join("\r\n");
+	return text.replaceAll("\n", "\r\n");
 }
 CheckString.prototype.setReplacers = function(replacers) {
 	this.replacers = replacers;
@@ -254,7 +254,7 @@ CheckString.prototype.doReplace = function() {
 //초기 상태 기억
 let origin = null;
 let operation = null;
-$(() => {
+ready(() => {
 	if (opener && opener.SmiEditor && opener.SmiEditor.selected) {
 		origin = opener.SmiEditor.selected.getText();
 	} else {
@@ -373,7 +373,7 @@ function parseResultData(data) {
 	refreshOutput();
 }
 
-$(() => {
+ready(() => {
 	const olResult = $("#olResult");
 	{	const preset = olResult.find(".preset").removeClass("preset");
 		olResult.data({ preset: preset.clone() });
@@ -421,7 +421,7 @@ function setChecker(i, j=-1) {
 }
 
 function html(text) {
-	return text.split("<").join("&lt;").split("\n").join("<br />");
+	return text.replaceAll("<", "&lt;").replaceAll("\n", "<br />");
 }
 function refreshOutput() {
 	operation.doReplace();

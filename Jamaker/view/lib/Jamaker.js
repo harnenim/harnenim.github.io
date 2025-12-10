@@ -1919,7 +1919,12 @@ function init(jsonSetting, isBackup=true) {
 	// ::-webkit-scrollbar에 대해 CefSharp에서 커서 모양이 안 바뀜
 	// ... 라이브러리 버그? 업데이트하면 달라지나?
 	$("body").on("mousemove", "textarea", function(e) {
-		$(this).css({ cursor: ((this.clientWidth <= e.offsetX) || (this.clientHeight <= e.offsetY) ? "default" : "text") });
+		const hoverScroll = (this.clientWidth <= e.offsetX) || (this.clientHeight <= e.offsetY);
+		if (hoverScroll) {
+			this.classList.add("hover-scroll");
+		} else {
+			this.classList.remove("hover-scroll");
+		}
 	});
 	
 	SmiEditor.activateKeyEvent();
@@ -1983,13 +1988,24 @@ function setSetting(setting, initial=false) {
 	}
 	
 	SmiEditor.setSetting(setting);
-	if (initial && oldSetting.scrollShow == undefined) {
-		setting.scrollShow = 0; // 기존 사용자는 0초로 초기화
+	if (initial) {
+		if (setting.useHighlight == false) {
+			// 문법 하이라이트 없는 버전에서 업데이트 시 기본값
+			setting.highlight = { parser: "", style: "eclipse" };
+			delete(setting.useHighlight);
+		} else if (setting.useHighlight) {
+			delete(setting.useHighlight);
+		}
+		if (oldSetting.scrollShow == undefined) {
+			// 기존 사용자는 기존 스타일 스크롤바로 초기화
+			setting.scrollShow = 0;
+		}
 	}
 	if (initial
 	 || (               oldSetting.size       !=                setting.size      )
 	 || (               oldSetting.scrollShow !=                setting.scrollShow)
 	 || (JSON.stringify(oldSetting.color)     != JSON.stringify(setting.color)    )
+	 || (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight))
 	) {
 		// 스타일 바뀌었을 때만 재생성
 		if (setting.css) {
@@ -2028,16 +2044,14 @@ function setSetting(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		$.ajax({url: "lib/Jamaker.color.css?251206v2v2"
+		$.ajax({url: "lib/Jamaker.color.css?251211"
 			,	dataType: "text"
 			,	success: (preset) => {
-					for (let name in setting.color) {
-						preset = preset.replaceAll("[" + name + "]", setting.color[name]);
+					let $style = $("#styleColor");
+					if (!$style.length) {
+						$("head").append($style = $("<style id='styleColor'>"));
 					}
-					{	// TODO: 문법 하이라이트 로딩 후 이쪽은 재처리 필요
-						//       이게 되려면 ajax 호출을 병렬에서 직렬로 바꿔야 함
-						preset = preset.replaceAll("[editorHL]", setting.color.editor);
-					}
+					
 					if (button.length) {
 						preset = preset.replaceAll("[button]", button).replaceAll("[buttonDisabled]", disabled);
 						$("body").addClass("classic-scrollbar");
@@ -2045,11 +2059,55 @@ function setSetting(setting, initial=false) {
 						$("body").removeClass("classic-scrollbar");
 					}
 					
-					let $style = $("#styleColor");
-					if (!$style.length) {
-						$("head").append($style = $("<style id='styleColor'>"));
+					for (let name in setting.color) {
+						preset = preset.replaceAll("[" + name + "]", setting.color[name]);
 					}
-					$style.html(preset);
+					function setStyleWithHighlight() {
+						// 문법 하이라이트 배경색 가져오기
+						let editorHL = setting.color.editor;
+						if (setting.highlight && setting.highlight.parser) {
+							let hljs = $(".hljs");
+							if (hljs.length) {
+								hljs = hljs[0];
+							} else {
+								if (window.tempHljs) {
+									hljs = window.tempHljs;
+								} else {
+									hljs = document.createElement("div");
+									hljs.classList.add("hljs");
+									hljs.style.display = "none";
+									document.body.append(hljs);
+								}
+							}
+							try {
+								const rgb = getComputedStyle(hljs).backgroundColor;
+								const rgbMatch = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+\.{0,1}\d*))?\)$/);
+								if (rgbMatch) {
+									editorHL = "#" + Color.hex(rgbMatch[1]) + Color.hex(rgbMatch[2]) + Color.hex(rgbMatch[3]);
+								}
+							} catch (e) {}
+						}
+						$style.html(preset.replaceAll("[editorHL]", editorHL));
+					}
+					
+					if (initial || (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight))) {
+						// 문법 하이라이트 양식 바뀌었을 때만 재생성
+						// 문법 하이라이트 세팅 중에 내용이 바뀔 수 있어서
+						// 에디터 목록을 만들어서 넘기지 않고, 함수 형태로 넘김
+						SmiEditor.setHighlight(setting.highlight, () => {
+							const editors = [];
+							for (let i = 0; i < tabs.length; i++) {
+								for (let j = 0; j < tabs[i].holds.length; j++) {
+									editors.push(tabs[i].holds[j]);
+								}
+							}
+							setStyleWithHighlight();
+							
+							return editors;
+						});
+					} else {
+						setStyleWithHighlight()
+					}
 				}
 		});
 		
@@ -2067,7 +2125,7 @@ function setSetting(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		$.ajax({url: "lib/Jamaker.size.css?251206v2v2"
+		$.ajax({url: "lib/Jamaker.size.css?251211"
 			,	dataType: "text"
 				,	success: (preset) => {
 					preset = preset.replaceAll("20px", (LH = (20 * setting.size)) + "px");
@@ -2106,27 +2164,6 @@ function setSetting(setting, initial=false) {
 				,	height: h
 			});
 		}
-	}
-	if (initial || (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight))) {
-		// 문법 하이라이트 양식 바뀌었을 때만 재생성
-		if (setting.useHighlight == false) {
-			setting.highlight = { parser: "", style: "eclipse" };
-			delete(setting.useHighlight);
-		} else if (setting.useHighlight) {
-			delete(setting.useHighlight);
-		}
-		// 문법 하이라이트 세팅 중에 내용이 바뀔 수 있어서
-		// 에디터 목록을 만들어서 넘기지 않고, 함수 형태로 넘김
-		SmiEditor.setHighlight(setting.highlight, () => {
-			const editors = [];
-			for (let i = 0; i < tabs.length; i++) {
-				for (let j = 0; j < tabs[i].holds.length; j++) {
-					editors.push(tabs[i].holds[j]);
-				}
-			}
-			// TODO: color 세팅과 직렬화 후 [editorHL] 처리 필요
-			return editors;
-		});
 	}
 	{
 		if (setting.sync.kLimit == undefined) {
@@ -2268,7 +2305,7 @@ function setHighlights(list) {
 }
 
 function openSetting() {
-	SmiEditor.settingWindow = window.open("setting.html?251206v2v2", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?251211", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2302,7 +2339,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251206v2v2";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251211";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
@@ -2854,7 +2891,7 @@ function confirmLoadVideo(path) {
 // C# 쪽에서 호출
 function setVideo(path) {
 	if (Subtitle.video.path == path) return;
-	log("setVideo");
+	log("setVideo: " + path);
 	
 	Subtitle.video.path = path;
 	Subtitle.video.fs = [];
@@ -2884,7 +2921,7 @@ function setVideo(path) {
 }
 // C# 쪽에서 호출 - requestFrames
 function setVideoInfo(w=1920, h=1080, fr=23976) {
-	log("setVideoInfo");
+	log("setVideoInfo: " + w + ", " + h);
 	
 	Subtitle.video.width = w;
 	Subtitle.video.height = h;
@@ -2902,7 +2939,7 @@ function setVideoInfo(w=1920, h=1080, fr=23976) {
 }
 // C# 쪽에서 호출 - requestFrames
 function loadFkf(fkfName) {
-	log("loadFkf start");
+	log("loadFkf start: " + fkfName);
 	// C# 파일 객체를 직접 js 쪽에 전달할 수 없으므로, 정해진 경로의 파일을 ajax 형태로 가져옴
 	// base64 거치는 방법도 있긴 한데, 어차피 캐시를 재활용하는 경우라면 한 번만 거치는 게 나음
 	const req = new XMLHttpRequest();
@@ -3420,7 +3457,6 @@ function loadAssFile(path, text, target=-1) {
 		funcSince = log("loadAssFile - 비교 완료", funcSince);
 		
 		if (changedStyles.length + addCount + delCount > 0) {
-			console.log(changedStyles);
 			let msg = "스타일 수정 내역이 " + changedStyles.length + "건 있습니다. 적용하시겠습니까?";
 			if (addCount + delCount) {
 				let countMsg = [];
@@ -4458,7 +4494,13 @@ SmiEditor.Finder1.open = function(isReplace=false) {
 SmiEditor.Finder1._onloadFind = SmiEditor.Finder1.onloadFind;
 SmiEditor.Finder1.onloadFind = function(isReplace) {
 	if (setting && setting.color) {
-		this.window.setColor(setting.color);
+		if (this.window.setColor) {
+			this.window.setColor(setting.color);
+		} else if (this.window.iframe
+		        && this.window.iframe.contentWindow
+		        && this.window.iframe.contentWindow.setColor) {
+			this.window.iframe.contentWindow.setColor(setting.color);
+		}
 	}
 	this._onloadFind(isReplace);
 };
@@ -4474,10 +4516,10 @@ SmiEditor.Finder2.open = function(isReplace) {
 		,	width: w
 		,	height: h
 	});
-	SmiEditor.Finder.window.iframe.contentWindow.setSize(ratio);
+	this.window.iframe.contentWindow.setSize(ratio);
 	
 	if (setting && setting.color) {
-		SmiEditor.Finder.window.iframe.contentWindow.setColor(setting.color);
+		this.window.iframe.contentWindow.setColor(setting.color);
 	}
 };
 
@@ -4501,7 +4543,7 @@ SmiEditor.Addon = {
 		windows: {}
 	,	open: function(name, target="addon") {
 			binder.setAfterInitAddon("");
-			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251206v2v2";
+			const url = (name.substring(0, 4) == "http") ? name : "addon/" + name.replaceAll("..", "").replaceAll(":", "") + ".html?251211";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
 				SmiEditor.Addon.moveWindowToSetting(target);
@@ -4514,14 +4556,14 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?251206v2v2", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?251211", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
 			binder.focus("addon");
 		}
-	,	openExt: function(url, afterInit) {
-			binder.setAfterInitAddon(afterInit);
+	,	openExt: async function(url, afterInit) {
+			await binder.setAfterInitAddon(afterInit);
 			this.windows.addon = window.open(url, "addon", "location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
@@ -4689,17 +4731,26 @@ function extSubmitSpeller() {
 		}
 		
 		// 태그 탈출 처리
-		value = $("<p>").html(value.replaceAll(/<br>/gi, " ")).text();
+		Subtitle.$tmp.html(value.replaceAll(/<br>/gi, " "));
+		Subtitle.$tmp.find("style").html(""); // <STYLE> 태그 내의 주석은 innerText로 잡힘
+		value = Subtitle.$tmp.text();
+		value = value.replaceAll("​", "").replaceAll("　", " ").replaceAll(" ", " ");
+		while (value.indexOf("  ") >= 0) {
+			value = value.replaceAll("  ", " ");
+		}
+		while (value.indexOf("  ") >= 0) { // &nbsp;에서 만들어진 건 이쪽으로 옴
+			value = value.replaceAll("  ", " ");
+		}
 		
-		// 신버전용으로 시도 중
+		// 신버전 창 켜진 후 스크립트로 검사 실행
 		SmiEditor.Addon.openExt("https://nara-speller.co.kr/speller"
-			,	"const chekcer = setInterval(() => {\n"
+			,	"window.chekcer = setInterval(() => {\n"
 			+	"	const $ta = document.getElementsByTagName('textarea')[0];\n"
-			+	"	if ($ta) clearInterval(checker);\n"
+			+	"	if ($ta) clearInterval(window.checker);\n"
 			+	"	else return;\n"
 			+	"	$ta.value = " + JSON.stringify(value) + ";\n"
 			+	"	$ta.dispatchEvent(new Event('input', { bubbles: true }));\n"
-			+	"	setTimeout(() => { document.getElementByTagName('button')[3].click(); });\n"
+			+	"	setTimeout(() => { document.getElementsByTagName('button')[3].click(); });\n"
 			+	"}, 100);"
 		);
 	}

@@ -4,15 +4,15 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>싱크 유지 텍스트 대체</title>
-	<script src="../lib/jquery-3.2.1.min.js?251206v2v2"></script>
-	<script src="../lib/popup.js?251206v2v2"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251206v2v2" />
+	<script src="../lib/jquery-3.2.1.min.js?251211"></script>
+	<script src="../lib/popup.js?251211"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251211" />
 	<script>
 windowName = "addon";
 
 // 초기 상태 기억
 let origin = null;
-$(() => {
+ready(() => {
 	if (opener && opener.SmiEditor && opener.SmiEditor.selected) {
 		origin = opener.SmiEditor.selected.getText();
 		origin.tab = opener.SmiEditor.selected;
@@ -109,7 +109,7 @@ function resizeTextarea() {
 	$("textarea").height(height);
 }
 
-$(() => {
+ready(() => {
 	init();
 	$("#btnFusion").on("click", fusion);
 	$("#btnApply" ).on("click", apply );

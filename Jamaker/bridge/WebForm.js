@@ -43,12 +43,12 @@ WebForm.prototype.script = function(names, ...args) {
 	eval(script);
 }
 WebForm.prototype.alert = function(name, msg) {
-	const hwnd = this.getHwnd(name);
+	let hwnd = this.getHwnd(name);
 	if (hwnd.iframe) hwnd = hwnd.iframe.contentWindow;
 	hwnd._alert(msg);
 }
 WebForm.prototype.confirm = function(name, msg) {
-	const hwnd = this.getHwnd(name);
+	let hwnd = this.getHwnd(name);
 	if (hwnd.iframe) hwnd = hwnd.iframe.contentWindow;
 	if (hwnd._confirm(msg)) {
 		this.mainView.contentWindow.afterConfirmYes();
@@ -57,7 +57,7 @@ WebForm.prototype.confirm = function(name, msg) {
 	}
 }
 WebForm.prototype.prompt = function(name, msg, def) {
-	const hwnd = this.getHwnd(name);
+	let hwnd = this.getHwnd(name);
 	if (hwnd.iframe) hwnd = hwnd.iframe.contentWindow;
 	this.mainView.contentWindow.afterPrompt(hwnd._prompt(msg, def));
 }
@@ -128,3 +128,25 @@ WebForm.prototype.initAfterLoad = function() {
 	this.windows[this.mainView.contentWindow.windowName] = window;
 };
 WebForm.prototype.beforeExit = (e) => {}
+
+{
+	window.onloads = [];
+	window.ready = (fn) => {
+		if (window.onloads != null) {
+			window.onloads.push(fn);
+			if (window.onloads.length == 1) {
+				window.addEventListener("load", () => {
+					afterReady();
+				});
+			}
+		} else {
+			try { fn(); } catch (e) {};
+		}
+	}
+	window.afterReady = () => {
+		window.onloads && onloads.forEach((fn) => {
+			try { fn(); } catch (e) {};
+		});
+		window.onloads = null;
+	}
+}

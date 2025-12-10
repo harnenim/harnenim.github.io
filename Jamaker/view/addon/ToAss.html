@@ -4,18 +4,18 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>ASS 자막으로 변환</title>
-	<script src="../lib/jquery-3.2.1.min.js?251206v2"></script>
-	<script src="../lib/popup.js?251206v2"></script>
-	<script src="../lib/SubtitleObject.js?251206v2"></script>
-	<script src="../lib/Combine.js?251206v2"></script>
-	<script src="../lib/SmiEditor.js?251206v2"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251206v2" />
+	<script src="../lib/jquery-3.2.1.min.js?251211"></script>
+	<script src="../lib/popup.js?251211"></script>
+	<script src="../lib/SubtitleObject.js?251211"></script>
+	<script src="../lib/Combine.js?251211"></script>
+	<script src="../lib/SmiEditor.js?251211"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251211" />
 	<script>
 windowName = "addon";
 
 let editor = null;
 
-$(() => {
+ready(() => {
 	if (opener && opener.SmiEditor) {
 		editor = opener.SmiEditor.selected;
 	} else {
@@ -117,7 +117,7 @@ $(() => {
 	</style>
 </head>
 <body>
-	<textarea id="input" spellcheck="false"></textarea>
+	<textarea id="input"></textarea>
 	<button id="btnExport">＞</button>
 	<textarea id="output">이곳의 결과물은 완성본이 아니며, Aegisub에 복사한 후 추가 작업이 필요합니다.
 </textarea>

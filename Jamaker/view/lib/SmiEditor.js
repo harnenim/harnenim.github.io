@@ -1,4 +1,4 @@
-﻿const LOG = false; // 배포 시 false
+﻿const LOG = true; // 배포 시 false
 
 let LH = 20; // LineHeight
 let SB = 16; // ScrollBarWidth ... TODO: 자동으로 구해지도록?
@@ -693,7 +693,7 @@ SmiEditor.prototype.bindEvent = function() {
 	}).on("blur", function() {
 		editor.showBlockArea();
 	}).on("focus", function() {
-		editor.block.hide();
+		editor.block.hide().empty();
 	}).on("contextmenu", function(e) {
 		if (SmiEditor.contextmenu) {
 			SmiEditor.contextmenu.open(e, SmiEditor.selected.input[0]);
@@ -1222,7 +1222,25 @@ SmiEditor.activateKeyEvent = function() {
 			
 			{	// 단축키 설정
 				let f = null;
-				const key = (e.keyCode == 192) ? '`' : String.fromCharCode(e.keyCode);
+				let key = e.key.toUpperCase();
+				if (key.length > 1 && key.startsWith("F")) {
+					const fn = key.substring(1);
+					switch (fn) {
+						case  "1": key = 'p'; break;
+						case  "2": key = 'q'; break;
+						case  "3": key = 'r'; break;
+						case  "4": key = 's'; break;
+						case  "5": key = 't'; break;
+						case  "6": key = 'u'; break;
+						case  "7": key = 'v'; break;
+						case  "8": key = 'w'; break;
+						case  "9": key = 'x'; break;
+						case "10": key = 'y'; break;
+						case "11": key = 'z'; break;
+						case "12": key = '{'; break;
+					}
+				}
+				
 				if (e.shiftKey) {
 					if (e.ctrlKey) {
 						if (e.altKey) {
@@ -2037,7 +2055,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?251206v2v2"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?251211"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -2619,7 +2637,7 @@ SmiEditor.Finder1 = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?251206v2v2", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?251211", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2993,7 +3011,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			newWindow = window.open("viewer.html?251206v2v2", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?251211", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -3108,9 +3126,14 @@ SmiEditor.Viewer = {
 				// C#을 거쳐서 미리보기 창과 통신한다는 가정하에 JSON을 거쳤었는데
 				// 그냥 팝업으로 통신하는 걸로
 //				binder.updateViewerLines(JSON.stringify(lines));
-				if (SmiEditor.Viewer.window
-				 && SmiEditor.Viewer.window.setLines) {
-					SmiEditor.Viewer.window.setLines(lines);
+				if (SmiEditor.Viewer.window) {
+					if (SmiEditor.Viewer.window.setLines) {
+						SmiEditor.Viewer.window.setLines(lines);
+					} else if (SmiEditor.Viewer.window.iframe
+					        && SmiEditor.Viewer.window.iframe.contentWindow
+					        && SmiEditor.Viewer.window.iframe.contentWindow.setLines) {
+						SmiEditor.Viewer.window.iframe.contentWindow.setLines(lines);
+					}
 				}
 			}, 1);
 		}
@@ -3450,7 +3473,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?251206v2v2", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?251211", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			

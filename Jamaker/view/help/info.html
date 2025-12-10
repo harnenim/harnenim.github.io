@@ -4,12 +4,12 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>프로그램 정보</title>
-	<script src="../lib/jquery-3.2.1.min.js?251206v2v2"></script>
-	<script src="../lib/popup.js?251206v2v2"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251206v2v2" />
+	<script src="../lib/jquery-3.2.1.min.js?251211"></script>
+	<script src="../lib/popup.js?251211"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251211" />
 	<script>
 windowName = "help";
-$(() => {
+ready(() => {
 	$("#version").text(opener.setting.version);
 	if (opener.Subtitle.video.ffmpeg ) { $("#ffmpeg" ).text(opener.Subtitle.video.ffmpeg ); } else { $("#ffmpeg" ).css({ color: "#888" }); }
 	if (opener.Subtitle.video.ffprobe) { $("#ffprobe").text(opener.Subtitle.video.ffprobe); } else { $("#ffprobe").css({ color: "#888" }); }

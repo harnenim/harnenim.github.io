@@ -2,9 +2,8 @@
 <head>
 <meta charset="utf-8">
 <title>미리보기</title>
-<script src="lib/jquery-3.2.1.min.js?251206v2v2"></script>
-<script src="lib/SubtitleObject.js?251206v2v2"></script>
-<script src="lib/SmiEditor.js?251206v2v2"></script>
+<script src="lib/jquery-3.2.1.min.js?251211"></script>
+<script src="lib/SubtitleObject.js?251211"></script>
 <script>
 let title = document.getElementsByTagName("title")[0];
 let lastTab = null;
@@ -173,7 +172,7 @@ function refreshTime(receiveTime, withoutTitle) {
 
 function setTextToView(text, hold) {
 	// RUBY태그 문법이 미묘하게 달라서 가공 필요
-	text = text.split("<RP").join("<!--RP").split("</RP>").join("</RP-->");
+	text = text.replaceAll("<RP", "<!--RP").replaceAll("</RP>", "</RP-->");
 	
 	{	// 흔들기 효과 상하 공백줄 처리 -> 맨 윗줄만
 		let showLines = text.split(/<br>/gi);
@@ -181,7 +180,7 @@ function setTextToView(text, hold) {
 			let line = showLines;
 			if (htmlToText(line) == "　") {
 				if (line.indexOf("font-size:") > 0) {
-					showlines[hold] = line.split("<font style=\"font-size:").join("<div style=\"height:").split("</font>").join("</div>");
+					showlines[hold] = line.replaceAll("<font style=\"font-size:", "<div style=\"height:").replaceAll("</font>", "</div>");
 				}
 			}
 		}
@@ -189,7 +188,7 @@ function setTextToView(text, hold) {
 	}
 	
 	// 비어있으면 높이 차지하지 않게 내용 없애기
-	if (!text.split("&nbsp;").join(" ").trim().length) {
+	if (!text.replaceAll("&nbsp;", " ").trim().length) {
 		text = "";
 	}
 	
@@ -220,24 +219,45 @@ function setTextToView(text, hold) {
 	}
 }
 
+//window.addEventListener("load", () => {
 $(() => {
+	// 우클릭 방지
+	document.addEventListener("contextmenu", (e) => {
+		// TODO: 우클릭 메뉴 뭐라도 만들까?
+		e.preventDefault();
+	});
+	window.onkeydown = (e) => {
+		switch(e.keyCode) {
+			case 116: return false; // F5 새로고침 방지
+		}
+	};
 	viewer = $("#viewer");
-	if (opener) {
-		SmiEditor = opener.SmiEditor;
+	
+	if (opener) { // 웹브라우저 샘플 실행 시
+		window.PlayerAPI = opener.SmiEditor.PlayerAPI;
 		opener.binder.updateViewerSetting();
-	} else if (binder && binder.onloadViewer) {
+		opener.SmiEditor.Viewer.refresh();
+		
+	} else if (window.binder && binder.onloadViewer) {
+		window.PlayerAPI = {
+				playOrPause: (    ) => { binder.playOrPause(); }
+			,	play       : (    ) => { binder.play(); }
+			,	stop       : (    ) => { binder.stop(); }
+			,	moveTo     : (time) => { binder.moveTo(time); }
+			,	move       : (move) => { binder.moveTo(time + move); }
+		};
 		binder.onloadViewer();
 	}
 });
 
-$(document).on("keydown", function(e) {
+document.addEventListener("keydown", (e) => {
 	switch (e.keyCode) {
 		case 37: { // ←
 			if (!e.shiftKey && !e.ctrlKey && e.altKey) {
 				// 뒤로
 				e.preventDefault();
-				SmiEditor.PlayerAPI.move(-SmiEditor.sync.move);
-				SmiEditor.PlayerAPI.play();
+				PlayerAPI.move(-SmiEditor.sync.move);
+				PlayerAPI.play();
 			}
 			break;
 		}
@@ -245,24 +265,24 @@ $(document).on("keydown", function(e) {
 			if (!e.shiftKey && !e.ctrlKey && e.altKey) {
 				// 앞으로
 				e.preventDefault();
-				SmiEditor.PlayerAPI.move(SmiEditor.sync.move);
-				SmiEditor.PlayerAPI.play();
+				PlayerAPI.move(SmiEditor.sync.move);
+				PlayerAPI.play();
 			}
 			break;
 		}
 		case 120: { // F9: 재생/일시정지
 			e.preventDefault();
-			SmiEditor.PlayerAPI.playOrPause();
+			PlayerAPI.playOrPause();
 			break;
 		}
 		case 121: { // F10: 재생
 			e.preventDefault();
-			SmiEditor.PlayerAPI.play();
+			PlayerAPI.play();
 			break;
 		}
 		case 122: { // F11: 정지
 			e.preventDefault();
-			SmiEditor.PlayerAPI.stop();
+			PlayerAPI.stop();
 			break;
 		}
 	}

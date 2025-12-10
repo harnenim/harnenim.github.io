@@ -100,17 +100,36 @@ function setDpi(dpi) {
 	DPI = dpi;
 }
 
-/* 어디선가 순서 꼬임
-function ready(fn) {
-	if (document.readyState === "loading") {
-		console.log("addEventListener");
-		document.addEventListener("DOMContentLoaded", fn);
-	} else {
-		fn();
+{
+	window.onloads = [];
+	window.ready = (fn) => {
+		if (window.onloads != null) {
+			window.onloads.push(fn);
+			if (window.onloads.length == 1) {
+				window.addEventListener("load", () => {
+					if (window.binder) {
+						// CefSharp인 경우 실행
+						afterReady();
+					} else if (window.chrome && window.chrome.webview) {
+						// WebView2인 경우 실행
+						afterReady();
+					}
+					// 웹샘플 iframe일 경우 부모창에서 binder 등록 후 onload로 실행
+				});
+			}
+		} else {
+			try { fn(); } catch (e) {};
+		}
+	}
+	window.afterReady = () => {
+		window.onloads && onloads.forEach((fn) => {
+			try { fn(); } catch (e) {};
+		});
+		window.onloads = null;
 	}
 }
-*/
-$(() => {
+
+ready(() => {
 	// 우클릭 방지
 	document.addEventListener("contextmenu", (e) => {
 		// TODO: 우클릭 메뉴 뭐라도 만들까?
@@ -244,8 +263,15 @@ Progress.set = (selector, ratio, unit="calc([ratio] * 100%)") => {
 		Progress.last = now;
 	}
 	let bar = Progress.bars[selector];
-	if (bar == null) {
-		const area = document.querySelector(selector);
+	if (!bar) {
+		let area = null;
+		if (selector.indexOf(":eq(") > 0) {
+			const parts = selector.split(":eq(");
+			const index = Number(parts[1].split(")")[0]);
+			area = document.querySelectorAll(parts[0])[index];
+		} else {
+			area = document.querySelector(selector);
+		}
 		Progress.bars[selector] = bar = document.createElement("div");
 		bar.classList.add("progress-bar");
 		area.classList.add("progress");

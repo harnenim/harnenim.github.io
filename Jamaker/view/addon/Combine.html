@@ -4,23 +4,23 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>겹치는 싱크 결합</title>
-	<script src="../lib/jquery-3.2.1.min.js?251206v2v2"></script>
-	<script src="../lib/popup.js?251206v2v2"></script>
-	<script src="../lib/setting.js?251206v2v2"></script>
-	<script src="../lib/AutoCompleteTextarea.js?251206v2v2"></script>
-	<script src="../lib/SubtitleObject.js?251206v2v2"></script>
-	<script src="../lib/Combine.js?251206v2v2"></script>
-	<script src="../lib/History.js?251206v2v2"></script>
-	<script src="../lib/SmiEditor.js?251206v2v2"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251206v2v2" />
-	<link rel="stylesheet" type="text/css" href="../lib/AutoCompleteTextarea.css?251206v2v2" />
+	<script src="../lib/jquery-3.2.1.min.js?251211"></script>
+	<script src="../lib/popup.js?251211"></script>
+	<script src="../lib/setting.js?251211"></script>
+	<script src="../lib/AutoCompleteTextarea.js?251211"></script>
+	<script src="../lib/SubtitleObject.js?251211"></script>
+	<script src="../lib/Combine.js?251211"></script>
+	<script src="../lib/History.js?251211"></script>
+	<script src="../lib/SmiEditor.js?251211"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251211" />
+	<link rel="stylesheet" type="text/css" href="../lib/AutoCompleteTextarea.css?251211" />
 	<script>
 windowName = "addon";
 if (LOG == undefined) {
 	LOG = false;
 }
 
-$(() => {
+ready(() => {
 	if (opener) {
 		setting = opener.setting;
 	}
@@ -35,7 +35,7 @@ function setSetting(setting) {
 	Combine.css = { font: $("#preview").css("font") };
 }
 
-$(() => {
+ready(() => {
 	//$("#preview").css(defaultCss);
 	setSetting(setting);
 	
