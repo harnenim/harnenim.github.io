@@ -151,7 +151,7 @@ if (opener) {
 }
 
 function setColor(color) {
-	$.ajax({url: "lib/popup.color.css?251211v2"
+	$.ajax({url: "lib/popup.color.css?251213"
 		,	dataType: "text"
 		,	success: (preset) => {
 				for (let name in color) {

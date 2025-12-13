@@ -1,4 +1,32 @@
-[ { "version": "2025.12.06v2"
+[ { "version": "2025.12.13v1"
+  , "comment":
+    [ "스크롤바 hover 기준 변경"
+    , "일부 영상에 대한 ASS 자막 해상도 문제 수정"
+    , "AutoSyncShift 싱크 비교 범위 오류 수정"
+    , "기타 버그 등 수정"
+    ]
+  , "files":
+    [ "view/lib/Frame.js"
+    , "view/lib/Jamaker.color.css"
+    , "view/lib/Jamaker.css"
+    , "view/lib/Jamaker.js"
+    , "view/lib/Jamaker.size.css"
+    , "view/lib/MenuStrip.css"
+    , "view/lib/MenuStrip.js"
+    , "view/lib/popup.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.css"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/lib/webview.js"
+    , "view/AutoSyncShift.html"
+    , "view/setting.html"
+    , "view/viewer.html"
+    , "AutoSyncShift.exe"
+    , "Jamaker.exe"
+    ]
+  }
+, { "version": "2025.12.06v2"
   , "comment":
     [ "스크롤바 색상 버그 수정 등"
     ]

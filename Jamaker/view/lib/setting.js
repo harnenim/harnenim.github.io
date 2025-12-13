@@ -41,7 +41,7 @@ let checkVersion;
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.12.06.v2"
+{	version: "2025.12.13.v1"
 ,	menu:
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
@@ -426,6 +426,11 @@ window.DEFAULT_SETTING =
 			{	path: "C:\\Program Files (x86)\\DAUM\\PotPlayer\\PotPlayer.exe" // 재생기 실행 경로 설정
 			,	withRun: true // 함께 실행
 			,	withExit: true // 함께 종료
+			}
+		,	WebPlayer:
+			{	path: "WebPlayer.exe"
+			,	withRun: true
+			,	withExit: true
 			}
 		}
 	}
