@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <title>WebPlayer</title>
-<link rel="stylesheet" type="text/css" href="WebForm.css?251213" />
-<script src="../view/lib/jquery-3.2.1.min.js?251213"></script>
-<script src="WinAPI.js?251213"></script>
-<script src="Binder.js?251213"></script>
+<link rel="stylesheet" type="text/css" href="WebForm.css?251214" />
+<script src="../view/lib/jquery-3.2.1.min.js?251214"></script>
+<script src="WinAPI.js?251214"></script>
+<script src="Binder.js?251214"></script>
 <script>
 Binder.prototype.startResizeWindow = function(type) {
 	this._.startResizeWindow(type);
@@ -21,7 +21,7 @@ Binder.prototype.close = function() {
 	this._.close();
 }
 </script>
-<script src="WebForm.js?251213"></script>
+<script src="WebForm.js?251214"></script>
 <script>
 // 팟플레이어 SDK 값 가져옴
 const WM_USER = 0x0400;
@@ -61,7 +61,7 @@ window.main = new WebForm();
 	main.run = function() {
 		this.initializeComponent();
 		
-		main.mainView.src = "../view/WebPlayer.html?251213";
+		main.mainView.src = "../view/WebPlayer.html?251214";
 		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
 			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;

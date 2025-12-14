@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251213" />
-<script src="view/lib/jquery-3.2.1.min.js?251213"></script>
-<script src="bridge/WinAPI.js?251213"></script>
-<script src="bridge/Binder.js?251213"></script>
-<script src="bridge/WebPlayerBridge.js?251213"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251214" />
+<script src="view/lib/jquery-3.2.1.min.js?251214"></script>
+<script src="bridge/WinAPI.js?251214"></script>
+<script src="bridge/Binder.js?251214"></script>
+<script src="bridge/WebPlayerBridge.js?251214"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -135,7 +135,7 @@ Binder.prototype.openTempDir = function() { this._.openTempDir() };
 Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 </script>
-<script src="bridge/WebForm.js?251213"></script>
+<script src="bridge/WebForm.js?251214"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -187,7 +187,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?251213";
+			editor.mainView.src = "view/Jamaker.html?251214";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -967,7 +967,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?251213", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?251214", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

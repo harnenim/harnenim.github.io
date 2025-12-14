@@ -766,9 +766,7 @@ SmiEditor.activateKeyEvent = function() {
 	SmiEditor.keyEventActivated = true;
 	const funcSince = log("activateKeyEvent start");
 	
-	let lastKeyDown = 0;
 	$(document).on("keydown", function(e) {
-		lastKeyDown = e.keyCode;
 		const editor = SmiEditor.selected;
 		const hasFocus = editor && editor.input.is(":focus");
 		
@@ -1247,6 +1245,21 @@ SmiEditor.activateKeyEvent = function() {
 						if (e.altKey) {
 							
 						} else {
+							switch (key) {
+								case '~': key = '`'; break;
+								case '!': key = '1'; break;
+								case '@': key = '2'; break;
+								case '#': key = '3'; break;
+								case '$': key = '4'; break;
+								case '%': key = '5'; break;
+								case '^': key = '6'; break;
+								case '&': key = '7'; break;
+								case '*': key = '8'; break;
+								case '(': key = '9'; break;
+								case ')': key = '0'; break;
+								case '_': key = '-'; break;
+								case '+': key = '='; break;
+							}
 							f = SmiEditor.withCtrlShifts[key];
 						}
 					}
@@ -2056,7 +2069,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 						name = name.split("?")[0];
 					}
 					
-					$.ajax({url: "lib/highlight/styles/" + name + ".css?251213"
+					$.ajax({url: "lib/highlight/styles/" + name + ".css?251214"
 						,	dataType: "text"
 						,	success: (style) => {
 								// 문법 하이라이트 테마에 따른 커서 색상 추가
@@ -2638,7 +2651,7 @@ SmiEditor.Finder1 = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?251213", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?251214", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -3012,7 +3025,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?251213", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?251214", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -3474,7 +3487,7 @@ $(() => {
 	
 	if (window.Frame) {
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?251213", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?251214", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			SmiEditor.Finder.window.frame.find(".tl, .t, .tr, .bl, .b, .br").remove();
 			
