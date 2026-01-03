@@ -93,7 +93,7 @@ function WebPlayerBridge() {
 					if (this.window && this.window.name) {
 						return;
 					}
-					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/WebPlayer.html?260103", "player", "scrollbars=no,location=no");
+					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/WebPlayer.html?260104", "player", "scrollbars=no,location=no");
 					if (this.window) {
 						const w = (this.window.iframe && this.window.iframe.contentWindow) ? this.window.iframe.contentWindow : this.window;
 						if (w.document) {

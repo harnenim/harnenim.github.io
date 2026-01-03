@@ -1,4 +1,19 @@
-[ { "version": "2026.01.03"
+[ { "version": "2026.01.04"
+  , "comment":
+    [ "신규 에디터 커스텀 설정 수정 등"
+    ]
+  , "files":
+    [ "view/help/info.html"
+    , "view/lib/highlight/cm/codemirror.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+, { "version": "2026.01.03"
   , "comment":
     [ "내장 브라우저 CefSharp에서 WebView2로 교체"
     , "소스코드 레거시 문법 최신화"
