@@ -1,3 +1,10 @@
+﻿{
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = new URL("./AutoComplete.css?260103", import.meta.url).href;
+	document.head.append(link);
+}
+
 window.AutoCompleteTextarea = function(ta, sets, onSelect) {
 	if (ta.length) { // jQuery인 경우
 		ta.ac = this;
@@ -8,11 +15,11 @@ window.AutoCompleteTextarea = function(ta, sets, onSelect) {
 	
 	this.sets = sets ? sets : [];
 	this.onSelect = onSelect;
-	if (this.sets.length) {
+	if (this.sets["-"]) {
 		// 일반 단어 자동완성은 정렬해서 표시
-		this.sets[0][1].sort();
+		this.sets["-"][1].sort();
 	} else {
-		this.sets[0] = ["", []];
+		this.sets["-"] = ["", []];
 	}
 	
 	if (!AutoCompleteTextarea.view) {
@@ -54,7 +61,7 @@ window.AutoCompleteTextarea = function(ta, sets, onSelect) {
 		if (ta.ac.selected < 0) {
 			if (!e.ctrlKey && !e.altKey) {
 				ta.ac.onCheck(e);
-			} else if (e.ctrlKey && (e.keyCode == 32)) { // Ctrl+SpaceBar
+			} else if (e.ctrlKey && (e.key == " ")) { // Ctrl+SpaceBar
 				ta.ac.openedByCtrl = true;
 				ta.ac.onCheckWord();
 			}
@@ -71,7 +78,7 @@ AutoCompleteTextarea.prototype.resize = function() {
 	AutoCompleteTextarea.view.style.fontSize   = this.font.fontSize   = font.fontSize  ;
 	AutoCompleteTextarea.view.style.fontWeight = this.font.fontWeight = font.fontWeight;
 	AutoCompleteTextarea.view.style.lineHeight = this.font.lineHeight = font.lineHeight;
-	this.LH = Number(font.lineHeight.split("px")[0]);
+	this.LH = parseFloat(font.lineHeight);
 }
 // 선택
 AutoCompleteTextarea.prototype.select = function(index) {
@@ -142,21 +149,22 @@ AutoCompleteTextarea.prototype.setPos = function() {
 	}
 	
 	// 오른쪽에 넘칠 경우 맞춤
-	css.left = Math.min(css.left, offset.left + this.ta.clientWidth - this.SB - AutoCompleteTextarea.view.clientWidth);
+	css.left = Math.max(0, Math.min(css.left, offset.left + this.ta.clientWidth - this.SB - AutoCompleteTextarea.view.clientWidth));
 	
 	AutoCompleteTextarea.view.style.top  = css.top  + "px";
 	AutoCompleteTextarea.view.style.left = css.left + "px";
 }
 AutoCompleteTextarea.prototype.getOffset = function() {
-	const offset = this.ta.getBoundingClientRect();
+	let offset = this.ta.getBoundingClientRect();
+	offset = { top: offset.top, left: offset.left };
 	const css = getComputedStyle(this.ta);
-	offset.top  += Number(css.paddingTop .split("px")[0]);
-	offset.left += Number(css.paddingLeft.split("px")[0]);
+	offset.top  += parseFloat(css.paddingTop);
+	offset.left += parseFloat(css.paddingLeft);
 	return offset;
 }
 AutoCompleteTextarea.prototype.onKeydown = function(e) {
-	switch (e.keyCode) {
-		case 38: { // ↑
+	switch (e.key) {
+		case "ArrowUp": {
 			e.preventDefault();
 			// 선택 위로 이동
 			const selected = this.selected - 1;
@@ -165,7 +173,7 @@ AutoCompleteTextarea.prototype.onKeydown = function(e) {
 			}
 			break;
 		}
-		case 40: { // ↓
+		case "ArrowDown": {
 			e.preventDefault();
 			// 선택 아래로 이동
 			const selected = this.selected + 1;
@@ -174,26 +182,26 @@ AutoCompleteTextarea.prototype.onKeydown = function(e) {
 			}
 			break;
 		}
-		case 13: // Enter
-		{	// 스크롤 튀는 것 방지
+		case "Enter": {
+			// 스크롤 튀는 것 방지
 			e.preventDefault();
 			break;
 		}
-		case 9: // Tab
-		{	// 포커스 이동 방지
+		case "Tab": {
+			// 포커스 이동 방지
 			e.preventDefault();
 			break;
 		}
 	}
 };
 AutoCompleteTextarea.prototype.onKeyup = function(e) {
-	switch (e.keyCode) {
-		case 38: // ↑
-		case 40: // ↓
+	switch (e.key) {
+		case "ArrowUp": // ↑
+		case "ArrowDown": // ↓
 			// keydown에서 동작 완료
 			e.preventDefault();
 			break;
-		case 17: // Ctrl
+		case "Control":
 			if (this.openedByCtrl) {
 				// Ctrl+SpaceBar로 연 직후
 				e.preventDefault();
@@ -201,15 +209,14 @@ AutoCompleteTextarea.prototype.onKeyup = function(e) {
 				break;
 			}
 			// 아니면 Alt/Esc와 같은 동작
-		case 18: // Alt
-		case 27: // Esc
-		{
+		case "Alt":
+		case "Escape": {
 			e.preventDefault();
 			// 선택 취소
 			this.close();
 			break;
 		}
-		case 13: { // Enter
+		case "Enter": {
 			if (e.altKey || e.ctrlKey || e.shiftKey) {
 				// 선택 취소로 간주
 				
@@ -292,20 +299,28 @@ AutoCompleteTextarea.prototype.afterInput = function() {
 		this.close();
 	}
 }
-AutoCompleteTextarea.prototype.onCheck = function(e) {
-	const c = e.keyCode;
+const normalKeys = "`1234567890-=\\[];',./";
+const shiftKeys  = "~!@#$%^&*()_+|{}:\"<>?";
+AutoCompleteTextarea.prototype.onCheck = function (e) {
+	if (e.key.length != 1) return;
 	const text = this.ta.value;
 	const pos = this.ta.selectionEnd - 1;
+	const c = text[pos];
+	if (c != e.key) {
+		const index = normalKeys.indexOf(e.key);
+		if (index < 0) return;
+		if (c != shiftKeys[index]) return;
+	}
 	
-	const sets = this.sets[""+e.keyCode];
-	if (sets && sets[0] == text[pos]) {
+	const sets = this.sets[c];
+	if (sets && sets[0] == c) {
 		this.text = text;
 		this.pos = pos;
 		this.end = pos + 1;
 		this.open(AutoCompleteTextarea.getList(text, pos, sets[1]));
 	}
 }
-AutoCompleteTextarea.getList = function(text, pos, list) {
+AutoCompleteTextarea.getList = function(text, pos, list) { // override용 추가 파라미터
 	return list;
 }
 AutoCompleteTextarea.wordBreaker = " \t\r\n()<>[]{},.`'\"?!;:/\\";
@@ -334,9 +349,6 @@ AutoCompleteTextarea.prototype.onCheckWord = function(e) {
 	this.text = text;
 	this.pos = start;
 	this.end = end;
-	this.open(this.sets[0][1]);
+	this.open(this.sets["-"][1]);
 	this.afterInput();
-}
-AutoCompleteTextarea.prototype.on = function(a, b) {
-	this.ta.on(a, b);
 }

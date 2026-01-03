@@ -4,19 +4,18 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>겹치는 싱크 분리</title>
-	<script src="../lib/jquery-3.2.1.min.js?251214"></script>
-	<script src="../lib/popup.js?251214"></script>
-	<script src="../lib/AutoCompleteTextarea.js?251214"></script>
-	<script src="../lib/History.js?251214"></script>
-	<script src="../lib/SubtitleObject.js?251214"></script>
-	<script src="../lib/SmiEditor.js?251214"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251214" />
-	<link rel="stylesheet" type="text/css" href="../lib/AutoCompleteTextarea.css?251214" />
+	<script src="../lib/jquery-3.2.1.min.js?260103"></script>
+	<script src="../lib/popup.js?260103"></script>
+	<script src="../lib/SmiEditor.js" type="module"></script>
 	<script>
 windowName = "addon";
 
 // 초기 상태 기억
 let origin = null;
+
+let inputOrigin;
+let outputUpper;
+let outputLower;
 
 function init() {
 	if (opener && opener.SmiEditor.selected) {
@@ -26,6 +25,19 @@ function init() {
 		window.close();
 		return false;
 	}
+	
+	{	// 에디터 교체
+        inputOrigin = new SmiEditor("", document.getElementById("input"));
+        outputUpper = new SmiEditor("", document.getElementById("outputUpper"));
+        outputLower = new SmiEditor("", document.getElementById("outputLower"));
+		SmiEditor.activateKeyEvent();
+    }
+	
+    SmiEditor.setSetting({});
+    if (opener.setting) {
+        SmiEditor.setHighlight(opener.setting.highlight, [inputOrigin, outputUpper, outputLower]);
+    }
+	
 	let start = 0;
 	let end = 0;
 	
@@ -37,7 +49,7 @@ function init() {
 		end = origin.text.split("\n").length;
 	}
 	
-	$("#input").val(origin.text.split("\n").slice(start, end).join("\n"));
+	inputOrigin.setValue(origin.text.split("\n").slice(start, end).join("\n"));
 }
 
 function smiTrim(text, prev="", next="") {
@@ -76,7 +88,7 @@ function smiTrim(text, prev="", next="") {
 function devide() {
 	const syncs = [];
 	
-	{	const lines = $("#input").val().split("\n");
+	{	const lines = inputOrigin.getValue().split("\n");
 		let lastSync = null;
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
@@ -106,7 +118,7 @@ function devide() {
 		const lines = syncs[i].text.join(" ").split(/<br>/gi);
 		for (let j = 0; j < lines.length; j++) {
 			const line = lines[j];
-			const text = smiTrim($("<span>").html(line).text());
+			const text = smiTrim(htmlToText(line));
 			lines[j] = (text == "" || text == "　") ? null : smiTrim(line);
 		}
 		syncs[i].text = lines;
@@ -278,26 +290,13 @@ function devide() {
 		}
 	}
 	
-	$("#outputUpper").val(upper.join("\n"));
-	$("#outputLower").val(lower.join("\n"));
+	outputUpper.setValue(upper.join("\n"));
+	outputLower.setValue(lower.join("\n"));
 }
 
 ready(() => {
 	init();
-	
-	SmiEditor.setSetting(opener ? opener.setting : { autoComplete: {}, hlghlight: {} });
-	{	const tmp = $("#input");
-		const editor = new SmiEditor(tmp.val());
-		tmp.remove();
-		
-		$("body").prepend(editor.input.attr({ id: "input" }));
-		SmiEditor.selected = editor;
-	}
-	SmiEditor.activateKeyEvent();
-	
-	LH = Number(SmiEditor.selected.input.css("line-height").split("px")[0]);
-	
-	$("#btnDevide").on("click", devide);
+	document.getElementById("btnDevide").addEventListener("click", devide);
 	devide();
 });
 	</script>
@@ -306,26 +305,28 @@ body > * {
 	position: absolute;
 }
 
-textarea {
+#input,
+#outputUpper,
+#outputLower {
 	position: absolute;
 	width: calc(50% - 10px);
 	border-width: 0;
+	border-top: 1px solid #aaa;
 }
 
-textarea#input {
+#input {
 	top: 0;
 	left: 0;
 	height: 100%;
 }
 
-textarea#outputUpper {
+#outputUpper {
 	top: 0;
 	left: calc(50% + 10px);
 	height: calc(50% - 1px);
-	border-bottom-width: 1px;
 }
 
-textarea#outputLower {
+#outputLower {
 	top: 50%;
 	left: calc(50% + 10px);
 	height: 50%;

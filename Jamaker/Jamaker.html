@@ -11,11 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?251214" />
-<script src="view/lib/jquery-3.2.1.min.js?251214"></script>
-<script src="bridge/WinAPI.js?251214"></script>
-<script src="bridge/Binder.js?251214"></script>
-<script src="bridge/WebPlayerBridge.js?251214"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260103" />
+<script src="bridge/WinAPI.js?260103"></script>
+<script src="bridge/Binder.js?260103"></script>
+<script src="bridge/WebPlayerBridge.js?260103"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -25,10 +24,6 @@ Binder.prototype.setFollowWindow = function(follow) {
 }
 Binder.prototype.setMenus = function(menus) {
 	this._.setMenus(JSON.parse(menus));
-}
-
-Binder.prototype.focusToMenu = function(keyCode) {
-	//this._.focusToMenu(keyCode);
 }
 
 Binder.prototype.repairSetting = function() {
@@ -135,7 +130,7 @@ Binder.prototype.openTempDir = function() { this._.openTempDir() };
 Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 </script>
-<script src="bridge/WebForm.js?251214"></script>
+<script src="bridge/WebForm.js?260103"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -187,7 +182,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?251214";
+			editor.mainView.src = "view/Jamaker.html?260103";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -366,7 +361,7 @@ window.MB = 9;
 				}
 				
 				//hwnd.binder = editor.binder;
-				hwnd.onload = function() {
+				(hwnd.iframe ? hwnd.iframe.contentWindow : hwnd).onload = function() {
 					//hwnd.binder = editor.binder;
 					setTimeout(function() {
 						if (target == "finder") {
@@ -381,7 +376,7 @@ window.MB = 9;
 								viewer.setLines(editor.viewerLines);
 							}
 						}
-					}, 1);
+					}, 100);
 				};
 			}
 		}
@@ -580,14 +575,11 @@ window.MB = 9;
 			this.strSettingJson = setting
 		}
 		this.strBridgeList = playerDlls;
-		$.ajax({url: "view/lib/highlight/list.txt"
-			,	dataType: "text"
-			,	success: (highlights) => {
-					editor.strHighlights = highlights;
-					if (afterSuccess) {
-						afterSuccess();
-					}
-				}
+		fetch("view/lib/highlight/list.txt").then(async (response) => {
+			editor.strHighlights = await response.text();
+			if (afterSuccess) {
+				afterSuccess();
+			}
 		});
 	}
 	editor.repairSetting = function() {
@@ -641,14 +633,11 @@ window.MB = 9;
 		// C#에선 addon 로딩되면 eval 실행
 	}
 	editor.loadAddonSetting = function(path) {
-		$.ajax({"url" : "setting/addon_" + path
-			,	"dataType": "text"
-			,	"success": (setting) => {
-					editor.mainView.contentWindow.afterLoadAddonSetting(setting.replaceAll("\r\n", "\n"));
-				}
-			,	"error": () => {
-					editor.mainView.contentWindow.afterLoadAddonSetting("");
-				}
+		fetch("setting/addon_" + path).then(async (response) => {
+			const setting = await response.text();
+			editor.mainView.contentWindow.afterLoadAddonSetting(setting.replaceAll("\r\n", "\n"));
+		}).catch(() => {
+			editor.mainView.contentWindow.afterLoadAddonSetting("");
 		});
 	}
 	editor.saveAddonSetting = function(path, text) {
@@ -676,45 +665,6 @@ window.MB = 9;
 			this.script("init", this.strSettingJson);
 		}
 	};
-	ready(() => {
-		$(document).on("keydown", ".submenu.open li", function(e) {
-			const li = $(this);
-			switch (e.keyCode) {
-				case 38: { // ↑
-					li.prev().focus();
-					break;
-				}
-				case 40: { // ↓
-					li.next().focus();
-					break;
-				}
-				case 37: { // ←
-					li.parent().data("menu").prev().click();
-					break;
-				}
-				case 39: { // →
-					li.parent().data("menu").next().click();
-					break;
-				}
-				case 13: { // Enter
-					li.click();
-					break;
-				}
-			}
-		});
-		
-		$(document).on("keydown", editor.keyDownForMenu);
-	});
-	editor.keyDownForMenu = function(e) {
-		const key = String.fromCharCode(e.keyCode);
-		if (!e.shiftKey && !e.ctrlKey && e.altKey) {
-			const menu = editor.menuKeys[key];
-			if (menu) {
-				e.preventDefault();
-				editor.menustrip.openMenu(menu);
-			}
-		}
-	}
 }
 {	// 파일
 	const fileBuffers = [];
@@ -798,7 +748,7 @@ window.MB = 9;
 			const paths = path.replaceAll("\\", "/").split("/");
 			title = paths[paths.length - 1] + " - Jamaker";
 		}
-		$("title").text(title);
+		document.title = title;
 	}
 	editor.checkLoadVideoFile = function() { /* native */ }
 	editor.loadVideoFile = function(path) { /* native */ }
@@ -957,8 +907,7 @@ window.MB = 9;
 	editor.saveTemp = function(text, path) {
 		path = path.split(":");
 		const filename = path[1] ? path[1] : path[0];
-//		const key = "tmp_" + new Date().getTime() + "_" + filename;
-		const key = "tmp_" + filename;
+		const key = `tmp_${new Date().getTime()}_${filename}`;
 		
 		const tmpKeys = localStorage.getItem("tmpKeys");
 		const keys = tmpKeys ? tmpKeys.split(":") : [];
@@ -967,7 +916,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?251214", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260103", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
@@ -981,16 +930,10 @@ window.MB = 9;
 	editor.initializeComponent = function() {
 		this.super_initializeComponent();
 		
-		this.layerForDrag.css({
-				padding: 80
-			,	textAlign: "center"
-			,	fontSize: 20
-		}).html("웹 간이 버전에서 드래그로 열 경우<br />저장 파일을 재지정해 줘야 합니다.");
-		/*
-		$("body").append((this.menustrip = new MenuStrip()).view);
-		this.mainView.style.top = "20px";
-		this.mainView.style.height = "calc(100% - 20px)";
-		*/
+		this.layerForDrag.style.padding = "80px";
+		this.layerForDrag.style.textAlign = "center";
+		this.layerForDrag.style.fontSize = "20px";
+		this.layerForDrag.innerHTML = "웹 간이 버전에서 드래그로 열 경우<br />저장 파일을 재지정해 줘야 합니다.";
 	}
 }
 ready(() => {

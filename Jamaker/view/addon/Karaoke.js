@@ -1,3 +1,9 @@
+﻿document.head.querySelectorAll("link").forEach((el) => {
+	if (el.href.endsWith("/popup.css?260103")) {
+		el.remove();
+	}
+});
+
 const DEFAULT_LIST = ("2023.03.27"
 	+ "\n五里霧中1112\n混凝土006\n春夏冬004\n真っ赤111\n夜明け111\n真実22\n往来22\n並行22\n曖昧22\n頂戴22\n血管22\n抑制22\n運命22\n衝動22\n逃亡22\n毎日22"
 	+ "\n窮屈22\n条件22\n後悔22\n稲妻22\n朝食22\n東京22\n体温22\n彩り31\n着信22\n完成22\n自覚12\n自分12\n無情12\n期待12\n未来12\n脳裏21\n深紅21\n笑顔12"
@@ -33,7 +39,7 @@ function refreshKanji() {
 			}
 		}
 	}
-	$("#inputKanji").val(savedKanjiList.substring(savedKanjiList.indexOf("\n") + 1)); // 첫 줄은 기본값 버전이므로 제외
+	document.getElementById("inputKanji").value = savedKanjiList.substring(savedKanjiList.indexOf("\n") + 1); // 첫 줄은 기본값 버전이므로 제외
 }
 
 window.windowName = "karaoke";
@@ -146,6 +152,30 @@ for (let i = 0; i < gana.length; i++) {
 	vws[gana[i]] = vw;
 }
 
+const dataMap = new WeakMap();
+window.eData = (el=null, key=null, value=null) => {
+	if (!el) return null;
+	
+	let map = dataMap.get(el);
+	if (!map) {
+		dataMap.set(el, map = {});
+	}
+	if (key != null) {
+		if (typeof key == "string") {
+			if (value == null) {
+				return map[key];
+			}
+			map[key] = value;
+		} else if (typeof key == "object") {
+			const paramMap = key;
+			for (key in paramMap) {
+				map[key] = paramMap[key];
+			}
+		}
+	}
+	return map;
+}
+
 ready(() => {
 	if (loadAddonSetting) {
 		loadAddonSetting(KANJI_FILE, (text) => {
@@ -153,33 +183,33 @@ ready(() => {
 		});
 	}
 	
-	const inputLyrics = $("#inputLyrics");
-	const inputDivider = $("#inputDivider");
+	const inputLyrics = document.getElementById("inputLyrics");
+	const inputDivider = document.getElementById("inputDivider");
 	
-	const inputOrig = $("#inputOrig");
-	const inputRead = $("#inputRead");
-	const inputTran = $("#inputTran");
+	const inputOrig = document.getElementById("inputOrig");
+	const inputRead = document.getElementById("inputRead");
+	const inputTran = document.getElementById("inputTran");
 	
-	const formEditLine = $("#formEditLine");
-	const inputLineO = $("#inputLineO");
-	const inputLineR = $("#inputLineR");
-	const inputLineT = $("#inputLineT");
+	const formEditLine = document.getElementById("formEditLine");
+	const inputLineO = document.getElementById("inputLineO");
+	const inputLineR = document.getElementById("inputLineR");
+	const inputLineT = document.getElementById("inputLineT");
 	
-	const preview    = $("#preview");
-	const formDesign = $("#formDesign");
-	const output     = $("#output");
+	const preview    = document.getElementById("preview");
+	const formDesign = document.getElementById("formDesign");
+	const output     = document.getElementById("output");
 	const result = [];
 	
-	const inputOColorFrom = $("#inputOColorFrom");
-	const inputOColorTo   = $("#inputOColorTo"  );
-	const inputRColorFrom = $("#inputRColorFrom");
-	const inputRColorTo   = $("#inputRColorTo"  );
-	const inputTColor     = $("#inputTColor"    );
+	const inputOColorFrom = document.getElementById("inputOColorFrom");
+	const inputOColorTo   = document.getElementById("inputOColorTo"  );
+	const inputRColorFrom = document.getElementById("inputRColorFrom");
+	const inputRColorTo   = document.getElementById("inputRColorTo"  );
+	const inputTColor     = document.getElementById("inputTColor"    );
 	
-	const btnOpenKanji = $("#btnOpenKanji");
-	const formKanji = $("#formKanji");
-	const inputKanji = $("#inputKanji"); // 첫 줄은 기본값 버전이므로 제외
-	const btnApplyKanji = $("#btnApplyKanji");
+	const btnOpenKanji = document.getElementById("btnOpenKanji");
+	const formKanji = document.getElementById("formKanji");
+	const inputKanji = document.getElementById("inputKanji"); // 첫 줄은 기본값 버전이므로 제외
+	const btnApplyKanji = document.getElementById("btnApplyKanji");
 	
 	const lefts = [	null
 		,	"  30%"
@@ -196,27 +226,55 @@ ready(() => {
 	const runs = [ null ];
 	
 	let step = 1;
-	$("#total").on("click", ".button.active", function() {
-		const newStep = $(this).data("step");
+	document.getElementById("total").addEventListener("click", (e) => {
+		const btn = e.target.closest(".button.active");
+		if (!btn) return;
+		
+		const newStep = Number(btn.dataset.step);
 		if (newStep > step && !validates[step]()) {
 			alert("입력값이 불완전합니다.");
+			if (step == 3) {
+				document.getElementById("page3").querySelector(".line.error input[type=text]").focus();
+			}
 			return;
 		}
 		step = newStep;
 		
-		$("#total").css("left", lefts[step]).find(".button").removeClass("hide").removeClass("active");
-		$("input, textarea, button").attr("tabindex", -1);
-		$("#page" + step).find(".button").addClass("hide");
-		$("#page" + step).find("input, textarea, button").attr("tabindex", "");
-		$("#page" + (step - 1)).find(".button").addClass("active");
-		$("#page" + (step + 1)).find(".button").addClass("active");
+		{	const total = document.getElementById("total");
+			total.style.left = lefts[step];
+			[...total.querySelectorAll(".button")].forEach((el) => {
+				el.classList.remove("hide");
+				el.classList.remove("active");
+			});
+		}
+		[...document.getElementsByTagName("input")]
+		.concat([...document.getElementsByTagName("textarea")])
+		.concat([...document.getElementsByTagName("button")]).forEach((el) => {
+			el.tabIndex = -1;
+		});
+		{	const page = document.getElementById("page" + step);
+			page.querySelectorAll(".button").forEach((el) => {
+				el.classList.add("hide");
+			});
+			[...page.getElementsByTagName("input")]
+			.concat([...page.getElementsByTagName("textarea")])
+			.concat([...page.getElementsByTagName("button")]).forEach((el) => {
+				el.tabIndex = "";
+			});
+		}
+		document.querySelectorAll(`#page${step-1} .button`).forEach((el) => {
+			el.classList.add("active");
+		});
+		document.querySelectorAll(`#page${step+1} .button`).forEach((el) => {
+			el.classList.add("active");
+		});
 		if (runs[step]) runs[step]();
 	});
 	
 	{	// Step 1
 		let run = runs[1] = () => {
-			const lines = inputLyrics.val().trim().split("\n");
-			const divider = Number(inputDivider.val());
+			const lines = inputLyrics.value.trim().split("\n");
+			const divider = Number(inputDivider.value);
 			
 			const lineGroups = [];
 			{
@@ -273,9 +331,9 @@ ready(() => {
 					tran.push(lineGroup[0]);
 				}
 			}
-			inputOrig.val(orig.join("\n"));
-			inputRead.val(read.join("\n"));
-			inputTran.val(tran.join("\n"));
+			inputOrig.value = orig.join("\n");
+			inputRead.value = read.join("\n");
+			inputTran.value = tran.join("\n");
 		}
 		
 		let checker = null;
@@ -292,7 +350,7 @@ ready(() => {
 			}, 1000);
 		}
 		
-		inputLyrics.on("keyup", function() {
+		inputLyrics.addEventListener("keyup", () => {
 			runAfterCheck();
 		});
 	}
@@ -300,9 +358,9 @@ ready(() => {
 	{	// Step 2
 		validates[2] = () => {
 			// 원문/독음/번역 줄 개수가 같아야 진행 가능
-			const o = inputOrig.val().trim().split("\n").length;
-			const r = inputRead.val().trim().split("\n").length;
-			const t = inputTran.val().trim().split("\n").length;
+			const o = inputOrig.value.trim().split("\n").length;
+			const r = inputRead.value.trim().split("\n").length;
+			const t = inputTran.value.trim().split("\n").length;
 			return o == r && r == t;
 		};
 		
@@ -311,10 +369,10 @@ ready(() => {
 				return;
 			}
 			
-			const orig = inputOrig.val().trim().split("\n");
-			const read = inputRead.val().trim().split("\n");
-			const tran = inputTran.val().trim().split("\n");
-			
+			const orig = inputOrig.value.trim().split("\n");
+			const read = inputRead.value.trim().split("\n");
+			const tran = inputTran.value.trim().split("\n");
+
 			{	// Step 1 역방향 적용
 				const lines = [];
 				for (let i = 0; i < orig.length; i++) {
@@ -334,21 +392,25 @@ ready(() => {
 					}
 					lines.push(line);
 				}
-				const divider = Number(inputDivider.val());
+				const divider = Number(inputDivider.value);
 				let n = "";
 				for (let i = 0; i < divider; i++) {
 					n += "\n";
 				}
-				inputLyrics.val(lines.join(n));
+				inputLyrics.value = lines.join(n);
 			}
 			
 			{	// Step 3 비우고 재생성
-				const area = $("#page3 > div:first-child").empty();
+				const area = document.getElementById("page3").children[0];
+				area.innerHTML = "";
 				for (let i = 0; i < orig.length; i++) {
 					const o = orig[i];
 					const r = read[i];
 					const t = tran[i];
-					const line = $("<div>").addClass("line").addClass("line-"+i).data("line", i);
+					const line = document.createElement("div");
+					line.classList.add("line");
+					line.classList.add(`line-${i}`);
+					eData(line, { line: i });
 					refreshLine(line, o, r, t);
 					area.append(line);
 				}
@@ -370,15 +432,17 @@ ready(() => {
 			}, 1000);
 		}
 		
-		$("#inputOrig, #inputRead, #inputTran").on("keyup", function() {
-			runAfterCheck();
-		});
+		[inputOrig, inputRead, inputTran].forEach((el) => {
+			el.addEventListener("keyup", () => {
+				runAfterCheck();
+			});
+		})
 	}
 	
 	function refreshLine(line, o, r, t) {
 		let sumO = 0;
 		let sumR = 0;
-		line.empty();
+		line.innerHTML = "";
 		
 		// 최종 결과물: [[문자,모라(,입력란)],[문자,모라(,입력란)], ...]
 		// ort: 1-원문, 2-원문/번역, 3-원문/독음/번역
@@ -387,22 +451,30 @@ ready(() => {
 			// 원문=독음 → 음절 입력 필요 없음
 			const oc = [];
 			
-			const oLine = $("<p>").text(o);
+			const oLine = document.createElement("p");
+			oLine.innerText = o;
 			for (let j = 0; j < o.length; j++) {
 				if (o[j] == " " || o[j] == "　" || o[j] == "\t") {
 					oc.push([o[j], 0]);
 				} else {
 					oc.push([o[j], 1]);
-					oLine.append($("<input type='hidden' value='1'>"));
+					const input = document.createElement("input");
+					input.type = "hidden";
+					input.value = 1;
+					oLine.append(input);
 				}
 			}
-			line.data("oc", oc).data("rc", oc).append(oLine);
+			eData(line, { oc: oc, rc: oc });
+			line.append(oLine);
 			
-			line.data("tc", t);
+			eData(line, { tc: t });
 			if (r == t) {
-				line.data("ort", 1);
+				eData(line, { ort: 1 });
 			} else {
-				line.data("ort", 2).append($("<p>").text(t));
+				eData(line, { ort: 2 });
+				const p = document.createElement("p");
+				p.innerText = t;
+				line.append(p);
 			}
 			
 		} else {
@@ -513,30 +585,56 @@ ready(() => {
 					}
 				}
 				
-				const tr0 = $("<tr>"), tr1 = $("<tr>");
+				const tr0 = document.createElement("tr");
+				const tr1 = document.createElement("tr");
 				for (let j = 0; j < oc.length; j++) {
 					let c = oc[j][0];
 					if (typeof(c) != "string") {
 						c = "<ruby>"+c[0]+"<rt>"+c[1]+"</rt></ruby>";
 					}
-					tr0.append($("<td>").append(c));
+					{	const td = document.createElement("td");
+						td.innerHTML = c;
+						tr0.append(td);
+					}
+					const len = oc[j][1];
 					if (oc[j][2]) { // 음절 입력
-						tr1.append($("<td>").append($("<input type='text'>").val(oc[j][1])));
+						const td = document.createElement("td");
+						const input = document.createElement("input");
+						input.type = "text";
+						input.value = len;
+						td.append(input);
+						tr1.append(td);
 					} else {
-						const len = oc[j][1];
-						tr1.append($("<td>").text(len>1 ? len : len==1 ? "-" : " ").append($("<input type='hidden'>").val(len)));
+						const td = document.createElement("td");
+						td.innerText = ((len > 1) ? len : (len == 1 ? "-" : " "));
+						const input = document.createElement("input");
+						input.type = "hidden";
+						input.value = len;
+						td.append(input);
+						tr1.append(td);
 					}
 					sumO += oc[j][1];
 				}
-				tr0.append($("<td rowspan='2' class='sum'>").text(sumO));
+				{	const td = document.createElement("td");
+					td.rowspan = 2;
+					td.classList.add("sum");
+					td.innerText = sumO;
+					tr0.append(td);
+				}
 				
-				line.data("oc", oc).append($("<table>").append(tr0).append(tr1));
+				eData(line, { oc: oc });
+				{	const table = document.createElement("table");
+					table.append(tr0);
+					table.append(tr1);
+					line.append(table);
+				}
 			}
 			
 			{	// 읽기
 				const rc = [];
-			
-				const tr0 = $("<tr>"), tr1 = $("<tr>");
+				
+				const tr0 = document.createElement("tr");
+				const tr1 = document.createElement("tr");
 				
 				const 가 = '가'.charCodeAt();
 				const 아 = '아'.charCodeAt();
@@ -547,7 +645,10 @@ ready(() => {
 				for (let j = 0; j < r.length; j++) {
 					let c = r[j];
 					let cc = c.charCodeAt();
-					tr0.append($("<td>").text(c));
+					{	const td = document.createElement("td");
+						td.innerHTML = c;
+						tr0.append(td);
+					}
 					if (가<=cc && cc<=힣) {
 						const batchim = (cc-가) % 28;
 						if (아<=cc && cc<=잏) {
@@ -561,13 +662,26 @@ ready(() => {
 									len = (lm == cm) ? 1 : 2; // 앞 글자와 모음 같을 경우: 1일 가능성이 큼
 								}
 								rc.push([c, len]);
-								tr1.append($("<td>").append($("<input type='text'>").val(len)));
+								{	const td = document.createElement("td");
+									const input = document.createElement("input");
+									input.type = "text";
+									input.value = len;
+									td.append(input);
+									tr1.append(td);
+								}
 								sumR += len;
 								
 							} else {
 								// 받침 없음: 1 고정
 								rc.push([c, 1]);
-								tr1.append($("<td>").text("-").append($("<input type='hidden'>").val(1)));
+								{	const td = document.createElement("td");
+									const input = document.createElement("input");
+									input.type = "hidden";
+									input.value = 1;
+									td.innerText = "-";
+									td.append(input);
+									tr1.append(td);
+								}
 								sumR++;
 							}
 						} else {
@@ -575,12 +689,25 @@ ready(() => {
 							if (batchim) {
 								// 받침 존재: 거의 확실하게 2
 								rc.push([c, 2]);
-								tr1.append($("<td>").append($("<input type='text'>").val(2)));
+								{	const td = document.createElement("td");
+									const input = document.createElement("input");
+									input.type = "text";
+									input.value = 2;
+									td.append(input);
+									tr1.append(td);
+								}
 								sumR += 2;
 							} else {
 								// 받침 없으면 1 고정
 								rc.push([c, 1]);
-								tr1.append($("<td>").text("-").append($("<input type='hidden'>").val(1)));
+								{	const td = document.createElement("td");
+									const input = document.createElement("input");
+									input.type = "hidden";
+									input.value = 1;
+									td.innerText = "-";
+									td.append(input);
+									tr1.append(td);
+								}
 								sumR++;
 							}
 						}
@@ -588,64 +715,98 @@ ready(() => {
 						if (c == ' ' || c == '　' || c == '\t') {
 							// 공백 문자 0 고정
 							rc.push([c, 0]);
-							tr1.append($("<td>").append("&nbsp;<input type='hidden' value='0' />"));
-							
+							{	const td = document.createElement("td");
+								const input = document.createElement("input");
+								input.type = "hidden";
+								input.value = 0;
+								td.innerText = " ";
+								td.append(input);
+								tr1.append(td);
+							}
 						} else if (('a'<=c && c<='z') || ('A'<=c && c<='Z')) {
 							// 알파벳일 경우 1 고정
 							rc.push([c, 1]);
-							tr1.append($("<td>").text("-").append("<input type='hidden' value='1' />"));
+							{	const td = document.createElement("td");
+								const input = document.createElement("input");
+								input.type = "hidden";
+								input.value = 1;
+								td.innerText = "-";
+								td.append(input);
+								tr1.append(td);
+							}
 							sumR++;
 							
 						} else {
 							rc.push([c, 1]);
-							tr1.append($("<td>").append($("<input type='text'>").val(1)));
+							{	const td = document.createElement("td");
+								const input = document.createElement("input");
+								input.type = "text";
+								input.value = 1;
+								td.append(input);
+								tr1.append(td);
+							}
 							sumR++;
 						}
 					}
 					last = cc;
 				}
-				tr0.append($("<td rowspan='2' class='sum'>").text(sumR));
+				{	const td = document.createElement("td");
+					td.rowspan = 2;
+					td.classList.add("sum");
+					td.innerText = sumR;
+					tr0.append(td);
+				}
 				
-				line.data("rc", rc).append($("<table>").append(tr0).append(tr1));
+				eData(line, { rc: rc });
+				{	const table = document.createElement("table");
+					table.append(tr0);
+					table.append(tr1);
+					line.append(table);
+				}
 			}
 			
 			{	// 번역
-				line.data("tc", t).append($("<p>").text(t));
+				eData(line, { tc: t });
+				const p = document.createElement("p");
+				p.innerText = t;
+				line.append(p);
 			}
 			
-			line.data("ort", 3);
+			eData(line, { ort: 3 });
 		}
 		
 		if (sumO == sumR) {
-			line.removeClass("error");
+			line.classList.remove("error");
 		} else {
-			line.addClass("error");
+			line.classList.add   ("error");
 		}
 	}
 	
 	// Step 3 해당 줄만 수정
 	function openEditLine(i) {
-		inputLineO.val(inputOrig.val().trim().split("\n")[i]);
-		inputLineR.val(inputRead.val().trim().split("\n")[i]);
-		inputLineT.val(inputTran.val().trim().split("\n")[i]);
-		formEditLine.show().data("line", i);
+		inputLineO.value = inputOrig.value.trim().split("\n")[i];
+		inputLineR.value = inputRead.value.trim().split("\n")[i];
+		inputLineT.value = inputTran.value.trim().split("\n")[i];
+		formEditLine.style.display = "block";
+		eData(formEditLine, { line: i });
 	}
 	function saveEditLine() {
-		const i = formEditLine.hide().data("line");
-		const orig = inputOrig.val().trim().split("\n");
-		const read = inputRead.val().trim().split("\n");
-		const tran = inputTran.val().trim().split("\n");
+		formEditLine.style.display = "none";
+		const i = eData(formEditLine).line;
+		const orig = inputOrig.value.trim().split("\n");
+		const read = inputRead.value.trim().split("\n");
+		const tran = inputTran.value.trim().split("\n");
 		
 		// Step 3 해당 줄 갱신
-		refreshLine($("#page3 .line-"+i)
-			,	orig[i] = inputLineO.val()
-			,	read[i] = inputLineR.val()
-			,	tran[i] = inputLineT.val()
+		refreshLine(document.getElementById("page3").querySelector(".line-"+i)
+			,	orig[i] = inputLineO.value
+			,	read[i] = inputLineR.value
+			,	tran[i] = inputLineT.value
 		);
 		// Step 2 역방향 갱신
-		inputOrig.val(orig.join("\n"));
-		inputRead.val(read.join("\n"));
-		inputTran.val(tran.join("\n"));
+		inputOrig.value = orig.join("\n");
+		inputRead.value = read.join("\n");
+		inputTran.value = tran.join("\n");
 		// Step 4 결과물 재계산
 		runs[3];
 	}
@@ -653,7 +814,7 @@ ready(() => {
 	{	// Step 3
 		validates[3] = () => {
 			// 음절 수 맞춰졌어야 진행 가능
-			return $("#page3 .line.error").length == 0;
+			return !document.getElementById("page3").querySelector(".line.error");
 		};
 		
 		function nokori(c, i) {
@@ -672,32 +833,32 @@ ready(() => {
 			if (!validates[3]()) {
 				return;
 			}
-			const orig = inputOrig.val().trim().split("\n");
-			const read = inputRead.val().trim().split("\n");
-			const tran = inputTran.val().trim().split("\n");
+			const orig = inputOrig.value.trim().split("\n");
+			const read = inputRead.value.trim().split("\n");
+			const tran = inputTran.value.trim().split("\n");
 			
 			result.length = 0;
 			
-			$("#page3 .line").each((_, el) => {
-				const line = $(el);
-				let ort = line.data("ort");
-				let oc = line.data("oc");
-				let rc = line.data("rc");
-				let tc = line.data("tc");
+			document.getElementById("page3").querySelectorAll(".line").forEach((line) => {
+				const lineData = eData(line);
+				let ort = lineData.ort;
+				let oc  = lineData.oc ;
+				let rc  = lineData.rc ;
+				let tc  = lineData.tc ;
 				
 				let length = 0;
 				
-				if (line.children().length == 1) {
+				if (line.children.length == 1) {
 					for (let i = 0; i < oc.length; i++) {
 						length += oc[i][1];
 					}
 				} else {
 					// oc, rc의 음절 값을 입력된 값으로 대체
-					line.find("table:eq(0) input").each((i, el) => {
-						length += (oc[i][1] = Number($(el).val()));
+					line.querySelector   ("table")   .querySelectorAll("input").forEach((el, i) => {
+						length += (oc[i][1] = Number(el.value));
 					});
-					line.find("table:eq(1) input").each((i, el) => {
-						rc[i][1] = Number($(el).val());
+					line.querySelectorAll("table")[1].querySelectorAll("input").forEach((el, i) => {
+						rc[i][1] = Number(el.value);
 					});
 				}
 				
@@ -835,34 +996,42 @@ ready(() => {
 			}, 1000);
 		}
 		
-		$("#page3").on("keyup", "input", function() {
+		document.getElementById("page3").addEventListener("keyup", (e) => {
+			const input = e.target.closest("input");
+			if (!input) return;
+			
 			// 입력 있을 경우 음절 수 재계산
-			const input = $(this);
-			const table = input.parents("table");
+			const table = input.closest("table");
 			let sum = 0;
-			table.find("input").each((_, el) => {
-				sum += Number($(el).val());
+			table.querySelectorAll("input").forEach((el) => {
+				sum += Number(el.value);
 			});
-			table.find(".sum").text(sum);
+			table.querySelector(".sum").innerText = sum;
 			
 			// 원문/독음 따로일 경우 음절 수 맞는지 확인
-			const line = input.parents(".line");
-			const tables = line.find("table");
+			const line = input.closest(".line");
+			const tables = line.querySelectorAll("table");
 			if (tables.length == 2) {
-				if ($(tables[0]).find(".sum").text() == $(tables[1]).find(".sum").text()) {
-					line.removeClass("error");
+				if (tables[0].querySelector(".sum").innerText == tables[1].querySelector(".sum").innerText) {
+					line.classList.remove("error");
 				} else {
-					line.addClass("error");
+					line.classList.add   ("error");
 				}
 			}
 			runAfterCheck();
 		});
-		
-		$("#page3").on("click", ".sum", function() {
+
+		document.getElementById("page3").addEventListener("click", (e) => {
+			const el = e.target.closest(".sum");
+			if (!el) return;
 			// 해당 줄 텍스트 편집
-			openEditLine($(this).parents(".line").data("line"));
+			openEditLine(eData(el.closest(".line")).line);
 		});
-		formEditLine.on("click", "button", saveEditLine);
+		formEditLine.addEventListener("click", (e) => {
+			if (e.target.closest("button")) {
+				saveEditLine();
+			}
+		});
 	}
 	
 	function hexToNumber(hex) {
@@ -870,14 +1039,14 @@ ready(() => {
 	}
 	function numberToHex(c) {
 		if (0 <= c && c < 16) {
-			return "0" + c.toString(16);
+			return `0${ c.toString(16) }`;
 		} else if (16 <= c && c < 256) {
 			return c.toString(16);
 		}
 		return "00";
 	}
 	function colorCode(color) {
-		return "#" + numberToHex(color[0]) + numberToHex(color[1]) + numberToHex(color[2]);
+		return `#${ numberToHex(color[0]) }${ numberToHex(color[1]) }${ numberToHex(color[2]) }`;
 	}
 	/**
 	 * line: [활성,중간,비활성]
@@ -917,9 +1086,9 @@ ready(() => {
 				const color = colorCode(i==0 ? to : from);
 				for (let j = 0; j < lineI.length; j++) {
 					if (typeof(lineI[j]) == "string") {
-						result[i] += "<FONT color=\""+color+"\">" + lineI[j] + "</FONT>";
+						result[i] += `<FONT color="${color}">${lineI[j]}</FONT>`;
 					} else {
-						result[i] += "<RUBY><FONT color=\""+color+"\">" + lineI[j][0] + "</FONT><RT><FONT color=\""+color+"\">" + lineI[j][1] + "</FONT></RT></RUBY>";
+						result[i] += `<RUBY><FONT color="${color}">${lineI[j][0]}</FONT><RT><FONT color="${color}">${lineI[j][1]}</FONT></RT></RUBY>`;
 					}
 				}
 			}
@@ -937,7 +1106,7 @@ ready(() => {
 					,	Math.floor((from[1]*(gl-gi) + to[1]*gi) / gl)
 					,	Math.floor((from[2]*(gl-gi) + to[2]*gi) / gl)
 				];
-				result[1] = "<FONT color=\""+colorCode(color)+"\">" + gc + "</FONT>";
+				result[1] = `<FONT color="${colorCode(color)}">${gc}</FONT>`;
 				
 			} else {
 				// RUBY 태그 처리
@@ -948,8 +1117,8 @@ ready(() => {
 					const r1 = r % 1;
 					if (r1 == 0) {
 						//글자 수 딱 떨어질 때
-						ruby[i] = "<FONT color=\""+colorCode(to  )+"\">" + gc[i].substring(0, r) + "</FONT>"
-						        + "<FONT color=\""+colorCode(from)+"\">" + gc[i].substring(r   ) + "</FONT>";
+						ruby[i] = `<FONT color="${colorCode(to  )}">${ gc[i].substring(0, r) }</FONT>`
+						        + `<FONT color="${colorCode(from)}">${ gc[i].substring(r   ) }</FONT>`;
 						
 					} else {
 						// 중간 색이 필요할 때
@@ -961,18 +1130,18 @@ ready(() => {
 						const j = Math.floor(r);
 						ruby[i] = "";
 						if (j > 0) {
-							ruby[i] += "<FONT color=\""+colorCode(to   )+"\">" + gc[i].substring(0, j  ) + "</FONT>";
+							ruby[i] += `<FONT color="${ colorCode(to   ) }">${ gc[i].substring(0, j  ) }</FONT>`;
 						}
 						{
-							ruby[i] += "<FONT color=\""+colorCode(color)+"\">" + gc[i].substring(j, j+1) + "</FONT>";
+							ruby[i] += `<FONT color="${ colorCode(color) }">${ gc[i].substring(j, j+1) }</FONT>`;
 						}
 						if (j+1 < gc[i].length) {
-							ruby[i] += "<FONT color=\""+colorCode(from )+"\">" + gc[i].substring(j+1   ) + "</FONT>";
+							ruby[i] += `<FONT color="${ colorCode(from ) }">${ gc[i].substring(j+1   ) }</FONT>`;
 						}
 					}
 				}
 				
-				result[1] = "<RUBY>" + ruby[0] + "<RT>" + ruby[1] + "</RT></RUBY>";
+				result[1] = `<RUBY>${ruby[0]}<RT>${ruby[1]}</RT></RUBY>`;
 			}
 		}
 		return result.join("");
@@ -980,11 +1149,11 @@ ready(() => {
 	
 	{	// Step 4
 		function run() {
-			let oColorFrom = inputOColorFrom.val();
-			let oColorTo   = inputOColorTo  .val();
-			let rColorFrom = inputRColorFrom.val();
-			let rColorTo   = inputRColorTo  .val();
-			let tColor     = inputTColor    .val();
+			let oColorFrom = inputOColorFrom.value;
+			let oColorTo   = inputOColorTo  .value;
+			let rColorFrom = inputRColorFrom.value;
+			let rColorTo   = inputRColorTo  .value;
+			let tColor     = inputTColor    .value;
 			
 			if (oColorFrom.length == 7) oColorFrom = oColorFrom.substring(1);
 			if (oColorTo  .length == 7) oColorTo   = oColorTo  .substring(1);
@@ -1003,10 +1172,9 @@ ready(() => {
 			tColor     = [hexToNumber(tColor    .substring(0,2)), hexToNumber(tColor    .substring(2,4)), hexToNumber(tColor    .substring(4,6))];
 			
 			let preset = "";
-			formDesign.find("input[name=preset]").each((_, el) => {
-				const input = $(el);
-				if (input.prop("checked")) {
-					preset = input.val();
+			[...formDesign.querySelectorAll("input[name=preset]")].forEach((input) => {
+				if (input.checked) {
+					preset = input.value;
 				}
 			});
 			
@@ -1030,7 +1198,7 @@ ready(() => {
 								break;
 							case "T":
 								if (line[0] > 1) {
-									sync.push("<FONT color=\""+colorCode(tColor)+"\">" + line[2] + "</FONT>");
+									sync.push(`<FONT color="${ colorCode(tColor) }">${line[2]}</FONT>`);
 								}
 								break;
 							case "t":
@@ -1042,14 +1210,14 @@ ready(() => {
 					}
 					if (line[0] == 3 && preset.substring(0,2) == "rO") {
 						// 원문 위에 독음 RUBY 태그
-						sync = ["<RUBY>" + sync[1] + "<RT>" + sync[0] + "</RT></RUBY>", sync[2]]; 
+						sync = [`<RUBY>${sync[1]}<RT>${sync[0]}</RT></RUBY>`, sync[2]]; 
 					}
 					html.push(sync.join("<br>"));
 				}
 			}
 			
-			preview.html("<p>" + html.join("</p><p>") + "</p>");
-			output.val(html.join("\n").replaceAll("<RT>", "<RP>(</RP><RT>").replaceAll("</RT>", "</RT><RP>)</RP>"));
+			preview.innerHTML = (`<p>${ html.join("</p><p>") }</p>`);
+			output.value = html.join("\n").replaceAll("<RT>", "<RP>(</RP><RT>").replaceAll("</RT>", "</RT><RP>)</RP>");
 		}
 		runs[4] = run;
 		
@@ -1067,32 +1235,43 @@ ready(() => {
 			}, 1000);
 		}
 		
-		$("#page4").on("click", "input", function() {
+		const page4 = document.getElementById("page4");
+		page4.addEventListener("click", (el) => {
+			if (!el.target.closest("input")) return;
 			runAfterCheck();
-		}).on("keyup", "input", function() {
+		});
+		page4.addEventListener("keyup", (el) => {
+			if (!el.target.closest("input")) return;
 			runAfterCheck();
-		}).on("change", "input", function() {
+		});
+		page4.addEventListener("change", (el) => {
+			if (!el.target.closest("input")) return;
 			runAfterCheck();
 		});
 		
-		$("#page4 #formDesign").on("change", "input[type=color]", function() {
-			$(this).next().val($(this).val());
-		});
-		$("#page4 #formDesign").on("change", "input.color", function() {
-			$(this).prev().val($(this).val());
+		formDesign.addEventListener("change", (e) => {
+			let el;
+			if (el = e.target.closest("input[type=color]")) {
+				el.nextSibling.value = el.value;
+				return;
+			}
+			if (el = e.target.closest("input.color")) {
+				el.previousSibling.value = el.value;
+				return;
+			}
 		});
 	}
 	
 	// 한자 음절 기본값 편집
-	btnOpenKanji.on("click", function() {
-		if (formKanji.css("display") == "none") {
-			formKanji.show();
+	btnOpenKanji.addEventListener("click", () => {
+		if (formKanji.style.display == "none") {
+			formKanji.style.display = "block";
 		} else {
-			formKanji.hide();
+			formKanji.style.display = "none";
 		}
 	});
-	btnApplyKanji.on("click", function() {
-		const lines = inputKanji.val().split("\n");
+	btnApplyKanji.addEventListener("click", () => {
+		const lines = inputKanji.value.split("\n");
 		const list = [];
 		const checker = {};
 		for (let i = 0; i < lines.length; i++) {
@@ -1136,10 +1315,10 @@ ready(() => {
 		const result = list.join("\n");
 		saveKanjiList(savedKanjiList.substring(0, savedKanjiList.indexOf("\n") + 1) + result);
 		refreshKanji();
-		inputKanji.val(result);
-		inputKanji.scrollTop(0);
+		inputKanji.value = result;
+		inputKanji.scrollTop = 0;
 		runs[2]();
-		formKanji.hide();
+		formKanji.style.display = "none";
 	});
 	
 	runs[1]();

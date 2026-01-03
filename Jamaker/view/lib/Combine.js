@@ -1,3 +1,5 @@
+import "./SubtitleObject.js";
+
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
 ,	defaultSize: 18 // TODO: 설정에서 바뀌도록... 하려면 서브 프로그램에서도 설정을 불러와야 하는데...
@@ -141,9 +143,9 @@ window.Combine = {
 		}
 	}
 	
-	function toText(html, checker) {
+	function toText(html) {
 		// RUBY태그 없애고 계산
-		return checker.html(html.replaceAll("<RT", "<!--RT").replaceAll("</RT>", "</RT-->")).text();
+		return htmlToText(html.replaceAll("<RT", "<!--RT").replaceAll("</RT>", "</RT-->"));
 	}
 	function isClear(attr, br=null) {
 		// 공백문자가 들어가도 무관한 속성
@@ -154,7 +156,7 @@ window.Combine = {
 		    && !attr.typing // 타이핑 같은 건 결합 전에 사라져야 함
 		    && !attr.furigana;
 	}
-	function getWidth(smi, checker) {
+	function getWidth(smi) {
 		// 태그 밖의 공백문자 치환
 		{	const tags = smi.split("<");
 			for (let i = 1; i < tags.length; i++) {
@@ -165,11 +167,12 @@ window.Combine = {
 			}
 			smi = tags.join("<");
 		}
-		const width = checker.html(smi).width();
+		Combine.checker.innerHTML = smi;
+		const width = Combine.checker.clientWidth;
 		if (LOG) console.log(width, smi);
 		return width;
 	}
-	function getAttrWidth(attrs, checker, withFs=false) {
+	function getAttrWidth(attrs, withFs=false) {
 		const cAttrs = [];
 		function append(attr) {
 			const cAttr = new Attr(attr, attr.text.replaceAll("&nbsp;", " "), true);
@@ -191,22 +194,27 @@ window.Combine = {
 				append(attrs[i]);
 			}
 		}
-		const width = checker.html(Smi.fromAttr(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>")).width();
+		Combine.checker.innerHTML = Smi.fromAttr(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>");
+		const width = Combine.checker.clientWidth;
 		if (LOG) console.log(width, attrs);
 		return width;
 	}
-	function getChecker() {
+	function initChecker() {
 		if (!Combine.checker) {
-			$("body").append(Combine.checker = $("<span class='width-checker'>"));
-			$("style").append($("<style>").html("\n"
-				+ ".width-checker, .width-checker * {\n"
-				+ "white-space: pre;\n"
-				+ "font-size: 144px;\n"
-				+ "font-weight: bold;\n"
-			));
+			Combine.checker = document.createElement("span");
+			Combine.checker.classList.add("width-checker");
+			document.body.append(Combine.checker);
+			const _style = document.createElement("style");
+			_style.innerHTML = "\n"
+				+ "	.width-checker, .width-checker * {\n"
+				+ "	white-space: pre;\n"
+				+ "	font-size: 144px;\n"
+				+ "	font-weight: bold;\n"
+				+ "}";
+			document.head.append(_style);
 		}
-		Combine.checker.attr({ style: Combine.css });
-		return Combine.checker.show();
+		Combine.checker.setAttribute("style", Combine.css);
+		Combine.checker.style.display = "inline-block";
 	}
 	
 	function getSyncLine(sync, type) {
@@ -214,12 +222,12 @@ window.Combine = {
 		if (window.SmiEditor) {
 			line = SmiEditor.makeSyncLine(sync, type + 1);
 		} else {
-			line = "<Sync Start=" + sync + "><P Class=KRCC" + Smi.TypeParser[type] + ">";
+			line = `<Sync Start=${sync}><P Class=KRCC${ Smi.TypeParser[type] }>`;
 		}
 		return line;
 	}
 	
-	function parse(text, checker) {
+	function parse(text) {
 		const smis = new SmiFile(text).body;
 		smis.push(new Smi(99999999, SyncType.normal, "&nbsp;"));
 		
@@ -243,8 +251,8 @@ window.Combine = {
 				const lineCount = smi.text.split(/<br>/gi).length;
 				
 				const attrs = smi.toAttrs(false);
-				const defaultWidth = getAttrWidth(attrs, checker);
-				const sizedWidth   = getAttrWidth(attrs, checker, true);
+				const defaultWidth = getAttrWidth(attrs);
+				const sizedWidth   = getAttrWidth(attrs, true);
 				syncs.push(last = [smi.start, smi.syncType, 0, 0, smi.text, attrs, lineCount, defaultWidth, sizedWidth]);
 			}
 		}
@@ -256,10 +264,9 @@ window.Combine = {
 		
 		// 결합 로직 돌아갈 때 문법 하이라이트가 있으면 성능 저하됨
 		// ... 지금은 개선해서 큰 저하 없을지도?
-		const hljs = $(".hljs").hide();
-		const checker = getChecker();
-		const upperSyncs = parse(inputUpper, checker);
-		const lowerSyncs = parse(inputLower, checker);
+		initChecker();
+		const upperSyncs = parse(inputUpper);
+		const lowerSyncs = parse(inputLower);
 		
 		const groups = [];
 		{
@@ -629,7 +636,7 @@ window.Combine = {
 									} else {
 										padsAttrs.push(new Attr()); // 종료태그 필수
 									}
-									width = getAttrWidth(padsAttrs, checker, withFontSize);
+									width = getAttrWidth(padsAttrs, withFontSize);
 									if (LOG) console.log(padsAttrs, width);
 									
 									if (width == groupMaxWidth || checkThinSpace) {
@@ -747,8 +754,8 @@ window.Combine = {
 				}
 			}
 		}
-		checker.text("").hide();
-		hljs.show();
+		Combine.checker.innerText = "";
+		Combine.checker.style.display = "none";
 		
 		const lines = [];
 		let lastSync = 0;
@@ -793,14 +800,12 @@ window.Combine = {
 						}
 						lines.push(text);
 							
+					} else if (line[LOWER]) {
+						// 아랫줄만 있을 때
+						lines.push(line[LOWER][TEXT]);
+							
 					} else {
-						if (line[LOWER]) {
-							// 아랫줄만 있을 때
-							lines.push(line[LOWER][TEXT]);
-								
-						} else {
-							// 그룹 내에서 둘 다 없을 수는 없음
-						}
+						// 그룹 내에서 둘 다 없을 수는 없음
 					}
 				}
 				if (line[ETIME] < 99999999) {
@@ -973,11 +978,11 @@ if (SmiFile) {
 		let originBody = [];
 		
 		// .text 동기화 안 끝났을 가능성 고려, 현재 값 다시 불러옴
-		const main = new SmiFile(origHolds[0].input ? origHolds[0].input.val() : origHolds[0].text);
+		const main = new SmiFile(origHolds[0].input ? origHolds[0].getValue() : origHolds[0].text);
 		{	// 메인 홀드 스타일 저장
 			const style = SmiFile.toSaveStyle(origHolds[0].style);
 			if (style) {
-				main.footer += "\n<!-- Style\n" + style + "\n-->";
+				main.footer += `\n<!-- Style\n${style}\n-->`;
 			}
 		}
 		
@@ -993,20 +998,20 @@ if (SmiFile) {
 			const imports = [];
 			for (let hi = 0; hi < holdsWithoutMain.length; hi++) {
 				const hold = holdsWithoutMain[hi];
-				const holdText = hold.input ? hold.input.val() : hold.text; // .text 동기화 안 끝났을 가능성 고려, 현재 값 다시 불러옴
+				const holdText = hold.input ? hold.getValue() : hold.text; // .text 동기화 안 끝났을 가능성 고려, 현재 값 다시 불러옴
 				let text = holdText;
 				hold.exportName = hold.name;
 				if (hold.style) {
 					const style = SmiFile.toSaveStyle(hold.style);
 					if (style) {
-						text = "<!-- Style\n" + style + "\n-->\n" + text;
+						text = `<!-- Style\n${style}\n-->\n` + text;
 					}
 					if (hold.style.output != 3) {
 						// 출력 선택
 						hold.exportName += "|" + hold.style.output;
 					}
 				}
-				result[hold.resultIndex = (hi + 1)] = "<!-- Hold=" + hold.pos + "|" + hold.exportName + "\n" + text.replaceAll("<", "<​").replaceAll(">", "​>") + "\n-->";
+				result[hold.resultIndex = (hi + 1)] = `<!-- Hold=${hold.pos}|${hold.exportName}\n${text.replaceAll("<", "<​").replaceAll(">", "​>")}\n-->`;
 				hold.imported = false;
 				hold.afterMain = false;
 				
@@ -1025,7 +1030,6 @@ if (SmiFile) {
 					// 스타일 적용 필요하면 내포 홀드 처리하지 않음
 					const style = hold.saveStyle = SmiFile.toSaveStyle(hold.style);
 					if (style) {
-						//text = "<!-- Style\n" + style + "\n-->\n" + text;
 						// ASS용 스타일은 내포 홀드 처리함. SMI용 스타일이 적용된 경우만 제외
 						if (hold.style.PrimaryColour != "#FFFFFF") continue;
 						if (hold.style.Italic   ) continue;
@@ -1143,7 +1147,7 @@ if (SmiFile) {
 				lastStart = hold.start;
 				
 				if (withComment > 0) {
-					importBody[0].text = "<!-- End=" + holdEnd + "\nHold=" + hold.pos + "|" + hold.exportName
+					importBody[0].text = `<!-- End=${holdEnd}\nHold=${hold.pos}|${hold.exportName}`
 						+ (hold.saveStyle ? "\n" + hold.saveStyle : "")
 						+ "\n-->\n" + importBody[0].text;
 				}
@@ -1191,12 +1195,12 @@ if (SmiFile) {
 				if (hold.imported) {
 					continue;
 				}
-				const holdText = hold.input ? hold.input.val() : hold.text;
+				const holdText = hold.getValue();
 				let text = holdText;
 				if (hold.style) {
 					const style = (typeof hold.style == "string") ? hold.style : SmiFile.toSaveStyle(hold.style);
 					if (style) {
-						text = "<!-- Style\n" + style + "\n-->\n" + text;
+						text = `<!-- Style\n${style}\n-->\n` + text;
 					}
 				}
 				const smi = holdSmis[hi] = new SmiFile(text);
@@ -1458,7 +1462,7 @@ if (SmiFile) {
 					origin.body = originBody.slice(log.from[0], log.from[1]);
 					let comment = origin.toText().trim();
 					
-					main.body[log.to[0]].text = "<!-- End=" + log.end + "\n" + (comment.replaceAll("<", "<​").replaceAll(">", "​>")) + "\n-->\n" + main.body[log.to[0]].text;
+					main.body[log.to[0]].text = `<!-- End=${log.end}\n${ comment.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + main.body[log.to[0]].text;
 				}
 			}
 		}

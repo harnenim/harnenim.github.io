@@ -1,3 +1,11 @@
+{
+	const src = document.currentScript.src;
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = src.substring(0, src.length - 2) + "css";
+	document.head.append(link);
+}
+
 let showDrag = false;
 function setShowDrag(dragging) {
 	showDrag = dragging;
@@ -36,6 +44,31 @@ window.afterPrompt  = (value) => {};
 prompt = (msg, after, def) => {
 	afterPrompt = after ? after : () => {};
 	binder.prompt(windowName, msg, def);
+}
+
+{	const dataMap = new WeakMap();
+	window.eData = (el=null, key=null, value=null) => {
+		if (!el) return null;
+		
+		let map = dataMap.get(el);
+		if (!map) {
+			dataMap.set(el, map = {});
+		}
+		if (key != null) {
+			if (typeof key == "string") {
+				if (value == null) {
+					return map[key];
+				}
+				map[key] = value;
+			} else if (typeof key == "object") {
+				const paramMap = key;
+				for (key in paramMap) {
+					map[key] = paramMap[key];
+				}
+			}
+		}
+		return map;
+	}
 }
 
 // JSON.stringify 보기 좋게 커스터마이징
@@ -95,9 +128,9 @@ function dragover(x, y) {}
 function drop(x, y) {}
 function beforeExit() {}
 
-let DPI = 1;
+window.DPI = 1;
 function setDpi(dpi) {
-	DPI = dpi;
+	window.DPI = dpi;
 }
 
 {
@@ -136,8 +169,8 @@ ready(() => {
 		e.preventDefault();
 	});
 	window.onkeydown = (e) => {
-		switch(e.keyCode) {
-			case 116: return false; // F5 새로고침 방지
+		switch(e.key) {
+			case "F5": return false; // F5 새로고침 방지
 		}
 	};
 	window.addEventListener("mousewheel", (e) => {
@@ -165,7 +198,7 @@ ready(() => {
 	
 	if (window.binder) {
 		setTimeout(() => {
-			binder.initAfterLoad(document.getElementsByTagName("title")[0].innerText);
+			binder.initAfterLoad(document.title);
 		}, 1);
 	}
 	{	const cover = document.createElement("div");
@@ -228,8 +261,7 @@ window.Progress = function() {
 		this.inner.style.background = "#fff";
 		this.inner.append(this.bar);
 	}
-	this.div.append(this.inner);
-	this.div.append(this.text);
+	this.div.append(this.inner, this.text);
 	document.body.append(this.div);
 	this.last = 0;
 };
@@ -243,8 +275,8 @@ Progress.prototype.set = function (value, total) {
 		}
 		this.last = now;
 	}
-	this.bar.style.width = "calc(" + (ratio * 100) + "%)";
-	this.text.innerText = (value + "/" + total);
+	this.bar.style.width = `calc(${ ratio * 100 }%)`;
+	this.text.innerText = `${value}/${total}`;
 	this.div.style.display = "block";
 }
 Progress.prototype.hide = function() {

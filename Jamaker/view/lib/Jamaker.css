@@ -188,52 +188,39 @@ button {
 	display: block;
 }
 
-input, textarea {
-	border-width: 1px;
-	user-select: text;
-}
+body.hover-scroll .input { cursor: default; }
 
-.hold {
-	overflow: hidden;
-	position: relative;
-	width: 100%;
-	height: 100%;
-}
-.hold > *,
-.hold > *.input {
-	position: absolute;
-	top: 0;
-	bottom: 0;
-}
-.hold * {
-	font-family: '맑은 고딕';
-	outline: 0;
-}
-.hold > .col-sync,
-.hold > .col-sync-cover {
-	left: 0;
-	height: 100%;
-	text-align: center;
-	border: 1px solid transparent;
-}
-.hold > .col-sync {
-	overflow-y: scroll;
-}
-.hold > .col-sync::-webkit-scrollbar { width: 0; height: 0; }
-.hold > .col-sync-cover {
-	overflow: hidden;
-	background: transparent;
-	display: none;
-}
-.hold > .input {
-	right: 0;
-}
-.highlight-textarea {
-	border-width: 1px 0 0 1px;
-	overflow: hidden;
-}
+.input ::-webkit-scrollbar-thumb { background-clip: content-box; }
+.input ::-webkit-scrollbar-button { width: 0; height: 0; }
+.input ::-webkit-scrollbar,
+.input ::-webkit-scrollbar-corner,
+.input ::-webkit-scrollbar-button,
+.input ::-webkit-scrollbar-track,
+.input ::-webkit-scrollbar-thumb { background-color: transparent; }
 
-.input .hover-scroll { cursor: default; }
+/* 색상 설정 따로 넣기 전에도 기본값은 있어야 함 */
+.input ::-webkit-scrollbar-thumb:hover { background-color: #aaaaaa; }
+.input ::-webkit-scrollbar-corner,
+.input ::-webkit-scrollbar-track:horizontal { background: linear-gradient(#ffffff3f, #ffffffff); }
+.input .scrolling::-webkit-scrollbar-thumb { background-color: #8888887f; }
+.input .scrolling::-webkit-scrollbar-corner { background: #dddddd; }
+
+.CodeMirror ::-webkit-scrollbar-thumb { background-clip: content-box; }
+.CodeMirror ::-webkit-scrollbar-button { width: 0; height: 0; }
+.CodeMirror ::-webkit-scrollbar,
+.CodeMirror ::-webkit-scrollbar-corner,
+.CodeMirror ::-webkit-scrollbar-button,
+.CodeMirror ::-webkit-scrollbar-track,
+.CodeMirror ::-webkit-scrollbar-thumb { background-color: transparent; }
+
+/* 색상 설정 따로 넣기 전에도 기본값은 있어야 함 */
+.CodeMirror ::-webkit-scrollbar-thumb:hover,
+.CodeMirror.scrolling ::-webkit-scrollbar-thumb:hover { background-color: #aaaaaa; }
+.CodeMirror ::-webkit-scrollbar-corner,
+.CodeMirror ::-webkit-scrollbar-track:horizontal { background: linear-gradient(#ffffff3f, #ffffffff); }
+.CodeMirror.scrolling ::-webkit-scrollbar-thumb { background-color: #8888887f; }
+.CodeMirror.scrolling ::-webkit-scrollbar-corner { background: #dddddd; }
+
 .classic-scrollbar ::-webkit-scrollbar-button,
 .classic-scrollbar ::-webkit-scrollbar-track,
 .classic-scrollbar ::-webkit-scrollbar-thumb { cursor: default; }
@@ -302,6 +289,10 @@ input, textarea {
 	margin-bottom: 0;
 }
 
+.hold > .col-sync,
+.hold > .col-sync-cover {
+	display: block;
+}
 #editor.trust-keyframe .sync.keyframe { font-weight: bold; }
 .sync.frame > span { border-top-width: 1px; }
 .sync.range { opacity: 0.5; }
@@ -349,18 +340,6 @@ input, textarea {
 }
 .btn-hold-style:hover {
 	opacity: 1;
-}
-
-.hold * {
-	font-size: calc(20px * 0.7);
-	line-height: 20px;
-}
-.hold > .col-sync,
-.hold > .col-sync-cover {
-	width: calc(20px * 5);
-}
-.hold > .input {
-	left: calc(20px * 5);
 }
 
 .sync.frame { line-height: calc(20px - 1px); }

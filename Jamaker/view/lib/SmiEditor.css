@@ -40,7 +40,7 @@ body.classic-scrollbar .highlight-textarea > div {
 	display: block;
 	position: absolute;
 }
-.highlight-textarea > div span.enter {
+span.enter {
 	opacity: 0.5;
 	font-style: normal;
 	font-family: Arial; /* 특정 상황에서 폰트 유지 안 됨 */
@@ -63,6 +63,7 @@ body.classic-scrollbar .highlight-textarea > div {
 .hljs-zw {
 	display: inline-block;
 	border-width: 0 1px 0 0;
+	border-style: solid;
 	margin: 0 -1px 0 0;
 	opacity: 0.2;
 }
@@ -82,8 +83,14 @@ body.classic-scrollbar .highlight-textarea > div {
 	background: linear-gradient(#f0f0f000, #f0f0f0);
 }
 /* 홀드/에디터 테두리 색 */
-.highlight-textarea {
+.highlight-textarea,
+.CodeMirror {
 	border-color: #aaaaaa;
+}
+.hold .CodeMirror-lines,
+.hold .CodeMirror pre.CodeMirror-line,
+.hold .CodeMirror pre.CodeMirror-line-like {
+	padding: 0;
 }
 
 /* 에디터 배경 색 */
@@ -98,6 +105,24 @@ body.classic-scrollbar .highlight-textarea > div {
 .hljs-zw {
 	border-color: #000000;
 }
+
+/* 에디터 포커스 없을 때 블록지정 영역 */
+.block-area {
+	position: absolute;
+	color: transparent;
+	display: none;
+}
+.block-prev,
+.block-line {
+	float: left;
+	height: 20px;
+}
+.block-line {
+	clear: both;
+	background: #a7a7a7a7;
+	color: #000;
+}
+.block-prev + .block-line { clear: none; }
 
 /* 싱크 구분 색 */
 .sync,.sync > span { border-color: #000000; }
@@ -117,17 +142,73 @@ body.classic-scrollbar .highlight-textarea > div {
 	height: 20px;
 }
 
-.input ::-webkit-scrollbar-thumb { background-clip: content-box; }
-.input ::-webkit-scrollbar-button { width: 0; height: 0; }
-.input ::-webkit-scrollbar,
-.input ::-webkit-scrollbar-corner,
-.input ::-webkit-scrollbar-button,
-.input ::-webkit-scrollbar-track,
-.input ::-webkit-scrollbar-thumb { background-color: transparent; }
+/* 이것도 이쪽에 있는 게 맞을 듯함 */
 
-/* 색상 설정 따로 넣기 전에도 기본값은 있어야 함 */
-.input ::-webkit-scrollbar-thumb:hover { background-color: #aaaaaa; }
-.input ::-webkit-scrollbar-corner,
-.input ::-webkit-scrollbar-track:horizontal { background: linear-gradient(#ffffff3f, #ffffffff); }
-.input .scrolling::-webkit-scrollbar-thumb { background-color: #8888887f; }
-.input .scrolling::-webkit-scrollbar-corner { background: #dddddd; }
+input, textarea {
+	border-width: 1px;
+	user-select: text;
+}
+
+.hold {
+	overflow: hidden;
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+.hold > *,
+.hold > *.input,
+.hold > *.CodeMirror {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	height: auto;
+}
+.hold * {
+	font-family: '맑은 고딕';
+	outline: 0;
+}
+.hold > .col-sync,
+.hold > .col-sync-cover {
+	left: 0;
+	height: 100%;
+	text-align: center;
+	border: 1px solid transparent;
+}
+.hold > .col-sync {
+	overflow-y: scroll;
+}
+.hold > .col-sync::-webkit-scrollbar { width: 0; height: 0; }
+.hold > .col-sync-cover {
+	overflow: hidden;
+	background: transparent;
+	display: none;
+}
+.hold > .input,
+.hold > .CodeMirror {
+	right: 0;
+}
+.highlight-textarea {
+	border-width: 1px 0 0 1px;
+	overflow: hidden;
+}
+.CodeMirror {
+	border-width: 1px 0 0 1px;
+}
+.highlight-textarea * {
+	white-space: pre;
+}
+
+.hold * {
+	font-size: calc(20px * 0.7);
+	line-height: 20px;
+}
+.hold > .col-sync,
+.hold > .col-sync-cover {
+	display: none; /* 필요한 경우에만 보이도록 함 */
+	width: calc(20px * 5);
+}
+.hold > .input,
+.hold > .CodeMirror {
+/*	left: calc(20px * 5); */
+	left: 0;
+}

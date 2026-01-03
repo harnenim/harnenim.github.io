@@ -1,4 +1,12 @@
-﻿window.ListView = function(div) {
+﻿{
+	const src = document.currentScript.src;
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = src.substring(0, src.length - 2) + "css";
+	document.head.append(link);
+}
+
+window.ListView = function(div) {
 	const self = this;
 	
 	this.area = div.length ? div[0] : div; // jQuery일 경우 0번 객체 선택
@@ -27,36 +35,36 @@
 		//self.clearSelection();
 	});
 	this.area.addEventListener("keydown", (e) => {
-		switch (e.keyCode) {
-			case 38: { // ↑
+		switch (e.key) {
+			case "ArrowUp": {
 				self.onCursorMove(-1, e);
 				break;
 			}
-			case 40: { // ↓
+			case "ArrowDown": {
 				self.onCursorMove(+1, e);
 				break;
 			}
-			case 36: { // Home
+			case "Home": {
 				if (self.list.length) {
 					self.onSelect(0, e);
 				}
 				break;
 			}
-			case 35: { // End
+			case "End": {
 				if (self.list.length) {
 					self.onSelect(self.list.length - 1, e);
 				}
 				break;
 			}
-			case 32: { // Spacebar
+			case " ": {
 				self.select(self.cursor, e.ctrlKey);
 				break;
 			}
-			case 46: { // Delete
+			case "Delete": {
 				self.remove();
 				break;
 			}
-			case 65: { // A
+			case "a": {
 				if (e.ctrlKey) { // Ctrl+A
 					self.list.forEach((item) => {
 						item.li.classList.add("selected");
@@ -65,7 +73,7 @@
 				}
 				break;
 			}
-			case 16: { // Shift
+			case "Shift": {
 				if (self.shiftFrom < 0) {
 					self.shiftFrom = self.cursor;
 				}
@@ -279,8 +287,7 @@ ListView.prototype.onSelect = function(index, e) {
 		
 	} else {
 		if (e.ctrlKey) {
-			console.log(e);
-			if (!e.keyCode) {
+			if (!e.key) { // Ctrl+클릭
 				this.select(index, true);
 			}
 		} else {

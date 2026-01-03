@@ -1,6 +1,5 @@
 // 업데이트 메시지
-let checkVersion;
-{	checkVersion = (version) => {
+{	window.checkVersion = (version) => {
 		if (!version) version = "";
 		
 		const notify = [];
@@ -34,14 +33,14 @@ let checkVersion;
 		}
 		return notified;
 	}
-	const lastNotifyForCommand = "2025.07.30.v1";
+	const lastNotifyForCommand = "2026.01.03.v1";
 	const lastNotifyForAutoComplete = "2025.04.19.v1";
 	const lastNotifyForStyle = "2025.03.07.v1";
-	const lastNotifyForMenu = "2025.12.06.v1";
+	const lastNotifyForMenu = "2026.01.03.v1";
 }
 
 window.DEFAULT_SETTING =
-{	version: "2025.12.14.v1"
+{	version: "2026.01.03.v1"
 ,	menu:
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
@@ -75,7 +74,7 @@ window.DEFAULT_SETTING =
 		,	"니코동 효과(&N)|openAddon('Nico');"
 		,	"재생 속도 조절|openAddon('Speed');"
 		,	""
-		,	"맞춤법 검사기|extSubmit(\"post\", \"https://nara-speller.co.kr/old_speller/results\", \"text1\");"
+		,	"맞춤법 검사기|extSubmitSpeller();"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
 		]
 	,	[	"도움말(&H)"
@@ -127,7 +126,7 @@ window.DEFAULT_SETTING =
 			   + '//    토글이 아닌 재생이 있는 게 맞을 듯'
 		,	'z': '/* 정지 */\n' + 'SmiEditor.PlayerAPI.stop()'
 		,	"s": "/* 되감기 */\nSmiEditor.PlayerAPI.move(-SmiEditor.sync.move);\nSmiEditor.PlayerAPI.play();"
-		,	"r": "/* 실행 취소 */\neditor.history.back();"
+		,	"r": "/* 실행 취소 */\neditor.undo();"
 		,	"q": "/* 홀드명 변경 */\neditor.rename();"
 		}
 	,	withCtrls:
@@ -188,7 +187,7 @@ window.DEFAULT_SETTING =
 			   + '			let ruby = block.substring(0, divIndex);\n'
 			   + '			let rt   = block.substring(divIndex + 1, endIndex);\n'
 			   + '			let left = block.substring(endIndex + 1);\n'
-			   + '			blocks[i] = "<RUBY>" + ruby + "<RT><RP>(</RP>" + rt + "<RP>)</RP></RT></RUBY>" + left;\n'
+			   + '			blocks[i] = `<RUBY>${ruby}<RT><RP>(</RP>${rt}<RP>)</RP></RT></RUBY>${left}`;\n'
 			   + '		} else {\n'
 			   + '			blocks[i] = "[" + blocks[i];\n'
 			   + '		}\n'
@@ -210,8 +209,7 @@ window.DEFAULT_SETTING =
 		}
 	,	withAlts:
 		{	't': '/* 일괄 싱크 입력 */\n' + 'editor.reSyncPrompt();'
-		,	'1': '/* 맞춤법 검사기 */\n'
-			   + 'extSubmit("post", "https://nara-speller.co.kr/old_speller/results", "text1");'
+		,	'1': '/* 맞춤법 검사기 */\n' + 'extSubmitSpeller();'
 		,	'2': '/* 국어사전 */\n'
 			   + 'extSubmit("get", "https://ko.dict.naver.com/%23/search", "query");'
 		,	'N': '/* 홀드 추가 */\n' + 'tabs.length && tabs[tab].addHold();'
@@ -315,7 +313,7 @@ window.DEFAULT_SETTING =
 ,	highlight:
 	{ parser: "full"
 	, style : "eclipse"
-	, enter : false
+	, enter : true
 	, color : true
 	, sync  : 0.5
 	}

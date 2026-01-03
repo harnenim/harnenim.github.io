@@ -93,16 +93,17 @@ function WebPlayerBridge() {
 					if (this.window && this.window.name) {
 						return;
 					}
-					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/WebPlayer.html?251214", "player", "scrollbars=no,location=no");
+					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/WebPlayer.html?260103", "player", "scrollbars=no,location=no");
 					if (this.window) {
-						if (this.window.document) {
-							this.window.document.title = "플레이어";
-						} else if (this.window.setTitle) {
-							this.window.setTitle("플레이어");
+						const w = (this.window.iframe && this.window.iframe.contentWindow) ? this.window.iframe.contentWindow : this.window;
+						if (w.document) {
+							w.document.title = "플레이어";
+						} else if (w.setTitle) {
+							w.setTitle("플레이어");
 						}
 						const self = this;
 						setTimeout(() => {
-							self.window.addEventListener("beforeunload", (e) => {
+							w.addEventListener("beforeunload", (e) => {
 								self.window = null;
 							});
 						}, 1000);

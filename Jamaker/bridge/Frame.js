@@ -1,3 +1,14 @@
+﻿// 여기에만 유일하게 jQuery가 남았는데...
+// 솔직히 프로그램 본체엔 안 들어갈 부분인데 굳이...
+import "./jquery-3.2.1.min.js";
+
+{
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = new URL("./Frame.css?260103", import.meta.url).href;
+	document.head.append(link);
+}
+
 window.Frame = function(url, name, options, onload) {
 	const frame = this.frame = Frame.preset.clone().data("obj", this);
 	$("body").append(frame);
@@ -14,10 +25,10 @@ window.Frame = function(url, name, options, onload) {
 		frame.css({ top: y, left: x });
 	}
 	this.getOffset = function(offset) {
-		offset.top    = Number(frame.css("top"   ).split("px")[0]);
-		offset.left   = Number(frame.css("left"  ).split("px")[0]);
-		offset.right  = Number(frame.css("width" ).split("px")[0]) + offset.left;
-		offset.bottom = Number(frame.css("height").split("px")[0]) + offset.top ;
+		offset.top    = parseFloat(frame.css("top"   ));
+		offset.left   = parseFloat(frame.css("left"  ));
+		offset.right  = parseFloat(frame.css("width" )) + offset.left;
+		offset.bottom = parseFloat(frame.css("height")) + offset.top ;
 	}
 	this.focus = function() {
 		this.iframe.focus();
@@ -35,12 +46,9 @@ window.Frame = function(url, name, options, onload) {
 		self.iframe.contentWindow.close = function() {
 			self.close();
 		};
-		self.setTitle($(self.iframe.contentDocument).find("title").text());
-		if (self.iframe.contentWindow.setTitle) {
-			self.iframe.contentWindow.setTitle = function(title) {
-				self.setTitle(title);
-			}
-		}
+		setInterval(() => {
+			self.setTitle(self.iframe.contentDocument.title);
+		}, 33);
 		self.iframe.contentWindow._open_ = self.iframe.contentWindow.open;
 		self.iframe.contentWindow.open = function(url, name, options, opener) {
 			return Frame.open(url, name, options, opener ? opener : self.iframe.contentWindow);
@@ -48,10 +56,11 @@ window.Frame = function(url, name, options, onload) {
 		$(self.iframe.contentDocument).on("mousedown", function() {
 			Frame.refreshOrder(self);
 		}).on("keydown", function(e) {
-			switch (e.keyCode) {
-				case 115: { // F4
+			switch (e.key) {
+				case "F4": {
 					if (e.altKey) {
 						// Alt+F4 최상위 창 종료 막기
+						e.stopPropagation();
 						e.preventDefault();
 						self.close();
 					}
@@ -59,7 +68,7 @@ window.Frame = function(url, name, options, onload) {
 				}
 			}
 		}).find("iframe").each((_, el) => {
-			subIframe = el;
+			const subIframe = el;
 			/*
 			subIframe.contentWindow.onload = function() {
 				console.log("이게 안 잡히나...?");
@@ -143,8 +152,9 @@ Frame.open = (url, name, options, opener) => {
 	return popup;
 };
 
+window.$ = jQuery;
+Frame.preset = $("<div class='window-frame resizable'>");
 $(() => {
-	Frame.preset = $("<div class='window-frame resizable'>");
 	{
 		const fr = $("<div class='fr'>");
 		const fhead = $("<div class='fhead'>");
@@ -196,10 +206,10 @@ $(() => {
 		}
 		frame.find(".cover").show();
 		dragging.frame = frame;
-		dragging.top    = Number(frame.css("top"   ).split("px")[0]);
-		dragging.left   = Number(frame.css("left"  ).split("px")[0]);
-		dragging.width  = Number(frame.css("width" ).split("px")[0]);
-		dragging.height = Number(frame.css("height").split("px")[0]);
+		dragging.top    = parseFloat(frame.css("top"   ));
+		dragging.left   = parseFloat(frame.css("left"  ));
+		dragging.width  = parseFloat(frame.css("width" ));
+		dragging.height = parseFloat(frame.css("height"));
 		dragging.x = e.clientX;
 		dragging.y = e.clientY;
 		$("#cover").show();
@@ -239,8 +249,8 @@ $(() => {
 			$("#cover").hide();
 		}
 	}).on("keydown", function(e) {
-		switch (e.keyCode) {
-			case 27: { // Esc
+		switch (e.key) {
+			case "Escape": {
 				if (dragging.frame) { // 드래그 취소
 					dragging.frame.css({ // 위치 원상복구
 							top   : dragging.top

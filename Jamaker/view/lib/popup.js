@@ -1,6 +1,14 @@
-﻿document.addEventListener("keydown", function(e) {
-	switch (e.keyCode) {
-		case 27: { // Esc
+﻿{
+	const src = document.currentScript.src;
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = src.substring(0, src.length - 2) + "css";
+	document.head.append(link);
+}
+
+document.addEventListener("keydown", function(e) {
+	switch (e.key) {
+		case "Escape": {
 			requestClose();
 			break;
 		}
@@ -82,6 +90,31 @@ confirm = (msg, yes, no) => {
 	}
 }
 
+{	const dataMap = new WeakMap();
+	window.eData = (el=null, key=null, value=null) => {
+		if (!el) return null;
+		
+		let map = dataMap.get(el);
+		if (!map) {
+			dataMap.set(el, map = {});
+		}
+		if (key != null) {
+			if (typeof key == "string") {
+				if (value == null) {
+					return map[key];
+				}
+				map[key] = value;
+			} else if (typeof key == "object") {
+				const paramMap = key;
+				for (key in paramMap) {
+					map[key] = paramMap[key];
+				}
+			}
+		}
+		return map;
+	}
+}
+
 {
 	window.onloads = [];
 	window.ready = (fn) => {
@@ -108,6 +141,11 @@ ready(() => {
 	document.addEventListener("contextmenu", (e) => {
 		e.preventDefault();
 	});
+	window.onkeydown = (e) => {
+		switch(e.key) {
+			case "F5": return false; // F5 새로고침 방지
+		}
+	};
 	[...document.getElementsByTagName("textarea")].forEach((input) => {
 		input.setAttribute("spellcheck", false);
 	});
@@ -151,18 +189,16 @@ if (opener) {
 }
 
 function setColor(color) {
-	$.ajax({url: "lib/popup.color.css?251214"
-		,	dataType: "text"
-		,	success: (preset) => {
-				for (let name in color) {
-					preset = preset.replaceAll("["+name+"]", color[name]);
-				}
-				
-				let $style = $("#styleColor");
-				if (!$style.length) {
-					$("head").append($style = $("<style id='styleColor'>"));
-				}
-				$style.html(preset);
+	fetch("lib/popup.color.css?260103").then(async (response) => {
+		let preset = await response.text();
+		for (let name in color) {
+			preset = preset.replaceAll(`[${name}]`, color[name]);
+		}
+		if (!window._style) {
+			if (!(_style = document.getElementById("styleColor"))) {
+				document.head.append(_style = document.createElement("style"));
 			}
+		}
+		_style.innerHTML = preset;
 	});
 }

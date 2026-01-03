@@ -4,30 +4,27 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>흔들기 효과</title>
-	<script src="../lib/jquery-3.2.1.min.js?251214"></script>
-	<script src="../lib/popup.js?251214"></script>
-	<script src="../lib/setting.js?251214"></script>
-	<script src="../lib/SubtitleObject.js?251214"></script>
-	<script src="../lib/SmiEditor.js?251214"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251214" />
+	<script src="../lib/popup.js?260103"></script>
+	<script src="../lib/setting.js?260103"></script>
+	<script src="../lib/SmiEditor.js" type="module"></script>
 	<script>
 windowName = "addon";
-
-ready(() => {
-	if (opener) {
-		setting = opener.setting;
-	}
-});
 
 let style = null;
 function setSetting(setting) {
 	if (style == null) {
-		$("head").append(style = $("<style>"));
+		document.head.append(style = document.createElement("style"));
 	}
-	style.html("#preview {\n" + setting.viewer.css + "}");
+	style.innerHTML = (`#preview {\n${setting.viewer.css}\nfont-size: calc(${setting.viewer.size}vw / 5.86);\n}`);
+	
+	if (setting) {
+		SmiEditor.setSetting(setting);
+		SmiEditor.setHighlight(setting.highlight, [input, output]);
+	}
 }
 
-const editor = (opener && opener.SmiEditor) ? opener.SmiEditor.selected : null;
+let input;
+let output;
 
 function shakeSync(lines, index, size) {
 	/*
@@ -41,15 +38,15 @@ function shakeSync(lines, index, size) {
 	
 	// 좌우로 흔들기
 	// 플레이어에서 사이즈 미지원해도 좌우로는 흔들리도록
-	const LRmin = "<font size=\"" + (3 * size) + "\"></font>";
-	const LRmid = "<font size=\"" + (3 * size) + "\"> </font>";
-	const LRmax = "<font size=\"" + (3 * size) + "\">  </font>";
+	const LRmin = `<font size="${ 3 * size }"></font>`;
+	const LRmid = `<font size="${ 3 * size }"> </font>`;
+	const LRmax = `<font size="${ 3 * size }">  </font>`;
 	
 	// 상하로 흔들기
 	// 플레이어에서 사이즈 미지원하면 상하로 흔들리지 않음
-	const TBmin = "<font size=\"" + (0 * size) + "\">　</font>";
-	const TBmid = "<font size=\"" + (1 * size) + "\">　</font>";
-	const TBmax = "<font size=\"" + (2 * size) + "\">　</font>";
+	const TBmin = `<font size="${ 0 * size }">　</font>`;
+	const TBmid = `<font size="${ 1 * size }">　</font>`;
+	const TBmax = `<font size="${ 2 * size }">　</font>`;
 	
 	{	// 좌우로 흔들기
 		// 플레이어에서 사이즈 미지원해도 좌우로는 흔들리도록
@@ -89,8 +86,8 @@ let start = 0;
 let end = 0;
 
 function shake() {
-	const speed = $("#inputSpeed").val();
-	const size  = $("#inputSize" ).val();
+	const speed = document.getElementById("inputSpeed").value;
+	const size  = document.getElementById("inputSize" ).value;
 	
 	const previewList = [];
 	const result = [];
@@ -155,7 +152,7 @@ function shake() {
 		result.concat(...footer);
 	}
 	
-	$("#output").val(result.join("\n"));
+	output.setValue(result.join("\n"));
 	
 	setPreview(previewList, speed);
 };
@@ -166,9 +163,9 @@ function setPreview(list, speed) {
 		clearInterval(refreshPreview);
 	}
 	
-	const preview = $("#preview");
+	const preview = document.getElementById("preview");
 	if (!list || !list.length) {
-		preview.html("");
+		preview.innerHTML = "";
 		return;
 	}
 	
@@ -177,7 +174,7 @@ function setPreview(list, speed) {
 		while (i >= list.length) {
 			i -= list.length;
 		}
-		preview.html(toShowText(list[i++]));
+		preview.innerHTML = toShowText(list[i++]);
 	}, speed);
 }
 function toShowText(showText) {
@@ -250,7 +247,7 @@ function toShowText(showText) {
 		const showLines = showText.split(/<br>/gi);
 		if (showLines.length > 2) {
 			const line = showLines[0];
-			if ($("<span>").html(line).text() == "　") {
+			if (htmlToText(line) == "　") {
 				if (line.indexOf("font-size:") > 0) {
 					showLines[0] = line.replaceAll("<font style=\"font-size:", "<div style=\"height:").replaceAll("</font>", "</div>");
 				}
@@ -262,7 +259,7 @@ function toShowText(showText) {
 }
 
 function apply() {
-	const text = $("#output").val();
+	const text = document.getElementById("output").value;
 	
 	// 해당 줄 앞뒤 전체 선택되도록 조정
 	const origLines = editor.text.split("\n");
@@ -277,11 +274,10 @@ function apply() {
 }
 
 ready(() => {
+	editor = (opener && opener.SmiEditor) ? opener.SmiEditor.selected : null;
 	if (!editor) {
 		alert("작업 대상이 없습니다.");
 	}
-	
-	setSetting(setting);
 	
 	start = 0;
 	end = editor.lines.length;
@@ -291,10 +287,21 @@ ready(() => {
 		start = editor.text.substring(0, range[0]).split("\n").length - 1;
 		end   = editor.text.substring(0, range[1]).split("\n").length;
 	}
-	$("#input").val(linesToText(editor.lines.slice(start, end)));
 	
-	$("#btnShake").on("click", shake);
-	$("#btnApply").on("click", apply);
+	{	// 에디터 교체
+		const ta1 = document.getElementById("input");
+		const ta2 = document.getElementById("output");
+		input  = new SmiEditor(linesToText(editor.lines.slice(start, end)), ta1);
+		output = new SmiEditor(ta2.value, ta2);
+		SmiEditor.activateKeyEvent();
+	}
+	
+	const setting = JSON.parse(JSON.stringify(opener.setting));
+	delete setting.command;
+	setSetting(setting);
+	
+	document.getElementById("btnShake").addEventListener("click", shake);
+	document.getElementById("btnApply").addEventListener("click", apply);
 });
 	</script>
 	<style>
@@ -361,8 +368,7 @@ ready(() => {
 	<button id="btnShake">＞</button>
 	<textarea id="output">
 현재 특수 태그로 흔들기 효과를 지원하고 있으나
-여러 싱크에 적용할 경우의 편의를 위해 남겨둔 기능입니다.
-	</textarea>
+여러 싱크에 적용할 경우의 편의를 위해 남겨둔 기능입니다.</textarea>
 	<button id="btnApply">적용</button>
 	<div id="preview"></div>
 </body>

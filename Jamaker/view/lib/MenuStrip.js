@@ -1,4 +1,11 @@
-function MenuStrip(ol=null) {
+﻿{
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = new URL("./MenuStrip.css?260103", import.meta.url).href;
+	document.head.append(link);
+}
+
+window.MenuStrip = function(ol=null) {
 	const self = this;
 	if (window.menustrip) return; // 한 윈도우에 하나만 존재하는 쪽으로
 	window.menustrip = this;
@@ -47,8 +54,8 @@ function MenuStrip(ol=null) {
 		const menu = e.target.closest(".menustrip li");
 		if (menu) {
 			e.stopPropagation();
-			switch (e.keyCode) {
-				case 37: { // ←
+			switch (e.key) {
+				case "ArrowLeft": {
 					let prev = menu.previousElementSibling;
 					if (!prev) {
 						prev = menustrip.view.lastChild;
@@ -60,7 +67,7 @@ function MenuStrip(ol=null) {
 					}
 					break;
 				}
-				case 39: { // →
+				case "ArrowRight": {
 					let next = menu.nextElementSibling;
 					if (!next) {
 						next = menustrip.view.firstChild;
@@ -72,21 +79,21 @@ function MenuStrip(ol=null) {
 					}
 					break;
 				}
-				case 38:   // ↑
-				case 40:   // ↓
-				case 13: { // Enter
+				case "ArrowUp":
+				case "ArrowDown":
+				case "Enter": {
 					// 방향키 이동으로 연 하위 메뉴에 포커스
 					menustrip.openMenu(menu, true);
 					break;
 				}
-				case 18:   // Alt
+				case "Alt":
 					lastKey = null; // 포커스 반환 직후 다시 Alt 메뉴 열리는 것 방지
-				case 27: { // Esc
+				case "Escape": {
 					menustrip.unfocus();
 					break;
 				}
-				case 9: // Tab
-				{	// 포커스 이동 방지
+				case "Tab": {
+					// 포커스 이동 방지
 					e.preventDefault();
 					break;
 				}
@@ -111,8 +118,8 @@ function MenuStrip(ol=null) {
 		const li = e.target.closest(".submenu.open li");
 		if (li) {
 			e.stopPropagation();
-			switch (e.keyCode) {
-				case 38: { // ↑
+			switch (e.key) {
+				case "ArrowUp": {
 					let prev = li;
 					do {
 						prev = prev.previousElementSibling;
@@ -124,7 +131,7 @@ function MenuStrip(ol=null) {
 					prev.focus();
 					break;
 				}
-				case 40: { // ↓
+				case "ArrowDown": {
 					let next = li;
 					do {
 						next = next.nextElementSibling;
@@ -136,7 +143,7 @@ function MenuStrip(ol=null) {
 					next.focus();
 					break;
 				}
-				case 37: { // ←
+				case "ArrowLeft": {
 					const menu = li.parentElement.owner;
 					if (menu) {
 						let prev = menu.previousElementSibling;
@@ -148,7 +155,7 @@ function MenuStrip(ol=null) {
 					}
 					break;
 				}
-				case 39: { // →
+				case "ArrowRight": {
 					const menu = li.parentElement.owner;
 					if (menu) {
 						let next = menu.nextElementSibling;
@@ -160,24 +167,24 @@ function MenuStrip(ol=null) {
 					}
 					break;
 				}
-				case 13: { // Enter
+				case "Enter": {
 					e.preventDefault(); // 포커스 반환 직후 키입력 방지
 					li.click();
 					break;
 				}
-				case 18: { // Alt
+				case "Atl": {
 					lastKey = null; // 포커스 반환 직후 다시 Alt 메뉴 열리는 것 방지
 					// 메뉴 닫고 포커스 반환
-					focusedMenu.unfocus();
+					focusedMenu?.unfocus();
 					break;
 				}
-				case 27: { // Esc
+				case "Escape": {
 					// 메뉴 닫기만 하고 상위 메뉴에 포커스
-					focusedMenu.close();
+					focusedMenu?.close();
 					break;
 				}
-				case 9: // Tab
-				{	// 포커스 이동 방지
+				case "Tab": {
+					// 포커스 이동 방지
 					e.preventDefault();
 					break;
 				}
@@ -201,8 +208,8 @@ function MenuStrip(ol=null) {
 		const contextmenu = e.target.closest(".submenu.contextmenu");
 		if (contextmenu) {
 			e.stopPropagation();
-			switch (e.keyCode) {
-				case 38: { // ↑
+			switch (e.key) {
+				case "ArrowUp": {
 					// 하위 메뉴 마지막 항목에 포커스
 					const lis = contextmenu.childNodes;
 					for (let i = lis.length - 1; i >= 0; i--) {
@@ -213,7 +220,7 @@ function MenuStrip(ol=null) {
 					}
 					break;
 				}
-				case 40: { // ↓
+				case "ArrowDown": {
 					// 하위 메뉴 첫 항목에 포커스
 					const lis = contextmenu.childNodes;
 					for (let i = 0; i < lis.length; i++) {
@@ -224,18 +231,18 @@ function MenuStrip(ol=null) {
 					}
 					break;
 				}
-				case 27: { // Esc
-					focusedMenu.unfocus();
+				case "Escape": {
+					focusedMenu?.unfocus();
 					break;
 				}
-				case 9: // Tab
-				{	// 포커스 이동 방지
+				case "Tab": {
+					// 포커스 이동 방지
 					e.preventDefault();
 					break;
 				}
 				default: {
 					// 하위 메뉴 열려있을 때 - 키 조합 실행
-					const subMenu = focusedMenu.menuKeys[e.key];
+					const subMenu = focusedMenu?.menuKeys[e.key];
 					if (subMenu) {
 						e.preventDefault(); // 포커스 반환 직후 키입력 방지
 						subMenu.click();
@@ -245,7 +252,7 @@ function MenuStrip(ol=null) {
 			return;
 		}
 
-		lastKey = e.keyCode;
+		lastKey = e.key;
 
 		if (!menustrip) return;
 		if (!e.shiftKey && !e.ctrlKey && e.altKey) {
@@ -261,10 +268,10 @@ function MenuStrip(ol=null) {
 	});
 	document.addEventListener("keyup", (e) => {
 		if (!menustrip) return;
-		e.stopPropagation();
-		if (e.keyCode == 18) {
+		if (e.key == "Alt") {
+			e.stopPropagation();
 			e.preventDefault(); // 이게 없으면 Alt+Spacebar 메뉴로 포커스됨
-			if (lastKey == 18) {
+			if (lastKey == "Alt") {
 				// 중간에 다른 키 누르지 않고, Alt만 눌렀다 뗀 경우
 				if (menustrip.opened) {
 					// 메뉴가 포커스 가지고 있었으면 반환
@@ -318,18 +325,23 @@ function MenuStrip(ol=null) {
 			if (li.classList.contains("line") || li.classList.contains("disable")) return;
 
 			// 하위 메뉴 클릭하면 메뉴 닫고 실행
-			eval("(() => { " + li.func + "// */\n})()"); // 내용물이 주석으로 끝날 수도 있음
-			focusedMenu.unfocus();
+			eval(`(() => { ${ li.func }// */\n})()`); // 내용물이 주석으로 끝날 수도 있음
+			focusedMenu?.unfocus();
 			return;
 		}
 		// 구분선 여백이 눌리는 경우가 있음
 		if (e.target.closest(".submenu")) return;
 
 		// 메뉴가 아닌 다른 곳을 클릭하면 포커스 반환
-		focusedMenu && focusedMenu.unfocus();
+		focusedMenu?.unfocus();
 	});
 	window.menustrip = null;
 	window.focusedMenu = null;
+	
+	// 비활성창일 때 메뉴 닫기
+	window.addEventListener("blur", (e) => {
+		focusedMenu?.unfocus();
+	});
 }
 
 // 메뉴 재생성
@@ -353,10 +365,10 @@ MenuStrip.prototype.setMenus = function(menus) {
 		const text = menuLi.innerText = list[0];
 		let index = text.indexOf("&");
 		if (index > 0) {
-			if (text.length > index + 1) {
+			if (text.length > index + 1) { // TODO: 여기도 서브메뉴처럼, 단축키가 맨 끝에 괄호가 아닌 경우에도 동작하도록 수정 필요
 				menuKey = text[text.length-2];
 				if (('A' <= menuKey && menuKey <= 'Z') || ('0' <= menuKey && menuKey <= '9')) {
-					menuLi.innerHTML = (text.substring(0, text.length - 3) + "<u>"+menuKey.toUpperCase()+"</u>)");
+					menuLi.innerHTML = (text.substring(0, text.length - 3) + `<u>${ menuKey.toUpperCase() }</u>)`);
 					this.menuKeys[menuKey.toLowerCase()] = menuLi;
 				}
 			}
@@ -390,12 +402,12 @@ MenuStrip.createSubMenu = function(menus=[]) {
 		
 		if (subLi.innerText = menu.name) {
 			subLi.func = menu.func;
-			index = menu.name.indexOf("&");
+			const index = menu.name.indexOf("&");
 			if (index > 0) {
 				if (menu.name.length > index + 1) {
-					menuKey = menu.name[index + 1];
+					const menuKey = menu.name[index + 1];
 					if (('A' <= menuKey && menuKey <= 'Z') || ('0' <= menuKey && menuKey <= '9')) {
-						subLi.innerHTML = (menu.name.substring(0, index) + "<u>" + menuKey.toUpperCase() + "</u>" + menu.name.substring(index + 2));
+						subLi.innerHTML = (menu.name.substring(0, index) + `<u>${ menuKey.toUpperCase() }</u>` + menu.name.substring(index + 2));
 						menuKeys[menuKey.toLowerCase()] = subLi;
 					}
 				}
@@ -447,7 +459,10 @@ MenuStrip.prototype.openMenu = function(menu=null, withFocus=false) {
 		for (let i = 0; i < lis.length; i++) {
 			const li = lis[i];
 			if (li.classList.contains("line")) continue;
-			li.focus();
+			setTimeout(() => {
+				// 웹샘플에선 setTimeout 없으면 이벤트를 뺏기나...?
+				li.focus();
+			});
 			break;
 		}
 	} else {
@@ -477,7 +492,7 @@ MenuStrip.prototype.unfocus = function(withReturnFocus=true) {
 	}
 };
 
-function ContextMenu(menus=[]) {
+window.ContextMenu = function(menus=[]) {
 	const submenu = MenuStrip.createSubMenu(menus);
 	this.menuKeys = submenu.menuKeys;
 	this.view = submenu.view;

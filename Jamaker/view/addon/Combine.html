@@ -4,49 +4,100 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>겹치는 싱크 결합</title>
-	<script src="../lib/jquery-3.2.1.min.js?251214"></script>
-	<script src="../lib/popup.js?251214"></script>
-	<script src="../lib/setting.js?251214"></script>
-	<script src="../lib/AutoCompleteTextarea.js?251214"></script>
-	<script src="../lib/SubtitleObject.js?251214"></script>
-	<script src="../lib/Combine.js?251214"></script>
-	<script src="../lib/History.js?251214"></script>
-	<script src="../lib/SmiEditor.js?251214"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/popup.css?251214" />
-	<link rel="stylesheet" type="text/css" href="../lib/AutoCompleteTextarea.css?251214" />
+	<script src="../lib/popup.js?260103"></script>
+	<script src="../lib/setting.js?260103"></script>
+	<script src="../lib/Combine.js" type="module"></script>
+	<script src="../lib/SmiEditor.js" type="module"></script>
 	<script>
 windowName = "addon";
-if (LOG == undefined) {
+if (!window.LOG) {
 	LOG = false;
 }
 
-ready(() => {
-	if (opener) {
-		setting = opener.setting;
-	}
-});
+let upper;
+let lower;
+let output;
 
 let style = null;
 function setSetting(setting) {
 	if (style == null) {
-		$("head").append(style = $("<style>"));
+		document.head.append(style = document.createElement("style"));
 	}
-	style.html("#preview {\n" + setting.viewer.css + "\nfont-size: calc(" + setting.viewer.size + "vw / 5.86);\n}");
-	Combine.css = { font: $("#preview").css("font") };
+	style.innerHTML = (`#preview {\n${ setting.viewer.css }\nfont-size: calc(${ setting.viewer.size }vw / 5.86);\n}`);
+	Combine.css = { font: getComputedStyle(document.getElementById("preview")).font };
+	
+	if (setting) {
+		SmiEditor.setSetting(setting);
+		SmiEditor.setHighlight(setting.highlight, [upper, lower, output]);
+	}
 }
 
 ready(() => {
-	//$("#preview").css(defaultCss);
-	setSetting(setting);
+	{	// 에디터 교체
+		const inputUpper = document.getElementById("inputUpper");
+		const inputLower = document.getElementById("inputLower");
+		upper  = new SmiEditor(inputUpper.value, inputUpper);
+		lower  = new SmiEditor(inputLower.value, inputLower);
+        output = new SmiEditor("", document.getElementById("output"));
+		SmiEditor.activateKeyEvent();
+	}
 	
-	$("#btnCombine").on("click", function() {
-		// [[시작,종료,대사,줄수], ...]
-		// {lines:[시작,종료,위,아래], maxLines:[1,1]}//, maxWidth: 100
+    if (opener) {
+        const setting = JSON.parse(JSON.stringify(opener.setting));
+        delete setting.command;
+        setSetting(setting);
+    }
+	
+	document.getElementById("btnCombine").addEventListener("click", () => {
+		const main = new SmiFile(Combine.combine(upper.getValue(), lower.getValue()).join("\n"));
 		
-		const lines = Combine.combine($("#inputUpper").val(), $("#inputLower").val());
-		$("#output").val(lines.join("\n"));
+		{	// 최종본에서 그룹 단위 윗줄 채워주기
+			let begin = 0;
+			let maxLine = 0;
+			for (let i = 0; i < main.body.length; i++) {
+				const smi = main.body[i];
+				const line = smi.text.split("<br>").length;
+				if (smi.syncType == SyncType.combinedNormal
+				 || smi.syncType == SyncType.combinedFrame
+				 || smi.syncType == SyncType.combinedInner) {
+					maxLine = Math.max(maxLine, line);
+					
+				} else {
+					const end = i;
+					if (end - begin > 1) {
+						for (let j = begin; j < end; j++) {
+							const item = main.body[j];
+							const add = maxLine - item.text.split("<br>").length;
+							for (let k = 0; k < add; k++) {
+								item.text = "<b>　</b><br>" + item.text;
+							}
+						}
+					}
+					
+					maxLine = line;
+					begin = i;
+				}
+			}
+		}
+		
+		{	// 임시 중간 싱크 정상화
+			for (let i = 0; i < main.body.length; i++) {
+				const smi = main.body[i];
+				if (smi.syncType == SyncType.combinedNormal) {
+					smi.syncType = SyncType.normal;
+				} else if (smi.syncType == SyncType.combinedFrame) {
+					smi.syncType = SyncType.frame;
+				} else if (smi.syncType == SyncType.combinedInner) {
+					smi.syncType = SyncType.inner;
+				}
+			}
+		}
+		
+		const result = main.toText();
+		output.setValue(result);
 		
 		// preview 돌리기
+		const lines = result.split("\n");
 		const list = [];
 		for (let i = 0; i < lines.length; i++) {
 			if (i % 2) { // 짝수: 싱크 / 홀수: 대사
@@ -103,24 +154,6 @@ ready(() => {
 		}
 		setPreview(list);
 	});
-	
-	if (setting) {
-		SmiEditor.setSetting(setting);
-	}
-	const inputUpper = $("#inputUpper");
-	const inputLower = $("#inputLower");
-	const upper = new SmiEditor(inputUpper.val());
-	const lower = new SmiEditor(inputLower.val());
-	inputUpper.remove();
-	inputLower.remove();
-	
-	$("body").prepend(lower.input.attr("id", "inputLower"));
-	$("body").prepend(upper.input.attr("id", "inputUpper"));
-	upper.input.on("focus", function() { SmiEditor.selected = upper; });
-	lower.input.on("focus", function() { SmiEditor.selected = lower; });
-	SmiEditor.activateKeyEvent();
-	
-	LH = Number(upper.input.css("line-height").split("px")[0]);
 });
 let refreshPreview = 0;
 function setPreview(list) {
@@ -128,13 +161,13 @@ function setPreview(list) {
 		clearInterval(refreshPreview);
 	}
 	
-	const preview = $("#preview");
+	const preview = document.getElementById("preview");
 	let i = 0;
 	refreshPreview = setInterval(() => {
 		while (i >= list.length) {
 			i -= list.length;
 		}
-		preview.html(list[i++]);
+		preview.innerHTML = list[i++];
 	}, 333);
 }
 	</script>
@@ -143,16 +176,18 @@ body > * {
 	position: absolute;
 }
 
-textarea {
+#inputUpper,
+#inputLower,
+#output {
 	position: absolute;
 	width: calc(50% - 10px);
 	border-width: 0;
+	border-top: 1px solid #aaa;
 }
 #inputUpper {
 	top: 0;
 	left: 0;
 	height: calc(50% - 1px);
-	border-bottom-width: 1px;
 }
 #inputLower {
 	top: 50%;
@@ -176,7 +211,6 @@ textarea {
 	left: calc(50% + 10px);
 	width: calc(50% - 10px);
 	height: 200px;
-	border-bottom: 1px solid #000;
 	background: #000;
 	text-align: left;
 	white-space: pre;
