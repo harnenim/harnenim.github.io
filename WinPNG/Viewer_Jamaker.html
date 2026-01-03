@@ -1477,11 +1477,19 @@ function addFile(cont) {
 			setTimeout(async () =>  {
 				// Jamaker 주석 제거 기능
 				let text = await file.text();
-				const parts = (text.split("\n</SAMI>")[0] + "\n</SAMI>").split("\n<!-- End=");
-				for (let i = 1; i < parts.length; i++) {
-					parts[i] = parts[i].split("-->").slice(1).join("-->");
+				text = text.split("\n</SAMI>")[0] + "\n</SAMI>";
+				{	const parts = text.split("\n<!-- End=");
+					for (let i = 1; i < parts.length; i++) {
+						parts[i] = parts[i].split("-->").slice(1).join("-->");
+					}
+					text = parts.join("");
 				}
-				text = parts.join("");
+				{	const parts = text.split("\n<!-- ASS");
+					for (let i = 1; i < parts.length; i++) {
+						parts[i] = parts[i].split("-->").slice(1).join("-->");
+					}
+					text = parts.join("");
+				}
 				const clearedFile = new File([new Blob([text], { type: "text/plain" })], filename);
 				const clearedUrl = URL.from(clearedFile);
 				a.setAttribute("data-cleared", clearedUrl);
@@ -2045,4 +2053,5 @@ function getImage(e) {
 	</div>
 </form>
 </body>
+
 </html>
