@@ -1,4 +1,22 @@
-[ { "version": "2026.01.04"
+[ { "version": "2026.01.05"
+  , "comment":
+    [ "에디터 블록지정 등 UI 조정"
+    , "SamiReplacer 작동 오류 등 수정"
+    ]
+  , "files":
+    [ "view/lib/highlight/cm/codemirror.css"
+    , "view/lib/highlight/cm/codemirror.js"
+    , "view/lib/Combine.js"
+    , "view/lib/Jamaker.js"
+    , "view/lib/Jamaker.size.css"
+    , "view/lib/ListView.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/SamiReplacer.html"
+    , "view/setting.html"
+    ]
+  }
+, { "version": "2026.01.04"
   , "comment":
     [ "신규 에디터 커스텀 설정 수정 등"
     ]

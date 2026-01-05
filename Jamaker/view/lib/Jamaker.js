@@ -6,14 +6,14 @@ import "./AssEditor.js";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
-		if (el.href.endsWith("/webview.css?260104")) {
+		if (el.href.endsWith("/webview.css?260105")) {
 			el.remove();
 		}
 	});
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260104", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260105", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1113,6 +1113,10 @@ Tab.prototype.getAdditionalToAss = function(forSmi=false) {
 }
 Tab.prototype.getSaveText = function(withNormalize=true, withCombine=true, withComment=1) {
 	const funcSince = log("getSaveText start");
+	this.holds.forEach((hold) => {
+		// SmiFile처럼 쓸 수 있도록 text 값 넣어줌
+		hold.text = hold.getValue();
+	});
 	const result = SmiFile.holdsToText(this.holds, withNormalize, withCombine, withComment, Subtitle.video.FR / 1000)
 		+ (((withComment > 0) && this.withAss) ? this.getAdditionalToAss(true) : ""); // ASS 추가 내용 footer에 넣어주기
 	log("getSaveText end", funcSince);
@@ -2168,7 +2172,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260104").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260105").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2248,7 +2252,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260104").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260105").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2418,7 +2422,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260104", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260105", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4606,8 +4610,8 @@ window.generateSmiFromAss = function(keepHoldsAss=true) {
 }
 
 // SmiEditor 팝업 재정의
-SmiEditor.Finder1._open = SmiEditor.Finder1.open;
-SmiEditor.Finder1.open = function(isReplace=false) {
+SmiEditor.Finder._open = SmiEditor.Finder.open;
+SmiEditor.Finder.open = function(isReplace=false) {
 	this._open(isReplace);
 	const ratio = (DPI ? DPI : 1) * setting.size;
 	const w = 440 * ratio;
@@ -4616,8 +4620,8 @@ SmiEditor.Finder1.open = function(isReplace=false) {
 	const y = Math.ceil((setting.window.y + (setting.window.height / 2)) - (h / 2));
 	binder.moveWindow("finder", x, y, w, h, false);
 };
-SmiEditor.Finder1._onloadFind = SmiEditor.Finder1.onloadFind;
-SmiEditor.Finder1.onloadFind = function(isReplace) {
+SmiEditor.Finder._onloadFind = SmiEditor.Finder.onloadFind;
+SmiEditor.Finder.onloadFind = function(isReplace) {
 	if (setting && setting.size && setting.color) {
 		if (this.window.setSize) {
 			this.window.setSize(setting.size);
@@ -4630,24 +4634,6 @@ SmiEditor.Finder1.onloadFind = function(isReplace) {
 		}
 	}
 	this._onloadFind(isReplace);
-};
-SmiEditor.Finder2._open = SmiEditor.Finder2.open;
-SmiEditor.Finder2.open = function(isReplace) {
-	this._open(isReplace);
-	const ratio = setting ? Number(setting.size) : 1;
-	const w = 440 * ratio;
-	const h = 220 * ratio;
-	this.window.frame.css({
-			top: (window.innerHeight - h) / 2
-		,	left: (window.innerWidth - w) / 2
-		,	width: w
-		,	height: h
-	});
-	this.window.iframe.contentWindow.setSize(ratio);
-	
-	if (setting && setting.color) {
-		this.window.iframe.contentWindow.setColor(setting.color);
-	}
 };
 
 SmiEditor.Viewer._open = SmiEditor.Viewer.open;
@@ -4683,7 +4669,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260104", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260105", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

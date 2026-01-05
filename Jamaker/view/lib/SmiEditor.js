@@ -8,12 +8,12 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260104", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260105", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260104", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260105", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -243,8 +243,20 @@ window.SmiEditor = function(text, replace) {
 		});
 	}
 	this.cm.on("renderLine", (cm, line, el) => {
-		let useHighlight = true;
+		const lineNo = cm.lineInfo(line).line;
+		el.dataset.line = lineNo;
 		const prs = el.children[0];
+
+		{	// 줄바꿈 블록지정 여부 확인
+			const cursor = [cm.getCursor("start"), cm.getCursor("end")];
+			if (cursor[0].line <= lineNo && lineNo < cursor[1].line) {
+				prs.classList.add("CodeMirror-selectedline");
+			} else {
+				prs.classList.remove("CodeMirror-selectedline");
+			}
+		}
+
+		let useHighlight = true;
 
 		if (SmiEditor.parser) {
 			if (line.text.toUpperCase().startsWith("<SYNC ")) {
@@ -329,6 +341,33 @@ window.SmiEditor = function(text, replace) {
 		if (SmiEditor.showEnter) {
 			el.append(showEnter.cloneNode(true));
 		}
+	});
+	let lastSelectedRange = [0,0];
+	this.cm.on("cursorActivity", (cm) => {
+		// 블록지정 시 강제로 다시 그리기
+		const selectedRange = [cm.getCursor("start").line, cm.getCursor("end").line];
+		const renderLines = [];
+		if ((lastSelectedRange[1] < selectedRange[0])
+		 || (selectedRange[1] < lastSelectedRange[0])) {
+			// 전체가 겹치지 않음
+			for (let i = lastSelectedRange[0]; i <= lastSelectedRange[1]; i++) renderLines.push(i);
+			for (let i = selectedRange[0]; i <= selectedRange[1]; i++) renderLines.push(i);
+		} else {
+			// 앞쪽 선택/해제
+			for (let i = selectedRange[0]; i < lastSelectedRange[0]; i++) renderLines.push(i);
+			for (let i = lastSelectedRange[0]; i < selectedRange[0]; i++) renderLines.push(i);
+			// 뒤쪽 선택/해제
+			for (let i = selectedRange[1]; i < lastSelectedRange[1]; i++) renderLines.push(i);
+			for (let i = lastSelectedRange[1]; i < selectedRange[1]; i++) renderLines.push(i);
+		}
+		cm.operation(() => {
+			renderLines.forEach((line) => {
+				//cm.addLineClass(line, "text", "custom-highlight");
+				//cm.setGutterMarker(line, "dummy-gutter", null);
+
+			});
+		});
+		lastSelectedRange = selectedRange;
 	});
 	
 	if (text) {
@@ -556,6 +595,7 @@ SmiEditor.setSetting = (setting) => {
 					+	"	SmiEditor.selected.cm.replaceRange(paste.replaceAll('\\r\\n', '\\n'), cursor, cursor);"
 					+	"});"
 				, perm: "(async () => {"
+					+	"	if (opener && opener.binder && opener.binder._ && (typeof opener.binder._ != 'function') return true;" // 웹샘플에선 확인하지 않음
 					+	"	try {"
 					+	"		const clipboardText = await navigator.clipboard.readText();"
 					+	"		if (clipboardText && clipboardText.trim().length) return true;"
@@ -769,6 +809,10 @@ SmiEditor.prototype.bindEvent = function() {
 		//console.log(e.key, new Date().getTime());
 	});
 	
+	document.addEventListener("mouseup", () => {
+		// 찾기/바꾸기 창이 있었을 경우 재활성화
+		SmiEditor.Finder.focus();
+	});
 	wrapper.addEventListener("keyup", (e) => {
 		// 찾기/바꾸기 창이 있었을 경우 재활성화
 		SmiEditor.Finder.focus();
@@ -2463,12 +2507,11 @@ SmiEditor.prototype.moveToSide = function(direction) {
 	this.setCursor(cursor);
 }
 
-// 별도 창 방식
-SmiEditor.Finder1 = {
+SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260104", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260105", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2654,199 +2697,11 @@ SmiEditor.Finder1 = {
 			}, delay);
 		}
 };
-// iframe 방식
-SmiEditor.Finder2 = {
-		last: { find: "", replace: "", withCase: false, reverse: false }
-	,	open: function(isReplace) {
-			const w = 440;
-			const h = 220;
-			this.window.frame.css({
-					top: (window.innerHeight - h) / 2
-				,	left: (window.innerWidth - w) / 2
-				,	width: w
-				,	height: h
-				,	zIndex: 99999
-			}).show();
-			
-			this.window.iframe.focus();
-			if (isReplace) {
-				this.onloadReplace();
-			} else {
-				this.onloadFind();
-			}
-		}
-	,	onloadFind: function(isReplace) {
-			this.last.toFocus = "[name=find]";
-			
-			if (SmiEditor.selected) {
-				const editor = SmiEditor.selected;
-				const selection = editor.getCursor();
-				const length = selection[1] - selection[0];
-				if (length) {
-					this.last.find = editor.text.substring(selection[0], selection[1]);
-					this.last.toFocus = (isReplace ? "[name=replace]" : ".button-find");
-				}
-			}
-			
-			this.window.iframe.contentWindow.init(JSON.stringify(this.last));
-		}
-	,	openChange: function() {
-			this.open(true);
-		}
-	,	onloadReplace: function() {
-			this.onloadFind(true);
-		}
-		
-	,	finding: {
-				find: ""
-			,	replace: ""
-			,	withCase: false
-			,	reverse: false
-		}
-	,	checkError: function(params) {
-			if (!SmiEditor.selected) {
-				return "열려있는 파일이 없습니다.";
-			}
-			this.finding = JSON.parse(params);
-			if (this.finding.find.length == 0) {
-				return "찾을 문자열이 없습니다.";
-			}
-			this.finding.editor = SmiEditor.selected;
-			this.finding.text  = this.finding.editor.cm.getValue();
-			this.finding.upperText = this.finding.text.toUpperCase();
-			this.finding.upperFind = this.finding.find.toUpperCase();
-		}
-	,	afterFind: function() {
-			this.last.find    = this.finding.find;
-			this.last.replace = this.finding.replace;
-			this.last.withCase= this.finding.withCase;
-			this.last.reverse = this.finding.reverse;
-			this.finding.editor.scrollToCursor();
-			this.finding.render();
-		}
-		
-	,	doFind: function(selection) {
-			if (!selection) {
-				selection = [
-						this.finding.editor.cm.indexFromPos(this.finding.editor.cm.getCursor("start"))
-					,	this.finding.editor.cm.indexFromPos(this.finding.editor.cm.getCursor("end"))
-				];
-			}
-			let index = -1;
-			let text = this.finding.text;
-			let find = this.finding.find;
-			if (!this.finding.withCase) {
-				text = this.finding.upperText;
-				find = this.finding.upperFind;
-			}
-			if (this.finding.reverse) {
-				index = text.lastIndexOf(find, selection[0] - 1);
-			} else {
-				index = text.indexOf(find, selection[1]);
-			}
-			if (index < 0) return null;
-			return [index, index + find.length];
-		}
-	,	doReplace: function(selection) {
-			if (!selection) {
-				selection = [
-						this.finding.editor.cm.indexFromPos(this.finding.editor.cm.getCursor("start"))
-					,	this.finding.editor.cm.indexFromPos(this.finding.editor.cm.getCursor("end"))
-				];
-			}
-			let text = this.finding.text;
-			let find = this.finding.find;
-			if (!this.finding.withCase) {
-				text = this.finding.upperText;
-				find = this.finding.upperFind;
-			}
-			if (text.substring(selection[0], selection[1]) == find) {
-				this.finding.text      = this.finding.text     .substring(0, selection[0]) + this.finding.replace + this.finding.text     .substring(selection[1]);
-				this.finding.upperText = this.finding.upperText.substring(0, selection[0]) + this.finding.replace + this.finding.upperText.substring(selection[1]);
-				selection[1] = selection[0] + this.finding.replace.length;
-				return selection;
-			}
-			return null;
-		}
-		
-	,	runFind: function(params) {
-			const err = this.checkError(params);
-			if (err) return this.sendMsgAfterRun(err);
-			
-			let selection = null;
-			if (selection = this.doFind()) {
-				this.finding.editor.cm.setSelection(this.finding.editor.cm.posFromIndex(selection[0]), this.finding.editor.cm.posFromIndex(selection[1]));
-				this.afterFind();
-			} else {
-				this.sendMsgAfterRun("찾을 수 없습니다.");
-			}
-		}
-	,	runReplace: function(params) {
-			const err = this.checkError(params);
-			if (err) return this.sendMsgAfterRun(err);
-			let selection = null;
-			
-			// 찾은 상태로 선택돼 있었으면 바꾸기
-			if (selection = this.doReplace()) {
-				this.finding.editor.cm.setValue(this.finding.text);
-				this.finding.editor.cm.setSelection(this.finding.editor.cm.posFromIndex(selection[0]), this.finding.editor.cm.posFromIndex(selection[1]));
-				this.afterFind();
-			}
-			
-			// 다음 거 찾기
-			if (selection = this.doFind(selection)) {
-				this.finding.editor.cm.setSelection(this.finding.editor.cm.posFromIndex(selection[0]), this.finding.editor.cm.posFromIndex(selection[1]));
-				this.afterFind();
-				
-			} else {
-				this.sendMsgAfterRun("찾을 수 없습니다.");
-			}
-		}
-	,	runReplaceAll: function(params) {
-			const err = this.checkError(params);
-			if (err) return this.sendMsgAfterRun(err);
-			
-			let count = 0;
-			let last = null;
-			let selection = null;
-			
-			// 바꾸기
-			if (last = selection = this.doReplace()) count++;
-			
-			// 다음 찾기
-			selection = this.doFind(selection);
-			
-			// 바꾸기-찾기 반복
-			while (selection) {
-				count++;
-				last = selection;
-				selection = this.doFind(this.doReplace(selection));
-			}
-			
-			if (count) {
-				this.finding.editor.cm.setValue(this.finding.text);
-				this.finding.editor.cm.setSelection(this.finding.editor.cm.posFromIndex(last[0]), this.finding.editor.cm.posFromIndex(last[1]));
-				this.afterFind();
-				this.sendMsgAfterRun(count + "개 바꿈");
-			} else {
-				this.sendMsgAfterRun("찾을 수 없습니다.");
-			}
-		}
-	,	sendMsgAfterRun: function(msg) {
-			// 딜레이 안 주면 화면 갱신 안 된 상태로 뜰 수 있음
-			setTimeout(() => {
-				alert(msg);
-			}, 100);
-		}
-
-		// 찾기/바꾸기 창 항상 위에 필요 없음
-	,	focus: function() {}
-};
 
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260104", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260105", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -3301,31 +3156,4 @@ if (window.AutoCompleteTextarea) {
 
 ready(() => {
 	SmiEditor.refreshHighlight();
-	
-	if (window.Frame) {
-		// TODO: 원래 CefSharp 프로젝트에서 팝업창 제어가 빈약할 때 iframe으로 띄우던 기능
-		//       추후 Finder2 통째로 삭제
-		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?260104", "finder", "", () => {
-			// 좌우 크기만 조절 가능
-			[...SmiEditor.Finder.window.frame.querySelectorAll(".tl, .t, .tr, .bl, .b, .br")].forEach((el) => { el.remove(); });
-			
-			SmiEditor.Finder.window.close =
-			SmiEditor.Finder.window.iframe.contentWindow.close = () => {
-				// 닫기가 아닌 숨기기로 재정의
-				SmiEditor.Finder.window.frame.hide();
-				setTimeout(() => {
-					// X 클릭했을 경우 버튼에 포커스 뺏기는데, 에디터에 돌려줌
-					SmiEditor.selected.cm.focus();
-				}, 1);
-			};
-		});
-		SmiEditor.Finder.window.frame.hide();
-	} else {
-		SmiEditor.Finder = SmiEditor.Finder1;
-		document.addEventListener("mouseup", () => {
-			// 찾기/바꾸기 창이 있었을 경우 재활성화
-			SmiEditor.Finder.focus();
-		});
-	}
 });
