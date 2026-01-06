@@ -93,7 +93,8 @@ function WebPlayerBridge() {
 					if (this.window && this.window.name) {
 						return;
 					}
-					this.window = window.open(location.href.substring(0, location.href.lastIndexOf("/")) + "/bridge/WebPlayer.html?260105", "player", "scrollbars=no,location=no");
+					const href = location.href.split("?")[0];
+					this.window = window.open(href.substring(0, href.lastIndexOf("/")) + "/bridge/WebPlayer.html?260106", "player", "scrollbars=no,location=no");
 					if (this.window) {
 						const w = (this.window.iframe && this.window.iframe.contentWindow) ? this.window.iframe.contentWindow : this.window;
 						if (w.document) {
@@ -114,7 +115,11 @@ function WebPlayerBridge() {
 		return this.hwnd;
 	}
 	WebPlayerBridge.prototype.openFile = function(path) {
-		/* native */
+		let w = this.hwnd.window;
+		if (w.iframe && w.iframe.contentWindow) {
+			w = w.iframe.contentWindow;
+		}
+		w.main.openFile(path);
 	}
 	WebPlayerBridge.prototype.getFileName = function() {
 		alert("이 플레이어에선 지원되지 않습니다.");

@@ -8,12 +8,12 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260105", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260106", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260105", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260106", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -535,10 +535,10 @@ SmiEditor.setSetting = (setting) => {
 		}
 		
 		// 예약 단축키
-		SmiEditor.withCtrls["F"] = "/* 찾기           */ SmiEditor.Finder.open();";
-		SmiEditor.withCtrls["H"] = "/* 바꾸기         */ SmiEditor.Finder.openChange();";
-		SmiEditor.withCtrls["Y"] = "/* 다시 실행      */";
-		SmiEditor.withCtrls["Z"] = "/* 실행 취소      */";
+		SmiEditor.withCtrls["F"] = "/* 찾기   */ SmiEditor.Finder.open();";
+		SmiEditor.withCtrls["H"] = "/* 바꾸기 */ SmiEditor.Finder.openChange();";
+		SmiEditor.withCtrls["Y"] = "/* 다시 실행 */";
+		SmiEditor.withCtrls["Z"] = "/* 실행 취소 */";
 		SmiEditor.withCtrls.reserved += "FHYZ";
 		
 		// 설정값 반영
@@ -595,10 +595,9 @@ SmiEditor.setSetting = (setting) => {
 					+	"	SmiEditor.selected.cm.replaceRange(paste.replaceAll('\\r\\n', '\\n'), cursor, cursor);"
 					+	"});"
 				, perm: "(async () => {"
-					+	"	if (opener && opener.binder && opener.binder._ && (typeof opener.binder._ != 'function') return true;" // 웹샘플에선 확인하지 않음
+					+	"	if (binder?._ && (typeof binder._ != 'function')) return true;" // 웹샘플에선 확인하지 않음
 					+	"	try {"
-					+	"		const clipboardText = await navigator.clipboard.readText();"
-					+	"		if (clipboardText && clipboardText.trim().length) return true;"
+					+	"		if (await navigator.clipboard.readText()?.trim().length) return true;"
 					+	"	} catch (e) { }"
 					+	"	return false;"
 					+	"})();"
@@ -1886,11 +1885,10 @@ SmiEditor.prototype.render = function(range=null) {
 			}
 		}
 		
-		self.text = newText; // TODO: 에디터 값 직접 가져오도록 수정함. 빠트린 것 없는 지 확인 후 삭제
 		self.lines = newLines;
 		self.colSyncSizer.style.top = (newLines.length * LH) + "px";
 		
-		if (SmiEditor.PlayerAPI && SmiEditor.PlayerAPI.setLines) {
+		if (SmiEditor.PlayerAPI?.setLines) {
 			SmiEditor.PlayerAPI.setLines(newLines);
 		}
 		if (SmiEditor.Viewer.window) {
@@ -1938,17 +1936,8 @@ SmiEditor.prototype.render = function(range=null) {
 	};
 	setTimeout(thread, 1);
 }
-// highlightCss, highlightText는 설정 가져와서 override
-// TODO: 여기도 에디터 바꾸면 안 쓰일 듯?
+// highlightCss는 설정 가져와서 override
 SmiEditor.highlightCss = ".hljs-sync: { color: #3F5FBF; }";
-SmiEditor.highlightText = (text, state=null) => {
-	const previewLine = document.createElement("span");
-	if (text.toUpperCase().startsWith("<SYNC ")) {
-		previewLine.classList.add("hljs-sync");
-	}
-	previewLine.innerText = text;
-	return previewLine;
-}
 SmiEditor.setHighlight = (SH, editors) => {
 	SmiEditor.useHighlight = SH && SH.parser;
 	SmiEditor.showColor = SH.color;
@@ -2158,7 +2147,7 @@ SmiEditor.prototype.renderByResync = function(range) {
 			}
 		}
 		
-		if (SmiEditor.PlayerAPI && SmiEditor.PlayerAPI.setLines) {
+		if (SmiEditor.PlayerAPI?.setLines) {
 			SmiEditor.PlayerAPI.setLines(newLines);
 		}
 		if (SmiEditor.Viewer.window) {
@@ -2511,11 +2500,14 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260105", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260106", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
 	,	onloadFind: function(isReplace=false) {
+			// 웹샘플에서 주소줄 있으면 창 크기 조절 필요함
+			this.window.resizeTo(this.window.outerWidth, (this.window.outerHeight - this.window.innerHeight + 190));
+			
 			this.last.toFocus = "[name=find]";
 			
 			if (SmiEditor.selected) {
@@ -2701,7 +2693,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260105", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260106", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("viewer");
 			setTimeout(() => {

@@ -4,11 +4,11 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>업데이트 확인</title>
-	<script src="../lib/popup.js?260105"></script>
+	<script src="../lib/popup.js?260106"></script>
 	<script>
 windowName = "help";
 ready(() => {
-	const url = (opener && opener.binder && (!opener.binder._ || (typeof opener.binder._ == "function")))
+	const url = (opener?.binder && (!opener.binder._ || (typeof opener.binder._ == "function")))
 		? /* C# 프로그램에서 서버 호출 */ "https://harnenim.github.io/Jamaker/updates.json?" + Math.random()
 		: /* 웹버전 내부에서 로컬 호출 */ "../../updates.json"
 		;

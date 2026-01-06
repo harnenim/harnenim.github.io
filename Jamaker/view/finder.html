@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>찾기/바꾸기</title>
-<script src="lib/popup.js?260105"></script>
+<script src="lib/popup.js?260106"></script>
 <script>
 windowName = "finder";
 let styleSizePreset = "";
@@ -71,7 +71,7 @@ ready(() => {
 		binder.onloadFinder();
 	} else {
 		if (opener) {
-			if (opener.SmiEditor && opener.SmiEditor.Finder) {
+			if (opener.SmiEditor?.Finder) {
 				document.getElementById("btnFind"      ).addEventListener("click", () => { opener.SmiEditor.Finder.runFind      (getParams()); });
 				document.getElementById("btnReplace"   ).addEventListener("click", () => { opener.SmiEditor.Finder.runReplace   (getParams()); });
 				document.getElementById("btnReplaceAll").addEventListener("click", () => { opener.SmiEditor.Finder.runReplaceAll(getParams()); });
@@ -81,7 +81,7 @@ ready(() => {
 			setTimeout(() => {
 				// iframe 기반인 경우 opener가 나중에 생김
 				if (opener) {
-					if (opener.SmiEditor && opener.SmiEditor.Finder) {
+					if (opener.SmiEditor?.Finder) {
 						document.getElementById("btnFind"      ).addEventListener("click", () => { opener.SmiEditor.Finder.runFind      (getParams()); });
 						document.getElementById("btnReplace"   ).addEventListener("click", () => { opener.SmiEditor.Finder.runReplace   (getParams()); });
 						document.getElementById("btnReplaceAll").addEventListener("click", () => { opener.SmiEditor.Finder.runReplaceAll(getParams()); });

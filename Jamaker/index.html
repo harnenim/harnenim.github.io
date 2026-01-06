@@ -15,7 +15,7 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 <script>
 window.addEventListener("load", () => {
 	setTimeout(() => {
-		const fEditor = new Frame("Jamaker.html?260105", "editor", "", () => {
+		const fEditor = new Frame("Jamaker.html?260106" + (location.search ? location.search : ""), "editor", "", () => {
 			fEditor.frame.find(".button").remove();
 			fEditor.frame.find("h3").css({ width: "100%" });
 			
@@ -30,7 +30,8 @@ window.addEventListener("load", () => {
 			w.editor.initAfterLoad = function() {
 				w.editor.mainView.contentWindow.window.open = function(url, name, options) {
 					if (url.substring(0, 4) != "http") {
-						url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
+						const href = location.href.split("?")[0];
+						url = href.substring(0, href.lastIndexOf("/")) + "/view/" + url;
 					}
 					return w.editor.windows[name] = Frame.open(url, name, options, w.editor.mainView.contentWindow);
 				};

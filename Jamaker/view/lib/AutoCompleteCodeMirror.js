@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AutoComplete.css?260105", import.meta.url).href;
+	link.href = new URL("./AutoComplete.css?260106", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -298,8 +298,7 @@ AutoCompleteCodeMirror.prototype.onCheckWord = function(e) {
 		const line = this.cm.getLine(start.line);
 		
 		while (ch > 0) {
-			ch--;
-			const c = line[ch];
+			const c = line[--ch];
 			if (AutoCompleteCodeMirror.wordBreaker.indexOf(c) >= 0) {
 				ch++;
 				break;

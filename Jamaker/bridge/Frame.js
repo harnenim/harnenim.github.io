@@ -5,7 +5,7 @@ import "./jquery-3.2.1.min.js";
 {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Frame.css?260105", import.meta.url).href;
+	link.href = new URL("./Frame.css?260106", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -50,6 +50,7 @@ window.Frame = function(url, name, options, onload) {
 			try {
 				self.setTitle(self.iframe.contentDocument.title);
 			} catch (e) {
+				// 창을 끈 경우
 				clearInterval(self.refreshTitle);
 			}
 		}, 33);

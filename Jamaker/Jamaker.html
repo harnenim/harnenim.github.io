@@ -11,10 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260105" />
-<script src="bridge/WinAPI.js?260105"></script>
-<script src="bridge/Binder.js?260105"></script>
-<script src="bridge/WebPlayerBridge.js?260105"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260106" />
+<script src="bridge/WinAPI.js?260106"></script>
+<script src="bridge/Binder.js?260106"></script>
+<script src="bridge/WebPlayerBridge.js?260106"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -129,8 +129,9 @@ Binder.prototype.runColorPicker = function() { this._.runColorPicker(); }
 Binder.prototype.openTempDir = function() { this._.openTempDir() };
 Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
+Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260105"></script>
+<script src="bridge/WebForm.js?260106"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -182,13 +183,14 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260105";
+			editor.mainView.src = "view/Jamaker.html?260106";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
 				editor.mainView.contentWindow.open = function(url, name, options) {
 					if (url.substring(0, 4) != "http") {
-						url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
+						const href = location.href.split("?")[0];
+						url = href.substring(0, href.lastIndexOf("/")) + "/view/" + url;
 					}
 					return editor.windows[name] = window_open(url, name, options, editor.mainView.contentWindow);
 				}
@@ -211,6 +213,10 @@ const window_open = function(url, name, options, opener) {
 						editor.timerFuncs[i]();
 					}
 				}, 50);
+				// 파라미터로 전달한 샘플 파일 열기
+				if (location.search) {
+					editor.openSamples(new URLSearchParams(location.search).get("sample").split(";"));
+				}
 			}, 1000);
 			editor.timerFuncs = [
 					() => { editor.followWindow(); }
@@ -238,6 +244,8 @@ const window_open = function(url, name, options, opener) {
 			MenuStrip.prototype.setMenus = function(menus) {
 				this._setMenus(menus.concat([["샘플용"
 					, "플레이어 실행|binder.runPlayer()"
+					, ""
+					, "샘플 파일 열기|binder.openSamples(['sample/sample.smi','sample/sample.fkf','sample/sample.mkv'])"
 					, ""
 					, "임시 저장 파일 확인하기|binder.openTempDir()"
 					, "설정 export|binder.exportSetting()"
@@ -274,6 +282,28 @@ const window_open = function(url, name, options, opener) {
 			this.script("eval", "for (let i = 0; i < 200000; i++) { Subtitle.video.fs.push(Math.round(i * Subtitle.video.FL)); }");
 		}, 2000);
 	};
+	editor.openSamples = function(samples) {
+		samples.forEach(async (sample) => {
+			if (sample.endsWith(".mp4")
+			 || sample.endsWith(".mkv")
+			 || sample.endsWith(".webm")) {
+				const href = location.href.split("?")[0];
+				editor.player?.openFile(href.substring(0, href.lastIndexOf("/")) + "/" + sample);
+				
+			} else {
+				fetch(decodeURIComponent(sample)).then(async (response) => {
+					if (sample.endsWith(".fkf")) {
+						editor.mainView.contentWindow.afterLoadFkfFile(await response.arrayBuffer());
+					} else {
+						const filename = sample.split("/");
+						editor.script("openFile", filename[filename.length - 1], await response.text(), false);
+					}
+				}).catch((e) => {
+					console.log(e);
+				});
+			}
+		});
+	}
 	
 	editor.refreshPlayer = function() {
 		if (this.player) {
@@ -763,10 +793,10 @@ window.MB = 9;
 		setTimeout(async function() {
 			for (let i = 0; i < list.length; i++) {
 				const param = list[i].split(",");
-				const time   = param[0];
-				const length = param[1];
-				const begin  = param[2];
-				const end    = param[3];
+				const time   = Number(param[0]);
+				const length = Number(param[1]);
+				const begin  = Number(param[2]);
+				const end    = Number(param[3]);
 				const flag   = param[4];
 				
 				let ms = time % 60000;
@@ -797,6 +827,8 @@ window.MB = 9;
 					editor.script("startCompareThumbnails", begin, end, flag);
 				}, 100);
 			}
+			await sleep(2);
+			editor.getHwnd("addon").document.getElementById("renderInfo").style.display = "none";
 		}, 1);
 	}
 	const SaveOrder = function(tab, text, path, type) {
@@ -916,7 +948,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260105", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260106", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

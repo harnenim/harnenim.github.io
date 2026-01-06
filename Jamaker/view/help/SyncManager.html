@@ -4,7 +4,7 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저 도움말</title>
-	<script src="../lib/popup.js?260105"></script>
+	<script src="../lib/popup.js?260106"></script>
 	<script>
 windowName = "help";
 
@@ -14,8 +14,7 @@ ready(() => {
 		let li = e.target.closest("li");
 		if (!li) return;
 		
-		let tmp = document.querySelector(".area.select");
-		if (tmp) tmp.classList.remove("select");
+		document.querySelector(".area.select")?.classList.remove("select");
 		
 		const area = li.getAttribute("data-area").split("-");
 		for (let i = 0; i < area[0].length; i++) {
