@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260106", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260107", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -312,7 +312,7 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 		hold.selector.classList.add("main", "selected");
 		const tab = this;
 		hold.afterRender = function() {
-			const match = /<sami( [^>]*)*>/gi.exec(this.text);
+			const match = /<sami( [^>]*)*>/gi.exec(info.text);
 			
 			let withSmi = false;
 			let withSrt = false;
@@ -1990,8 +1990,8 @@ window.init = function(jsonSetting, isBackup=true) {
 				
 				setTimeout(() => {
 					if (tabs.length) {
-						if (tabSelector.querySelector(".th.selected")) {
-							// 선택돼있던 탭을 닫았을 경우 다른 탭 선택
+						if (!tabSelector.querySelector(".th.selected")) {
+							// 현재 선택된 탭이 없음 = 선택돼있던 탭을 닫았을 경우
 							tabIndex = Math.min(index, tabs.length - 1);
 						} else {
 							// 비활성 탭을 닫았을 경우
@@ -2165,7 +2165,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260106").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260107").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2243,7 +2243,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260106").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260107").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2409,7 +2409,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260106", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260107", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4656,7 +4656,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260106", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260107", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

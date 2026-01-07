@@ -8,12 +8,12 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260106", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260107", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260106", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260107", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -228,7 +228,10 @@ window.SmiEditor = function(text, replace) {
 		this.cm.getWrapperElement().classList.add("hljs");
 		this.cm.on("keydown", SmiEditor.cmKeydownHandler);
 		this.cm.setOption("extraKeys", {
-			"Ctrl-Z": (cm) => {
+			"Insert": (cm) => {
+				cm.toggleOverwrite(false);
+			}
+		,	"Ctrl-Z": (cm) => {
 				const scroll = cm.getScrollInfo();
 				cm.undo();
 				cm.scrollTo(scroll.left, scroll.top);
@@ -805,7 +808,7 @@ SmiEditor.prototype.bindEvent = function() {
 	
 	// 개발용 임시
 	wrapper.addEventListener("keydown", (e) => {
-		//console.log(e.key, new Date().getTime());
+		//console.log(e, new Date().getTime());
 	});
 	
 	document.addEventListener("mouseup", () => {
@@ -1247,6 +1250,8 @@ SmiEditor.activateKeyEvent = function() {
 				let key = e.key.toUpperCase();
 				if ((key[0] == "F") && (key.length > 1)) { // Fn -> pqrstuvwxyz{ 할당
 					key = String.fromCharCode(Number(key.substring(1)) + 111);
+				} else if (e.code == "Backquote") {
+					key = '`'; // 일본어 입력기에서 키값이 다르게 나옴
 				}
 				
 				if (e.shiftKey) {
@@ -2500,7 +2505,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260106", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260107", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2515,7 +2520,7 @@ SmiEditor.Finder = {
 				const selection = editor.getCursor();
 				const length = selection[1] - selection[0];
 				if (length) {
-					this.last.find = editor.text.substring(selection[0], selection[1]);
+					this.last.find = editor.getValue().substring(selection[0], selection[1]);
 					this.last.toFocus = (isReplace ? "[name=replace]" : ".button-find");
 				}
 			}
@@ -2693,7 +2698,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260106", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260107", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("viewer");
 			setTimeout(() => {
