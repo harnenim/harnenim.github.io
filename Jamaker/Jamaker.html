@@ -11,10 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260107" />
-<script src="bridge/WinAPI.js?260107"></script>
-<script src="bridge/Binder.js?260107"></script>
-<script src="bridge/WebPlayerBridge.js?260107"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260110" />
+<script src="bridge/WinAPI.js?260110"></script>
+<script src="bridge/Binder.js?260110"></script>
+<script src="bridge/WebPlayerBridge.js?260110"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -107,10 +107,6 @@ Binder.prototype.saveAddonSetting = function(path, text) { this._.saveAddonSetti
 Binder.prototype.getSubDirs = function(dir) { console.log(dir); }
 Binder.prototype.searchFiles = function(dir, query) { alert("C#에서 동작합니다."); };
 
-// viewer/finder opener 못 쓰게 될 경우 고려
-Binder.prototype.updateViewerSetting  = function() { this._.updateViewerSetting(); };
-Binder.prototype.updateViewerLines = function(lines) { this._.updateViewerLines(lines); };
-
 Binder.prototype.onloadFinder  = function(last  ) { this._.onloadFinder (last  ); };
 Binder.prototype.runFind	   = function(params) { this._.runFind      (params); };
 Binder.prototype.runReplace    = function(params) { this._.runReplace   (params); };
@@ -131,7 +127,7 @@ Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260107"></script>
+<script src="bridge/WebForm.js?260110"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -183,7 +179,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260107";
+			editor.mainView.src = "view/Jamaker.html?260110";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -348,7 +344,7 @@ const window_open = function(url, name, options, opener) {
 	public void WebFormClosed(object sender, FormClosedEventArgs e)
 	*/
 }
-	
+
 // 윈도우 그림자 여백 보정
 // iframe 버전에서 호출할 경우 값 바뀔 수 있음
 window.MT = 0;
@@ -560,18 +556,6 @@ window.MB = 9;
 	editor.runReplace    = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runReplace   (params); };	
 	editor.runReplaceAll = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runReplaceAll(params); };
 	
-	editor.updateViewerSetting = function() {
-		let viewer = this.getHwnd("viewer");
-		if (viewer) {
-			if (viewer.iframe && viewer.iframe.contentWindow) {
-				viewer = viewer.iframe.contentWindow;
-			}
-			if (viewer.setSetting) {
-				viewer.setSetting(editor.strSettingJson);
-				viewer.setLines(editor.viewerLines);
-			}
-		}
-	};
 	editor.updateViewerTime = function(time) {
 		let viewer = this.getHwnd("viewer");
 		if (viewer) {
@@ -583,19 +567,6 @@ window.MB = 9;
 			}
 		}
 	}
-	editor.viewerLines = "[]";
-	editor.updateViewerLines = function(lines) {
-		this.viewerLines = lines;
-		let viewer = this.getHwnd("viewer");
-		if (viewer) {
-			if (viewer.iframe && viewer.iframe.contentWindow) {
-				viewer = viewer.iframe.contentWindow;
-			}
-			if (viewer.setLines) {
-				viewer.setLines(lines);
-			}
-		}
-	};
 }
 
 {	// 설정
@@ -630,7 +601,6 @@ window.MB = 9;
 	}
 	editor.saveSetting = function(setting) {
 		localStorage.setItem("setting", (this.strSettingJson = setting));
-		this.updateViewerSetting();
 	}
 	editor.setVideoExts = function(exts) {
 		this.videoExts = exts.split(','); // C#에서만 필요
@@ -948,7 +918,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260107", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260110", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

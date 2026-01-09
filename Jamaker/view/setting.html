@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/popup.js?260107"></script>
+<script src="lib/popup.js?260110"></script>
 <script src="lib/SmiEditor.js" type="module"></script>
 <script>
 windowName = "setting";
@@ -39,6 +39,7 @@ function init() {
 	styleColorAppendPreset = document.getElementById("styleColorAppend").innerHTML;
 	setColor(setting.color);
 	SmiEditor.scrollShow = setting.scrollShow;
+	SmiEditor.cssActiveLine = setting.highlight?.activeline;
 	
 	let lastFocus = null;
 	
@@ -829,9 +830,11 @@ function init() {
 				,	enter : document.querySelector("input[name=highlight_enter]").checked
 				,	color : document.querySelector("input[name=highlight_color]").checked
 				,	sync  : Number(document.querySelector("input[name=highlight_sync]").value)
+				,	activeline: document.querySelector("input[name=highlight_activeline]").value
 			}, [editorNewFile]);
 		}
 		const editorNewFile = new SmiEditor(setting.newFile);
+		window.enf = editorNewFile;
 		document.getElementById("areaNewFile").append(editorNewFile.area);
 		{	// textarea resize
 			editorNewFile.area.style.height = "400px";
@@ -922,6 +925,11 @@ function init() {
 				refreshHighlight();
 			}
 		});
+		document.addEventListener("input", (e) => {
+			if (e.target.closest("input[name=highlight_activeline]")) {
+				refreshHighlight();
+			}
+		});
 		selectParser.addEventListener("change", () => {
 			const shs = document.getElementById("style_highlight_setting");
 			const inputs = [].concat(shs.querySelectorAll("input")).concat(shs.querySelectorAll("select[name=highlight_style]"));
@@ -940,7 +948,9 @@ function init() {
 		});
 		
 		afterOpen["style"] = () => {
-			editorNewFile.refresh();
+			setTimeout(() => {
+				editorNewFile.refresh();
+			}, 1);
 		}
 		
 		submitFuncs["style"] = () => {
@@ -952,6 +962,7 @@ function init() {
 			setting.highlight.enter  = document.querySelector("input[name=highlight_enter]").checked;
 			setting.highlight.color  = document.querySelector("input[name=highlight_color]").checked;
 			setting.highlight.sync   = Number(document.querySelector("input[name=highlight_sync]").value);
+			setting.highlight.activeline = document.querySelector("input[name=highlight_activeline]").value;
 			
 			setting.scrollMargin     = Number(document.querySelector("input[name=scrollMargin]").value);
 			setting.scrollShow       = Number(document.querySelector("input[name=scrollShow]").value);
@@ -1653,6 +1664,16 @@ body {
 #areaNewFile .highlight-textarea {
 	border-color: [tabBorder];
 }
+body:not(.hl) .CodeMirror {
+	background: [editor];
+}
+body:not(.hl) .CodeMirror {
+	color: [text];
+	caret-color: [text];
+}
+body:not(.hl) .CodeMirror .CodeMirror-cursor {
+	border-color: [text];
+}
 </style>
 <style id="styleBeforeLoad"> body { display: none; } </style>
 <script> ready(() => { setTimeout(() => { document.getElementById("styleBeforeLoad").remove(); }, 1); }); </script>
@@ -1859,7 +1880,7 @@ body {
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?260107")</h4>
+					<h4>openAddon("~~.html?260110")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -1938,6 +1959,11 @@ body {
 					<label><input type="checkbox" name="highlight_enter" /> <span>줄바꿈 표시</span></label>
 					<label><input type="checkbox" name="highlight_color" /> <span>색상 미리보기</span></label>
 				</span>
+			</div>
+			<div style="clear: both; width: 100%;">
+				<label><span>　선택된 줄 CSS:</span>
+					<input type="text" name="highlight_activeline" style="width: calc(100% - 140px);" />
+				</label>
 			</div>
 		</div>
 		<div style="float: left;">

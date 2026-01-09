@@ -3,17 +3,18 @@
 import "./highlight/cm/codemirror.js";
 import "./highlight/cm/scrollpastend.js";
 import "./highlight/cm/mark-selection.js";
+import "./highlight/cm/active-line.js";
 import "./highlight/cm/sami.js";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260107", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260110", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260107", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260110", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -223,14 +224,27 @@ window.SmiEditor = function(text, replace) {
 			,	configureMouse: (cm, repaet, event) => {
 					return (event.altKey) ? { unit: "char", addNew: false } : { addNew: false };
 				}
+			,	styleActiveLine: true
 //			,	lineNumbers: true
 		});
 		this.cm.getWrapperElement().classList.add("hljs");
 		this.cm.on("keydown", SmiEditor.cmKeydownHandler);
 		this.cm.setOption("extraKeys", {
-			"Insert": (cm) => {
-				cm.toggleOverwrite(false);
+			"Insert": false
+		,	"Down": (cm) => {
+				if (cm.somethingSelected()) {
+					cm.setCursor(cm.getCursor());
+				}
+				cm.moveV(1, "line");
 			}
+		,	"Up": (cm) => {
+				if (cm.somethingSelected()) {
+					cm.setCursor(cm.getCursor());
+				}
+				cm.moveV(-1, "line");
+			}
+		,	"Home": "goLineStart"
+		,	"Ctrl-D": false
 		,	"Ctrl-Z": (cm) => {
 				const scroll = cm.getScrollInfo();
 				cm.undo();
@@ -271,7 +285,7 @@ window.SmiEditor = function(text, replace) {
 				}
 			} else if (line.text.replaceAll("&nbsp;", "").trim().length == 0) {
 				// 공백 싱크인 경우 싱크 투명도 따라감
-				prs.classList.add("hljs-sync");
+				el.classList.add("hljs-sync");
 
 			} else {
 				if (SmiEditor.parser == "SyncOnly") {
@@ -325,13 +339,15 @@ window.SmiEditor = function(text, replace) {
 							
 						} else {
 							if (!(color.length == 7 && color.startsWith("#"))) {
+								// 색상코드가 아닐 경우 이름으로 확인
 								let hex = sToAttrColor(color);
 								if (hex == color) {
+									// 잘못된 값
 									return;
 								}
+								// 색상코드로 변환..은 안 해도 되나? 변환 가능 여부만 체크하고 놔둬도?
 								color = "#" + hex;
 							}
-							
 							value.classList.add("hljs-color");
 							value.style.borderColor = color;
 						}
@@ -339,6 +355,15 @@ window.SmiEditor = function(text, replace) {
 				}
 			});
 		}
+		
+		// 텍스트 노드에 <span> 태그 넣기
+		prs.childNodes.forEach((node) => {
+			if (node.nodeName == "#text") {
+				const span = document.createElement("span");
+				node.after(span);
+				span.append(node);
+			}
+		});
 		
 		// 줄바꿈 표시
 		if (SmiEditor.showEnter) {
@@ -468,10 +493,15 @@ SmiEditor.setSetting = (setting) => {
 	if (setting.sync) {
 		SmiEditor.sync = setting.sync;
 	}
-	SmiEditor.useHighlight = setting.highlight && setting.highlight.parser;
+	if (SmiEditor.useHighlight = setting.highlight && setting.highlight.parser) {
+		document.body.classList.add("hl");
+	} else {
+		document.body.classList.remove("hl");
+	}
 	if (setting.highlight) {
 		SmiEditor.showColor = setting.highlight.color;
 		SmiEditor.showEnter = setting.highlight.enter;
+		SmiEditor.cssActiveLine = setting.highlight.activeline ?? "";
 	}
 	SmiEditor.scrollShow = setting.scrollShow;
 	
@@ -1755,8 +1785,12 @@ SmiEditor.prototype.deleteLine = function() {
 		return;
 	}
 	this.remember();
-	const line = this.cm.getCursor().line;
-	this.cm.replaceRange("", { line: line, ch: 0 }, { line: line+1, ch: 0 }, `deleteLine_${new Date().getTime()}`);
+	const cursor = [this.cm.getCursor("start"), this.cm.getCursor("end")];
+	this.cm.replaceRange(""
+		, { line: cursor[0].line, ch: 0 }
+		, { line: cursor[1].line + (((cursor[0].line < cursor[1].line) && (cursor[1].ch == 0)) ? 0 : 1), ch: 0 }
+		, `deleteLine_${new Date().getTime()}`
+	);
 	this.remember();
 }
 
@@ -1948,6 +1982,7 @@ SmiEditor.setHighlight = (SH, editors) => {
 	SmiEditor.showColor = SH.color;
 	SmiEditor.showEnter = SH.enter;
 	SmiEditor.parser = SH.parser;
+	SmiEditor.cssActiveLine = SH.activeline;
 
 	if (SH.parser) {
 		let name = SH.style;
@@ -1963,22 +1998,34 @@ SmiEditor.setHighlight = (SH, editors) => {
 			// 문법 하이라이트 테마에 따른 커서 색상 추가
 			SmiEditor.highlightCss
 				= ".hljs { color: unset; }\n"
-				+ `.hold .CodeMirror-cursor { border-left-color: ${ (isDark ? "#fff" : "#000") }; }\n`
+				+ `body.hl .hold .CodeMirror-cursor { border-left-color: ${ (isDark ? "#fff" : "#000") }; }\n`
 				+ style
-				+ `.hljs-zw { border-color: ${ (isDark ? "#fff" : "#000") }; }\n`
-				+ `.hljs-sync { opacity: ${ SH.sync } }\n`;
+				+ "body:not(.hl) .hljs { background: unset; color: unset; }\n"
+				+ `body.hl .hljs-zw { border-color: ${ (isDark ? "#fff" : "#000") }; }\n`
+				+ `body.hl .hljs-sync > span *:not(.CodeMirror-selectedtext) { opacity: ${ SH.sync } }\n`
+				+ `body.hl .CodeMirror-activeline-background { ${SmiEditor.cssActiveLine} }`;
 			SmiEditor.refreshHighlight(editors);
 		});
+		document.body.classList.add("hl");
 	} else {
 		SmiEditor.afterRefreshHighlight(editors);
+		document.body.classList.remove("hl");
 	}
 }
 SmiEditor.refreshHighlight = (editors) => {
 	let styleHighlight = document.getElementById("styleHighlight");
 	if (!styleHighlight) {
+		const styles = [...document.getElementsByTagName("style")];
 		styleHighlight = document.createElement("style");
 		styleHighlight.id = "styleHighlight";
 		document.head.append(styleHighlight);
+
+		// 기존에 있던 <style> 태그들을 뒤쪽으로 가져옴
+		let last = styleHighlight;
+		styles.forEach((el) => {
+			last.after(el);
+			last = el;
+		});
 	}
 	styleHighlight.innerHTML = SmiEditor.highlightCss;
 	
@@ -2505,7 +2552,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260107", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260110", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2698,7 +2745,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260107", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260110", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -2810,9 +2857,7 @@ SmiEditor.Viewer = {
 					// 열린 게 없어도 오류 나지 않도록
 					lines.push([new Line()]);
 				}
-				// C#을 거쳐서 미리보기 창과 통신한다는 가정하에 JSON을 거쳤었는데
-				// 그냥 팝업으로 통신하는 걸로
-//				binder.updateViewerLines(JSON.stringify(lines));
+				
 				if (SmiEditor.Viewer.window) {
 					if (SmiEditor.Viewer.window.setLines) {
 						SmiEditor.Viewer.window.setLines(lines);
@@ -2916,8 +2961,8 @@ SmiEditor.fillSync = (text) => {
 };
 
 // 자동완성에 닫는 태그 추가
-if (window.AutoCompleteTextarea) {
-	AutoCompleteTextarea.getList = function(text, pos, list) {
+if (window.AutoCompleteCodeMirror) {
+	AutoCompleteCodeMirror.getList = function(text, pos, list) {
 		if (text[pos] == '<') {
 			// '<' 입력일 경우 닫는 태그 자동완성에 추가
 			let lines = text.substring(0, pos).split("\n");
