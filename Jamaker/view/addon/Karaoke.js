@@ -1,5 +1,5 @@
 ﻿document.head.querySelectorAll("link").forEach((el) => {
-	if (el.href.endsWith("/popup.css?260110")) {
+	if (el.href.endsWith("/popup.css?260113")) {
 		el.remove();
 	}
 });
@@ -1249,14 +1249,16 @@ ready(() => {
 			runAfterCheck();
 		});
 		
-		formDesign.addEventListener("change", (e) => {
+		formDesign.addEventListener("input", (e) => {
 			let el;
 			if (el = e.target.closest("input[type=color]")) {
-				el.nextSibling.value = el.value;
+				el.nextElementSibling.value = el.value;
 				return;
 			}
 			if (el = e.target.closest("input.color")) {
-				el.previousSibling.value = el.value;
+				if (el.value.startsWith("#") && el.value.length == 7) {
+					el.previousElementSibling.value = el.value;
+				}
 				return;
 			}
 		});
