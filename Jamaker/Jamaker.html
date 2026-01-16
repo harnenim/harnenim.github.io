@@ -11,10 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260117" />
-<script src="bridge/WinAPI.js?260117"></script>
-<script src="bridge/Binder.js?260117"></script>
-<script src="bridge/WebPlayerBridge.js?260117"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260117v1v1" />
+<script src="bridge/WinAPI.js?260117v1v1"></script>
+<script src="bridge/Binder.js?260117v1v1"></script>
+<script src="bridge/WebPlayerBridge.js?260117v1v1"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -127,7 +127,7 @@ Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260117"></script>
+<script src="bridge/WebForm.js?260117v1v1"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -179,7 +179,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260117";
+			editor.mainView.src = "view/Jamaker.html?260117v1v1";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -793,7 +793,11 @@ window.MB = 9;
 				}, 100);
 			}
 			await sleep(2);
-			editor.getHwnd("addon").document.getElementById("renderInfo").style.display = "none";
+			let addon = editor.getHwnd("addon");
+			if (addon.iframe) { // 웹샘플 iframe 버전
+				addon = addon.iframe.contentWindow;
+			}
+			addon.document.getElementById("renderInfo").style.display = "none";
 		}, 1);
 	}
 	const SaveOrder = function(tab, text, path, type) {
@@ -913,7 +917,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260117", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260117v1v1", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
