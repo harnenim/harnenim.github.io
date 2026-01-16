@@ -11,10 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260113" />
-<script src="bridge/WinAPI.js?260113"></script>
-<script src="bridge/Binder.js?260113"></script>
-<script src="bridge/WebPlayerBridge.js?260113"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260117" />
+<script src="bridge/WinAPI.js?260117"></script>
+<script src="bridge/Binder.js?260117"></script>
+<script src="bridge/WebPlayerBridge.js?260117"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -127,7 +127,7 @@ Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260113"></script>
+<script src="bridge/WebForm.js?260117"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -179,7 +179,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260113";
+			editor.mainView.src = "view/Jamaker.html?260117";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -211,7 +211,9 @@ const window_open = function(url, name, options, opener) {
 				}, 9);
 				// 파라미터로 전달한 샘플 파일 열기
 				if (location.search) {
-					editor.openSamples(new URLSearchParams(location.search).get("sample").split(";"));
+					setTimeout(() => {
+						editor.openSamples(new URLSearchParams(location.search).get("sample").split(";"));
+					}, 500);
 				}
 			}, 1000);
 			editor.timerFuncs = [
@@ -272,10 +274,13 @@ const window_open = function(url, name, options, opener) {
 		WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
 		editor.useFollowWindow = true;
 		
-		// 실행 5초 후 동영상 불러온 것처럼 실행
+		// 실행 2초 후 동영상 불러온 것처럼 실행
 		setTimeout(() => {
-			this.script("setVideoInfo", 1920, 1080, 23976);
-			this.script("eval", "for (let i = 0; i < 200000; i++) { Subtitle.video.fs.push(Math.round(i * Subtitle.video.FL)); }");
+			if (!editor.mainView.contentWindow?.Subtitle?.video?.kfs?.length) {
+				// 키프레임 없으면 샘플 fkf 열리지 않은 것으로 간주
+				this.script("setVideoInfo", 1920, 1080, 23976);
+				this.script("eval", "for (let i = 0; i < 200000; i++) { Subtitle.video.fs.push(Math.round(i * Subtitle.video.FL)); }");
+			}
 		}, 2000);
 	};
 	editor.openSamples = function(samples) {
@@ -396,10 +401,6 @@ window.MB = 9;
 							let viewer = hwnd;
 							if (viewer.iframe && viewer.iframe.contentWindow) {
 								viewer = viewer.iframe.contentWindow;
-							}
-							if (viewer.setSetting) {
-								viewer.setSetting(editor.strSettingJson);
-								viewer.setLines(editor.viewerLines);
 							}
 						}
 					}, 100);
@@ -775,21 +776,15 @@ window.MB = 9;
 				m %= 60;
 				let timeStr = ((100 + h) * 100 + m) * 100000 + ms + "";
 				timeStr = timeStr.substring(1, 3) + ":" + timeStr.substring(3, 5) + ":" + timeStr.substring(5, 7) + "." + timeStr.substring(7, 10);
-				const args = "-ss {ss} -t {length} -i \"{path}\" -s 96x54 -f image2 \"tmp/thumbnails/{begin}{flag}_%d.jpg\""
-				.replaceAll("{ss}"    , timeStr)
-				.replaceAll("{length}", length / 1000)
-				.replaceAll("{path}"  , "~")
-				.replaceAll("{begin}" , begin)
-				.replaceAll("{flag}"  , flag)
-				;
+				const args = `-ss ${timeStr} -t ${length / 1000} -i "~" -s {TX}x{TY} -qscale:v2 -fps_mode passthrough {vf} -f image2 "tmp/thumbnails/${begin}${flag}_%d.jpg"`;
 				console.log(args);
 				await sleep(0.1);
 				
 				for (let index = 0; index < (end - begin); index++) {
-					const from = "tmp/thumbnails/" + begin + flag + "_" + (index + 1) + ".jpg";
-					const to = "tmp/thumbnails/" + (begin + index) + flag + ".jpg";
-					const cmdDel = "del \"{to}\"".replaceAll("{to}", to);
-					const cmdRen = "ren \"{from}\" \"{to}\"".replaceAll("{from}", from).replaceAll("{to}", to);
+					const from = `tmp/thumbnails/${begin}${flag}_${index + 1}.jpg`;
+					const to = `tmp/thumbnails/${begin + index}${flag}.jpg`;
+					const cmdDel = `del "${to}"`;
+					const cmdRen = `ren "${from}" "${to}"`;
 				}
 				
 				editor.script("startRenderThumbnails", begin, end, flag);
@@ -918,7 +913,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260113", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260117", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}

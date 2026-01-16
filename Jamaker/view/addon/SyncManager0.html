@@ -4,7 +4,7 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저 (구버전)</title><!-- 웹샘플에서 작업이 필요할 때를 위해 남겨둠 -->
-	<script src="../lib/popup.js?260113"></script>
+	<script src="../lib/popup.js?260117"></script>
 	<script src="../lib/SmiEditor.js" type="module"></script>
 	<script>
 windowName = "addon";
@@ -536,13 +536,7 @@ ready(() => {
 			originFrameAss.scrollTop = 0;
 			originFrameAss.scrollLeft = 0;
 			confirm("작업할 내역을 복사하시겠습니까?\nAegisub에서 작업이 필요합니다.", () => {
-				if (opener && opener.binder && !opener.binder._) {
-					// C# 프로그램에서 호출
-					document.execCommand("copy");
-				} else {
-					// 웹버전에서 호출
-					navigator.clipboard.writeText(text);
-				}
+				navigator.clipboard.writeText(text);
 			});
 		}, 100); // 너무 빨리 키보드 누르면 confirm 뜨기 전에 textarea의 블록지정된 내용을 날려버림...
 	}

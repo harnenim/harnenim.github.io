@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AutoComplete.css?260113", import.meta.url).href;
+	link.href = new URL("./AutoComplete.css?260117, import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -96,12 +96,12 @@ AutoCompleteCodeMirror.prototype.open = function(list) {
 		this.list = list;
 		this.lis = [];
 		AutoCompleteCodeMirror.view.innerHTML = "";
-		for (let i = 0; i < list.length; i++) {
+		list.forEach((item) => {
 			const li = document.createElement("li");
-			li.innerText = list[i];
+			li.innerText = item;
 			this.lis.push(li);
 			AutoCompleteCodeMirror.view.append(li);
-		}
+		});
 		AutoCompleteCodeMirror.view.style.height = (this.lis.length * this.LH) + "px";
 		this.select(0);
 		this.setPos();
@@ -230,30 +230,34 @@ AutoCompleteCodeMirror.prototype.onKeyup = function(e) {
 	}
 };
 AutoCompleteCodeMirror.prototype.input = function(li) {
-	let pos = this.pos;
 	let value = li.innerText;
 	if (value.indexOf("|") > 0) {
 		value = value.split("|")[1];
 	}
+	const lines = value.split("\\n");
+	value = lines.join("\n");
+	
 	this.cm.replaceRange(value, this.pos, this.cm.getCursor("end"));
-	pos.ch += value.length;
-	this.cm.setSelection(pos);
+	this.cm.setSelection({
+		line: this.pos.line + lines.length - 1
+	,	ch: this.pos.ch + lines[lines.length - 1].length
+	});
 }
 AutoCompleteCodeMirror.prototype.afterInput = function() {
 	// 최초 리스트에서 현재 입력값에 대해 검색
 	const value = this.cm.getRange(this.pos, this.cm.getCursor("end"));
 	this.lis = [];
 	AutoCompleteCodeMirror.view.innerHTML = "";
-	for (let i = 0; i < this.list.length; i++) {
+	this.list.forEach((item) => {
 		// 설정 순서대로 표시하려고 정렬 없이 전체 비교를 돌리는데
 		// 기능 특성상 전체를 돌려도 연산량이 과도하진 않을 듯함
-		if (this.list[i].substring(0, value.length) == value) {
+		if (item.substring(0, value.length) == value) {
 			const li = document.createElement("li");
-			li.innerText = this.list[i];
+			li.innerText = item;
 			this.lis.push(li);
 			AutoCompleteCodeMirror.view.append(li);
 		}
-	}
+	});
 	if (this.lis.length) {
 		AutoCompleteCodeMirror.view.style.height = (this.lis.length * this.LH) + "px";
 		// 첫 번째 항목 선택

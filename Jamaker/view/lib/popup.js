@@ -47,11 +47,11 @@ window.windowName = null;
 
 // alert 재정의
 window._alert = alert;
-alert = (msg) => {
+alert = async (msg) => {
 	if (windowName && opener?.binder) {
-		opener.binder.alert(windowName, msg);
+		await opener.binder.alert(windowName, msg);
 	} else if (windowName && window.binder) {
-		binder.alert(windowName, msg);
+		await binder.alert(windowName, msg);
 	} else {
 		_alert(msg);
 	}
@@ -190,7 +190,7 @@ if (opener) {
 }
 
 function setColor(color) {
-	fetch("lib/popup.color.css?260113").then(async (response) => {
+	fetch("lib/popup.color.css?260117).then(async (response) => {
 		let preset = await response.text();
 		for (let name in color) {
 			preset = preset.replaceAll(`[${name}]`, color[name]);

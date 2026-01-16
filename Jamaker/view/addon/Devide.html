@@ -4,7 +4,7 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>겹치는 싱크 분리</title>
-	<script src="../lib/popup.js?260113"></script>
+	<script src="../lib/popup.js?260117"></script>
 	<script src="../lib/SmiEditor.js" type="module"></script>
 	<script>
 windowName = "addon";
@@ -16,11 +16,11 @@ let inputOrigin;
 let outputUpper;
 let outputLower;
 
-function init() {
+async function init() {
 	if (opener && opener.SmiEditor.selected) {
 		origin = opener.SmiEditor.selected.getText();
 	} else {
-		alert("작업 대상이 없습니다.");
+		await alert("작업 대상이 없습니다.");
 		window.close();
 		return false;
 	}

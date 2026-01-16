@@ -1,5 +1,5 @@
 ﻿document.head.querySelectorAll("link").forEach((el) => {
-	if (el.href.endsWith("/popup.css?260113")) {
+	if (el.href.endsWith("/popup.css?260117)) {
 		el.remove();
 	}
 });
@@ -1245,6 +1245,10 @@ ready(() => {
 			runAfterCheck();
 		});
 		page4.addEventListener("change", (el) => {
+			if (!el.target.closest("input")) return;
+			runAfterCheck();
+		});
+		page4.addEventListener("input", (el) => {
 			if (!el.target.closest("input")) return;
 			runAfterCheck();
 		});

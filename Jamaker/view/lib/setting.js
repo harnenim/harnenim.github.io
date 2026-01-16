@@ -40,7 +40,7 @@
 }
 
 window.DEFAULT_SETTING =
-{	version: "2026.01.13.v1"
+{	version: "2026.01.17.v1"
 ,	menu:
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
@@ -91,10 +91,10 @@ window.DEFAULT_SETTING =
 		]
 	]
 ,	window:
-	{	x: 640
+	{	x: 1280
 	,	y: 0
 	,	width: 640
-	,	height: 720
+	,	height: 920
 	,	follow: true // 미리보기/플레이어 창 따라오기
 	}
 ,	sync:
@@ -392,31 +392,20 @@ window.DEFAULT_SETTING =
 ,	viewer:
 	{	window:
 		{	x: 0
-		,	y: 420
-		,	width: 640
-		,	height: 300
+		,	y: 720
+		,	width: 1280
+		,	height: 200
 		}
 	,	useAlign: false
 	,	size: 18
-	,	css : "background: #888;\n"
-			+ "color: #fff;\n"
-			+ "font-family: '맑은 고딕';\n"
-			+ "font-weight: bold;\n"
-			+ "text-shadow: -2px -2px #000\n"
-			+ "           , -2px  2px #000\n"
-			+ "           ,  2px  2px #000\n"
-			+ "           ,  2px -2px #000\n"
-			+ "           , -1px -1px 4px #000\n"
-			+ "           , -1px  2px 4px #000\n"
-			+ "           ,  2px  2px 4px #000\n"
-			+ "           ,  2px -1px 4px #000;"
+	,	background: "#888888"
 	}
 ,	player:
 	{	window:
 		{	x: 0
 		,	y: 0
-		,	width: 640
-		,	height: 420
+		,	width: 1280
+		,	height: 720
 		,	use: true
 		}
 	,	exts: "mp4,mkv,avi,ts,m2ts" // 동영상 파일 찾기 우선순위 순으로

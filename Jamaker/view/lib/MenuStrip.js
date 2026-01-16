@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./MenuStrip.css?260113", import.meta.url).href;
+	link.href = new URL("./MenuStrip.css?260117, import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -331,8 +331,10 @@ window.MenuStrip = function(ol=null) {
 		}
 		// 구분선 여백이 눌리는 경우가 있음
 		if (e.target.closest(".submenu")) return;
-
-		// 메뉴가 아닌 다른 곳을 클릭하면 포커스 반환
+	});
+	document.addEventListener("mousedown", (e) => {
+		if (e.target.closest(".submenu")) return;
+		// 메뉴가 아닌 다른 곳을 누르면 포커스 반환
 		focusedMenu?.unfocus();
 	});
 	window.menustrip = null;
@@ -388,8 +390,7 @@ MenuStrip.createSubMenu = function(menus=[]) {
 	const menuKeys = [];
 	const ol = document.createElement("ol");
 	ol.classList.add("submenu");
-	for (let j = 0; j < menus.length; j++) {
-		let menu = menus[j];
+	menus.forEach((menu) => {
 		if (typeof menu == "string") {
 			menu = menu.split("|");
 			menu = {
@@ -417,7 +418,7 @@ MenuStrip.createSubMenu = function(menus=[]) {
 			subLi.classList.add("line");
 		}
 		ol.append(subLi);
-	}
+	});
 	
 	return { view: ol, menuKeys: menuKeys };
 }
