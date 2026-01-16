@@ -91,10 +91,10 @@ window.DEFAULT_SETTING =
 		]
 	]
 ,	window:
-	{	x: 1280
-	,	y: 0
+	{	x: 660
+	,	y: 20
 	,	width: 640
-	,	height: 920
+	,	height: 720
 	,	follow: true // 미리보기/플레이어 창 따라오기
 	}
 ,	sync:
@@ -391,10 +391,10 @@ window.DEFAULT_SETTING =
 		+	"</SAMI>"
 ,	viewer:
 	{	window:
-		{	x: 0
-		,	y: 720
-		,	width: 1280
-		,	height: 200
+		{	x: 20
+		,	y: 440
+		,	width: 640
+		,	height: 300
 		}
 	,	useAlign: false
 	,	size: 18
@@ -402,10 +402,10 @@ window.DEFAULT_SETTING =
 	}
 ,	player:
 	{	window:
-		{	x: 0
-		,	y: 0
-		,	width: 1280
-		,	height: 720
+		{	x: 20
+		,	y: 20
+		,	width: 640
+		,	height: 420
 		,	use: true
 		}
 	,	exts: "mp4,mkv,avi,ts,m2ts" // 동영상 파일 찾기 우선순위 순으로
