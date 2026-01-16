@@ -9,12 +9,12 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260117, import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260117", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260117, import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260117", import.meta.url).href;
 	document.head.append(link);
 }
 

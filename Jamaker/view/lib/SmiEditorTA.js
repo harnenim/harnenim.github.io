@@ -4,7 +4,7 @@ import "./SubtitleObject.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260117, import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260117", import.meta.url).href;
 	document.head.append(link);
 }
 
