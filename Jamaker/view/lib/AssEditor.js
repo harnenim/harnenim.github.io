@@ -3,7 +3,7 @@
 {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AssEditor.css?260117v1", import.meta.url).href;
+	link.href = new URL("./AssEditor.css?260120", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -204,7 +204,7 @@ AssEditor.prototype.getFrameSyncs = function() {
 	// 중복 제외 후 출력
 	const result = [];
 	let last = null;
-	this.syncs.forEach((sync) => {
+	syncs.forEach((sync) => {
 		if (last == sync) {
 			return;
 		}

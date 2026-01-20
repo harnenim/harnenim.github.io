@@ -1,5 +1,5 @@
 ﻿document.head.querySelectorAll("link").forEach((el) => {
-	if (el.href.endsWith("/popup.css?260117v1")) {
+	if (el.href.endsWith("/popup.css?260120")) {
 		el.remove();
 	}
 });

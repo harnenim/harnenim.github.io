@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./MenuStrip.css?260117v1", import.meta.url).href;
+	link.href = new URL("./MenuStrip.css?260120", import.meta.url).href;
 	document.head.append(link);
 }
 

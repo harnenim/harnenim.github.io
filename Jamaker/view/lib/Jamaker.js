@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260117v1", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260120", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -97,6 +97,32 @@ window.Tab = function(text, path) {
 				}
 				tab.onChangeSaved();
 			};
+			const resEditor = assHold.area.querySelector(".tab-ass-resolution");
+			tab.area.querySelector("div.tab-ass-appends button.btn-edit-res").addEventListener("click", () => {
+				const x = assHold.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+				const y = assHold.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+				if (!isFinite(x) || !isFinite(y)) {
+					alert("원본 해상도 정보가 없습니다.");
+					return;
+				}
+				resEditor.querySelector("input[name=origin-w]").value = x;
+				resEditor.querySelector("input[name=origin-h]").value = y;
+				resEditor.querySelector("input[name=player-w]").value = Subtitle.video.width;
+				resEditor.querySelector("input[name=player-h]").value = Subtitle.video.height;
+				resEditor.querySelector("input[name=target-w]").value = Subtitle.video.width;
+				resEditor.querySelector("input[name=target-h]").value = Subtitle.video.height;
+				assHold.area.classList.add("res");
+			});
+			resEditor.querySelector(".btn-close-popup").addEventListener("click", () => {
+				assHold.area.classList.remove("res");
+			});
+			resEditor.querySelector("form").addEventListener("submit", (e) => {
+				e.preventDefault();
+				if (tab.setResolution(resEditor.querySelector("input[name=target-w]").value, resEditor.querySelector("input[name=target-h]").value)) {
+					assHold.area.classList.remove("res");
+				}
+			});
+			
 			tab.area.querySelector("div.tab-ass-script button.btn-add-event").addEventListener("click", () => {
 				const sync = SmiEditor.getSyncTime("!"); // 가중치 없는 현재 싱크로 넣음
 				assHold.assEditor.addEvents([ new AssEvent(sync, sync, "Default", "") ]);
@@ -149,6 +175,16 @@ window.Tab = function(text, path) {
 			
 			const info = this.assFile.getInfo();
 			if (info) {
+				let playResX = info.get("PlayResX");
+				let playResY = info.get("PlayResY");
+				if (playResX && playResY) {
+					tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value = playResX;
+					tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = playResY;
+				} else {
+					tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value = Subtitle.video.width;
+					tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = Subtitle.video.height;
+				}
+				
 				let strFrameSyncs = info.get("FrameSyncs");
 				if (strFrameSyncs) {
 					frameSyncs = strFrameSyncs.split(",");
@@ -161,6 +197,11 @@ window.Tab = function(text, path) {
 			}
 			assHold.assEditor.setEvents(events.body, frameSyncs, true);
 			assHold.assEditor.update();
+			
+		} else {
+			// ASS용 파일 아니어도 값은 채워둠
+			tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value = Subtitle.video.width;
+			tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = Subtitle.video.height;
 		}
 		
 		holds[0].frameSyncs = frameSyncs;
@@ -894,7 +935,10 @@ Tab.prototype.updateHoldSelector = function() {
 }
 Tab.prototype.selectHold = function(hold) {
 	// 단축키 홀드 전환 시, 입력기를 우선 해제해야 함
-	this.holds[this.holdIndex]?.cm.getInputField().blur();
+	const selectedHold = this.holds[this.holdIndex];
+	if (selectedHold && selectedHold.cm) {
+		selectedHold.cm.getInputField().blur();
+	}
 	
 	setTimeout(() => {
 		let index = hold;
@@ -1000,33 +1044,11 @@ Tab.prototype.replaceBeforeSave = function() {
 	
 	log("replaceBeforeSave end", funcSince);
 }
-Tab.prototype.getAdditionalToAss = function(forSmi=false) {
+Tab.prototype.getAdditionalToAss = function(forSave=false) {
 	const funcSince = log("getAdditionalToAss start");
 	
 	const assFile = new AssFile(" "); // 기본 part 없이 생성
 	
-	let frameSyncs = [];
-	{
-		let syncs = this.assHold.assEditor.getFrameSyncs();
-		// 정렬
-		syncs.sort((a, b) =>  {
-			if (a < b) {
-				return -1;
-			} else if (a > b) {
-				return 1;
-			}
-			return 0;
-		});
-		
-		// 중복 제외 후 출력
-		let last = null;
-		syncs.forEach((sync) => {
-			if (last == sync) {
-				return;
-			}
-			frameSyncs.push(last = sync);
-		});
-	}
 	let videoPath = Subtitle.video.path;
 	if (videoPath && this.path) {
 		// 상대경로로 바꿔줌
@@ -1043,9 +1065,9 @@ Tab.prototype.getAdditionalToAss = function(forSmi=false) {
 			videoPath = "..\\" + videoPath;
 		}
 	}
-	const info = assFile.getInfo(true);
-	info.set("VideoInfo", videoPath);
-	info.set("FrameSyncs", frameSyncs.join(","));
+	
+	// 프로젝트 파일 저장용일 경우 [Script Info] 생성
+	const info = forSave ? assFile.getInfo(true) : null;
 	
 	let appends = this.area.querySelector(".tab-ass-appends textarea").value;
 	if (appends.trim().length) {
@@ -1085,8 +1107,39 @@ Tab.prototype.getAdditionalToAss = function(forSmi=false) {
 	
 	log("getAdditionalToAss end", funcSince);
 	
-	if (forSmi) {
+	if (forSave) {
+		// [Script Info] 내용 채우기
+		if (videoPath) {
+			info.set("VideoInfo", videoPath);
+		}
+		// 동영상 싱크 정보
+		let playResX = this.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+		let playResY = this.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+		if (playResX && playResY && isFinite(playResX) && isFinite(playResY)) {
+			info.set("PlayResX", playResX);
+			info.set("PlayResY", playResY);
+		}
+		// 화면 싱크 정보
+		const syncs = this.assHold.assEditor.getFrameSyncs();
+		if (syncs.length) {
+			const frameSyncs = [];
+			// 정렬
+			syncs.sort((a, b) =>  {
+				if (a < b) return -1;
+				if (a > b) return 1;
+				return 0;
+			});
+			// 중복 제외 후 출력
+			let last = null;
+			syncs.forEach((sync) => {
+				if (last == sync) return;
+				frameSyncs.push(last = sync);
+			});
+			info.set("FrameSyncs", frameSyncs.join(","));
+		}
+		
 		assFile.getEvents().format = AssEditor.FormatToSave;
+		
 		const assText = assFile.toText();
 		if (assText) {
 			return `\n<!-- ASS\n${ assText }\n-->`;
@@ -1144,7 +1197,19 @@ Tab.prototype.isSaved = function() {
 Tab.prototype.toAss = function(orderByEndSync=false) {
 	const funcSince = log("toAss start");
 	
-	const assFile = new AssFile(null, Subtitle.video.width, Subtitle.video.height);
+	let playResX = this.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+	let playResY = this.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+	if (playResX && playResY && isFinite(playResX) && isFinite(playResY)) {
+		// 기존에 가지고 있던 해상도 값이 있을 때
+		playResX = Number(playResX);
+		playResY = Number(playResY);
+	} else {
+		// 없었으면 현재 열려있는 동영상 정보에서 가져옴
+		this.area.querySelector("div.tab-ass-appends input.inputPlayResX").value = playResX = Subtitle.video.width;
+		this.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = playResY = Subtitle.video.height;
+	}
+	
+	const assFile = new AssFile(null, playResX, playResY);
 	const assStyles = assFile.getStyles();
 	const assEvents = assFile.getEvents();
 	
@@ -1191,20 +1256,20 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 			styles[name] = style;
 		}
 		
-		hold.smiFile = new SmiFile(hold.getValue());
+		const smiFile = hold.smiFile = new SmiFile(hold.getValue());
 		if (h == 0) {
 			// 메인 홀드에서 <title> 확인
-			const h0 = hold.smiFile.header.search(/<title>/gi);
+			const h0 = smiFile.header.search(/<title>/gi);
 			if (h0 > 0) {
-				const h1 = hold.smiFile.header.search(/<\/title>/gi);
+				const h1 = smiFile.header.search(/<\/title>/gi);
 				if (h1 > 0) {
-					const title = hold.smiFile.header.substring(h0 + 7, h1);
+					const title = smiFile.header.substring(h0 + 7, h1);
 					assFile.getInfo().body.push({ key: "Title", value: title });
 				}
 			}
 		}
 		
-		const smis = hold.smiFile.body;
+		const smis = smiFile.body;
 		
 		const assComments = []; // ASS 주석에서 복원한 목록
 		const toAssEnds = {};
@@ -1373,7 +1438,7 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 		});
 		
 		// SMI 기반 스크립트
-		syncs.push(hold.syncs = hold.smiFile.toSyncs());
+		syncs.push(hold.syncs = smiFile.toSyncs());
 	});
 	{	// 홀드 결합 pos 자동 조정
 		const an2Holds = [];
@@ -1557,6 +1622,87 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 		});
 	}
 	return assFile;
+}
+// 동영상 해상도 변경에 따른 ASS 좌표 조정
+// 해상도 배율은 무시, 레터박스만 고려
+Tab.prototype.setResolution = function(x, y) {
+	if (!isFinite(x) || !isFinite(y)) {
+		alert("잘못된 값입니다.");
+		return true;
+	}
+	const inputPlayResX = this.area.querySelector("div.tab-ass-appends input.inputPlayResX");
+	const inputPlayResY = this.area.querySelector("div.tab-ass-appends input.inputPlayResY");
+	let playResX = inputPlayResX.value;
+	let playResY = inputPlayResY.value;
+	if (!playResX || !playResY || !isFinite(playResX) || !isFinite(playResY)) {
+		// 원래 정상적인 해상도 값이 없었을 때 - UI 자체가 안 열리는 게 맞음
+		alert("적용할 수 없습니다.");
+		return true;
+	}
+	playResX = Number(playResX);
+	playResY = Number(playResY);
+	
+	if (playResX == x && playResY == y) {
+		alert("해상도가 그대로입니다.");
+		return false;
+	}
+	
+	const moveX = ((inputPlayResX.value = x) - playResX) / 2;
+	const moveY = ((inputPlayResY.value = y) - playResY) / 2;
+	
+	this.holds.forEach((hold) => {
+		hold.moveAssPos(moveX, moveY);
+	});
+	this.assHold.moveAssPos(moveX, moveY);
+	return true;
+}
+SmiEditor.prototype.moveAssPos = function(x, y) {
+	if (this.isAssHold) {
+		this.assEditor.syncs.forEach((sync) => {
+			sync.inputText.value = SmiEditor.moveAssPos(sync.inputText.value, x, y);
+			sync.update();
+		});
+	} else {
+		this.setText(SmiEditor.moveAssPos(this.getValue(), x, y));
+	}
+}
+SmiEditor.moveAssPos = function(text, x=0, y=0) {
+	if (!x && !y) return;
+	
+	const parts = text.split('{');
+	parts.forEach((part, i) => {
+		// ASS 태그 안의 \pos, \orig, \mov, \move 좌표 변환
+		part = part.split('}');
+		
+		const tags = part[0].split('\\');
+		tags.forEach((tag, j) => {
+			const tagEnd = tag.indexOf(')');
+			if (tagEnd < 0) return;
+			
+			let tagName = null;
+			if (tag.startsWith("pos(")) {
+				tagName = "pos(";
+			} else if (tag.startsWith("orig(")) {
+				tagName = "orig(";
+			} else if (tag.startsWith("mov(")) {
+				tagName = "mov(";
+			} else if (tag.startsWith("move(")) {
+				tagName = "move(";
+			}
+			if (!tagName) return;
+			
+			const ps = tag.substring(tagName.length, tagEnd).split(",");
+			ps.forEach((p, k) => {
+				if (k >= 4) return; // 4개 넘어가면 move의 좌표가 아닌 시간값
+				ps[k] = Number(p) + (k%2==0 ? x : y); // 0,2번째는 x / 1,3번째는 y
+			});
+			tags[j] = tagName + ps.join(",") + ")";
+		});
+		part[0] = tags.join('\\');
+		
+		parts[i] = part.join('}');
+	});
+	return parts.join('{');
 }
 
 SmiEditor.prototype.isSaved = function() {
@@ -1874,7 +2020,7 @@ window.init = function(jsonSetting, isBackup=true) {
 				count++;
 			}
 			Subtitle.DefaultStyle = setting.defStyle;
-			Subtitle.DefaultStyle.Fontsize = Number(setting.viewer.size) / 5.86 * (25.5 * 1.001);
+			Subtitle.DefaultStyle.Fontsize = Math.round(Number(setting.viewer.size) / 5.86 * (25.5 * 1.001) * 100) / 100;
 			if (count) {
 				saveSetting();
 			}
@@ -2166,7 +2312,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260117v1").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260120").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2244,7 +2390,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260117v1").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260120").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2341,7 +2487,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	Subtitle.DefaultStyle = setting.defStyle;
-	Subtitle.DefaultStyle.Fontsize = Number(setting.viewer.size) / 5.86 * (25.5 * 1.001);
+	Subtitle.DefaultStyle.Fontsize = Math.round(Number(setting.viewer.size) / 5.86 * (25.5 * 1.001) * 100) / 100;
 	
 	document.querySelectorAll("input[name=Fontname]").placeholder = Subtitle.DefaultStyle.Fontname;
 	SmiEditor.stylePreset.querySelector("input[name=Fontname]").placeholder = Subtitle.DefaultStyle.Fontname;
@@ -2410,7 +2556,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260117v1", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260120", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2787,6 +2933,10 @@ window.saveFile = function(asNew, isExport) {
 			binder.save(tabIndex, saveText, path, 0);
 			log("binder.save end", saveFrom);
 			
+			// TODO: 위에서 await 걸고 최종 파일명을 받아올까 생각해 봤는데
+			//       처음 저장할 때 플레이어에 파일명 요청하고 콜백 받아오는 부분이 있어서 안 됨...
+			// 저게 된다면 withSmi / withSrt / withAss 관련 작업이 이쪽으로 와야 함
+			
 			if (withSmi || withSrt) {
 				const smiText = currentTab.getSaveText(setting.saveWithNormalize, true, -1);
 				
@@ -3038,11 +3188,27 @@ window.setVideo = function(path) {
 window.setVideoInfo = function(w=1920, h=1080, fr=23976) {
 	log(`setVideoInfo: ${w}, ${h}`);
 	
-	if (tabs[tabIndex]?.withAss) {
-		if (Subtitle.video.width != w
-		 || Subtitle.video.height != h
-		) {
-			alert("동영상 해상도에 따른 ASS 좌표 변환은 지원하지 않습니다.");
+	tabs.forEach((tab, i) => {
+		const playResX = tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+		const playResY = tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+
+		if (!playResX || !playResY) {
+			// 원래 값이 없었으면 지금 불러온 영상에 맞춰줌
+			tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value = w;
+			tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = h;
+		}
+	});
+	const tab = tabs[tabIndex];
+	if (tab && tab.withAss) {
+		const playResX = tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+		const playResY = tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+		
+		if (playResX && playResY) {
+			if (Subtitle.video.width  != playResX
+			 || Subtitle.video.height != playResY) {
+				// TODO: 현재 열려있는 파일만이 아니라, 탭 전환할 때도 고려해야 하나?
+				alert("동영상 해상도가 ASS 자막 설정과 다릅니다.");
+			}
 		}
 	}
 	
@@ -3558,7 +3724,7 @@ window.loadAssFile = function(path, text, target=-1) {
 			if (addCount + delCount) {
 				let countMsg = [];
 				if (addCount) countMsg.push(`추가 ${addCount}건`);
-				if (delCount) countMsg.push(`삭제 ${addCount}건`);
+				if (delCount) countMsg.push(`삭제 ${delCount}건`);
 				msg = `스크립트/태그 ${ countMsg.join(", ") }이 있습니다. 적용하시겠습니까?\n`
 				    + "자막에 맞는 동영상 파일이 열려있어야 정상적인 결과를 얻을 수 있습니다.\n\n"
 				    + "수정되지 않은 부분에도 레이어 재계산 등이 있을 수 있습니다.";
@@ -4620,7 +4786,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260117v1", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260120", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

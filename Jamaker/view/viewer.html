@@ -2,7 +2,7 @@
 <head>
 <meta charset="utf-8">
 <title>미리보기</title>
-<script src="lib/SubtitleObject.js?260117v1"></script>
+<script src="lib/SubtitleObject.js?260120"></script>
 <script>
 let lastTab = null;
 let time = 0;
@@ -130,10 +130,10 @@ function setLines(newLines) {
 	time = -1;
 	if (viewer) {
 		viewer.innerHTML = "";
-		viewers = [];
 		for (let i = 0; i < lines.length; i++) {
 			viewer.append(viewers[i] = document.createElement("div"));
 		}
+		viewers.length = lines.length;
 	}
 	refreshTime(receiveTime, true); // 내용 바꿀 땐 시간 표시는 갱신 X
 }
