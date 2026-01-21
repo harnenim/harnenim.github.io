@@ -606,3 +606,10 @@ body, input, button {
 .hold-selector > .selector.not-saved {
 	border-color: #ff8866;
 }
+
+/* Mac에서 웹샘플 실행하는 경우 */
+@supports (font-family: -apple-system) {
+	*, *::before, *::after {
+			font-family: "Apple SD Gothic Neo" !important;
+	}
+}
