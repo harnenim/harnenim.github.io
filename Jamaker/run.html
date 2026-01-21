@@ -9,12 +9,12 @@ function makeParams() {
 	return document.getElementById("withSample").checked ? `?&${SAMPLE}` : "";
 }
 function runPopup() {
-	window.open("Jamaker.html?260120" + makeParams(), "editor", "scrollbars=no,location=no");
+	window.open("Jamaker.html?260121" + makeParams(), "editor", "scrollbars=no,location=no");
 	//history.back();
 	if (window.opener) window.close();
 }
 function runIframe() {
-	location.href = "index.html?260120" + makeParams();
+	location.href = "index.html?260121" + makeParams();
 }
 </script>
 <style>

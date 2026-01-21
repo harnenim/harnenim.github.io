@@ -4,7 +4,7 @@ import "./SubtitleObject.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260120", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260121", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2816,7 +2816,7 @@ SmiEditor.Finder1 = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260120", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260121", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -3194,7 +3194,7 @@ SmiEditor.Finder2 = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260120", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260121", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("viewer");
 			setTimeout(() => {
@@ -3658,7 +3658,7 @@ ready(() => {
 		// TODO: 원래 CefSharp 프로젝트에서 팝업창 제어가 빈약할 때 iframe으로 띄우던 기능
 		//       추후 Finder2 통째로 삭제
 		SmiEditor.Finder = SmiEditor.Finder2;
-		SmiEditor.Finder.window = new Frame("finder.html?260120", "finder", "", () => {
+		SmiEditor.Finder.window = new Frame("finder.html?260121", "finder", "", () => {
 			// 좌우 크기만 조절 가능
 			[...SmiEditor.Finder.window.frame.querySelectorAll(".tl, .t, .tr, .bl, .b, .br")].forEach((el) => { el.remove(); });
 			

@@ -299,5 +299,4 @@ Progress.set = (selector, ratio, unit="calc([ratio] * 100%)") => {
 		area.prepend(bar);
 	}
 	bar.style.width = (unit.replaceAll("[ratio]", ratio));
-
 }

@@ -5,7 +5,7 @@ import "./jquery-3.2.1.min.js";
 {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Frame.css?260120", import.meta.url).href;
+	link.href = new URL("./Frame.css?260121", import.meta.url).href;
 	document.head.append(link);
 }
 

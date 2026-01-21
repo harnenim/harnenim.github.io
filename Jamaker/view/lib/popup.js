@@ -147,6 +147,19 @@ ready(() => {
 			case "F5": return false; // F5 새로고침 방지
 		}
 	};
+	
+	if (/Mac|iPhone|iPod|iPad/.test(navigator.userAgent)) {
+		/* Mac에서 웹샘플 실행하는 경우 */
+		const styleFont = document.createElement("style");
+		styleFont.innerHTML = ''
+			+	'@supports (font-family: -apple-system) {'
+			+	'	*, *::before, *::after {'
+			+	'		font-family: "Apple SD Gothic Neo" !important;'
+			+	'	}'
+			+	'}'
+		document.head.append(styleFont);
+	}
+	
 	[...document.getElementsByTagName("textarea")].forEach((input) => {
 		input.setAttribute("spellcheck", false);
 	});
@@ -190,7 +203,7 @@ if (opener) {
 }
 
 function setColor(color) {
-	fetch("lib/popup.color.css?260120").then(async (response) => {
+	fetch("lib/popup.color.css?260121").then(async (response) => {
 		let preset = await response.text();
 		for (let name in color) {
 			preset = preset.replaceAll(`[${name}]`, color[name]);
