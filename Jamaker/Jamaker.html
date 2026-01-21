@@ -11,10 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260121v1" />
-<script src="bridge/WinAPI.js?260121v1"></script>
-<script src="bridge/Binder.js?260121v1"></script>
-<script src="bridge/WebPlayerBridge.js?260121v1"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260121" />
+<script src="bridge/WinAPI.js?260121"></script>
+<script src="bridge/Binder.js?260121"></script>
+<script src="bridge/WebPlayerBridge.js?260121"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -74,7 +74,7 @@ Binder.prototype.requestFrames = function(path) {
 	this._.requestFrames(path);
 }
 Binder.prototype.setThumbnailSize = function(width, height) {
-	// C#에서 동작
+	this._.setThumbnailSize(width, height);
 }
 Binder.prototype.renderThumbnails = function(path, params) {
 	this._.renderThumbnails(path, params);
@@ -127,7 +127,7 @@ Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260121v1"></script>
+<script src="bridge/WebForm.js?260121"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -179,7 +179,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260121v1";
+			editor.mainView.src = "view/Jamaker.html?260121";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -252,8 +252,12 @@ const window_open = function(url, name, options, opener) {
 						+ "if (isFinite(fps)) {"
 						+ "    Subtitle.video.FL = 1000000 / (Subtitle.video.FR = Math.round(fps * 1000));"
 						+ "    Subtitle.video.fs.length = 0;"
+						+ "    Subtitle.video.kfs.length = 0;"
 						+ "    for (let i = 0; i < 200000; i++) {"
 						+ "        Subtitle.video.fs.push(Math.round(i * Subtitle.video.FL));"
+						+ "        if (i % 48 == 0) {"
+						+ "            Subtitle.video.kfs.push(Math.round(i * Subtitle.video.FL));"
+						+ "        }"
 						+ "    }"
 						+ "    afterSetFkf();"
 						+ "} else {"
@@ -754,15 +758,27 @@ window.MB = 9;
 	editor.checkLoadVideoFile = function() { /* native */ }
 	editor.loadVideoFile = function(path) { /* native */ }
 	editor.requestFrames = function(path) { /* native */ }
+	editor.setThumbnailSize = function(width, height) {
+		this.TX = width;
+		this.TY = height;
+	}
 	editor.renderThumbnails = function(path, params) { /* native */
 		const list = params.split("\n");
+		
+		const USE_REAL = true;
+		const fileSeq = 0;
+		const isWindows = (navigator.userAgentData?.platform || navigator.platform).toLowerCase().includes("win");
+		const mv = isWindows ? "ren" : "mv";
 		
 		function sleep(sec) {
 			return new Promise(resolve => setTimeout(resolve, sec * 1000));
 		}
 		
 		setTimeout(async function() {
+			const cmds = [];
+			const renders = [];
 			for (let i = 0; i < list.length; i++) {
+				const procSeq = i;
 				const param = list[i].split(",");
 				const time   = Number(param[0]);
 				const length = Number(param[1]);
@@ -776,28 +792,43 @@ window.MB = 9;
 				m %= 60;
 				let timeStr = ((100 + h) * 100 + m) * 100000 + ms + "";
 				timeStr = timeStr.substring(1, 3) + ":" + timeStr.substring(3, 5) + ":" + timeStr.substring(5, 7) + "." + timeStr.substring(7, 10);
-				const args = `-ss ${timeStr} -t ${length / 1000} -i "~" -s {TX}x{TY} -qscale:v2 -fps_mode passthrough {vf} -f image2 "tmp/thumbnails/${begin}${flag}_%d.jpg"`;
-				console.log(args);
-				await sleep(0.1);
 				
-				for (let index = 0; index < (end - begin); index++) {
-					const from = `tmp/thumbnails/${begin}${flag}_${index + 1}.jpg`;
-					const to = `tmp/thumbnails/${begin + index}${flag}.jpg`;
-					const cmdDel = `del "${to}"`;
-					const cmdRen = `ren "${from}" "${to}"`;
+				let vf = ""; // 원래 페이드 플래그에 따른 보정치였는데, 현재 사용 안 함
+				
+				const cmd = `./ffmpeg -ss ${timeStr} -t ${length / 1000} -i "{path}" -s ${editor.TX}x${editor.TY} -qscale:v 2 -fps_mode passthrough ${vf}-f image2 "thumbnails/p${procSeq}_${begin}${flag}_%d.jpg"`;
+				
+				if (USE_REAL) {
+					cmds.push(cmd);
+					for (let index = 0; index < (end - begin); index++) {
+						const from = `./thumbnails/p${procSeq}_${begin}${flag}_${index+1}.jpg`;
+						const to   = `${fileSeq}_${begin+index}${flag}.jpg`;
+						cmds.push(`${mv} "${from}" "${to}"`);
+					}
+					renders.push([begin, end, flag]);
+					
+				} else {
+					console.log(cmd);
+					await sleep(0.1);
+					
+					editor.script("startRenderThumbnails", begin, end, flag);
+					setTimeout(() => {
+						editor.script("startCompareThumbnails", begin, end, flag);
+					}, 100);
 				}
+			}
+			if (USE_REAL) {
+				// TODO: 명령어를 로컬에서 돌릴 수 있도록 UI 제공
+				editor.script("emulateRenderThumbnail", cmds.join("\n"), renders);
 				
-				editor.script("startRenderThumbnails", begin, end, flag);
-				setTimeout(() => {
-					editor.script("startCompareThumbnails", begin, end, flag);
-				}, 100);
+			} else {
+				// 원래 afterRenderThumbnails에서 진행되는 부분
+				await sleep(2);
+				let addon = editor.getHwnd("addon");
+				if (addon.iframe) { // 웹샘플 iframe 버전
+					addon = addon.iframe.contentWindow;
+				}
+				addon.document.getElementById("renderInfo").style.display = "none";
 			}
-			await sleep(2);
-			let addon = editor.getHwnd("addon");
-			if (addon.iframe) { // 웹샘플 iframe 버전
-				addon = addon.iframe.contentWindow;
-			}
-			addon.document.getElementById("renderInfo").style.display = "none";
 		}, 1);
 	}
 	const SaveOrder = function(tab, text, path, type) {
@@ -917,7 +948,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260121v1", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260121", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
