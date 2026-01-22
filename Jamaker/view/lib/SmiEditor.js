@@ -9,12 +9,12 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260121", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260122", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260121", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260122", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1572,7 +1572,7 @@ mode:
 	0: 기본 싱크
 	1: 화면 싱크
 	2: 가중치 없이 화면 싱크
-	true -> 1로 동작 (레거시 지원)
+	true -> 1로 동작 (레거시 지원, 단축키 설정에 true로 들어간 경우가 있음)
 */
 SmiEditor.prototype.insertSync = function(mode=0) {
 	if (this.isRendering) {
@@ -1639,10 +1639,11 @@ SmiEditor.prototype.insertSync = function(mode=0) {
 				// 싱크 찍은 다음 줄로 커서 이동 추가
 				cursorLine += SmiEditor.sync.insert;
 				
-				// 싱크 찍고 내려가는 줄 내용이 없고, 그다음 줄 내용은 있으면 공백 싱크 채워주기
-				if (this.lines[lineNo].TEXT.length == 0) {
+				if (this.lines[lineNo].TEXT.length == 0) { // 싱크 찍고 내려가는 줄에 내용이 없고
 					const nextLine = this.lines[lineNo + SmiEditor.sync.insert];
-					if (nextLine && nextLine.TEXT.length) {
+					if ((lineNo + 1 == this.lines.length)  // 마지막 줄에서 싱크 찍었거나
+					 || (nextLine && nextLine.TEXT.length) // 그다음 줄에는 내용이 있으면 공백 싱크 채워주기
+					) {
 						this.cm.replaceRange("&nbsp;", { line: lineNo, ch: 0 }, { line: lineNo }, op);
 					}
 				}
@@ -2544,7 +2545,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260121", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260122", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2737,7 +2738,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260121", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260122", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}

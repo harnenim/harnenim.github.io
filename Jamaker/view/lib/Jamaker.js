@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260121", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260122", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -681,7 +681,6 @@ SmiEditor.prototype.reSync = function(sync, limitRange=false) {
 	// 스타일 편집일 때 무시
 	if (this.area.classList.contains("style")) return;
 	
-	// ASS 편집일 때 동작
 	if (this.isAssHold) {
 		alert("ASS 에디터에선 사용하실 수 없습니다.");
 		return;
@@ -693,24 +692,6 @@ SmiEditor.prototype.reSync = function(sync, limitRange=false) {
 	}
 	const originSync = this._reSync(sync, limitRange);
 	if (!originSync) return;
-	
-	/* 각 홀드마다 ASS 에디터 넣었을 때 사용했던 부분
-	// ASS 에디터도 싱크 이동
-	if (this.assEditor) {
-		this.assEditor.syncs.forEach((item) => {
-			const start = Number(item.inputStart.value);
-			const end   = Number(item.inputEnd  .value);
-			if (end >= originSync) {
-				const add = sync - originSync
-				item.inputEnd.value = (end + add);
-				if (start >= originSync) {
-					item.inputStart.value = (start + add);
-				}
-				item.update();
-			}
-		});
-	}
-	*/
 }
 SmiEditor.prototype._toggleSyncType = SmiEditor.prototype.toggleSyncType;
 SmiEditor.prototype.toggleSyncType = function() {
@@ -1286,27 +1267,7 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 			}
 			
 			let assTexts = [];
-			/*
-			if (smi.text.startsWith("<!-- ASS X -->")) {
-				// ASS 변환 대상 제외
-				smi.text = smi.text.substring(14).trim();
-				smi.skip = true;
-				
-			} else if (smi.text.startsWith("<!-- ASS\n")) {
-				// 원래 ASS 변환용 주석이 있었을 경우 삭제
-				const commentEnd = smi.text.indexOf("\n-->"); // "\n-->\n"으로 할 경우, SMI 내용물이 아예 없는 경우 못 잡아냄
-				if (commentEnd > 0) {
-					assTexts = smi.text.substring(9, commentEnd).split("\n");
-					smi.text = smi.text.substring(commentEnd + 4).trim();
-					if (assTexts[assTexts.length - 1] == "END") {
-						// ASS 변환 대상 제외
-						assTexts.length = assTexts.length - 1;
-						smi.skip = true;
-					}
-				}
-			}
-			/*/
-			// 'END\n-->' 대신 'END -->', 'X -->' 등의 표현도 사용 가능하도록 재구현
+			// 'END\n-->' 대신 'END -->', 'X -->' 등의 표현도 사용 가능
 			if (smi.text.startsWith("<!-- ASS")) {
 				const commentEnd = smi.text.indexOf("-->");
 				if (commentEnd > 0) {
@@ -1326,12 +1287,13 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 					}
 				}
 			}
-			//*/
 			
 			// ASS 주석에 [TEXT] 있을 경우 넣을 내용물 ([SMI]는 후처리 필요해서 빼둠)
 			let smiText = htmlToText(smi.text.replaceAll(/<br>/gi, "\\N"));
 			while (smiText.indexOf("\\N　\\N") >= 0) { smiText = smiText.replaceAll("\\N　\\N", "\\N"); }
 			while (smiText.indexOf("\\N\\N"  ) >= 0) { smiText = smiText.replaceAll("\\N\\N"  , "\\N"); }
+			while (smiText.startsWith("\\N")) { smiText = smiText.substring(2); }
+			while (smiText.endsWith("\\N")) { smiText = smiText.substring(0, smiText.length - 2); }
 			
 			// ASS 주석에서 복원
 			assTexts.forEach((assText) => {
@@ -2313,7 +2275,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260121").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260122").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2391,7 +2353,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260121").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260122").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2557,7 +2519,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260121", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260122", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4380,28 +4342,7 @@ window.srt2smi = function(text) {
  */
 window.fitSyncsToFrame = function(frameSyncOnly=false, add=0) {
 	if (!Subtitle.video.fs.length) {
-		//*
 		return;
-		/*/
-		// 테스트용 코드
-		for (let s = 0; s < 2000000; s += 50) {
-			Subtitle.video.fs.push(s);
-			if (s % 1000 == 0) {
-				Subtitle.video.kfs.push(s);
-			}
-		}
-		
-		// 키프레임 신뢰 기능 활성화
-		document.getElementById("forFrameSync").classList.remove("disabled");
-		document.getElementById("checkTrustKeyframe").disabled = false;
-		Progress.set("#forFrameSync", 0);
-		
-		tabs.forEach((tab) => {
-			tab.holds.forEach((hold) => {
-				hold.refreshKeyframe();
-			});
-		});
-		//*/
 	}
 	
 	if (!tabs.length) return;
@@ -4787,7 +4728,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260121", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260122", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

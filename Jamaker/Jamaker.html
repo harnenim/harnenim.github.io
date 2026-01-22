@@ -11,10 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260121" />
-<script src="bridge/WinAPI.js?260121"></script>
-<script src="bridge/Binder.js?260121"></script>
-<script src="bridge/WebPlayerBridge.js?260121"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260122" />
+<script src="bridge/WinAPI.js?260122"></script>
+<script src="bridge/Binder.js?260122"></script>
+<script src="bridge/WebPlayerBridge.js?260122"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -127,7 +127,7 @@ Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260121"></script>
+<script src="bridge/WebForm.js?260122"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -179,7 +179,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260121";
+			editor.mainView.src = "view/Jamaker.html?260122";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -768,7 +768,9 @@ window.MB = 9;
 		const USE_REAL = true;
 		const fileSeq = 0;
 		const isWindows = (navigator.userAgentData?.platform || navigator.platform).toLowerCase().includes("win");
-		const mv = isWindows ? "ren" : "mv";
+		const mv = isWindows
+			? ((procSeq, begin, flag, index) => { return `ren "{ffmpeg}/thumbnails/p${procSeq}_${begin}${flag}_${index+1}.jpg" ` +                `"${fileSeq}_${begin+index}${flag}.jpg"`; })
+			: ((procSeq, begin, flag, index) => { return  `mv "{ffmpeg}/thumbnails/p${procSeq}_${begin}${flag}_${index+1}.jpg" "{ffmpeg}/thumbnails/${fileSeq}_${begin+index}${flag}.jpg"`; });
 		
 		function sleep(sec) {
 			return new Promise(resolve => setTimeout(resolve, sec * 1000));
@@ -777,6 +779,12 @@ window.MB = 9;
 		setTimeout(async function() {
 			const cmds = [];
 			const renders = [];
+			if (isWindows) {
+				cmds.push('if (!(Test-Path -Path "{ffmpeg}/thumbnails")) { New-Item -ItemType Directory -Path "{ffmpeg}/thumbnails" }');
+			} else {
+				cmds.push('mkdir -p "{ffmpeg}/thumbnails"');
+			}
+			
 			for (let i = 0; i < list.length; i++) {
 				const procSeq = i;
 				const param = list[i].split(",");
@@ -784,7 +792,7 @@ window.MB = 9;
 				const length = Number(param[1]);
 				const begin  = Number(param[2]);
 				const end    = Number(param[3]);
-				const flag   = param[4];
+				const flag   =        param[4] ;
 				
 				let ms = time % 60000;
 				let m = Math.floor(time / 60000);
@@ -795,14 +803,12 @@ window.MB = 9;
 				
 				let vf = ""; // 원래 페이드 플래그에 따른 보정치였는데, 현재 사용 안 함
 				
-				const cmd = `./ffmpeg -ss ${timeStr} -t ${length / 1000} -i "{path}" -s ${editor.TX}x${editor.TY} -qscale:v 2 -fps_mode passthrough ${vf}-f image2 "thumbnails/p${procSeq}_${begin}${flag}_%d.jpg"`;
+				const cmd = `{ffmpeg}/ffmpeg -ss ${timeStr} -t ${length / 1000} -i "{path}" -s ${editor.TX}x${editor.TY} -qscale:v 2 -fps_mode passthrough ${vf}-f image2 "{ffmpeg}/thumbnails/p${procSeq}_${begin}${flag}_%d.jpg"`;
 				
 				if (USE_REAL) {
 					cmds.push(cmd);
 					for (let index = 0; index < (end - begin); index++) {
-						const from = `./thumbnails/p${procSeq}_${begin}${flag}_${index+1}.jpg`;
-						const to   = `${fileSeq}_${begin+index}${flag}.jpg`;
-						cmds.push(`${mv} "${from}" "${to}"`);
+						cmds.push(mv(procSeq, begin, flag, index));
 					}
 					renders.push([begin, end, flag]);
 					
@@ -817,8 +823,8 @@ window.MB = 9;
 				}
 			}
 			if (USE_REAL) {
-				// TODO: 명령어를 로컬에서 돌릴 수 있도록 UI 제공
-				editor.script("emulateRenderThumbnail", cmds.join("\n"), renders);
+				const cmd = cmds.join("\n");
+				editor.script("emulateRenderThumbnail", (isWindows ? cmd.replaceAll("/", "\\") : cmd), renders);
 				
 			} else {
 				// 원래 afterRenderThumbnails에서 진행되는 부분
@@ -948,7 +954,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260121", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260122", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
