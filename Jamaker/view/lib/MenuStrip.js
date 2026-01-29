@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./MenuStrip.css?260122", import.meta.url).href;
+	link.href = new URL("./MenuStrip.css?260129", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -424,7 +424,7 @@ MenuStrip.createSubMenu = function(menus=[]) {
 }
 MenuStrip.prototype.rememberFocus = function() {
 	if (window.focusedMenu && focusedMenu != this) focusedMenu.unfocus(false);
-	if (this.focused) return;
+//	if (this.focused) return; // null로 만드는 부분을 없앴음
 	this.focused = document.activeElement;
 	focusedMenu = this;
 }
@@ -489,7 +489,9 @@ MenuStrip.prototype.unfocus = function(withReturnFocus=true) {
 	if (this.focused && withReturnFocus) {
 		// 기존 포커스 객체에 포커스 반환
 		this.focused.focus();
-		this.focused = null;
+		// 굳이 여기서 null로 만들 필요는 없을 듯함
+		// 오히려 메뉴 열 때 unfocus가 중복되면 연결을 잃어버림
+//		this.focused = null;
 	}
 };
 

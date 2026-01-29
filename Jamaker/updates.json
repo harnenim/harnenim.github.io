@@ -1,4 +1,18 @@
-[ { "version": "2026.01.23"
+[ { "version": "2026.01.29"
+  , "comment":
+    [ "줄표 대사에 페이드 적용 시 미리보기 버그 수정"
+    , "ASS 변환 시 군더더기 태그 삭제 등"
+    ]
+  , "files":
+    [ "view/lib/Jamaker.js"
+    , "view/lib/MenuStrip.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/viewer.html"
+    ]
+  }
+, { "version": "2026.01.23"
   , "comment":
     [ "CodeMirror5 에디터 버그 수정"
     , "소스코드 문법 정리 중 발생한 오류 수정"

@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260122", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260129", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1293,7 +1293,8 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 			while (smiText.indexOf("\\N　\\N") >= 0) { smiText = smiText.replaceAll("\\N　\\N", "\\N"); }
 			while (smiText.indexOf("\\N\\N"  ) >= 0) { smiText = smiText.replaceAll("\\N\\N"  , "\\N"); }
 			while (smiText.startsWith("\\N")) { smiText = smiText.substring(2); }
-			while (smiText.endsWith("\\N")) { smiText = smiText.substring(0, smiText.length - 2); }
+			while (smiText.endsWith("\\N　")) { smiText = smiText.substring(0, smiText.length - 3); }
+			while (smiText.endsWith("\\N"  )) { smiText = smiText.substring(0, smiText.length - 2); }
 			
 			// ASS 주석에서 복원
 			assTexts.forEach((assText) => {
@@ -1655,7 +1656,7 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 				tagName = "clip(";
 			}
 			if (!tagName) return;
-
+			
 			if (tag.startsWith("clip(m ")) {
 				const ps = [];
 				tag.substring(tagName.length, tagEnd).split(" ").forEach((v) => {
@@ -1682,6 +1683,22 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 		parts[i] = part.join('}');
 	});
 	return parts.join('{');
+}
+
+Tab.prototype.setSpeed = function(fromFps=24, toFps=23.976) {
+	this.holds.forEach((hold) => {
+		const smiFile = new SmiFile(hold.getValue());
+		smiFile.body.forEach((sync) => {
+			sync.start = Math.round(sync.start * fromFps / toFps);
+		});
+		hold.setText(smiFile.toText());
+	});
+	
+	this.assHold.assEditor.syncs.forEach((sync) => {
+		sync.inputStart.value = Math.round(Number(sync.inputStart.value) * fromFps / toFps);
+		sync.inputEnd  .value = Math.round(Number(sync.inputEnd  .value) * fromFps / toFps);
+		sync.update();
+	});
 }
 
 SmiEditor.prototype.isSaved = function() {
@@ -2291,7 +2308,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260122").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260129").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2369,7 +2386,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260122").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260129").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2535,7 +2552,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260122", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260129", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -3183,10 +3200,9 @@ window.setVideoInfo = function(w=1920, h=1080, fr=23976) {
 		const playResY = tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
 		
 		if (playResX && playResY) {
-			if (Subtitle.video.width  != playResX
-			 || Subtitle.video.height != playResY) {
+			if ((w / h) != (playResX / playResY)) {
 				// TODO: 현재 열려있는 파일만이 아니라, 탭 전환할 때도 고려해야 하나?
-				alert("동영상 해상도가 ASS 자막 설정과 다릅니다.");
+				alert("동영상 화면비가 ASS 자막 설정과 다릅니다.");
 			}
 		}
 	}
@@ -3825,6 +3841,7 @@ window.loadAssFile = function(path, text, target=-1) {
 								let replaceTo = -1;
 								let fromEmpty = true;
 								let toEmpty = true;
+								let fromSmi = false;
 								
 								{
 									let i = 0;
@@ -3852,6 +3869,7 @@ window.loadAssFile = function(path, text, target=-1) {
 											// 시작 싱크가 SMI 싱크와 일치
 											replaceFrom = i;
 											fromEmpty = false;
+											fromSmi = true;
 										}
 										
 										for (; i < body.length; i++) {
@@ -3930,6 +3948,7 @@ window.loadAssFile = function(path, text, target=-1) {
 									,	replaceTo: replaceTo
 									,	fromEmpty: fromEmpty
 									,	toEmpty: toEmpty
+									,	fromSmi: fromSmi
 									,	point: point
 									,	isDefault: (h == 0)
 								};
@@ -3942,6 +3961,7 @@ window.loadAssFile = function(path, text, target=-1) {
 							const replaceTo   = importSet.replaceTo;
 							const fromEmpty   = importSet.fromEmpty;
 							const toEmpty     = importSet.toEmpty;
+							const fromSmi     = importSet.fromSmi;
 							
 							let smi = body[replaceFrom];
 							
@@ -3952,7 +3972,10 @@ window.loadAssFile = function(path, text, target=-1) {
 							if (fromEmpty) {
 								// 공백 싱크 추가
 								let syncType = SyncType.frame;
-								if (importSet.isDefault) {
+								if (fromSmi && smi) {
+									syncType = smi.syncType;
+									
+								} else if (importSet.isDefault) {
 									syncType = SyncType.normal;
 									for (let i = 0; i < targets.length; i++) {
 										const item = targets[i];
@@ -3970,7 +3993,10 @@ window.loadAssFile = function(path, text, target=-1) {
 							{
 								// 종료 싱크 추가 필요
 								let syncType = SyncType.frame;
-								if (importSet.isDefault) {
+								if (fromSmi && smi) {
+									syncType = smi.syncType;
+									
+								} else if (importSet.isDefault) {
 									syncType = SyncType.normal;
 									for (let i = 0; i < targets.length; i++) {
 										const item = targets[i];
@@ -4744,7 +4770,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260122", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260129", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

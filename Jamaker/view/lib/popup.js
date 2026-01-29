@@ -203,7 +203,7 @@ if (opener) {
 }
 
 function setColor(color) {
-	fetch("lib/popup.color.css?260122").then(async (response) => {
+	fetch("lib/popup.color.css?260129").then(async (response) => {
 		let preset = await response.text();
 		for (let name in color) {
 			preset = preset.replaceAll(`[${name}]`, color[name]);
