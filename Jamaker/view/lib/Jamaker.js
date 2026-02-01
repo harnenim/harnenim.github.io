@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260129", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260201", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2100,21 +2100,11 @@ window.init = function(jsonSetting, isBackup=true) {
 	const tabSelector = document.getElementById("tabSelector");
 	tabSelector.addEventListener("click", (e) => {
 		let el;
-		if (el = e.target.closest(".th")) {
-			if ((el == closingTab) || e.target.closest("#btnNewTab")) {
-				return;
-			}
-			
-			const currentTab = eData(el).tab;
-			if (currentTab) {
-				SmiEditor.selectTab(tabs.indexOf(currentTab));
-			}
-		}
 
 		if (el = e.target.closest(".btn-close-tab")) {
 			e.preventDefault();
 			
-			const th = closingTab = el.parentNode; // 탭 선택 이벤트 방지... e.preventDefault()로 안 되네...
+			const th = closingTab = el.parentNode;
 			
 			let saved = true;
 			{	const currentTab = eData(th).tab;
@@ -2150,6 +2140,18 @@ window.init = function(jsonSetting, isBackup=true) {
 					closingTab = null;
 				}, 1);
 			});
+			return;
+		}
+
+		if (el = e.target.closest(".th")) {
+			if ((el == closingTab) || e.target.closest("#btnNewTab")) {
+				return;
+			}
+
+			const currentTab = eData(el).tab;
+			if (currentTab) {
+				SmiEditor.selectTab(tabs.indexOf(currentTab));
+			}
 		}
 	});
 	
@@ -2308,7 +2310,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260129").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260201").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2386,7 +2388,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260129").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260201").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2552,7 +2554,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260129", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260201", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -3016,8 +3018,8 @@ window.afterSaveFile = function(tabIndex, path) { // 저장 도중에 탭 전환
 	currentTab.path = path;
 	const title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	const span = document.getElementById("tabSelector").querySelectorAll(".th")[tabIndex].querySelector("span");
-	span.innerText = path;
-	span.title = title;
+	span.innerText = title;
+	span.title = path;
 	currentTab.holdEdited = false;
 	currentTab.savedHolds = currentTab.holds.slice(0);
 	
@@ -4770,7 +4772,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260129", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260201", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
