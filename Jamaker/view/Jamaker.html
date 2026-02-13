@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>Jamaker</title>
-<script src="lib/webview.js?260201"></script>
-<script src="lib/setting.js?260201"></script>
+<script src="lib/webview.js?260214"></script>
+<script src="lib/setting.js?260214"></script>
 <script src="lib/Jamaker.js" type="module"></script>
 <style id="styleBeforeLoad"> body { display: none; } </style>
 <script> ready(() => { setTimeout(() => { document.getElementById("styleBeforeLoad").remove(); }, 1); }); </script>
@@ -20,7 +20,7 @@
 	--><label id="forFrameSync" class="for-frame-sync disabled" title="화면 싱크를 가급적 키프레임에 맞춰줍니다.\nOTT 영상에선 맞지 않는 경우가 많습니다."
 		><input type="checkbox" id="checkTrustKeyframe" disabled /><span>키프레임 신뢰</span></label><!--
 --></div>
-	<div id="tabSelector"><div class="th" id="btnNewTab">＋</div></div>
+	<div id="tabSelector"><div id="ths"><div class="th" id="btnNewTab">＋</div></div></div>
 	<div id="editor">
 		<div id="tabPreset" class="tab">
 			<div class="hold-selector"></div>

@@ -1,5 +1,5 @@
 ﻿import "./MenuStrip.js";
-import "./Combine.js";
+import "./Subtitle.Converter.js";
 import "./AutoCompleteCodeMirror.js";
 import "./SmiEditor.js";
 import "./AssEditor.js";
@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260201", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260214", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -23,7 +23,6 @@ window.menustrip = null;
 
 window.tabs = [];
 window.tabIndex = 0;
-window.closingTab = null;
 window.tabToCloseAfterRun = null;
 
 window.autoSaveTemp = null;
@@ -62,6 +61,18 @@ window.Tab = function(text, path) {
 				this.assFile = new AssFile(hold.ass);
 			}
 			hold.ass = [];
+			
+			if (!Subtitle.video.path) {
+				if (hold.fs) {
+					Subtitle.video.fs = hold.fs;
+					if (hold.kfs) {
+						Subtitle.video.kfs = hold.kfs;
+					}
+					afterSetFkf();
+				}
+			}
+			delete hold.fs;
+			delete hold.kfs;
 		}
 		for (let i = 1; i < holds.length; i++) {
 			holds[i].ass = [];
@@ -1132,16 +1143,16 @@ Tab.prototype.getAdditionalToAss = function(forSave=false) {
 		return assFile;
 	}
 }
-Tab.prototype.getSaveText = function(withNormalize=true, withCombine=true, withComment=1) {
-	const funcSince = log("getSaveText start");
+Tab.prototype.getSaveText = function(withNormalize=true, withCombine=true, withComment=1, withFs=false, withKfs=false) {
 	this.holds.forEach((hold) => {
-		// SmiFile처럼 쓸 수 있도록 text 값 넣어줌
 		hold.text = hold.getValue();
 	});
-	const result = SmiFile.holdsToText(this.holds, withNormalize, withCombine, withComment, Subtitle.video.FR / 1000)
-		+ (((withComment > 0) && this.withAss) ? this.getAdditionalToAss(true) : ""); // ASS 추가 내용 footer에 넣어주기
-	log("getSaveText end", funcSince);
-	return result;
+	let fs = [];
+	let additional = "";
+	if ((withComment > 0) && this.withAss) {
+		additional += this.getAdditionalToAss(true); // ASS 추가 내용 footer에 넣어주기
+	}
+	return SmiFile.holdsToText(this.holds, withNormalize, withCombine, withComment, additional, withFs, withKfs);
 }
 Tab.prototype.onChangeSaved = function(hold) {
 	if (this.isSaved()) {
@@ -1176,8 +1187,6 @@ Tab.prototype.isSaved = function() {
 }
 
 Tab.prototype.toAss = function(orderByEndSync=false) {
-	const funcSince = log("toAss start");
-	
 	let playResX = this.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
 	let playResY = this.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
 	if (playResX && playResY && isFinite(playResX) && isFinite(playResY)) {
@@ -1190,12 +1199,7 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 		this.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = playResY = Subtitle.video.height;
 	}
 	
-	const assFile = new AssFile(null, playResX, playResY);
-	const assStyles = assFile.getStyles();
-	const assEvents = assFile.getEvents();
-	
-	// 스타일/이벤트는 뺐다가 뒤쪽에 다시 추가
-	assFile.parts.length = 1;
+	const appendParts = [];
 	const append = this.getAdditionalToAss();
 	append.parts.forEach((part) => {
 		switch (part.name) {
@@ -1204,388 +1208,14 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 			case "Events":
 				break;
 			default: {
-				assFile.parts.push(part);
+				appendParts.push(part);
 			}
 		}
 	});
-	assFile.parts.push(assStyles);
-	assFile.parts.push(assEvents);
-	
-	// ASS에서 추가한 내용 먼저 추가
-	const appendedLength = append.getEvents().body.length;
-	assEvents.body.push(...append.getEvents().body);
-	
-	const holds = this.holds;
-	const syncs = [];
-	const styles = {};
-	
-	holds.forEach((hold, h) => {
-		const name = (h == 0) ? "Default" : hold.name;
-		const style = hold.style ? hold.style : Subtitle.DefaultStyle;
-		
-		if ((style.output & 0b10) == 0) {
-			// ASS 변환 대상 제외
-			syncs.push(hold.syncs = []);
-			hold.smiFile = null;
-			return;
-		}
-		
-		if (styles[name]) {
-			// 이미 추가함
-		} else {
-			assFile.addStyle(name, style, hold);
-			styles[name] = style;
-		}
-		
-		const smiFile = hold.smiFile = new SmiFile(hold.getValue());
-		if (h == 0) {
-			// 메인 홀드에서 <title> 확인
-			const h0 = smiFile.header.search(/<title>/gi);
-			if (h0 > 0) {
-				const h1 = smiFile.header.search(/<\/title>/gi);
-				if (h1 > 0) {
-					const title = smiFile.header.substring(h0 + 7, h1);
-					assFile.getInfo().body.push({ key: "Title", value: title });
-				}
-			}
-		}
-		
-		const smis = smiFile.body;
-		
-		const assComments = []; // ASS 주석에서 복원한 목록
-		const toAssEnds = {};
-		smis.forEach((smi, i) => {
-			{	// 앞에서 나온 ASS 형태에 종료싱크 채워주기
-				const toAssEnd = toAssEnds[i];
-				if (toAssEnd) {
-					toAssEnd.forEach((t) => {
-						if (!t[7]) {
-							t[2] += smi.start;
-						}
-					});
-				}
-			}
-			
-			let assTexts = [];
-			// 'END\n-->' 대신 'END -->', 'X -->' 등의 표현도 사용 가능
-			if (smi.text.startsWith("<!-- ASS")) {
-				const commentEnd = smi.text.indexOf("-->");
-				if (commentEnd > 0) {
-					const assCmTexts = smi.text.substring(8, commentEnd).split("\n");
-					smi.text = smi.text.substring(commentEnd + 3).trim();
-					for (let j = 0; j < assCmTexts.length; j++) {
-						const assLine = assCmTexts[j].trim();
-						if (assLine == "") {
-							continue;
-						}
-						if (assLine == "END" || assLine == "X") {
-							// ASS 변환 대상 제외
-							smi.skip = true;
-							break;
-						}
-						assTexts.push(assLine);
-					}
-				}
-			}
-			
-			// ASS 주석에 [TEXT] 있을 경우 넣을 내용물 ([SMI]는 후처리 필요해서 빼둠)
-			let smiText = htmlToText(smi.text.replaceAll(/<br>/gi, "\\N"));
-			while (smiText.indexOf("\\N　\\N") >= 0) { smiText = smiText.replaceAll("\\N　\\N", "\\N"); }
-			while (smiText.indexOf("\\N\\N"  ) >= 0) { smiText = smiText.replaceAll("\\N\\N"  , "\\N"); }
-			while (smiText.startsWith("\\N")) { smiText = smiText.substring(2); }
-			while (smiText.endsWith("\\N　")) { smiText = smiText.substring(0, smiText.length - 3); }
-			while (smiText.endsWith("\\N"  )) { smiText = smiText.substring(0, smiText.length - 2); }
-			
-			// ASS 주석에서 복원
-			assTexts.forEach((assText) => {
-				let ass = assText.replaceAll("[TEXT]", smiText)
-				                 .replaceAll("\n", "") // 비태그 줄바꿈은 무시해야 함
-				                 .split(",");
-				
-				let layer = 0;
-				let span = 1;
-				let addStart = 0;
-				let addEnd = 0;
-				let style = name;
-				let text = "";
-				let addEndFromStart = false;
-				
-				if (isFinite(ass[0])) {
-					layer = ass[0];
-					let type = null;
-					
-					if (ass.length >= 5) {
-						if (ass[1] == "") { // span 형식
-							type = "span";
-							if (ass[2] == "") {
-								// [Layer, -, -, Style, Text]
-								if (ass[3]) style = ass[3];
-								text = ass.slice(4).join(",");
-								
-							} else if (isFinite(ass[2])) {
-								// [Layer, -, span, Style, Text]
-								span = Number(ass[2]);
-								if (ass[3]) style = ass[3];
-								text = ass.slice(4).join(",");
-								
-							} else if (ass[3].endsWith(")")) {
-								let ass2 = ass[2].split("(");
-								let ass3 = ass[3].split(")");
-								if (ass2.length == 2
-								 && isFinite(ass2[0])
-								 && isFinite(ass2[1])
-								 && isFinite(ass3[0])
-								) {
-									// [Layer, -, span(add, add), Style, Text]
-									span = Number(ass2[0]);
-									addStart = Number(ass2[1]);
-									addEnd   = Number(ass3[0]);
-									if (ass[4]) style = ass[4];
-									text = ass.slice(5).join(",");
-								}
-							}
-						} else if (isFinite(ass[1])) { // add 형식
-							type = "add";
-							addStart = Number(ass[1]);
-							if (isFinite(ass[2])) {
-								addEnd = Number(ass[2]);
-								if (ass[2].startsWith("+")) { // +로 시작할 경우 시작 싱크를 기준으로
-									addEnd += smi.start;
-									addEndFromStart = true;
-								}
-							} else {
-								addEnd = addStart;
-							}
-							if (ass[3]) style = ass[3];
-							text = ass.slice(4).join(",");
-						}
-					}
-					if (!type) {
-						// 싱크 변형 없이 스타일이 나오는 형식
-						// [Layer, Style, Text]
-						style = ass[1];
-						text = ass.slice(2).join(",");
-					}
-				} else {
-					// 텍스트만 입력
-					text = ass.join(",");
-				}
-				
-				ass = [layer, smi.start + addStart, addEnd, style, text, smi, assText, addEndFromStart];
-				let toAssEnd = toAssEnds[i + span];
-				if (toAssEnd == null) {
-					toAssEnd = toAssEnds[i + span] = [];
-				}
-				toAssEnd.push(ass);
-				assComments.push(ass);
-			});
-		});
-		if (assComments.length && assComments[assComments.length - 1][2] == 0) {
-			// 마지막에 종료싱크 없을 때
-			assComments[assComments.length - 1][2] = 999999999;
-		}
-		
-		// 주석 기반 스크립트
-		assComments.forEach((item) => {
-			const event = new AssEvent(item[1], item[2], item[3], item[4], item[0]);
-			event.owner = item[5];
-			event.comment = item[6];
-			assEvents.body.push(event);
-			
-			// [SMI]는 후처리 결과를 반영해야 함
-			if (event.comment.indexOf("[SMI]") >= 0) {
-				if (!event.owner.preAss) {
-					event.owner.preAss = [];
-				}
-				event.owner.preAss.push(event);
-			}
-		});
-		
-		// SMI 기반 스크립트
-		syncs.push(hold.syncs = smiFile.toSyncs());
+	this.holds.forEach((hold) => {
+		hold.smiFile = new SmiFile(hold.getValue());
 	});
-	{	// 홀드 결합 pos 자동 조정
-		const an2Holds = [];
-		holds.forEach((hold) => {
-			if (hold.style
-			 && !(   hold.style.Alignment == 2
-			      || hold.style.Alignment == 5
-			     )
-			) return; // ASS에서 정중앙 혹은 중앙 하단이 아니면 제외
-			an2Holds.push(hold);
-		});
-		// 아래인 것부터 정렬
-		an2Holds.sort((a, b) => {
-			return a.pos - b.pos;
-		});
-		
-		if (an2Holds.length > 1) {
-			const usedLines = []; // 각 싱크에 사용된 줄 수
-			an2Holds.forEach((hold) => {
-				hold.syncs.forEach((sync) => {
-					let useBottom = true; // a2Holds에 애초에 걸러진 것만 있음
-					for (let j = 0; j < sync.text.length; j++) {
-						const ass = sync.text[j].ass;
-						if (ass && (ass.indexOf("\\an") > 0)) {
-							const an = ass[ass.indexOf("\\an") + 3];
-							if (an % 3 != 2) {
-								// 개별적으로 좌우 구석에 밀었을 경우 제외
-								useBottom = false;
-								break;
-							}
-						}
-					}
-					if (!useBottom) {
-						// \pos를 지정했으면 좌우 구석이 아니므로 중앙 높이를 차지할 수 있음
-						for (let j = 0; j < sync.text.length; j++) {
-							const ass = sync.text[j].ass;
-							if (ass && (ass.indexOf("\\pos") > 0)) {
-								useBottom = true;
-								break;
-							}
-						}
-					}
-					if (!useBottom) {
-						return;
-					}
-					
-					let used = 0;
-					
-					// 이미 확인된 줄과 비교
-					let j = 0
-					for (; j < usedLines.length; j++) {
-						if (sync.start == usedLines[j].start) {
-							used = usedLines[j].used;
-							break;
-						} else if (sync.start < usedLines[j].start) {
-							used = (j > 0) ? usedLines[j - 1].used : 0;
-							break;
-						}
-					}
-					
-					const nextLines = [];
-					let k = j;
-					for (; k < usedLines.length; k++) {
-						if (sync.end == usedLines[k].start) {
-							break;
-						} else if (sync.end < usedLines[k].start) {
-							nextLines.push({ start: sync.end, used: ((k > 0) ? usedLines[k - 1].used : 0) });
-							break;
-						}
-						used = Math.max(used, usedLines[k].used);
-					}
-					if (k == usedLines.length) {
-						// 뒤쪽이 없었으면 끝내기 잡아줌
-						nextLines.push({ start: sync.end, used: 0 });
-					}
-					
-					sync.bottom = used;
-					if (!sync.origin.skip) { // SMI 무시한 경우엔 더하지 않음
-						used += sync.getTextOnly().split("\n").length;
-					}
-					
-					nextLines.push(...usedLines.slice(k));
-					usedLines.length = j;
-					if (j > 0 && usedLines[j - 1].used == used) {
-						// 앞쪽이랑 같으면 건너뜀
-					} else {
-						usedLines.push({ start: sync.start, used: used });
-					}
-					usedLines.push(...nextLines);
-				});
-			});
-		}
-	}
-	for (let h = 1; h < holds.length; h++) {
-		// SMI에서 용도가 다른 <b> 태그 속성 없애고 진행
-		syncs[h].forEach((sync) => {
-			sync.text.forEach((attr) => {
-				if (attr.b) attr.b = false;
-			});
-		});
-		// 홀드 내용물 추가
-		assFile.addFromSyncs(syncs[h], holds[h].name);
-	}
-	// 메인 홀드를 마지막에 추가
-	assFile.addFromSync(syncs[0], "Default");
-	
-	// 홀드에 없는 스타일 추가
-	assStyles.body.push(...append.getStyles().body);
-	
-	const eventsBody = assFile.getEvents().body;
-	{	// ASS 자막은 SMI와 싱크 타이밍이 미묘하게 달라서 보정 필요
-		if (SmiEditor.sync && SmiEditor.sync.frame) {
-			if (Subtitle.video.fs.length) {
-				for (let i = appendedLength; i < eventsBody.length; i++) {
-					const item = eventsBody[i];
-					item.Start = AssEvent.toAssTime((item.start = Subtitle.findSync(item.start)) - 15);
-					item.End   = AssEvent.toAssTime((item.end   = Subtitle.findSync(item.end  )) - 15);
-					if (item.start == 0) item.start = 1;
-				}
-			} else {
-				const FL = Subtitle.video.FL;
-				for (let i = appendedLength; i < eventsBody.length; i++) {
-					const item = eventsBody[i];
-					item.Start = Math.max(1, ((Math.round(item.start / FL) - 0.5) * FL) - 15);
-					item.End   = Math.max(1, ((Math.round(item.end   / FL) - 0.5) * FL) - 15);
-				}
-			}
-		}
-		
-		eventsBody.forEach((item) => {
-			item.clearEnds();
-		});
-	}
-	
-	// 원래의 스크립트 순서를 기준으로, 시간이 겹치는 걸 기준으로 레이어 재부여
-	let forLayers = [];
-	eventsBody.forEach((item) => {
-		let forLayer = forLayers[item.Layer];
-		if (!forLayer) {
-			forLayers[item.Layer] = forLayer = [];
-		}
-		forLayer.push(item);
-	});
-	let checkeds = [];
-	forLayers.forEach((forLayer) => {
-		if (!forLayer) return;
-		forLayer.forEach((item) => {
-			let maxLayer = -1;
-			checkeds.forEach((checked) => {
-				if (item.start < checked.end && checked.start < item.end) {
-					maxLayer = Math.max(maxLayer, checked.Layer);
-				}
-			});
-			item.Layer = maxLayer + 1;
-			checkeds.push(item);
-		});
-	});
-	
-	// TODO: ASS 에디터에 레이어 재계산치 반영 가능한가...?
-	//       애초에 여긴 SMI 저장 이후에 돌아가는 부분인데 패스?
-	
-	log("toAss end", funcSince);
-	
-	if (orderByEndSync) {
-		// 레이어 보장된 상태에서 종료싱크까지 정렬
-		eventsBody.sort((a, b) => {
-			let cmp = a.start - b.start;
-			if (cmp == 0) {
-				cmp = a.end - b.end;
-			}
-			return cmp;
-		});
-	} else {
-		// 저장 시엔 레이어 순으로 정렬
-		eventsBody.sort((a, b) => {
-			let cmp = a.start - b.start;
-			if (cmp == 0) {
-				cmp = a.Layer - b.Layer;
-			}
-			return cmp;
-		});
-	}
-	return assFile;
+	return SmiFile.holdsToAss(this.holds, appendParts, append.getStyles().body, append.getEvents().body, playResX, playResY, orderByEndSync);
 }
 // 동영상 해상도 변경에 따른 ASS 좌표 조정
 // 해상도 배율은 무시, 레터박스만 고려
@@ -2098,13 +1728,54 @@ window.init = function(jsonSetting, isBackup=true) {
 	});
 	
 	const tabSelector = document.getElementById("tabSelector");
+	{	// 탭 스크롤 기능
+		const ths = document.getElementById("ths");
+		let from = null;
+		tabSelector.addEventListener("mousedown", (e) => {
+			from = {
+					mouseX: e.screenX
+				,	scroll: Number(ths.style.marginLeft.split("px")[0])
+			}
+		});
+		window.addEventListener("mousemove", (e) => {
+			if (!from) return;
+			let scroll = from.scroll - from.mouseX + e.screenX;
+			if (ths.clientWidth + scroll < tabSelector.clientWidth) {
+				// 오른쪽에 불필요한 여백이 생기면 안 됨
+				scroll = tabSelector.clientWidth - ths.clientWidth;
+			}
+			if (scroll > 0) {
+				// 왼쪽에 여백이 생기면 안 됨
+				scroll = 0;
+			}
+			ths.style.marginLeft = `${scroll}px`;
+			body.style.cursor = "w-resize";
+		});
+		window.addEventListener("mouseup", (e) => {
+			if (!from) return;
+			body.style.cursor = null;
+			from = null;
+		});
+		window.addEventListener("mousewheel", (e) => {
+			let scroll = Number(ths.style.marginLeft.split("px")[0]) - e.deltaY;
+			if (ths.clientWidth + scroll < tabSelector.clientWidth) {
+				// 오른쪽에 불필요한 여백이 생기면 안 됨
+				scroll = tabSelector.clientWidth - ths.clientWidth;
+			}
+			if (scroll > 0) {
+				// 왼쪽에 여백이 생기면 안 됨
+				scroll = 0;
+			}
+			ths.style.marginLeft = `${scroll}px`;
+		});
+	}
 	tabSelector.addEventListener("click", (e) => {
 		let el;
-
+		
 		if (el = e.target.closest(".btn-close-tab")) {
 			e.preventDefault();
 			
-			const th = closingTab = el.parentNode;
+			const th = el.parentNode;
 			
 			let saved = true;
 			{	const currentTab = eData(th).tab;
@@ -2132,22 +1803,16 @@ window.init = function(jsonSetting, isBackup=true) {
 						}
 						tabSelector.querySelectorAll(".th")[tabIndex].click();
 					}
-					closingTab = null;
-				}, 1);
-				
-			}, () => {
-				setTimeout(() => {
-					closingTab = null;
 				}, 1);
 			});
 			return;
 		}
-
+		
 		if (el = e.target.closest(".th")) {
-			if ((el == closingTab) || e.target.closest("#btnNewTab")) {
+			if (e.target.closest("#btnNewTab")) {
 				return;
 			}
-
+			
 			const currentTab = eData(el).tab;
 			if (currentTab) {
 				SmiEditor.selectTab(tabs.indexOf(currentTab));
@@ -2310,7 +1975,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260201").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260214").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2388,7 +2053,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260201").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260214").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2399,6 +2064,8 @@ window.setSetting = function(setting, initial=false) {
 			styleSize.innerHTML = preset.replaceAll("20px", (LH = (20 * setting.size)) + "px");
 			
 			SmiEditor.selected?.refresh();
+			
+			resizeTabSelector();
 		});
 		
 		// 찾기/바꾸기 내재화했을 경우
@@ -2554,7 +2221,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260201", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260214", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2606,8 +2273,8 @@ window.runIfCanOpenNewTab = function(func) {
 		// 탭 미사용 -> 현재 파일 닫기
 		if (tabs.length) {
 			const currentTab = tabs[0];
-			const tabSelector = document.getElementById("tabSelector");
-			const firstTh = (tabSelector.childNodes.length > 1) ? tabSelector.childNodes[0] : null;
+			const ths = document.getElementById("ths");
+			const firstTh = (ths.childNodes.length > 1) ? ths.childNodes[0] : null;
 			for (let i = 0; i < currentTab.holds.length; i++) {
 				if (!currentTab.isSaved()) {
 					confirm("현재 파일을 닫을까요?", () => {
@@ -2629,6 +2296,8 @@ window.closeTab = function(th) {
 	targetTab.area.remove();
 	th.remove();
 	
+	resizeTabSelector();
+	
 	SmiEditor.selected = null;
 	SmiEditor.Viewer.refresh();
 	return index;
@@ -2637,6 +2306,33 @@ window.closeCurrentTab = function() {
 	if (setting.useTab && tabs.length && tabs[tabIndex]) {
 		document.getElementById("tabSelector").querySelectorAll(".th")[tabIndex].querySelector(".btn-close-tab").click();
 	}
+}
+window.resizeTabSelector = function(scrollToEnd=false) {
+	const ths = document.getElementById("ths");
+	ths.style.transition = "0s";
+	
+	let width = 0;
+	[...ths.childNodes].forEach((th) => {
+		width += th.getBoundingClientRect().width;
+	});
+	ths.style.width = `${width}px`;
+	ths.style.transition = null;
+	
+	setTimeout(() =>  {
+		let scroll = Number(ths.style.marginLeft.split("px")[0]);
+		if (scrollToEnd) {
+			// 새 탭이면 오른쪽 끝으로 스크롤
+			scroll = tabSelector.clientWidth - width;
+		} else if (width + scroll < tabSelector.clientWidth) {
+			// 오른쪽에 불필요한 여백이 생기면 안 됨
+			scroll = tabSelector.clientWidth - width;
+		}
+		if (scroll > 0) {
+			// 왼쪽에 여백이 생기면 안 됨
+			scroll = 0;
+		}
+		ths.style.marginLeft = `${scroll}px`;
+	}, 1);
 }
 
 window.newFile = function() {
@@ -2651,7 +2347,7 @@ window.openFile = function(path, text, forVideo, confirmed=false) {
 	
 	if (path?.toLowerCase().endsWith(".ass")) {
 		// 연동 ASS 파일 열기
-		loadAssFile(path, text);
+		loadAssFile(text);
 		
 	} else if (confirmed) {
 		// 현재 파일 닫는 걸 승인하고 파일 열기 대화상자를 거쳐서 온 경우
@@ -2923,12 +2619,18 @@ window.saveFile = function(asNew, isExport) {
 		function saveAfterConfirm() {
 			lastSave = new Date().getTime();
 			
-			const saveText = path.endsWith(".jmk")
-			               ? currentTab.getSaveText(false, false) // 프로젝트 파일에선 정규화하지 않고 원본 저장만 진행
-			               : currentTab.getSaveText(setting.saveWithNormalize, true, (exporting = isExport) ? -1 : 1);
+			let saveText = "";
+			if (path.endsWith(".jmk")) {
+				// 프로젝트 파일에선 정규화하지 않고 원본 저장만 진행
+				const withFs = setting.sync.jmk && Subtitle.video.fs;
+				const withKfs = withFs && setting.sync.kfs;
+				saveText = currentTab.getSaveText(false, false, 1, withFs, withKfs);
+			} else {
+				saveText = currentTab.getSaveText(setting.saveWithNormalize, true, (exporting = isExport) ? -1 : 1);
+			}
 			
 			const saveFrom = log("binder.save start");
-			binder.save(tabIndex, saveText, path, 0);
+			binder.save(tabIndex, saveText, path, 0/*jmk*/);
 			log("binder.save end", saveFrom);
 			
 			// TODO: 위에서 await 걸고 최종 파일명을 받아올까 생각해 봤는데
@@ -2936,24 +2638,19 @@ window.saveFile = function(asNew, isExport) {
 			// 저게 된다면 withSmi / withSrt / withAss 관련 작업이 이쪽으로 와야 함
 			
 			if (withSmi || withSrt) {
-				const smiText = currentTab.getSaveText(setting.saveWithNormalize, true, -1);
+				// 위에서 getSaveText 과정에서 hold.text는 채워짐
+				const smiFile = SmiFile.holdsToParts(currentTab.holds, setting.saveWithNormalize, true, -1)[0];
 				
 				if (withSmi) {
 					const saveSmiFrom = log("binder.save smi start");
-					binder.save(tabIndex, smiText, smiPath, 1);
+					binder.save(tabIndex, smiFile.toText(), smiPath, 1/*smi*/);
 					log("binder.save smi end", saveSmiFrom);
 				}
 				if (withSrt) {
-					// TODO: 위에서 getSaveText 구하는 중간 단계 SmiFile을 쓸 수 있으면 좀 더 효율적이겠지만...
-					//       C# out 쓰듯이 파라미터 추가하기엔 이미 너무 많음
-					//       이제 와서 getSaveText 리턴값을 재정의하는 건 미묘
-					//       ... getSaveObj 함수 같은 단계를 추가할까?
-					// 홀드 결합 이전의 원본 그대로 SRT 자막을 만들면 홀드 상하 배치가 섞여버림
-					const syncs = new SmiFile(smiText).toSyncs();
-					const srtFile = new SrtFile().fromSyncs(syncs);
-					binder.save(tabIndex, srtFile.toText(), srtPath, 3);
+					// 홀드 결합 이전의 원본 그대로 SRT 자막을 만들면 홀드 상하 배치가 섞여버리므로
+					// SMI 결과물을 기반으로 생성함
 					const saveSrtFrom = log("binder.save srt start");
-					
+					binder.save(tabIndex, new SrtFile().fromSyncs(smiFile.toSyncs()).toText(), srtPath, 3/*srt*/);
 					log("binder.save srt end", saveSrtFrom);
 				}
 			}
@@ -2962,7 +2659,7 @@ window.saveFile = function(asNew, isExport) {
 					const assText = currentTab.toAss().toText();
 					
 					const saveAssFrom = log("binder.save ass start");
-					binder.save(tabIndex, assText, assPath, 2);
+					binder.save(tabIndex, assText, assPath, 2/*ass*/);
 					log("binder.save ass end", saveAssFrom);
 					
 			    } else {
@@ -3003,9 +2700,6 @@ window.afterSaveFile = function(tabIndex, path) { // 저장 도중에 탭 전환
 		return;
 	}
 	currentTab.holds.forEach((hold) => {
-		// 최종 저장 여부는 탭 단위로 다뤄져야 해서 군더더기 작업이 됨
-		// afterSave 재정의도 삭제
-		// hold.afterSave();
 		hold.saved = hold.getValue();
 		hold.savedPos = hold.pos;
 		hold.savedName = hold.name;
@@ -3019,7 +2713,7 @@ window.afterSaveFile = function(tabIndex, path) { // 저장 도중에 탭 전환
 	const title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	const span = document.getElementById("tabSelector").querySelectorAll(".th")[tabIndex].querySelector("span");
 	span.innerText = title;
-	span.title = path;
+	span.title = path ? path : title;
 	currentTab.holdEdited = false;
 	currentTab.savedHolds = currentTab.holds.slice(0);
 	
@@ -3078,10 +2772,6 @@ window.openNewTab = function(text, path, forVideo) {
 		closeTab(tabToCloseAfterRun);
 		tabToCloseAfterRun = null;
 	}
-	if (tabs.length >= 4) {
-		alert("탭은 4개까지 열 수 있습니다.");
-		return;
-	}
 	const funcSince = log("openNewTab start");
 	
 	const texts = [];
@@ -3101,7 +2791,7 @@ window.openNewTab = function(text, path, forVideo) {
 	
 	const th = tab.th = document.createElement("div");
 	th.classList.add("th");
-	th.title = path;
+	th.title = path ? path : title;
 	{	const span = document.createElement("span");
 		span.innerText = title;
 		th.append(span);
@@ -3113,6 +2803,7 @@ window.openNewTab = function(text, path, forVideo) {
 		th.append(button);
 	}
 	document.getElementById("btnNewTab").before(th);
+	resizeTabSelector(true);
 	
 	_for_video_ = forVideo;
 	eData(th, { tab: tab });
@@ -3286,14 +2977,14 @@ window.afterSetFkf = function() {
 	log("afterSetFkf end", funcSince);
 }
 
-window.loadAssFile = function(path, text, target=-1) {
-	if (target < 0) {
-		// 탭이 지정 안 된 경우..는 없어야 맞음
-		target = tabIndex;
-	}
-	const currentTab = tabs[target];
+window.loadAssFile = function(text) {
+	const currentTab = tabs[tabIndex];
 	if (!currentTab || !currentTab.withAss) {
 		alert("연동용 자막 파일이 열려있어야 ASS 파일을 읽을 수 있습니다.");
+		return;
+	}
+	if (!Subtitle.video.fs.length) {
+		alert("프레임 분석이 끝나야 ASS 파일을 읽을 수 있습니다.");
 		return;
 	}
 	let funcSince = log("loadAssFile start");
@@ -4487,7 +4178,6 @@ window.generateSmiFromAss = function(keepHoldsAss=true) {
 	
 	origins.forEach((origin) => {
 		const newLines = origin.text.split("\n");
-		let selectedLine = origin.start;
 		
 		const keepHoldAss = (origin.hold.name == "메인") ? false : keepHoldsAss;
 		
@@ -4772,7 +4462,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260201", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260214", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

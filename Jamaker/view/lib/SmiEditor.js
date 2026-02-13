@@ -9,12 +9,12 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260201", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260214", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260201", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260214", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -23,14 +23,6 @@ window.LOG = true; // 배포 시 false
 window.LH = 20; // LineHeight
 window.SB = 16; // ScrollBarWidth ... TODO: 자동으로 구해지도록?
 
-// 배열로 개발했던 것들 레거시 지원
-window.LINE = {
-		TEXT: "TEXT"
-	,	SYNC: "SYNC"
-	,	TYPE: "TYPE"
-	,	LEFT: "LEFT"
-	,	VIEW: "VIEW"
-};
 window.TYPE = {
 		TEXT: null
 	,	BASIC: 1
@@ -38,6 +30,12 @@ window.TYPE = {
 	,	RANGE: 3
 };
 window.TIDs = [null, "", " ", "	"];
+if (Smi.TypeParser[4] && Smi.TypeParser[5] && Smi.TypeParser[6]) {
+	// Converter가 import된 경우
+	TIDs[5] = Smi.TypeParser[4];
+	TIDs[6] = Smi.TypeParser[5];
+	TIDs[7] = Smi.TypeParser[6];
+};
 window.linesToText = function(lines) {
 	const textLines = [];
 	lines.forEach((line) => {
@@ -1419,7 +1417,6 @@ SmiEditor.prototype.setLine = function(text, selection) {
 	const cursor = this.cm.getCursor();
 	this.cm.replaceRange(text, { line: cursor.line, ch: 0 }, { line: cursor.line, ch: this.cm.getLine(cursor.line).length }, `setLine_${new Date().getTime()}`);
 	if (selection) {
-		const index = this.cm.indexFromPos({ line: cursor.line, ch: 0 });
 		this.cm.setSelection({ line: cursor.line, ch: selection[0] }, { line: cursor.line, ch: selection[1] });
 	} else {
 		this.cm.setCursor(cursor);
@@ -1664,8 +1661,6 @@ SmiEditor.prototype.toggleSyncType = function() {
 		return;
 	}
 	
-	const text = this.cm.getValue();
-	let cursor = this.cm.indexFromPos(this.cm.getCursor());
 	let lineNo = this.cm.getCursor().line;
 	
 	for (let i = lineNo; i >= 0; i--) {
@@ -2048,7 +2043,6 @@ SmiEditor.prototype.moveLine = function(toNext) {
 	range[0] = this.cm.indexFromPos(range[0]);
 	range[1] = this.cm.indexFromPos(range[1]);
 	const lines = text.split("\n");
-	let addLine = 0;
 	
 	if (toNext) {
 		if (lineRange[1] == lines.length - 1) {
@@ -2056,18 +2050,22 @@ SmiEditor.prototype.moveLine = function(toNext) {
 			return;
 		}
 		const newLines = [lines[lineRange[1]+1]]; // 선택 범위 아랫줄을 위로 올림
-		newLines.push(...lines.slice(lineRange[0], lineRange[1]+1)); // 선택 범위를 아래로 내림
+		newLines.push(...lines.slice(lineRange[0], lineRange[1] + 1)); // 선택 범위를 아래로 내림
+		this.cm.getInputField().blur(); // 다국어 입력기를 해제하기 위함
 		this.cm.replaceRange(newLines.join("\n"), { line: lineRange[0], ch: 0 }, { line: lineRange[1]+1 });
 		this.cm.setSelection({ line: lineRange[0]+1, ch: 0 }, { line: lineRange[1]+1 });
+		this.cm.focus();
 	} else {
 		if (lineRange[0] == 0) {
 			// 더 이상 올릴 수 없음
 			return;
 		}
 		const newLines = lines.slice(lineRange[0], lineRange[1]+1); // 선택 범위를 위로 올림
-		newLines.push([lines[lineRange[0]-1]]); // 선택 범위 윗줄을 아래로 내림
+		newLines.push([lines[lineRange[0] - 1]]); // 선택 범위 윗줄을 아래로 내림
+		this.cm.getInputField().blur(); // 다국어 입력기를 해제하기 위함
 		this.cm.replaceRange(newLines.join("\n"), { line: lineRange[0]-1, ch: 0 }, { line: lineRange[1] });
-		this.cm.setSelection({ line: lineRange[0]-1, ch: 0 }, { line: lineRange[1]-1 });
+		this.cm.setSelection({ line: lineRange[0] - 1, ch: 0 }, { line: lineRange[1] - 1 });
+		this.cm.focus();
 	}
 }
 SmiEditor.prototype.moveSync = function(toForward) {
@@ -2545,7 +2543,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260201", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260214", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2738,7 +2736,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260201", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260214", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
@@ -2912,7 +2910,7 @@ SmiEditor.prototype.normalize = function() {
 	if (text) {
 		const smi = new SmiFile();
 		const input = smi.fromText(text).body;
-		Smi.normalize(input, false, Subtitle.video.FR / 1000);
+		Smi.normalize(input, false);
 		smi.body = input;
 		SmiEditor.afterTransform(smi.toText().trim());
 	}

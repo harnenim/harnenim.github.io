@@ -91,10 +91,10 @@ window.DEFAULT_SETTING =
 		]
 	]
 ,	window:
-	{	x: 660
-	,	y: 20
+	{	x: 1280
+	,	y: 0
 	,	width: 640
-	,	height: 720
+	,	height: 920
 	,	follow: true // 미리보기/플레이어 창 따라오기
 	}
 ,	sync:
@@ -108,6 +108,8 @@ window.DEFAULT_SETTING =
 	,	frame: true
 	,	kframe: false
 	,	kLimit: 200
+	,	jmk: true
+	,	kfs: false
 	,	holds: true
 	,	width: 192	// 화면 싱크 매니저 섬네일 크기
 	,	height: 108
@@ -206,6 +208,11 @@ window.DEFAULT_SETTING =
 		,	'M': '/* 화면 싱크 매니저 실행 */\n' + 'openAddon("SyncManager");'
 		,	'Q': '/* 현재 위치 재생 */\n' + 'editor.moveToSync(-2000);'
 		,	'T': '/* 홀드 추가 */\n' + 'editor.owner.addHold();'
+		,	'W': '/* 홀드 삭제 */\n'
+			   + 'let tab = tabs[tabIndex];\n'
+			   + 'if (tab.holdIndex) {\n'
+			   + '	tab.holds[tab.holdIndex].selector.querySelector("button.btn-hold-remove").click();\n'
+			   + '}'
 		}
 	,	withAlts:
 		{	't': '/* 일괄 싱크 입력 */\n' + 'editor.reSyncPrompt();'
@@ -391,10 +398,10 @@ window.DEFAULT_SETTING =
 		+	"</SAMI>"
 ,	viewer:
 	{	window:
-		{	x: 20
-		,	y: 440
-		,	width: 640
-		,	height: 300
+		{	x: 0
+		,	y: 720
+		,	width: 1280
+		,	height: 200
 		}
 	,	useAlign: false
 	,	size: 18
@@ -402,10 +409,10 @@ window.DEFAULT_SETTING =
 	}
 ,	player:
 	{	window:
-		{	x: 20
-		,	y: 20
-		,	width: 640
-		,	height: 420
+		{	x: 0
+		,	y: 0
+		,	width: 1280
+		,	height: 720
 		,	use: true
 		}
 	,	exts: "mp4,mkv,avi,ts,m2ts" // 동영상 파일 찾기 우선순위 순으로

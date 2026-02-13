@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./MenuStrip.css?260201", import.meta.url).href;
+	link.href = new URL("./MenuStrip.css?260214", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -362,7 +362,6 @@ MenuStrip.prototype.setMenus = function(menus) {
 	menus.forEach((list) => {
 		const menuLi = document.createElement("li");
 		menuLi.tabIndex = 1;
-		let menuKey = null;
 		
 		const text = menuLi.innerText = list[0];
 		const index = text.indexOf("&");
