@@ -1,4 +1,28 @@
-[ { "version": "2026.02.01"
+[ { "version": "2026.02.14"
+  , "comment":
+    [ "페이드 효과 등 변환 기능 보완"
+    , "탭 UI 개수 제한 해제"
+    , "저장 관련 로직 정리 등"
+    ]
+  , "files":
+    [ "view/addon/Combine.html"
+    , "view/addon/SearchFiles.html"
+    , "view/addon/SyncManager.html"
+    , "view/lib/Jamaker.color.css"
+    , "view/lib/Jamaker.css"
+    , "view/lib/Jamaker.js"
+    , "view/lib/Jamaker.size.css"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/AutoSyncShift.html"
+    , "view/Jamaker.html"
+    , "view/SamiReplacer.html"
+    , "view/setting.html"
+    ]
+  }
+, { "version": "2026.02.01"
   , "comment":
     [ "탭 닫는 동작 버그 수정"
     , "새 파일 저장 시 탭 이름 버그 수정"
