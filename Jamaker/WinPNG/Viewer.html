@@ -270,7 +270,7 @@ async function addFile(cont) {
 				}
 				text = parts.join("");
 			}
-			const clearedFile = new File([new Blob([text], { type: "text/plain" })], filename);
+			const clearedFile = new File([new Blob(["\uFEFF" + text], { type: "text/plain;charset=utf-8" })], filename);
 			const clearedUrl = URL.from(clearedFile);
 			a.setAttribute("data-cleared", clearedUrl);
 			
@@ -307,7 +307,7 @@ async function addFile(cont) {
 				if (withSmi) {
 					const smiFilename = filename.substring(0, extIndex) + "smi";
 					const smiText = SmiFile.holdsToText(holds, true, true, -1);
-					const smiFile = new File([new Blob([smiText], { type: "text/plain" })], smiFilename);
+					const smiFile = new File([new Blob(["\uFEFF" + smiText], { type: "text/plain;charset=utf-8" })], smiFilename);
 					const smiUrl = URL.from(smiFile);
 					a.setAttribute("data-smi", smiUrl);
 					
@@ -347,7 +347,7 @@ async function addFile(cont) {
 					});
 					const assFilename = filename.substring(0, extIndex) + "ass";
 					const assText = SmiFile.holdsToAss(holds, appendParts, append.getStyles().body, append.getEvents().body, x, y).toText();
-					const assFile = new File([new Blob([assText], { type: "text/plain" })], assFilename);
+					const assFile = new File([new Blob(["\uFEFF" + assText], { type: "text/plain;charset=utf-8" })], assFilename);
 					const assUrl = URL.from(assFile);
 					a.setAttribute("data-ass", assUrl);
 					
