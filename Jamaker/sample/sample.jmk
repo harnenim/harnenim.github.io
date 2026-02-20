@@ -1,4 +1,4 @@
-﻿<SAMI ass smi>
+﻿<SAMI ass>
 <HEAD>
 <TITLE>HELLO WORLD PV3</TITLE>
 <STYLE TYPE="text/css">
@@ -15,97 +15,97 @@ P { margin-left:8pt; margin-right:8pt; margin-bottom:2pt; margin-top:2pt;
 -->
 </HEAD>
 <BODY>
-<Sync Start=1335><P Class=KRCC>
+<Sync Start=1335>
 이 도시도, 나도, 너도
-<Sync Start=4338><P Class=KRCC >
+<Sync Start=4338 >
 현실인 줄 알았던 이 세계는
-<Sync Start=6882><P Class=KRCC >
+<Sync Start=6882 >
 &nbsp;
-<Sync Start=7716><P Class=KRCC>
+<Sync Start=7716>
 전부 그냥 데이터였다
-<Sync Start=9801><P Class=KRCC >
+<Sync Start=9801 >
 &nbsp;
-<Sync Start=15390><P Class=KRCC>
+<Sync Start=15390>
 10년 후의... 나?
-<Sync Start=17851><P Class=KRCC >
+<Sync Start=17851 >
 &nbsp;
-<Sync Start=18310><P Class=KRCC>
+<Sync Start=18310>
 그쪽은 대체 뭘 하러 왔죠?
-<Sync Start=20229><P Class=KRCC>
+<Sync Start=20229>
 너한테 여자친구를<br>만들기 위해서지
-<Sync Start=22856><P Class=KRCC>
+<Sync Start=22856>
 &nbsp;
-<Sync Start=25317><P Class=KRCC>
+<Sync Start=25317>
 - 좋아<br>- 좋긴 뭐가요!
-<Sync Start=27277><P Class=KRCC >
+<Sync Start=27277 >
 허둥대지 마
-<Sync Start=28320><P Class=KRCC>
+<Sync Start=28320>
 사랑은 막 시작됐어
-<Sync Start=29988><P Class=KRCC >
+<Sync Start=29988 >
 모으기로 한 이상<br>어중간하게는 안 돼요
-<Sync Start=33242><P Class=KRCC >
+<Sync Start=33242 >
 끝장을 봐요
-<Sync Start=34243><P Class=KRCC >
+<Sync Start=34243 >
 &nbsp;
-<Sync Start=37955><P Class=KRCC >
+<Sync Start=37955 >
 왜 그렇게 싱글거리냐
-<Sync Start=38956><P Class=KRCC>
+<Sync Start=38956>
 아야...<br>싱글거린 적 없어요
-<Sync Start=41250><P Class=KRCC >
+<Sync Start=41250 >
 &nbsp;
-<Sync Start=41541><P Class=KRCC>
+<Sync Start=41541>
 저는 이치교 씨를
-<Sync Start=43293><P Class=KRCC >
+<Sync Start=43293 >
 &nbsp;
-<Sync Start=45837><P Class=KRCC>
+<Sync Start=45837>
 사귄 지 얼마 안 돼서
-<Sync Start=48048><P Class=KRCC>
+<Sync Start=48048>
 사고는 일어났다
-<Sync Start=49675><P Class=KRCC >
+<Sync Start=49675 >
 구하고 싶어요, 저도
-<Sync Start=51510><P Class=KRCC >
+<Sync Start=51510 >
 그 애를 지킨다
-<Sync Start=52719><P Class=KRCC >
+<Sync Start=52719 >
 네!
-<Sync Start=54012><P Class=KRCC >
+<Sync Start=54012 >
 &nbsp;
-<Sync Start=57516><P Class=KRCC >
+<Sync Start=57516 >
 서둘러, 나오미
-<Sync Start=58475><P Class=KRCC>
+<Sync Start=58475>
 이치교 씨
-<Sync Start=59184><P Class=KRCC>
+<Sync Start=59184>
 뭐야, 어떻게 된 거야?
-<Sync Start=60519><P Class=KRCC >
+<Sync Start=60519 >
 &nbsp;
-<Sync Start=60936><P Class=KRCC>
+<Sync Start=60936>
 뭐야, 이거
-<Sync Start=62312><P Class=KRCC>
+<Sync Start=62312>
 도시가... 세계가...
-<Sync Start=64439><P Class=KRCC>
+<Sync Start=64439>
 지워져...
-<Sync Start=65857><P Class=KRCC >
+<Sync Start=65857 >
 &nbsp;
-<Sync Start=66483><P Class=KRCC >
+<Sync Start=66483 >
 싫어!
-<Sync Start=67609><P Class=KRCC >
+<Sync Start=67609 >
 죽어도 싫어!
-<Sync Start=69194><P Class=KRCC >
+<Sync Start=69194 >
 &nbsp;
-<Sync Start=71947><P Class=KRCC >
+<Sync Start=71947 >
 줄곧, 줄곧 기다렸어
-<Sync Start=74283><P Class=KRCC>
+<Sync Start=74283>
 왜 이런 일이...
-<Sync Start=75867><P Class=KRCC>
+<Sync Start=75867>
 아니야, 당신은
-<Sync Start=77244><P Class=KRCC >
+<Sync Start=77244 >
 나는...
-<Sync Start=77828><P Class=KRCC>
+<Sync Start=77828>
 카타가키 씨가 아니야
-<Sync Start=79121><P Class=KRCC>
+<Sync Start=79121>
 널 좋아했어
-<Sync Start=80539><P Class=KRCC>
+<Sync Start=80539>
 이치교 씨!
-<Sync Start=81748><P Class=KRCC >
+<Sync Start=81748 >
 &nbsp;
 </BODY>
 </SAMI>
@@ -116,16 +116,16 @@ P { margin-left:8pt; margin-right:8pt; margin-bottom:2pt; margin-top:2pt;
 <​!-- Style
 맑은 고딕,40,&H00FFFFFF,&H000000FF,&HE07F7F7F,&H7F000000,0,0,0,0,100,100,0,0,1,0,2,5,24,24,18
 --​>
-<​Sync Start=1001​><​P Class=KRCC ​>
+<​Sync Start=1001 ​>
 <​!-- ASS
 0,,,스태프,{\pos(980,498)\fsp35\b1}이토 토모히코
 1,,,스태프,{\fs47\fsp25\pos(970,670)}『소드 아트 온라인』
 END
 --​>
 이토 토모히코<​br​>『소드 아트 온라인』
-<​Sync Start=2836​><​P Class=KRCC ​>
+<​Sync Start=2836 ​>
 &nbsp;
-<​Sync Start=10802​><​P Class=KRCC ​>
+<​Sync Start=10802 ​>
 <​!-- ASS
 0,,,스태프,{\fs50\fsp17\an7\pos(160,470)}노자키 마도
 1,,,스태프,{\fs30\an7\pos(160,530)}『카도: The Right Answer』
@@ -137,185 +137,185 @@ END
 『카도: The Right Answer』　　　　　　　　​<​br​>
 ​　　　　　　　　　　　　 호리구치 유키코<​br​>
 ​　　　　　　　　　　　　　　　 『케이온!』
-<​Sync Start=13263​><​P Class=KRCC ​>
+<​Sync Start=13263 ​>
 &nbsp;
 -->
 <!-- Hold=1|화면 글씨
 <​!-- Style
 맑은 고딕,60,&H00FFFFFF,&H000000FF,&HC0000000,&H000A00EB,0,0,0,0,100,100,0,0,1,5,0,5,24,24,18
 --​>
-<​Sync Start=7090​><​P Class=KRCC ​>
+<​Sync Start=7090 ​>
 <​font ass="{\pos(960,640)\fs80\fsp21}"​><​/font​>
 우리는 현실 세계의 “<​RUBY​>기록<​RT​><​RP​>(<​/RP​>데이터 <​RP​>)<​/RP​><​/RT​><​/RUBY​>”이었다<​font ass="{\fsp\fscx190}"​><​/font​>─<​font ass="{\fscx\fsp21}"​><​/font​><​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
-<​Sync Start=9801​><​P Class=KRCC ​>
+<​Sync Start=9801 ​>
 &nbsp;
-<​Sync Start=13263​><​P Class=KRCC ​>
+<​Sync Start=13263 ​>
 <​!-- ASS
 0,,,화면 글씨,{\pos(960,450)\fs80\fsp18\3c&HD6A27B&\3a&H00&\blur5}2027년 교토
 END
 --​>
 <​FONT ass="{\pos(960,450)\fs80\fsp18\3c&HD6A27B&\3a&H00&\blur5}"​><​/FONT​>
 2027년 교토<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​><​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
-<​Sync Start=14723​><​P Class=KRCC ​>
+<​Sync Start=14723 ​>
 <​!-- ASS
 0,,,화면 글씨,{\fs70\bord0\bord2\blur5\pos(396,614)}키타무라 타쿠미
 END
 --​>
 키타무라 타쿠미　　　　　　　　　　　　​<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
-<​Sync Start=16642​><​P Class=KRCC ​>
+<​Sync Start=16642 ​>
 &nbsp;
-<​Sync Start=17851​><​P Class=KRCC ​>
+<​Sync Start=17851 ​>
 <​!-- ASS
 0,,,화면 글씨,{\pos(970,620)\c&H5B5B5B&\bord0\fs70\fsp25}미래에서 온 “10년 후의 나”
 END
 --​>
 미래에서 온 “10년 후의 나”<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
-<​Sync Start=19770​><​P Class=KRCC ​>
+<​Sync Start=19770 ​>
 <​!-- ASS
 0,,,화면 글씨,{\fs70\bord0\bord2\blur5\pos(338,614)}마츠자카 토리
 END
 --​>
 마츠자카 토리　　　　　　　　　　　　　​<​br​><​b​>　<​/b​>
-<​Sync Start=22272​><​P Class=KRCC ​>
+<​Sync Start=22272 ​>
 &nbsp;
-<​Sync Start=24024​><​P Class=KRCC ​>
+<​Sync Start=24024 ​>
 <​!-- ASS
 0,,,화면 글씨,{\an2\fs50\bord0\shad2\fsp14\4c&H000000&\4a&H7F&\pos(1680,838)}「예스터데이」
 END
 --​>
-<​Sync Start=27277​><​P Class=KRCC ​>
+<​Sync Start=27277 ​>
 &nbsp;
-<​Sync Start=33242​><​P Class=KRCC ​>
+<​Sync Start=33242 ​>
 <​!-- ASS
 0,,,화면 글씨,{\fs70\bord0\bord2\blur5\pos(1562,614)}하마베 미나미
 END
 --​>
 ​　　　　　　　　　　　　　　하마베 미나미<​br​><​b​>　<​/b​>
-<​Sync Start=34243​><​P Class=KRCC ​>
+<​Sync Start=34243 ​>
 &nbsp;
-<​Sync Start=57516​><​P Class=KRCC ​>
+<​Sync Start=57516 ​>
 <​!-- ASS
 0,,,화면 글씨,{\an2\fs50\bord0\shad2\fsp13\4c&H000000&\4a&H7F&\pos(1722,892)}「신세계」
 END
 --​>
-<​Sync Start=60519​><​P Class=KRCC ​>
+<​Sync Start=60519 ​>
 &nbsp;
-<​Sync Start=72823​><​P Class=KRCC ​>
+<​Sync Start=72823 ​>
 <​!-- ASS
 0,,,화면 글씨,{\fs83\t(\fs86)\fsp28\pos(974,540)\bord4\blur5\3c&HA37844&\c&HF7FFFC&}설령 세계가 무너지더라도\N\N\N\N\N{}
 END
 --​>
 <​FONT color="#FCFFF7"​>설령 세계가 무너지더라도<​br​>
-<​Sync Start=74408​><​P Class=KRCC ​>
+<​Sync Start=74408 ​>
 &nbsp;
-<​Sync Start=81790​><​P Class=KRCC ​>
+<​Sync Start=81790 ​>
 <​!-- ASS
 0,,,화면 글씨,{\fade(500,300)\fs80\fsp28\pos(976,540)\bord4\blur5\c&HF7FFFC&}\N\N\N\N다시 한번, 널 만나고 싶어
 END
 --​>
 다시 한번, 널 만나고 싶어<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
-<​Sync Start=85669​><​P Class=KRCC ​>
+<​Sync Start=85669 ​>
 &nbsp;
-<​Sync Start=88088​><​P Class=KRCC ​>
+<​Sync Start=88088 ​>
 <​font ass="{\c&H555555&\pos(966,800)\fs60\t(\fs65)\fsp13\bord0}"​><​/font​>
 이 <​RUBY​>이야기<​RT​><​RP​>(<​/RP​><​font ass="{\bord0}"​><​/font​>세 계<​RP​>)<​/RP​><​/RT​><​/RUBY​>는 라스트 1초에서 뒤집힌다<​font ass="{\fscx150}"​><​/font​>─<​font ass="{\fscx}"​><​/font​><​br​><​b​>　<​/b​>
-<​Sync Start=91091​><​P Class=KRCC ​>
+<​Sync Start=91091 ​>
 &nbsp;
 -->
 <!-- Hold=-1|イエスタデイ
 <​!-- Style
 맑은 고딕,60,&H00FFD1EB,&H000000FF,&H00000000,&H00000000,-1,-1,0,0,100,100,0,0,1,4,0,7,64,64,120
 --​>
-<​Sync Start=23357​><​P Class=KRCC ​>
+<​Sync Start=23357 ​>
 <​!-- ASS
 0,0,250,,{\fade(0,500)}[TEXT]
 END
 --​>
 아득히 저편으로 나아가
-<​Sync Start=27819​><​P Class=KRCC​>
+<​Sync Start=27819​>
 <​!-- ASS
 0,-250,250,,{\fade(500,500)}[TEXT]
 END
 --​>
 너무 제멋대로 구는 사랑이라고
-<​Sync Start=31782​><​P Class=KRCC​>
+<​Sync Start=31782​>
 <​!-- ASS
 0,-250,250,,{\fade(500,500)}[TEXT]
 END
 --​>
 세상이 뒤에서 손가락질하더라도
-<​Sync Start=37371​><​P Class=KRCC​>
+<​Sync Start=37371​>
 &nbsp;
-<​Sync Start=37955​><​P Class=KRCC ​>
+<​Sync Start=37955 ​>
 <​!-- ASS
 0,0,250,,{\fade(0,500)}[TEXT]
 END
 --​>
 뒤돌아보지 말고 나아가
-<​Sync Start=42626​><​P Class=KRCC​>
+<​Sync Start=42626​>
 <​!-- ASS
 0,-250,0,,{\fade(500,0)}[TEXT]
 END
 --​>
 두 사...
-<​Sync Start=43293​><​P Class=KRCC ​>
+<​Sync Start=43293 ​>
 &nbsp;
 -->
 <!-- Hold=-1|新世界
 <​!-- Style
 맑은 고딕,60,&H00FFD1EB,&H000000FF,&H00000000,&H00000000,-1,-1,0,0,100,100,0,0,1,4,0,7,64,64,60
 --​>
-<​Sync Start=53428​><​P Class=KRCC ​>
+<​Sync Start=53428 ​>
 <​!-- ASS
 0,0,250,,{\fade(0,500)}[TEXT]
 END
 --​>
 Just do it
-<​Sync Start=55055​><​P Class=KRCC​>
+<​Sync Start=55055​>
 <​!-- ASS
 0,-250,0,,{\fade(500,0)}[TEXT]
 END
 --​>
 몇 번이든, 몇 번이든
-<​Sync Start=57516​><​P Class=KRCC ​>
+<​Sync Start=57516 ​>
 <​!-- ASS
 0,0,250,,{\fade(0,500)}[TEXT]
 END
 --​>
 휘갈겨 쓴 노트 페이지를 넘기고
-<​Sync Start=62312​><​P Class=KRCC​>
+<​Sync Start=62312​>
 <​!-- ASS
 0,-250,250,,{\fade(500,500)}[TEXT]
 END
 --​>
 새로운 곳에 적어나간
-<​Sync Start=66191​><​P Class=KRCC​>
+<​Sync Start=66191​>
 <​!-- ASS
 0,-250,250,,{\fade(500,500)}[TEXT]
 END
 --​>
 우리의 새로운 세계
-<​Sync Start=71071​><​P Class=KRCC​>
+<​Sync Start=71071​>
 <​!-- ASS
 0,-250,250,,{\fade(500,500)}[TEXT]
 END
 --​>
 언젠가 그대에게도
-<​Sync Start=75117​><​P Class=KRCC​>
+<​Sync Start=75117​>
 <​!-- ASS
 0,-250,250,,{\fade(500,500)}[TEXT]
 END
 --​>
 전해지도록
-<​Sync Start=79121​><​P Class=KRCC​>
+<​Sync Start=79121​>
 <​!-- ASS
 0,-250,0,,{\fade(500,0)}[TEXT]
 END
 --​>
 소원을 담겠어
-<​Sync Start=82666​><​P Class=KRCC​>
+<​Sync Start=82666​>
 <​font fade="out"​>소원을 담겠어<​/font​>
-<​Sync Start=83959​><​P Class=KRCC​>
+<​Sync Start=83959​>
 &nbsp;
 -->
 <!-- ASS
@@ -323,7 +323,6 @@ END
 VideoInfo: PV03.mkv
 PlayResX: 1920
 PlayResY: 1080
-FrameSyncs: 
 
 [Aegisub Project Garbage]
 Last Style Storage: Default
@@ -339,4 +338,8 @@ Video Position: 2112
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: 주석,맑은 고딕,54,&H00AAAAAA,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,3,3,51,99,39,1
+-->
+<!-- FS
+vwMqACQBKgCzBSoAtAUqAMYJKgCnACkASAIqAPwHKQDAAykAdAkpAIoFKgByAikAugQqAI8EKgChASoAigUqAKEBKgDSBykAHgIqAMsBKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKgApACoAKgDQACoAJAEqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQDHCSkAeQgqADEGKgABByoAkAQpAJwCKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoAKgApACoAKgApACoAKgAqACkAKgAqACkAKgAqACoAKQAqACoAKQAqACoAKQAqACoASQkqAJELKgA=
+6QMrB94FwAqXCiwHWga0BX8HuQR/B8YJPQRzCXQQNwU8BCwHigXjBBMEuQQTBBME4BNgBakHEgTsEVkcUAiPBOQE5hIhEFUHlwoAHQ==
 -->
