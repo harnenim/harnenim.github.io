@@ -1,4 +1,20 @@
-[ { "version": "2026.02.14"
+[ { "version": "2026.02.21"
+  , "comment":
+    [ "ASS 변환 관련 미비점 보완"
+    , "jmk 저장 시 <P> 태그 제거 등"
+    ]
+  , "files":
+    [ "view/addon/SearchFiles.html"
+    , "view/addon/SyncManager.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/AutoSyncShift.html"
+    ]
+  }
+, { "version": "2026.02.14"
   , "comment":
     [ "페이드 효과 등 변환 기능 보완"
     , "탭 UI 개수 제한 해제"
