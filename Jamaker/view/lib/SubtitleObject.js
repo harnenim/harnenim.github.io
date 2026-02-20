@@ -1024,6 +1024,9 @@ Color.prototype.ass = function(value, total) {
 }
 
 Subtitle.optimizeSync = (time=0, fromFrameSync=false) => {
+	if (time >= 35999999) {
+		return 35999999;
+	}
 	if (time < 0) time = 0;
 	if (Subtitle.video.fs.length) {
 		const index = Subtitle.findSyncIndex(time);
@@ -1037,6 +1040,7 @@ Subtitle.optimizeSync = (time=0, fromFrameSync=false) => {
 		}
 	} else {
 		if (fromFrameSync) {
+			// 프레임 싱크 정보 없이 보정 필요한 경우, 일률적으로 15ms로 보정
 			time -= 15;
 		}
 	}
@@ -1048,12 +1052,13 @@ Subtitle.optimizeSync = (time=0, fromFrameSync=false) => {
 
 
 
+// TODO: Subtitle.Ass.js 분리?
 
 window.AssEvent = Subtitle.AssEvent = function(start, end, style, text, layer=0) {
 	this.key = "Dialogue";
 	this.Layer = layer;
-	this.Start = AssEvent.toAssTime(this.start = start); // 소문자 start/end: ms 단위 숫자값
-	this.End   = AssEvent.toAssTime(this.end   = end  ); // 대문자 Start/End: ASS 형식 시간값
+	this.Start = AssEvent.toAssTime(this.start = start, true); // 소문자 start/end: ms 단위 숫자값
+	this.End   = AssEvent.toAssTime(this.end   = end  , true); // 대문자 Start/End: ASS 형식 시간값
 	this.Style = style;
 	this.Name = "";
 	this.MarginL = 0;
@@ -1075,7 +1080,10 @@ AssEvent.toAssTime = (time=0, fromFrameSync=false) => {
 AssEvent.fromAssTime = (assTime, toFrameSync=false) => {
 	const vs = assTime.split(':');
 	let time = ((Number(vs[0]) * 360000) + (Number(vs[1]) * 6000) + (Number(vs[2].replaceAll(".", "")))) * 10;
-	if (toFrameSync) {
+	if (vs[0] == 9) {
+		// 9시간 넘는 영상은 존재하지 않음. 종료싱크 없는 경우에 넣어준 임의의 값
+		time = 35999999;
+	} else if (toFrameSync) {
 		time = AssEvent.optimizeSync(time);
 	}
 	return time;
@@ -1119,11 +1127,15 @@ AssEvent.optimizeSync = function(sync) {
 			return (i == 1 && fs[0] == 0) ? 1 : fs[i - 1]; // ASS 0:00:00.00은 출력되지만, SMI 0ms는 출력되지 않아 1ms 부여
 		}
 	}
-	// 마지막 싱크로 맞춰줌
+	// 위에서 못 찾았으면 마지막 싱크로 맞춰줌
 	return Subtitle.video.fs[i - 1];
 }
 AssEvent.prototype.optimizeSync = function() {
 	this.Start = AssEvent.toAssTime((this.start = AssEvent.optimizeSync(this.start)), true);
+	if (this.end == 35999999) {
+		// 종료싱크 없이 생성한 값
+		return;
+	}
 	this.End   = AssEvent.toAssTime((this.end   = AssEvent.optimizeSync(this.end  )), true);
 }
 
@@ -2197,6 +2209,7 @@ AssFile.prototype.fromSyncs = function(syncs, style) {
 
 
 
+// TODO: Subtitle.Smi.js 분리?
 
 window.Smi = Subtitle.Smi = function(start, syncType, text) {
 	this.start = start ? Math.round(start) : 0;
@@ -2208,18 +2221,22 @@ TypeParser[SyncType.normal] = "";
 TypeParser[SyncType.frame] = " ";
 TypeParser[SyncType.inner] = "\t";
 TypeParser[SyncType.split] = "  ";
+Smi.syncPreset = "<Sync Start={sync}><P Class=KRCC{type}>";
 
 Smi.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
-Smi.prototype.toText = function() {
+Smi.prototype.toText = function(jmk=false) {
 	if (this.syncType == SyncType.comment) { // Normalize 시에만 존재
 		return `<!--${ this.text }-->`;
 	}
-	return `<Sync Start=${this.start}><P Class=KRCC${ TypeParser[this.syncType] }>\n` + this.text;
+	if (jmk) {
+		return `<Sync Start=${this.start}${ TypeParser[this.syncType] }>\n` + this.text;
+	}
+	return Smi.syncPreset.replaceAll("{sync}", this.start).replaceAll("{type}", TypeParser[this.syncType]) + "\n" + this.text;
 }
-Smi.smi2txt = (smis) => {
+Smi.smi2txt = (smis, jmk=false) => {
 	let result = "";
 	smis.forEach((smi) => {
-		result += smi.toText() + "\n";
+		result += smi.toText(jmk) + "\n";
 	});
 	return result;
 }
@@ -3318,7 +3335,7 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 	if (end < 0) {
 		// 종료태그 없는 경우, 그라데이션만 동작
 		if (hasGradation && withComment) {
-			smi.text = `<!-- End=999999999\n${ smiText.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + smi.text;
+			smi.text = `<!-- End=35999999\n${ smiText.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + smi.text;
 		}
 		return [smi];
 	}
@@ -3831,10 +3848,10 @@ window.SmiFile = Subtitle.SmiFile = function(text) {
 	}
 }
 SmiFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
-SmiFile.prototype.toText = function() {
+SmiFile.prototype.toText = function(jmk=false) {
 	return this.text
 	   = ( this.header.replaceAll("\r\n", "\n")
-	     + Smi.smi2txt(this.body)
+	     + Smi.smi2txt(this.body, jmk)
 	     + this.footer.replaceAll("\r\n", "\n")
 	     ).trim();
 }
@@ -3889,15 +3906,18 @@ SmiFile.prototype.fromText = function(text) {
 			
 			this.body.push(last = new Smi(start));
 			
+			// <P> 태그 없는 경우 <Sync> 태그에서 싱크 유형 구분
+			last.syncType = Smi.getSyncType(text.substring(pos, index));
+			
 		} else if (text.length > pos + 4 && text.substring(pos, pos + 3).toUpperCase() == ("<P ")) {
-			const endOfP = text.indexOf('>', pos + 3) + 1;
+			const endOfTag = text.indexOf('>', pos + 3) + 1;
 			if (last == null) {
 				this.header = text.substring(0, pos);
 			} else {
 				// last.text가 있음 -> <P> 태그가 <SYNC> 태그 바로 뒤에 붙은 게 아님 - 별도 텍스트로 삽입
-				last.text += text.substring(index, last.text ? endOfP : pos);
+				last.text += text.substring(index, last.text ? endOfTag : pos);
 			}
-			index = endOfP;
+			index = endOfTag;
 			if (index == 0) {
 				index = text.length;
 				break;
@@ -4404,7 +4424,8 @@ SmiFile.prototype.antiNormalize = function() {
 
 
 
-// SRT
+// TODO: Subtitle.Srt.js 분리?
+// 이쪽은 Smi 의존성이 있음
 
 window.Srt = Subtitle.Srt = function(start, end, text) {
 	this.start = start ? Math.round(start) : 0;

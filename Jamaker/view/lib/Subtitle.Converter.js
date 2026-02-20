@@ -106,7 +106,7 @@ window.Combine = {
 	
 	function parse(text) {
 		const smis = new SmiFile(text).body;
-		smis.push(new Smi(99999999, SyncType.normal, "&nbsp;"));
+		smis.push(new Smi(35999999, SyncType.normal, "&nbsp;"));
 		
 		const syncs = [];
 		let last = null;
@@ -153,8 +153,8 @@ window.Combine = {
 				if ((ui == upperSyncs.length) && (li == lowerSyncs.length)) {
 					break;
 				}
-				const us = (ui < upperSyncs.length) ? upperSyncs[ui] : [99999999, 99999999, null, 0];
-				const ls = (li < lowerSyncs.length) ? lowerSyncs[li] : [99999999, 99999999, null, 0];
+				const us = (ui < upperSyncs.length) ? upperSyncs[ui] : [35999999, 35999999, null, 0];
+				const ls = (li < lowerSyncs.length) ? lowerSyncs[li] : [35999999, 35999999, null, 0];
 				if (us[STIME] < ls[STIME]) { // 위가 바뀜
 					if (group
 						&& (   (   (us[STYPE] == SyncType.inner) // 중간 싱크
@@ -551,8 +551,8 @@ window.Combine = {
 					if ((ui == group.upper.length) && (li == group.lower.length)) {
 						break;
 					}
-					const us = (ui < group.upper.length) ? group.upper[ui] : [99999999, 99999999, null, 0];
-					const ls = (li < group.lower.length) ? group.lower[li] : [99999999, 99999999, null, 0];
+					const us = (ui < group.upper.length) ? group.upper[ui] : [35999999, 35999999, null, 0];
+					const ls = (li < group.lower.length) ? group.lower[li] : [35999999, 35999999, null, 0];
 						
 					if (us[STIME] < ls[STIME]) { // 위가 바뀜
 						if (!last) { // 첫 싱크
@@ -674,7 +674,7 @@ window.Combine = {
 						// 그룹 내에서 둘 다 없을 수는 없음
 					}
 				}
-				if (line[ETIME] < 99999999) {
+				if (line[ETIME] < 35999999) {
 					let syncLine = getSyncLine(lastSync = line[ETIME], line[ETYPE]);
 					if (i < group.lines.length - 1 && !syncLine.endsWith("\t\t>")) {
 						// 결합 시 임시 중간 싱크로 처리, 다중 결합 시 그룹화
@@ -877,6 +877,8 @@ SmiFile.textToHolds = (text) => {
 SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withComment=1) => {
 	// withComment: 원래 true/false였는데
 	// 1: true / 0: false / -1: Jamaker 전용 싱크 표시 같은 것까지 제거하도록 변경
+	// 2: jmk 저장 시 <P> 태그 제외
+	const jmk = (withComment == 2);
 	
 	const funcFrom = window.log ? log("holdsToParts start") : 0;
 	
@@ -906,6 +908,10 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 		holdsWithoutMain.forEach((hold, hi) => {
 			const holdText = hold.text;
 			let text = holdText;
+			if (jmk) {
+				// jmk 저장 시 <P> 태그 제외
+				text = new SmiFile(text).toText(true);
+			}
 			hold.exportName = hold.name;
 			if (hold.style) {
 				const style = SmiFile.toSaveStyle(hold.style);
@@ -921,18 +927,23 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 			hold.imported = false;
 			hold.afterMain = false;
 			
+			// SMI 출력 제외 홀드면 결합 대상에서 제외하고 완료 처리
+			if (hold.style && !(hold.style.output & 0x01)) {
+				hold.imported = true;
+				return;
+			}
+			
+			if (withComment <= 0) {
+				// export인 경우엔 내포 홀드 처리 필요 없음
+				return;
+			}
+			
 			// 홀드 위치가 1 또는 -1인 경우에만 내포 홀드 여부 확인
 			if ((hold.pos > 1) || (hold.pos < -1)) {
 				return;
 			}
 			
 			if (hold.style) {
-				// SMI 출력 없으면 내포 홀드 처리하지 않음
-				if (!(hold.style.output & 0x01)) {
-					// 홀드 결합 대상에선 제외되도록 완료 처리
-					hold.imported = true;
-					return;
-				}
 				// 스타일 적용 필요하면 내포 홀드 처리하지 않음
 				const style = hold.saveStyle = SmiFile.toSaveStyle(hold.style);
 				if (style) {
@@ -1034,7 +1045,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 			}
 		});
 		// 내포 홀드 처리
-		let lastStart = 999999999;
+		let lastStart = 35999999;
 		for (let i = imports.length - 1; i >= 0; i--) {
 			const index = imports[i][0];
 			const hold = imports[i][1];
@@ -1202,8 +1213,8 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 			const sliced = new SmiFile();
 			sliced.body = main.body.slice(mainBegin, mainEnd);
 			
-			const slicedText = sliced.toText().trim();
-			const combineText = smi.toText().trim();
+			const slicedText = sliced.toText(jmk).trim();
+			const combineText = smi.toText(jmk).trim();
 			const combined = new SmiFile(((hold.pos < 0) ? Combine.combine(slicedText, combineText) : Combine.combine(combineText, slicedText)).join("\n"));
 			// 원칙상 normalized.result를 다뤄야 맞을 것 같지만...
 			main.body = main.body.slice(0, mainBegin).concat(combined.body).concat(main.body.slice(mainEnd));
@@ -1306,7 +1317,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 						from: [oi, originBody.length]
 					,	to  : [ni, main.body.length]
 					,	start: main.body[ni].start
-					,	end: 999999999
+					,	end: 35999999
 				};
 				while ((oi < originBody.length) && (ni < main.body.length)) {
 					if (originBody[oi].start < main.body[ni].start) {
@@ -1358,11 +1369,11 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 					if (log.from[1] < originBody.length - 1) {
 						log.end = originBody[log.from[1]].start;
 					} else {
-						log.end = 999999999;
+						log.end = 35999999;
 					}
 				}
 				origin.body = originBody.slice(log.from[0], log.from[1]);
-				let comment = origin.toText().trim();
+				let comment = origin.toText(jmk).trim();
 				
 				main.body[log.to[0]].text = `<!-- End=${log.end}\n${ comment.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + main.body[log.to[0]].text;
 			});
@@ -1405,7 +1416,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 }
 SmiFile.holdsToTexts = (holds, withNormalize=true, withCombine=true, withComment=1) => {
 	const parts = SmiFile.holdsToParts(holds, withNormalize, withCombine, withComment);
-	parts[0] = parts[0].toText();
+	parts[0] = parts[0].toText(withComment == 2);
 	return parts;
 }
 SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=1, additional="", withFs=false, withKfs=false) => {
@@ -1507,7 +1518,6 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 				});
 			});
 		});
-		fs.push(Subtitle.video.fs[Subtitle.video.fs.length - 1]); // 마지막 싱크 필요할 수 있음
 		(fs = [...new Set(fs)]).sort((a, b) => { return a - b; }); // 중복 제외 후 정렬
 		
 		// 프레임값 대신 프레임 간격을 16비트 정수로 저장
@@ -1545,8 +1555,8 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 	}
 	return SmiFile.holdsToTexts(holds, withNormalize, withCombine, withComment).join("\n") + additional;
 }
-SmiFile.partsToText = (parts) => {
-	parts[0] = parts[0].toText();
+SmiFile.partsToText = (parts, jmk=false) => {
+	parts[0] = parts[0].toText(jmk);
 	return parts.join("\n");
 }
 
@@ -1736,9 +1746,14 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				assComments.push(item);
 			});
 		});
-		if (assComments.length && assComments[assComments.length - 1].end == 0) {
-			// 마지막에 종료싱크 없을 때
-			assComments[assComments.length - 1].end = 999999999;
+		// 종료싱크 없는 것들 처리
+		for (let i in toAssEnds) {
+			if (i >= smis.length) {
+				toAssEnds[i].forEach((item) => {
+					if (item.end) return;
+					item.end = 35999999;
+				});
+			}
 		}
 		
 		// 주석 기반 스크립트
@@ -1874,7 +1889,11 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			for (let i = appendEvents.length; i < eventsBody.length; i++) {
 				const item = eventsBody[i];
 				item.Start = AssEvent.toAssTime((item.start = Subtitle.findSync(item.start)) - 15);
-				item.End   = AssEvent.toAssTime((item.end   = Subtitle.findSync(item.end  )) - 15);
+				if (item.end <= Subtitle.video.fs[Subtitle.video.fs.length - 1]) {
+					item.End = AssEvent.toAssTime((item.end = Subtitle.findSync(item.end)) - 15);
+				} else {
+					item.End = AssEvent.toAssTime(item.end, false);
+				}
 				if (item.start == 0) item.start = 1;
 			}
 		} else {

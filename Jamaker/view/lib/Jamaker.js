@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260214", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260220", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1917,6 +1917,8 @@ window.setSetting = function(setting, initial=false) {
 	}
 	
 	SmiEditor.setSetting(setting);
+	Smi.syncPreset = setting.sync.preset.replaceAll("{lang}", setting.sync.lang);
+	
 	if (initial) {
 		if (setting.useHighlight == false) {
 			// 문법 하이라이트 없는 버전에서 업데이트 시 기본값
@@ -1975,7 +1977,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260214").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260220").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2053,7 +2055,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260214").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260220").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2221,7 +2223,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260214", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260220", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2621,12 +2623,14 @@ window.saveFile = function(asNew, isExport) {
 			
 			let saveText = "";
 			if (path.endsWith(".jmk")) {
-				// 프로젝트 파일에선 정규화하지 않고 원본 저장만 진행
 				const withFs = setting.sync.jmk && Subtitle.video.fs;
 				const withKfs = withFs && setting.sync.kfs;
-				saveText = currentTab.getSaveText(false, false, 1, withFs, withKfs);
+				// 프로젝트 파일에선 정규화하지 않고 원본 저장만 진행
+				saveText = currentTab.getSaveText(false, false, 2, withFs, withKfs);
 			} else {
-				saveText = currentTab.getSaveText(setting.saveWithNormalize, true, (exporting = isExport) ? -1 : 1);
+				const withFs = (withAss || withSrt) && setting.sync.jmk && setting.sync.smi && Subtitle.video.fs;
+				const withKfs = withFs && setting.sync.kfs;
+				saveText = currentTab.getSaveText(setting.saveWithNormalize, true, (exporting = isExport) ? -1 : 1, withFs, withKfs);
 			}
 			
 			const saveFrom = log("binder.save start");
@@ -4462,7 +4466,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260214", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260220", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
