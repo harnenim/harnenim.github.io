@@ -8,7 +8,17 @@ function WebForm() {
 }
 WebForm.prototype.super_getHwnd =
 WebForm.prototype.getHwnd = function(name) {
-	return this.windows[name];
+	const hwnd = this.windows[name];
+	if (hwnd) {
+		if (hwnd.closed) {
+			delete this.windows[name];
+			return null;
+		} else {
+			return hwnd;
+		}
+	} else {
+		return null;
+	}
 }
 WebForm.prototype.focusWindow = function(target) {
 	WinAPI.SetForegroundWindow(this.getHwnd(target));
@@ -17,11 +27,10 @@ WebForm.prototype.focusWindow = function(target) {
 WebForm.prototype.script = function(names, ...args) {
 	// WebView2에선 eval 가능한 형태로 넘겨야 함
 	let script = `this.mainView.contentWindow.${names}(`;
-	for (let i = 0; i < args.length; i++) {
+	args.forEach((arg, i) => {
 		if (i > 0) {
 			script += ',';
 		}
-		const arg = args[i];
 		switch (typeof arg) {
 			case "number":
 			case "boolean":
@@ -30,7 +39,7 @@ WebForm.prototype.script = function(names, ...args) {
 			default:
 				script += JSON.stringify(arg);
 		}
-	}
+	});
 	script += ")";
 	eval(script);
 }

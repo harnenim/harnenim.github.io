@@ -154,7 +154,15 @@ SyncShift.GetShiftsForRange = function(origin, target, range, targetRangeStart, 
 	
 	// 5초 이상 남았을 때만 나머지 범위 확인
 	if (offset + 500 < range.end) {
-		shifts.push(...SyncShift.GetShiftsForRange(origin, target, new Range(offset, range.end), (offset + shift), progress));
+		const leftShift = SyncShift.GetShiftsForRange(origin, target, new Range(offset, range.end), (offset + shift), progress);
+		if (leftShifts.length) {
+			if (shift == leftShifts[0].shift) {
+				// 가중치가 그대로면 추가할 필요 없음
+				shifts.push(...leftShifts.slice(1));
+			} else {
+				shifts.push(...leftShifts);
+			}
+		}
 	}
 	
 	return shifts;
