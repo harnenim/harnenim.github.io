@@ -40,7 +40,7 @@
 }
 
 window.DEFAULT_SETTING =
-{	version: "2026.02.21.v1"
+{	version: "2026.03.07.v1"
 ,	menu:
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
@@ -109,6 +109,7 @@ window.DEFAULT_SETTING =
 	,	kframe: false
 	,	kLimit: 200
 	,	jmk: true
+	,	smi: true
 	,	kfs: false
 	,	holds: true
 	,	width: 192	// 화면 싱크 매니저 섬네일 크기

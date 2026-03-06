@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>Auto Sync Shift</title>
-	<script src="lib/webview.js?260220"></script>
-	<script src="lib/Subtitle.Converter.js?260214" type="module"></script>
+	<script src="lib/webview.js?260307"></script>
+	<script src="lib/Subtitle.Converter.js?260307" type="module"></script>
 	<script>
 let isProcessing = false;
 function showProcessing(text) {
@@ -93,6 +93,22 @@ ready(() => {
 	document.querySelector("#targetVideo button").addEventListener("click", () => {
 		binder.openFileDialog(20, document.getElementById("chkSaveSkfTarget").checked, document.getElementById("chkTrustKfTarget").checked);
 	});
+	document.getElementById("rangeList").addEventListener("input", (e) => {
+		const el = e.target.closest("input");
+		if (el) {
+			el.classList.remove("error");
+			// 자기 자신만이 아니라 다음 input의 에러도 풀어줘야 함
+			if (el.classList.contains("start")) {
+				el.parentNode.querySelector("input.end").classList.remove("error");
+			}
+			if (el.classList.contains("end")) {
+				const next = el.parentNode.nextSibling;
+				if (next) {
+					next.querySelector("input.start").classList.remove("error");
+				}
+			}
+		}
+	});
 	[document.getElementById("rangeList"), document.getElementById("shiftList")].forEach((view) => {
 		view.addEventListener("mouseover", (e) => {
 			const input = e.target.closest("input");
@@ -105,7 +121,7 @@ ready(() => {
 			const input = e.target.closest("input");
 			if (!input) return;
 
-			fieldOrigin.querySelector(".hover").classList.remove("hover");
+			fieldOrigin.querySelector(".hover")?.classList.remove("hover");
 		});
 		view.addEventListener("dblclick", (e) => {
 			const input = e.target.closest("input");
@@ -219,11 +235,16 @@ function setOriginSubtitleFile(path, text) {
 	{	const ext = path.toLowerCase();
 		if (ext.endsWith(".smi")
 		 || ext.endsWith(".sami")
-		 || ext.endsWith(".jmk")
 		) {
-			operation.type = (ext.endsWith(".jmk") ? "jmk" : "smi");
-			operation.origin = new SmiFile(text);
+			operation.type = "smi";
 			operation.input = SmiFile.textToHolds(text);
+			operation.origin = new SmiFile(text);
+			operation.target = new SmiFile();
+			
+		} else if (ext.endsWith(".jmk")) {
+			operation.type = "jmk";
+			operation.input = SmiFile.textToHolds(text);
+			operation.origin = new SmiFile(SmiFile.holdsToText(operation.input, false, true, 0));
 			operation.target = new SmiFile();
 			
 		} else if (ext.endsWith(".srt")) {
@@ -250,6 +271,12 @@ function setOriginSubtitleFile(path, text) {
 			if ((operation.type == "smi" || operation.type == "jmk") && item.text.replaceAll("&nbsp;", " ").trim().length == 0) {
 				// 공백 싱크일 경우 넘기기
 				continue;
+			}
+			if (ranges.length) {
+				const last = ranges[ranges.length - 1];
+				if (last[1] >= item.ms) {
+					last[1] = item.ms - 1;
+				}
 			}
 			range[0] = item.ms;
 			ranges.push(range);
@@ -462,30 +489,40 @@ function refreshRangeAfterReadOriginVideoFile(length) {
 }
 
 function calcShift() {
+	if (document.getElementById("processing").style.display == "block") {
+		// 중복 실행 방지
+		return;
+	}
 	const ranges = [];
 	{
 		let last = -1;
 		let isCorrect = true;
 		let alertNumber = false;
 		[...document.querySelectorAll("#rangeList .list-body > div")].forEach((item) => {
-			let start = item.querySelector("input.start").value;
+			const inputStart = item.querySelector("input.start");
+			let start = inputStart.value;
 			if (isFinite(start)) {
 				start = Number(start);
 			} else {
 				alertNumber = true;
+				inputStart.classList.add("error");
 				return isCorrect = false;
 			}
 			if (start < last) {
+				inputStart.classList.add("error");
 				return isCorrect = false;
 			}
-			let end = item.querySelector("input.end").value;
+			const inputEnd = item.querySelector("input.end");
+			let end = inputEnd.value;
 			if (isFinite(end)) {
 				end = Number(end);
 			} else {
 				alertNumber = true;
+				inputEnd.classList.add("error");
 				return isCorrect = false;
 			}
 			if (end <= start) {
+				inputEnd.classList.add("error");
 				return isCorrect = false;
 			}
 			ranges.push(`${start}~${last=end}`);
@@ -496,6 +533,7 @@ function calcShift() {
 			} else {
 				alert("범위가 어긋난 부분이 있습니다.");
 			}
+			document.querySelector("#rangeList .error").focus();
 			return;
 		}
 	}
@@ -993,6 +1031,10 @@ body.drag-file fieldset.hover {
 	overflow-y: auto;
 }
 
+#settingForm input.error {
+	background: #fdd;
+}
+
 #settingForm > button,
 #settingForm .button {
 	float: left;
@@ -1048,6 +1090,9 @@ h4 {
 	height: 17px;
 	border-bottom: 0;
 }
+.list-body button {
+	width: 14px;
+}
 
 #rangeList .start,
 #rangeList .end {
@@ -1095,6 +1140,9 @@ h4 {
 	background: transparent;
 }
 
+#settingForm > #btnSave {
+	margin-left: 8px;
+}
 #settingForm > #btnApplySave {
 	width: 100%;
 }
@@ -1242,7 +1290,7 @@ h4 {
 			</div>
 		</div>
 		<div id="settingCalc" title="음성 데이터에서 유사한 부분을 비교·탐색하며\n완벽한 결과를 보장하진 않습니다.">
-			<button id="btnCalc">가중치 계산</button>
+			<button id="btnCalc" accesskey="c">가중치 계산</button>
 		</div>
 		
 		<div id="shiftList">
@@ -1257,8 +1305,8 @@ h4 {
 			</div>
 			<button id="btnAddShiftList" style="width: 100%; height: 20px;">추가</button>
 		</div>
-		<button id="btnApply" style="margin-right: 8px;">적용</button><button id="btnSave">저장</button>
-		<button id="btnApplySave">적용 & 저장</button>
+		<button id="btnApply" accesskey="a">적용</button><button id="btnSave">저장</button>
+		<button id="btnApplySave" accesskey="s">적용 & 저장</button>
 		<div id="settingCombine">
 			<label title="일부 홀드만 따로 빼서 작업하는 용도일 때 주로 사용"><input type="checkbox" id="chkCombine" /> <span>홀드 결합 생략</span></label>
 		</div>

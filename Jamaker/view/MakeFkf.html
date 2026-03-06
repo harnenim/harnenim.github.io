@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>Make FKF</title>
-	<script src="lib/webview.js?260220"></script>
-	<script src="lib/ListView.js?260220"></script>
+	<script src="lib/webview.js?260307"></script>
+	<script src="lib/ListView.js?260307"></script>
 	<script>
 function setTextareaHeight(obj) {
 	const lineCount = obj.val().split("\n").length;
@@ -69,6 +69,8 @@ ready(() => {
 	});
 	
 	document.getElementById("btnMakeFkfs").addEventListener("click", () => {
+		if (isProcessing) return;
+		
 		const files = [];
 		for (let i = 0; i < listFiles.list.length; i++) {
 			files.push(listFiles.list[i].value);
