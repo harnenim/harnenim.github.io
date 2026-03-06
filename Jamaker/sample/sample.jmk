@@ -145,36 +145,23 @@ END
 맑은 고딕,60,&H00FFFFFF,&H000000FF,&HC0000000,&H000A00EB,0,0,0,0,100,100,0,0,1,5,0,5,24,24,18
 --​>
 <​Sync Start=7090 ​>
-<​font ass="{\pos(960,640)\fs80\fsp21}"​><​/font​>
+<​font ass="{\pos(960,680)\fs80\fsp21}"​><​/font​>
 우리는 현실 세계의 “<​RUBY​>기록<​RT​><​RP​>(<​/RP​>데이터 <​RP​>)<​/RP​><​/RT​><​/RUBY​>”이었다<​font ass="{\fsp\fscx190}"​><​/font​>─<​font ass="{\fscx\fsp21}"​><​/font​><​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
 <​Sync Start=9801 ​>
 &nbsp;
 <​Sync Start=13263 ​>
-<​!-- ASS
-0,,,화면 글씨,{\pos(960,450)\fs80\fsp18\3c&HD6A27B&\3a&H00&\blur5}2027년 교토
-END
---​>
 <​FONT ass="{\pos(960,450)\fs80\fsp18\3c&HD6A27B&\3a&H00&\blur5}"​><​/FONT​>
 2027년 교토<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​><​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
 <​Sync Start=14723 ​>
-<​!-- ASS
-0,,,화면 글씨,{\fs70\bord0\bord2\blur5\pos(396,614)}키타무라 타쿠미
-END
---​>
+<​font ass="{\fs70\bord0\bord2\blur5\pos(396,614)}"​><​/font​>
 키타무라 타쿠미　　　　　　　　　　　　​<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
 <​Sync Start=16642 ​>
 &nbsp;
 <​Sync Start=17851 ​>
-<​!-- ASS
-0,,,화면 글씨,{\pos(970,620)\c&H5B5B5B&\bord0\fs70\fsp25}미래에서 온 “10년 후의 나”
-END
---​>
+<​font ass="{\pos(970,620)\c&H5B5B5B&\bord0\fs70\fsp25}"​><​/font​>
 미래에서 온 “10년 후의 나”<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
 <​Sync Start=19770 ​>
-<​!-- ASS
-0,,,화면 글씨,{\fs70\bord0\bord2\blur5\pos(338,614)}마츠자카 토리
-END
---​>
+<​font ass="{\fs70\bord0\bord2\blur5\pos(338,614)}"​><​/font​>
 마츠자카 토리　　　　　　　　　　　　　​<​br​><​b​>　<​/b​>
 <​Sync Start=22272 ​>
 &nbsp;
@@ -186,10 +173,7 @@ END
 <​Sync Start=27277 ​>
 &nbsp;
 <​Sync Start=33242 ​>
-<​!-- ASS
-0,,,화면 글씨,{\fs70\bord0\bord2\blur5\pos(1562,614)}하마베 미나미
-END
---​>
+<​font ass="{\fs70\bord0\bord2\blur5\pos(1562,614)}"​><​/font​>
 ​　　　　　　　　　　　　　　하마베 미나미<​br​><​b​>　<​/b​>
 <​Sync Start=34243 ​>
 &nbsp;
@@ -201,18 +185,13 @@ END
 <​Sync Start=60519 ​>
 &nbsp;
 <​Sync Start=72823 ​>
-<​!-- ASS
-0,,,화면 글씨,{\fs83\t(\fs86)\fsp28\pos(974,540)\bord4\blur5\3c&HA37844&\c&HF7FFFC&}설령 세계가 무너지더라도\N\N\N\N\N{}
-END
---​>
-<​FONT color="#FCFFF7"​>설령 세계가 무너지더라도<​br​>
+<​font ass="{\fs83\t(\fs86)\fsp28\pos(974,540)\bord4\blur5\3c&HA37844&}"​><​/font​>
+<​FONT color="#FCFFF7"​>설령 세계가 무너지더라도<​/font​>
+<​font ass="\N\N\N\N\N{}"​><​/font​>
 <​Sync Start=74408 ​>
 &nbsp;
 <​Sync Start=81790 ​>
-<​!-- ASS
-0,,,화면 글씨,{\fade(500,300)\fs80\fsp28\pos(976,540)\bord4\blur5\c&HF7FFFC&}\N\N\N\N다시 한번, 널 만나고 싶어
-END
---​>
+<​font ass="{\fade(500,300)\fs80\fsp28\pos(976,540)\bord4\blur5\c&HF7FFFC&}\N\N\N\N"​><​/font​>
 다시 한번, 널 만나고 싶어<​br​><​b​>　<​/b​><​br​><​b​>　<​/b​>
 <​Sync Start=85669 ​>
 &nbsp;
