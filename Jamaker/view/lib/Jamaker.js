@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260307", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260321", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1976,7 +1976,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260307").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260321").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2054,7 +2054,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260307").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260321").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2222,7 +2222,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260307", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260321", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4463,7 +4463,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260307", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260321", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4657,15 +4657,26 @@ window.extSubmitSpeller = function () {
 		
 		// 신버전 창 켜진 후 스크립트로 검사 실행
 		SmiEditor.Addon.openExt("https://nara-speller.co.kr/speller"
-			,	"window.chekcer = setInterval(() => {\n"
+			,	"window.taChekcer = setInterval(() => {\n"
 			+	"	const ta = document.getElementsByTagName('textarea')[0];\n"
-			+	"	if (ta) clearInterval(window.checker);\n"
+			+	"	if (ta) clearInterval(window.taChecker);\n"
 			+	"	else return;\n"
 			+	`	ta.value = ${ JSON.stringify(value) };\n`
 			+	"	ta.dispatchEvent(new Event('input', { bubbles: true }));\n"
 			+	"	setTimeout(() => {\n"
-			+	"		document.getElementsByTagName('button')[1].click();\n"
-			+	"		setTimeout(() => { document.getElementsByTagName('button')[3].click(); }, 00);\n"
+			+	"		const buttons = document.getElementsByTagName('button');"
+			+	"		let btnToggle = null;"
+			+	"		let btnSubmit = null;"
+			+	"		[...buttons].forEach((button) => {"
+			+	"			if (button.getAttribute('aria-label')?.indexOf('강한') >= 0) {"
+			+	"				btnToggle = button;"
+			+	"			};"
+			+	"			if (button.innerText.indexOf('검사하기') >= 0) {"
+			+	"				btnSubmit = button;"
+			+	"			};"
+			+	"		});"
+			+	"		btnToggle?.click();\n"
+			+	"		setTimeout(() => { btnSubmit?.click(); }, 00);\n"
 			+	"	});\n"
 			+	"}, 100);"
 		);
