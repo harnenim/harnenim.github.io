@@ -1,4 +1,15 @@
-[ { "version": "2026.03.07"
+[ { "version": "2026.03.21"
+  , "comment":
+    [ "맞춤법 검사기 연동 코드 수정"
+    , "% 페이드 지원"
+    ]
+  , "files":
+    [ "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/SubtitleObject.js"
+    ]
+  }
+, { "version": "2026.03.07"
   , "comment":
     [ "그라데이션 색상 사용 시 공백문자에 불필요한 색상태그 제거"
     , "화면 싱크 매니저 마이너스 시간 발생하지 않도록 조치"
