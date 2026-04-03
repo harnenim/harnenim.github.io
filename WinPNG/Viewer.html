@@ -1534,15 +1534,24 @@ function showTargetImage(bmp) {
 	bmp.canvas.style.margin = (-height / 2) + "px " + (-width / 2) + "px";
 }
 function downloadZip() {
+	const as = [...document.getElementById("viewFileList").children];
+	if (!as.length) {
+		alert("PNG 파일을 열지 않았습니다.");
+		return;
+	}
+	
+	// jszip timezone 보정 안 됨
+	const now = new Date();
+	now.setTime(now.getTime() - (now.getTimezoneOffset() * 60000));
+	const opt = { date: now };
+	
 	const zip = new JSZip();
-	const as = document.getElementById("viewFileList").children;
-	for (let i = 0; i < as.length; i++) {
-		const a = as[i];
+	as.forEach((a) => {
 		const spans = a.children;
 		const name = spans[0].innerText + spans[1].innerText;
 		const file = URL.files[a.href];
-		zip.file(name, file);
-	}
+		zip.file(name, file, opt);
+	});
 	zip.generateAsync({ type: "blob" }).then((blob) => {
 		const a = document.createElement("a");
 		a.href = URL.createObjectURL(blob);
