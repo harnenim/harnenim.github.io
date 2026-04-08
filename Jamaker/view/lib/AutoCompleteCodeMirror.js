@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AutoComplete.css?260408", import.meta.url).href;
+	link.href = new URL("./AutoComplete.css?260409", import.meta.url).href;
 	document.head.append(link);
 }
 
