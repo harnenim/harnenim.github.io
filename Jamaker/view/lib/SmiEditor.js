@@ -9,12 +9,12 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260324", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260408", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260324", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260408", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -261,7 +261,7 @@ window.SmiEditor = function(text, replace) {
 		const lineNo = cm.lineInfo(line).line;
 		el.dataset.line = lineNo;
 		const prs = el.children[0];
-
+		
 		{	// 줄바꿈 블록지정 여부 확인
 			const cursor = [cm.getCursor("start"), cm.getCursor("end")];
 			if (cursor[0].line <= lineNo && lineNo < cursor[1].line) {
@@ -270,9 +270,9 @@ window.SmiEditor = function(text, replace) {
 				prs.classList.remove("CodeMirror-selectedline");
 			}
 		}
-
+		
 		let useHighlight = true;
-
+		
 		if (SmiEditor.parser) {
 			if (line.text.toUpperCase().startsWith("<SYNC ")) {
 				el.classList.add("hljs-sync");
@@ -284,7 +284,7 @@ window.SmiEditor = function(text, replace) {
 			} else if (line.text.replaceAll("&nbsp;", "").trim().length == 0) {
 				// 공백 싱크인 경우 싱크 투명도 따라감
 				el.classList.add("hljs-sync");
-
+				
 			} else {
 				if (SmiEditor.parser == "SyncOnly") {
 					// 싱크만 구분 - 문법 강조 제거
@@ -314,7 +314,7 @@ window.SmiEditor = function(text, replace) {
 				}
 			});
 		});
-
+		
 		// 색상 미리보기
 		if (SmiEditor.showColor) {
 			[...prs.querySelectorAll("span.hljs-attr")].forEach((attr) => {
@@ -390,7 +390,6 @@ window.SmiEditor = function(text, replace) {
 			renderLines.forEach((line) => {
 				//cm.addLineClass(line, "text", "custom-highlight");
 				//cm.setGutterMarker(line, "dummy-gutter", null);
-
 			});
 		});
 		lastSelectedRange = selectedRange;
@@ -663,8 +662,8 @@ SmiEditor.PlayerAPI = {
 		playOrPause: (    ) => { binder.playOrPause(); }
 	,	play       : (    ) => { binder.play(); }
 	,	stop       : (    ) => { binder.stop(); }
-	,	moveTo     : (time) => { binder.moveTo(time); }
-	,	move       : (move) => { binder.moveTo(time + move); }
+	,	moveTo     : (time) => { binder.moveTo(Math.max(0, time)); }
+	,	move       : (move) => { binder.moveTo(Math.max(0, time + move)); }
 };
 SmiEditor.limitKeyFrame = 200;
 SmiEditor.trustKeyFrame = false;
@@ -1354,6 +1353,7 @@ SmiEditor.prototype.undo = function () {
 	this.cm.undo();
 }
 
+// 원래 <textarea> 기준으로 만들었었는데, CodeMirror 기준으로 바꾸면서 불합리해진 면이 있지만, 단축키 설정 호환성을 위해 이대로 유지
 SmiEditor.prototype.getCursor = function() {
 	return [this.cm.indexFromPos(this.cm.getCursor("start")), this.cm.indexFromPos(this.cm.getCursor("end"))];
 }
@@ -2111,10 +2111,12 @@ SmiEditor.prototype.moveSync = function(toForward) {
 	if (isLimited) { // 선택 영역이 있을 때
 		// 줄 전체 선택
 		this.cm.setSelection(range[0], range[1]);
+		this.refreshKeyframe(lineRange[0], lineRange[1]);
 		
 	} else { // 선택 영역이 없을 때
 		// 커서 위치 찾기
 		this.cm.setSelection(range[0], range[0]);
+		this.refreshKeyframe();
 	}
 }
 SmiEditor.prototype.renderByResync = function(range) {
@@ -2310,8 +2312,8 @@ SmiEditor.prototype.fitSyncsToFrame = function(frameSyncOnly=false, add=0) {
 	}
 	this.render();
 }
-SmiEditor.prototype.refreshKeyframe = function() {
-	this.lines.forEach((line) => {
+SmiEditor.prototype.refreshKeyframe = function(begin, end) {
+	((isFinite(begin) && isFinite(end)) ? this.lines.slice(begin, end + 1) : this.lines).forEach((line) => {
 		if (line.TYPE == TYPE.BASIC || line.TYPE == TYPE.FRAME) {
 			if (Subtitle.findSync(line.SYNC, Subtitle.video.kfs, false)) {
 				line.LEFT.classList.add   ("keyframe");
@@ -2544,7 +2546,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260324", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260408", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2737,7 +2739,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260324", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260408", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
