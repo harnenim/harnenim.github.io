@@ -18,7 +18,7 @@ import "./highlight/cm/sami.js";
 	document.head.append(link);
 }
 
-window.LOG = true; // 배포 시 false
+window.LOG = false; // 배포 시 false
 
 window.LH = 20; // LineHeight
 window.SB = 16; // ScrollBarWidth
