@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/popup.js?260409"></script>
-<script src="lib/SmiEditor.js?260409" type="module"></script>
-<script src="lib/highlight/cm/javascript.js?260409" type="module"></script>
+<script src="lib/popup.js?260414"></script>
+<script src="lib/SmiEditor.js?260414" type="module"></script>
+<script src="lib/highlight/cm/javascript.js?260414" type="module"></script>
 <script>
 windowName = "setting";
 
@@ -692,7 +692,7 @@ function init() {
 				checkSaved("cmd", () => {
 					inputCommandName.value = name;
 					inputCommandKey .value = command;
-					cmCommandFunc.setValue(func);
+					cmCommandFunc.setValue(func ? func : "");
 					cmCommandFunc.clearHistory();
 					setSaved("cmd", true);
 				});
@@ -725,11 +725,13 @@ function init() {
 		});
 		
 		cmCommandFunc.on("change", (cm, e) => {
+			if (e.origin == "setValue") return;
 			if (inputCommandKey.value.length > 1) { // 한 글자인 경우 단축키 조합 아님
 				setSaved("cmd", false);
 			} else {
-				// 입력 차단
+				// 키 조합 선택되지 않은 경우 입력 차단
 				cmCommandFunc.setValue("");
+				alert("키 조합이 선택되지 않았습니다.");
 			}
 		});
 		
@@ -2191,7 +2193,7 @@ body:not(.hl) .CodeMirror .CodeMirror-cursor,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?260409")</h4>
+					<h4>openAddon("~~.html?260414")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>

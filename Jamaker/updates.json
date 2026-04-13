@@ -1,4 +1,27 @@
-﻿[ { "version": "2026.04.09"
+﻿[ { "version": "2026.04.14"
+  , "comment":
+    [ "프로젝트 파일 저장 시 마지막 싱크 추가"
+    , "ASS 후리가나 변환 기능 보완"
+    , "여백 클릭 시 포커스 반환"
+    , "SMI 전용 홀드에서도 주석 기반 ASS 스크립트 생성하도록 정책 변경"
+    , "[TEXTxx] 줄바꿈 미동작 문제 수정"
+    , "내용물 비었을 때 커서 모양 나오도록 수정"
+    , "설정화면 단축키 설정 조합 미선택 시 동작 보완"
+    ]
+  , "files":
+    [ "view/lib/highlight/cm/codemirror.css"
+    , "view/lib/Jamaker.css"
+    , "view/lib/Jsetting.js"
+    , "view/lib/JSubtitle.Converter.js"
+    , "view/lib/JSubtitleObject.js"
+    , "view/setting.html"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+﻿, { "version": "2026.04.09"
   , "comment":
     [ "단축키 설정 관련 개선"
     , "되감기 시 시간 마이너스로 튀지 않도록 수정"

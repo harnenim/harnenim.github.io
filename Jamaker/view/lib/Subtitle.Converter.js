@@ -1520,6 +1520,7 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 				});
 			});
 		});
+		fs.push(Subtitle.video.fs[Subtitle.video.fs.length - 1]); // 마지막 싱크는 무조건 추가해서 계산 범위 넘치지 않도록 함
 		(fs = [...new Set(fs)]).sort((a, b) => { return a - b; }); // 중복 제외 후 정렬
 		
 		// 프레임값 대신 프레임 간격을 16비트 정수로 저장
@@ -1528,9 +1529,13 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 			fs.forEach((f) => {
 				let ftf = f - last;
 				if (ftf == 0) return;
-				while (ftf > 65535) { // 싱크 간격이 65535ms를 넘어갈 경우 - 대사가 적으면 있을 수 있음
-					ftfs.push(65535);
-					ftf -= 65535;
+				if (ftf > 65535) { // 싱크 간격이 65535ms를 넘어갈 경우 - 대사가 적으면 있을 수 있음
+					while (ftf > 98303) {
+						ftfs.push(65535);
+						ftf -= 65535;
+					}
+					ftfs.push(32768);
+					ftf -= 32768;
 				}
 				ftfs.push(ftf);
 				last = f;
@@ -1543,9 +1548,13 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 				Subtitle.video.kfs.forEach((f) => {
 					let ftf = f - last;
 					if (ftf == 0) return;
-					while (ftf > 65535) { // 키프레임 간격이 65535ms를 넘어갈 경우 - 어지간해선 존재하지 않는데, Philosophy 얘넨 있을 수 있음[..]
-						ftfs.push(65535);
-						ftf -= 65535;
+					if (ftf > 65535) { // 키프레임 간격이 65535ms를 넘어갈 경우 - 어지간해선 존재하지 않는데, Philosophy 얘넨 있을 수 있음[..]
+						while (ftf > 98303) {
+							ftfs.push(65535);
+							ftf -= 65535;
+						}
+						ftfs.push(32768);
+						ftf -= 32768;
 					}
 					ktfs.push(ftf);
 					last = f;
@@ -1587,12 +1596,14 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		const name = (h == 0) ? "Default" : hold.name;
 		const style = hold.style ?? Subtitle.DefaultStyle;
 		
+		/* SMI 전용 홀드여도 ASS 변환 주석은 동작하도록 함
 		if ((style.output & 0b10) == 0) {
 			// ASS 변환 대상 제외
 			syncs.push(hold.syncs = []);
 			hold.smiFile = null;
 			return;
 		}
+		*/
 		
 		if (styles[name]) {
 			// 이미 추가한 스타일은 건너뜀
@@ -1658,7 +1669,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				
 				Subtitle._tmp.innerHTML = smi.text;
 				[...Subtitle._tmp.querySelectorAll("font[text]")].forEach((font) => {
-					replacers.push({ from: `[TEXT${font.getAttribute("text")}]`, to: htmlToText(font.innerText.replaceAll("\n", "\\N")) });
+					replacers.push({ from: `[TEXT${font.getAttribute("text")}]`, to: htmlToText(font.innerHTML.replaceAll(/<br>/gi, "\\N")) });
 				});
 			}
 			replacers.forEach((replacer) => {
@@ -1790,8 +1801,14 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			}
 		});
 		
-		// SMI 기반 스크립트
-		syncs.push(hold.syncs = hold.smiFile.toSyncs());
+		if ((style.output & 0b10) == 0) {
+			// ASS 변환 대상 제외
+			syncs.push(hold.syncs = []);
+			hold.smiFile = null;
+		} else {
+			// SMI 기반 스크립트
+			syncs.push(hold.syncs = hold.smiFile.toSyncs());
+		}
 	});
 	{	// 홀드 결합 pos 자동 조정
 		const an2Holds = [];

@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260409", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260414", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -33,11 +33,14 @@ window.autoFindSync = false;
 window.refreshTime = function(now) {
 	if (time != now) {
 		time = now;
-		if (autoFindSync && tabs.length && tabs[tabIndex]) {
-			if (tabs[tabIndex].holdIndex < 0) {
-				tabs[tabIndex].assHold.findSync();
-			} else {
-				tabs[tabIndex].holds[tabs[tabIndex].holdIndex].findSync();
+		if (autoFindSync && tabs.length) {
+			const tab = tabs[tabIndex];
+			if (tab) {
+				if (tab.holdIndex < 0) {
+					tab.assHold.findSync();
+				} else {
+					tab.holds[tab.holdIndex].findSync();
+				}
 			}
 		}
 	}
@@ -1697,20 +1700,25 @@ window.init = function(jsonSetting, isBackup=true) {
 	});
 	document.getElementById("btnMoveToBack").addEventListener("click", () => {
 		if (tabs.length == 0) return;
-		tabs[tabIndex].holds[tabs[tabIndex].holdIndex].moveSync(false);
-		tabs[tabIndex].holds[tabs[tabIndex].holdIndex].focus();
+		const tab = tabs[tabIndex];
+		const hold = tab.holds[tab.holdIndex];
+		hold.moveSync(false);
+		hold.focus();
 	});
 	document.getElementById("btnMoveToForward").addEventListener("click", () => {
 		if (tabs.length == 0) return;
-		tabs[tabIndex].holds[tabs[tabIndex].holdIndex].moveSync(true);
-		tabs[tabIndex].holds[tabs[tabIndex].holdIndex].focus();
+		const tab = tabs[tabIndex];
+		const hold = tab.holds[tab.holdIndex];
+		hold.moveSync(true);
+		hold.focus();
 	});
 
 	const checkAutoFindSync = document.getElementById("checkAutoFindSync");
 	checkAutoFindSync.addEventListener("click", () => {
 		autoFindSync = checkAutoFindSync.checked;
 		if (tabs.length == 0) return;
-		tabs[tabIndex].holds[tabs[tabIndex].holdIndex].focus();
+		const tab = tabs[tabIndex];
+		tab.holds[tab.holdIndex].focus();
 	});
 	const checkTrustKeyframe = document.getElementById("checkTrustKeyframe");
 	checkTrustKeyframe.addEventListener("click", () => {
@@ -1855,6 +1863,16 @@ window.init = function(jsonSetting, isBackup=true) {
 		document.body.classList.remove("hover-scroll");
 	});
 	
+	// 여백 클릭해서 포커스 증발하면 에디터에 포커스 반환
+	document.body.addEventListener("click", (e) => {
+		if (document.activeElement == document.body && tabs.length) {
+			const tab = tabs[tabIndex];
+			if (tab && tab.holds.length) {
+				tab.holds[tab.holdIndex].focus();
+			}
+		}
+	});
+	
 	SmiEditor.activateKeyEvent();
 	
 	// Win+방향키 이벤트 직후 창 위치 초기화
@@ -1976,7 +1994,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260409").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260414").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2054,7 +2072,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260409").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260414").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2222,7 +2240,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260409", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260414", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4463,7 +4481,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260409", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260414", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4657,28 +4675,29 @@ window.extSubmitSpeller = function () {
 		
 		// 신버전 창 켜진 후 스크립트로 검사 실행
 		SmiEditor.Addon.openExt("https://nara-speller.co.kr/speller"
-			,	"window.taChekcer = setInterval(() => {\n"
-			+	"	const ta = document.getElementsByTagName('textarea')[0];\n"
-			+	"	if (ta) clearInterval(window.taChecker);\n"
-			+	"	else return;\n"
-			+	`	ta.value = ${ JSON.stringify(value) };\n`
-			+	"	ta.dispatchEvent(new Event('input', { bubbles: true }));\n"
-			+	"	setTimeout(() => {\n"
-			+	"		const buttons = document.getElementsByTagName('button');"
-			+	"		let btnToggle = null;"
-			+	"		let btnSubmit = null;"
-			+	"		[...buttons].forEach((button) => {"
-			+	"			if (button.getAttribute('aria-label')?.indexOf('강한') >= 0) {"
-			+	"				btnToggle = button;"
-			+	"			};"
-			+	"			if (button.innerText.indexOf('검사하기') >= 0) {"
-			+	"				btnSubmit = button;"
-			+	"			};"
-			+	"		});"
-			+	"		btnToggle?.click();\n"
-			+	"		setTimeout(() => { btnSubmit?.click(); }, 00);\n"
-			+	"	});\n"
-			+	"}, 100);"
+		,	[	"window.taChekcer = setInterval(() => {"
+			,	"	const ta = document.getElementsByTagName('textarea')[0];"
+			,	"	if (ta) clearInterval(window.taChecker);"
+			,	"	else return;"
+			,	`	ta.value = ${ JSON.stringify(value) };`
+			,	"	ta.dispatchEvent(new Event('input', { bubbles: true }));"
+			,	"	setTimeout(() => {"
+			,	"		const buttons = document.getElementsByTagName('button');"
+			,	"		let btnToggle = null;"
+			,	"		let btnSubmit = null;"
+			,	"		[...buttons].forEach((button) => {"
+			,	"			if (button.getAttribute('aria-label')?.indexOf('강한') >= 0) {"
+			,	"				btnToggle = button;"
+			,	"			};"
+			,	"			if (button.innerText.indexOf('검사하기') >= 0) {"
+			,	"				btnSubmit = button;"
+			,	"			};"
+			,	"		});"
+			,	"		btnToggle?.click();"
+			,	"		setTimeout(() => { btnSubmit?.click(); }, 00);"
+			,	"	});"
+			,	"}, 100);"
+			].join("\n")
 		);
 	}
 }
