@@ -124,12 +124,15 @@ window.Combine = {
 				}
 			}
 			if (smi.text.replaceAll("&nbsp;", "").trim()) {
-				const lineCount = smi.text.split(/<br>/gi).length;
+				const lines = [];
+				smi.text.split(/<br>/gi).forEach((line) => {
+					lines.push((line.search(/<ruby>/gi) >= 0) ? true : false);
+				});
 				
 				const attrs = smi.toAttrs(false);
 				const defaultWidth = getAttrWidth(attrs);
 				const sizedWidth   = getAttrWidth(attrs, true);
-				syncs.push(last = [smi.start, smi.syncType, 0, 0, smi.text, attrs, lineCount, defaultWidth, sizedWidth]);
+				syncs.push(last = [smi.start, smi.syncType, 0, 0, smi.text, attrs, lines, defaultWidth, sizedWidth]);
 			}
 		});
 		return syncs;
@@ -155,16 +158,35 @@ window.Combine = {
 				}
 				const us = (ui < upperSyncs.length) ? upperSyncs[ui] : [35999999, 35999999, null, 0];
 				const ls = (li < lowerSyncs.length) ? lowerSyncs[li] : [35999999, 35999999, null, 0];
+				
 				if (us[STIME] < ls[STIME]) { // 위가 바뀜
 					if (group
 						&& (   (   (us[STYPE] == SyncType.inner) // 중간 싱크
+						        || (us[STYPE] == SyncType.combinedNormal)
+						        || (us[STYPE] == SyncType.combinedFrame)
 						        || (us[STYPE] == SyncType.combinedInner)
 						       )
 						    || (group.lower.length && (group.lower[group.lower.length - 1][ETIME] > us[STIME]))
 						   )
 					) { // 그룹 유지
 						group.upper.push(us);
-						group.maxLines[0] = Math.max(group.maxLines[0], us[LINES]);
+						if (us[LINES].length > group.maxLines[0].length) {
+							let add = us[LINES].length - group.maxLines[0].length;
+							const rubys = [];
+							for (let i = 0; i < add; i++) {
+								rubys.push(false);
+							}
+							rubys.push(...group.maxLines[0]);
+							group.maxLines[0] = rubys;
+						}
+						{
+							let add = group.maxLines[0].length - us[LINES].length;
+							for (let i = 0; i < us[LINES].length; i++) {
+								if (us[LINES][i]) {
+									group.maxLines[0][add + i] = true;
+								}
+							}
+						}
 						group.maxWidth = Math.max(group.maxWidth, us[WIDTH]);
 						group.maxSized = Math.max(group.maxSized, us[SIZED]);
 						
@@ -172,7 +194,7 @@ window.Combine = {
 						groups.push(group = {
 								upper: [us]
 							,	lower: []
-							,	maxLines: [us[LINES], 0]
+							,	maxLines: [us[LINES], []]
 							,	maxWidth: us[WIDTH]
 							,	maxSized: us[SIZED]
 						});
@@ -188,7 +210,23 @@ window.Combine = {
 						   )
 					) { // 그룹 유지
 						group.lower.push(ls);
-						group.maxLines[1] = Math.max(group.maxLines[1], ls[LINES]);
+						if (ls[LINES].length > group.maxLines[1].length) {
+							let add = ls[LINES].length - group.maxLines[1].length;
+							const rubys = [];
+							for (let i = 0; i < add; i++) {
+								rubys.push(false);
+							}
+							rubys.push(...group.maxLines[1]);
+							group.maxLines[1] = rubys;
+						}
+						{
+							let add = group.maxLines[1].length - ls[LINES].length;
+							for (let i = 0; i < ls[LINES].length; i++) {
+								if (ls[LINES][i]) {
+									group.maxLines[1][add + i] = true;
+								}
+							}
+						}
 						group.maxWidth = Math.max(group.maxWidth, ls[WIDTH]);
 						group.maxSized = Math.max(group.maxSized, ls[SIZED]);
 						
@@ -196,7 +234,7 @@ window.Combine = {
 						groups.push(group = {
 								upper: []
 							,	lower: [ls]
-							,	maxLines: [0, ls[LINES]]
+							,	maxLines: [[], ls[LINES]]
 							,	maxWidth: ls[WIDTH]
 							,	maxSized: ls[SIZED]
 						});
@@ -204,13 +242,49 @@ window.Combine = {
 					li++;
 					
 				} else { // 둘이 같이 바뀜
-					if ((us[STYPE] == SyncType.inner) || (us[STYPE] == SyncType.combinedInner)
-					 || (ls[STYPE] == SyncType.inner) || (ls[STYPE] == SyncType.combinedInner)) {
+					if ((us[STYPE] == SyncType.inner)
+					 || (ls[STYPE] == SyncType.inner)
+					 || (us[STYPE] == SyncType.combinedNormal)
+					 || (us[STYPE] == SyncType.combinedFrame)
+					 || (us[STYPE] == SyncType.combinedInner)
+					 || (ls[STYPE] == SyncType.combinedInner)) {
 						// 하나라도 중간 싱크 - 그룹 유지
 						group.upper.push(us);
 						group.lower.push(ls);
-						group.maxLines[0] = Math.max(group.maxLines[0], us[LINES]);
-						group.maxLines[1] = Math.max(group.maxLines[1], ls[LINES]);
+						if (us[LINES].length > group.maxLines[0].length) {
+							let add = us[LINES].length - group.maxLines[0].length;
+							const rubys = [];
+							for (let i = 0; i < add; i++) {
+								rubys.push(false);
+							}
+							rubys.push(...group.maxLines[0]);
+							group.maxLines[0] = rubys;
+						}
+						{
+							let add = group.maxLines[0].length - us[LINES].length;
+							for (let i = 0; i < us[LINES].length; i++) {
+								if (us[LINES][i]) {
+									group.maxLines[0][add + i] = true;
+								}
+							}
+						}
+						if (ls[LINES].length > group.maxLines[1].length) {
+							let add = ls[LINES].length - group.maxLines[1].length;
+							const rubys = [];
+							for (let i = 0; i < add; i++) {
+								rubys.push(false);
+							}
+							rubys.push(...group.maxLines[1]);
+							group.maxLines[1] = rubys;
+						}
+						{
+							let add = group.maxLines[1].length - ls[LINES].length;
+							for (let i = 0; i < ls[LINES].length; i++) {
+								if (ls[LINES][i]) {
+									group.maxLines[1][add + i] = true;
+								}
+							}
+						}
 						group.maxWidth = Math.max(group.maxWidth, us[WIDTH]);
 						group.maxWidth = Math.max(group.maxWidth, ls[WIDTH]);
 						group.maxSized = Math.max(group.maxSized, us[SIZED]);
@@ -259,6 +333,7 @@ window.Combine = {
 						for (let k = 0; k < attrs.length; k++) {
 							const attr = attrs[k];
 							if (attr.attrs) {
+								// RUBY 태그인 경우 아래쪽 글씨만 좌우 폭 계산에 사용
 								const subAttrs = attr.attrs;
 								for (let ki = 0; ki < subAttrs.length; ki++) {
 									const subAttr = subAttrs[ki];
@@ -276,6 +351,7 @@ window.Combine = {
 								}
 								
 							} else if (attr.text) {
+								// 일반 태그
 								if (!attr.text.replaceAll("　", "").replaceAll("​", "").trim()) {
 									continue;
 								}
@@ -317,6 +393,7 @@ window.Combine = {
 							const trimedLines = [trimedLine];
 							for (let k = 0; k < attrs.length; k++) {
 								if (attrs[k].attrs) {
+									// RUBY 태그인 경우
 									attrs[k].attrs.forEach((subAttr) => {
 										const attrText = subAttr.text.replaceAll("​", "");
 										let attr = new Attr(subAttr, attrText, true);
@@ -327,7 +404,7 @@ window.Combine = {
 										}
 										
 										if (attr.text) {
-											trimedLine.attrs.push(attr);
+											trimedLine.attrs.push({ attrs: [attr], furigana: attrs[k].furigana, rp: attrs[k].rp });
 										}
 										wasClear = isClear(attr, br);
 										if (trimedLine.isEmpty && attr.text.replaceAll("　", "").trim().length) {
@@ -537,7 +614,9 @@ window.Combine = {
 								if (LOG) console.log(padsAttrs, width);
 							}
 							
-							sync[TEXT] = Smi.fromAttr(padsAttrs).replaceAll("\n", "<br>");
+							sync[TEXT] = Smi.fromAttr(padsAttrs).replaceAll("\n", "<br>")
+								.split("<RUBY><B>　</B><RT><RP>(</RP>　<RP>)</RP></RT></RUBY>")
+								.join("<RUBY><B>　</B><RT>　</RT></RUBY>");
 							
 						} else {
 							sync[TEXT] = Smi.fromAttr(attrs).replaceAll("\n", "<br>");
@@ -629,14 +708,6 @@ window.Combine = {
 		const lines = [];
 		let lastSync = 0;
 		groups.forEach((group, gi) => {
-			const forEmpty = [[], []];
-			for (let i = 0; i < 2; i++) {
-				for (let j = 0; j < group.maxLines[i]; j++) {
-					forEmpty[i].push("<b>　</b>");
-				}
-				forEmpty[i] = forEmpty[i].join("<br>");
-			}
-			
 			group.lines.forEach((line, i) => {
 				if (line[STIME] < 0) {
 					// 건너뛰기
@@ -653,17 +724,28 @@ window.Combine = {
 				} else if (group.lower.length == 0) {
 					lines.push(line[UPPER] ? line[UPPER][TEXT] : "&nbsp;");
 				} else {
-					// 위쪽 채우지 않기
+					// 위쪽은 따로 채우지 않음
 					if (line[UPPER]) {
 						let text = line[UPPER][TEXT];
+						let lowerText = "";
 						// 중간 공백줄 채우기
-						for (let j = (line[LOWER] ? line[LOWER][LINES] : 0); j < group.maxLines[1]; j++) {
-							text += "<br><b>　</b>";
+						for (let j = (line[LOWER] ? line[LOWER][LINES].length : 0); j < group.maxLines[1].length; j++) {
+							lowerText += "<br><b>　</b>";
 						}
 						// 아랫줄 있으면 넣기
 						if (line[LOWER]) {
-							text += "<br>" + line[LOWER][TEXT];
+							lowerText += "<br>" + line[LOWER][TEXT];
 						}
+						// RUBY 태그 높이 맞춰야 하면 넣기
+						lowerText = lowerText.split(/<br>/gi).slice(1);
+						lowerText.forEach((t, j) => {
+							if (group.maxLines[1][j]) {
+								if (t.search(/<ruby>/gi) < 0) {
+									lowerText[j] = "<RUBY>" + t + "<RT>　</RT></RUBY>";
+								}
+							}
+						});
+						text += "<br>" + lowerText.join("<br>");
 						lines.push(text);
 							
 					} else if (line[LOWER]) {
@@ -1644,7 +1726,15 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			if (smi.text.startsWith("<!-- ASS")) {
 				const commentEnd = smi.text.indexOf("-->");
 				if (commentEnd > 0) {
-					const assCmTexts = smi.text.substring(8, commentEnd).replaceAll(/\n +/g, "").split("\n");
+					const assCmTexts = []; let last = -1;
+					smi.text.substring(8, commentEnd).split("\n").forEach((line) => {
+						if (line.startsWith(" ") && last >= 0) {
+							assCmTexts[last] += "\n" + line; // 줄바꿈 문법을 ASS 변환 시엔 없애더라도, 역반영 시 유지하려면 기억은 하고 있어야 함
+						} else {
+							last = assCmTexts.length;
+							assCmTexts.push(line);
+						}
+					});
 					smi.text = smi.text.substring(commentEnd + 3).trim();
 					for (let j = 0; j < assCmTexts.length; j++) {
 						const assLine = assCmTexts[j].trim();
@@ -1669,7 +1759,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				
 				Subtitle._tmp.innerHTML = smi.text;
 				[...Subtitle._tmp.querySelectorAll("font[text]")].forEach((font) => {
-					replacers.push({ from: `[TEXT${font.getAttribute("text")}]`, to: htmlToText(font.innerHTML.replaceAll(/<br>/gi, "\\N")) });
+					const assText = font.getAttribute("ass");
+					replacers.push({ from: `[TEXT${font.getAttribute("text")}]`, to: assText ? assText : htmlToText(font.innerHTML.replaceAll(/<br>/gi, "\\N")) });
 				});
 			}
 			replacers.forEach((replacer) => {
@@ -1689,7 +1780,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 					replacers.forEach((replacer) => {
 						replaced = replaced.replaceAll(replacer.from, replacer.to);
 					});
-					return replaced.replaceAll("\n", "").split(","); // 비태그 줄바꿈은 무시해야 함
+					return replaced.replaceAll("}{", "").replaceAll("\n ", "").replaceAll("\n", "").split(","); // 비태그 줄바꿈은 무시해야 함
 				})();
 				const item = {
 						smi: smi
@@ -1787,6 +1878,11 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		
 		// 주석 기반 스크립트
 		assComments.forEach((item) => {
+			{	// 자체 fadein/out 태그 처리
+				const fadeLength = item.end - item.start;
+				item.text = item.text.replaceAll("\\fadein" , `\\fade(${fadeLength},0)`)
+				                     .replaceAll("\\fadeout", `\\fade(0,${fadeLength})`);
+			}
 			const event = new AssEvent(item.start, item.end, item.style, item.text, item.layer);
 			event.owner = item.smi;
 			event.comment = item.ass;

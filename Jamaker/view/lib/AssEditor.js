@@ -3,7 +3,7 @@
 {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AssEditor.css?260414", import.meta.url).href;
+	link.href = new URL("./AssEditor.css?260421", import.meta.url).href;
 	document.head.append(link);
 }
 

@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260414", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260421", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1994,7 +1994,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260414").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260421").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2072,7 +2072,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260414").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260421").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2240,7 +2240,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260414", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260421", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2259,7 +2259,7 @@ window.saveSetting = function() {
 }
 window.refreshPaddingBottom = function() {
 	// 에디터 하단 여백 재조정
-	const holdTop = tabs.length ? Number(tabs[tabIndex].area.querySelector(".holds").offsetTop) : 0;
+	const holdTop = tabs.length ? Number(tabs[tabIndex]?.area.querySelector(".holds").offsetTop) : 0;
 	const padding = document.getElementById("editor").offsetHeight - holdTop - LH;
 	const append = `\n#editor .input textarea { padding-bottom: ${ padding - 2 - SB }px; }`
 	             + `\n.hold > .col-sync > div:first-child { height: ${ padding - 1 }px; }`;
@@ -2470,6 +2470,7 @@ window.saveFile = function(asNew, isExport) {
 					}
 				}
 			} else {
+				if (currentTab.smiPath) currentTab.smiPath = null;
 				await alert("최초 프로젝트 파일 생성 시엔 SMI 파일이 생성되지 않습니다.");
 				withSmi = false;
 			}
@@ -2496,6 +2497,7 @@ window.saveFile = function(asNew, isExport) {
 					srtPath = currentTab.srtPath;
 				}
 			} else {
+				if (currentTab.srtPath) currentTab.srtPath = null;
 				await alert("최초 SMI 파일 생성 시엔 SRT 파일이 생성되지 않습니다.");
 				withSmi = false;
 			}
@@ -2628,6 +2630,7 @@ window.saveFile = function(asNew, isExport) {
 					assPath = currentTab.assPath;
 				}
 			} else {
+				if (currentTab.assPath) currentTab.assPath = null;
 				await alert("최초 SMI 파일 생성 시엔 ASS 파일이 생성되지 않습니다.");
 				withAss = false;
 			}
@@ -4481,7 +4484,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260414", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260421", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

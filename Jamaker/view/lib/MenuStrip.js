@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./MenuStrip.css?260414", import.meta.url).href;
+	link.href = new URL("./MenuStrip.css?260421", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -102,6 +102,7 @@ window.MenuStrip = function(ol=null) {
 						// 하위 메뉴 열려있을 때 - 키 조합 실행
 						const subMenu = menu.subMenuKeys[e.key];
 						if (subMenu) {
+							e.preventDefault();
 							subMenu.click();
 						}
 					} else {
@@ -172,7 +173,7 @@ window.MenuStrip = function(ol=null) {
 					li.click();
 					break;
 				}
-				case "Atl": {
+				case "Alt": {
 					lastKey = null; // 포커스 반환 직후 다시 Alt 메뉴 열리는 것 방지
 					// 메뉴 닫고 포커스 반환
 					focusedMenu?.unfocus();

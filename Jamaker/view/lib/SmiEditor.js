@@ -9,16 +9,16 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260414", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260421", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260414", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260421", import.meta.url).href;
 	document.head.append(link);
 }
 
-window.LOG = true; // 배포 시 false
+window.LOG = false; // 배포 시 false
 
 window.LH = 20; // LineHeight
 window.SB = 16; // ScrollBarWidth
@@ -884,7 +884,7 @@ SmiEditor.prototype.bindEvent = function() {
 			if (!sync || sync.classList.contains("range")) {
 				return;
 			}
-			editor.moveSyncLine(sync.getAttribute("data-index"), (e.deltaY < 0));
+			editor.moveSyncLine(Number(sync.getAttribute("data-index")), (e.deltaY < 0));
 		}, { passive: true });
 		
 		this.colSync.title = "Ctrl+휠로 개별 싱크를 조절할 수 있습니다.";
@@ -894,7 +894,7 @@ SmiEditor.prototype.bindEvent = function() {
 			const sync = e.target.closest(".sync:not(.range)");
 			if (!sync) return;
 			if ((e.clientX / editor.colSync.clientWidth) >= 0.84) {
-				editor.moveSyncLine(sync.getAttribute("data-index"), (((e.clientY - sync.getBoundingClientRect().top) / sync.offsetHeight * 2) < 1));
+				editor.moveSyncLine(Number(sync.getAttribute("data-index")), (((e.clientY - sync.getBoundingClientRect().top) / sync.offsetHeight * 2) < 1));
 			}
 		});
 	}
@@ -2546,7 +2546,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260414", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260421", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2739,7 +2739,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260414", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260421", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
