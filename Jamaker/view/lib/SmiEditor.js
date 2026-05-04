@@ -9,16 +9,16 @@ import "./highlight/cm/sami.js";
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260421", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260505", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260421", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260505", import.meta.url).href;
 	document.head.append(link);
 }
 
-window.LOG = false; // 배포 시 false
+window.LOG = true; // 배포 시 false
 
 window.LH = 20; // LineHeight
 window.SB = 16; // ScrollBarWidth
@@ -523,6 +523,29 @@ SmiEditor.setSetting = (setting) => {
 				}
 				SmiEditor.autoComplete[key] = value;
 			}
+			// ASS 태그 자동완성 지원
+			SmiEditor.autoComplete["\\"] = ['\\', [
+					'\\c&HAAAAAA&'
+				,	'\\1a&H3F&'
+				,	'\\bord'
+				,	'\\blur'
+				,	'\\shad'
+				,	'\\pos(0,0)'
+				,	'\\move(0,0,0,0)'
+				,	'\\fade(0,0)'
+				,	'\\orig(0,0)'
+				,	'\\an'
+				,	'\\fn'
+				,	'\\fs'
+				,	'\\fscx'
+				,	'\\fscy'
+				,	'\\fsp'
+				,	'\\fax'
+				,	'\\fay'
+				,	'\\frx'
+				,	'\\fry'
+				,	'\\frz'
+			]];
 		}
 	}
 	
@@ -623,7 +646,7 @@ SmiEditor.setSetting = (setting) => {
 					+	"	SmiEditor.selected.cm.replaceRange(paste.replaceAll('\\r\\n', '\\n'), cursor, cursor);"
 					+	"});"
 				, perm: "(async () => {"
-					+	"	if (binder?._ && (typeof binder._ != 'function')) return true;" // 웹샘플에선 확인하지 않음
+					+	"	if (!window.chrome?.webview && (binder?._ && (typeof binder._ != 'function'))) return true;" // 웹샘플에선 확인하지 않음
 					+	"	try {"
 					+	"		if (await navigator.clipboard.readText()?.trim().length) return true;"
 					+	"	} catch (e) { }"
@@ -2546,7 +2569,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260421", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260505", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2739,7 +2762,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260421", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260505", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
@@ -2911,10 +2934,8 @@ SmiEditor.afterTransform = (result) => { // 주로 C#에서 호출
 SmiEditor.prototype.normalize = function() {
 	const text = this.getTransformText();
 	if (text) {
-		const smi = new SmiFile();
-		const input = smi.fromText(text).body;
-		Smi.normalize(input, false);
-		smi.body = input;
+		const smi = new SmiFile(text);
+		smi.normalize();
 		SmiEditor.afterTransform(smi.toText().trim());
 	}
 };

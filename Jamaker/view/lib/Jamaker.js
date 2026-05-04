@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260421", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260505", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -50,6 +50,7 @@ window.Tab = function(text, path) {
 	this.area = SmiEditor.tabPreset.cloneNode(true);
 	this.holdSelector = this.area.querySelector(".hold-selector");
 	this.holdArea     = this.area.querySelector(".holds");
+	this.holdResizer  = this.area.querySelector(".hold-resizer");
 	this.holds = [];
 	this.holdIndex = 0;
 	this.lastHold = 1;
@@ -313,6 +314,8 @@ window.Tab = function(text, path) {
 		eData(el.parentNode).hold.rename();
 		
 	});
+	
+	eData(this.holdResizer, { owner: this });
 	
 	this.area.addEventListener("click", (e) => {
 		const el = e.target.closest(".btn-hold-style");
@@ -807,10 +810,15 @@ SmiEditor.prototype.tagging = function(input, standCursor) {
 Tab.prototype.updateHoldSelector = function() {
 	if (!this.withAss && this.holds.length <= 1) {
 		this.area.classList.remove("with-hold");
+		this.lastHoldAreaTop = this.holdArea.style.top;
+		this.holdArea.style.top = '';
 		refreshPaddingBottom();
 		return;
 	}
 	this.area.classList.add("with-hold");
+	if (this.lastHoldAreaTop) {
+		this.holdArea.style.top = this.lastHoldAreaTop;
+	}
 	refreshPaddingBottom();
 	
 	let BEGIN = 1;
@@ -866,6 +874,8 @@ Tab.prototype.updateHoldSelector = function() {
 	}
 	
 	const posStatus = {};
+	let maxViewPos = 0;
+	let minViewPos = 0;
 	timers.forEach((timer) => {
 		// 종료된 홀드를 먼저 빼주지 않으면 과잉 보정 발생
 		timer.holds.sort((a, b) => {
@@ -896,19 +906,8 @@ Tab.prototype.updateHoldSelector = function() {
 				}
 				posStatus[pos] = [hold];
 				hold.viewPos = pos;
-				
-				let top = 30;
-				if (pos > 0) {
-					for (let k = 0; k < pos; k++) {
-						top /= 2;
-					}
-				} else if (hold.pos < 0) {
-					for (let k = 0; k < -pos; k++) {
-						top /= 2;
-					}
-					top = 60 - top;
-				}
-				hold.selector.style.top = `${top}%`;
+				maxViewPos = Math.max(pos, maxViewPos);
+				minViewPos = Math.min(pos, minViewPos);
 				
 			} else {
 				// 홀드 끝
@@ -924,6 +923,29 @@ Tab.prototype.updateHoldSelector = function() {
 				}
 			}
 		});
+	});
+	this.holds.forEach((hold, i) => {
+		if (i == 0) return;
+
+		const pos = hold.viewPos;
+		const maxCount = Math.max(maxViewPos, -minViewPos);
+
+		// 기본 높이에 대한 top
+		let top = setting.size * 24 - 1;
+		if (pos > 0) {
+			for (let k = 0; k < pos; k++) {
+				top /= 2;
+			}
+		} else if (hold.pos < 0) {
+			for (let k = 0; k < -pos; k++) {
+				top /= 2;
+			}
+			top = 48 - top;
+		}
+
+		// 크기 조절한 경우에 대한 추가 top
+		const t = (maxCount - pos) / (maxCount * 2);
+		hold.selector.style.top = `calc(${t * 100}% + ${setting.size * 16}px + ${top}px - ${(setting.size * 80 - 2) * t}px)`;
 	});
 }
 Tab.prototype.selectHold = function(hold) {
@@ -1267,7 +1289,7 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 	
 	const parts = text.split('{');
 	parts.forEach((part, i) => {
-		// ASS 태그 안의 \pos, \orig, \mov, \move, \clip 좌표 변환
+		// ASS 태그 안의 \pos, \orig, \move, \clip 좌표 변환
 		part = part.split('}');
 		
 		const tags = part[0].split('\\');
@@ -1280,8 +1302,6 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 				tagName = "pos(";
 			} else if (tag.startsWith("orig(")) {
 				tagName = "orig(";
-			} else if (tag.startsWith("mov(")) {
-				tagName = "mov(";
 			} else if (tag.startsWith("move(")) {
 				tagName = "move(";
 			} else if (tag.startsWith("clip(")) {
@@ -1826,6 +1846,38 @@ window.init = function(jsonSetting, isBackup=true) {
 			}
 		}
 	});
+	{	// 홀드 선택기 리사이즈 기능
+		let from = null;
+		document.body.addEventListener("mousedown", (e) => {
+			const holdResizer = e.target.closest(".hold-resizer");
+			if (holdResizer) {
+				from = {
+						tab: eData(holdResizer).owner
+					,	mouseY: e.screenY
+					,	height: holdResizer.offsetTop - 1
+				}
+			}
+		});
+		window.addEventListener("mousemove", (e) => {
+			if (!from) return;
+			const height = from.height - from.mouseY + e.screenY;
+			from.tab.holdSelector.style.height = `${height}px`;
+			const offsetHeight = from.tab.holdSelector.offsetHeight; // min-height를 고려한 최종 크기
+			if (height < offsetHeight) {
+				// 완전히 초기화해야 설정 배율 바꿀 때 따라감
+				from.tab.holdSelector.style.height = '';
+				from.tab.holdResizer.style.top = '';
+				from.tab.holdArea.style.top = '';
+			} else {
+				from.tab.holdResizer.style.top = `${height + 1}px`;
+				from.tab.holdArea.style.top = `${height + 4}px`;
+			}
+		});
+		window.addEventListener("mouseup", (e) => {
+			if (!from) return;
+			from = null;
+		});
+	}
 	
 	document.getElementById("assSplitHoldSelectorPopup").addEventListener("click", (e) => {
 		const btn = e.target.closest("button");
@@ -1868,7 +1920,7 @@ window.init = function(jsonSetting, isBackup=true) {
 		if (document.activeElement == document.body && tabs.length) {
 			const tab = tabs[tabIndex];
 			if (tab && tab.holds.length) {
-				tab.holds[tab.holdIndex].focus();
+				tab.holds[tab.holdIndex]?.focus();
 			}
 		}
 	});
@@ -1994,7 +2046,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260421").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260505").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2072,7 +2124,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260421").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260505").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2085,6 +2137,10 @@ window.setSetting = function(setting, initial=false) {
 			SmiEditor.selected?.refresh();
 			
 			resizeTabSelector();
+			
+			tabs.forEach((tab) => {
+				tab.updateHoldSelector();
+			});
 		});
 		
 		// 찾기/바꾸기 내재화했을 경우
@@ -2240,7 +2296,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260421", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260505", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2437,7 +2493,7 @@ window.saveFile = function(asNew, isExport) {
 			path = "";
 		} else if (isExport) {
 			// 내보내기용 파일명 생성
-			if (binder && !binder._) {
+			if (window.chrome?.webview || (binder && !binder._)) {
 				const index = path.lastIndexOf("/");
 				const prefix = "_"; // 설정 만들기?
 				path = path.substring(0, index + 1) + prefix + path.substring(index + 1);
@@ -2646,7 +2702,7 @@ window.saveFile = function(asNew, isExport) {
 				const withFs = setting.sync.jmk && Subtitle.video.fs;
 				const withKfs = withFs && setting.sync.kfs;
 				// 프로젝트 파일에선 정규화하지 않고 원본 저장만 진행
-				saveText = currentTab.getSaveText(false, false, 2, withFs, withKfs);
+				saveText = currentTab.getSaveText(false, false, 3, withFs, withKfs);
 			} else {
 				const withFs = (withAss || withSrt) && setting.sync.jmk && setting.sync.smi && Subtitle.video.fs;
 				const withKfs = withFs && setting.sync.kfs;
@@ -4469,12 +4525,20 @@ SmiEditor.Viewer.moveWindowToSetting = function() {
 
 SmiEditor.Addon = {
 		windows: {}
-	,	open: function(name, target="addon") {
+	,	open: function(name, target="addon", x=-1, y=-1, w=-1, h=-1) {
 			binder.setAfterInitAddon("");
 			const url = (name.substring(0, 4) == "http") ? name : `addon/${ name.replaceAll("..", "").replaceAll(":", "") }.html`;
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
-				SmiEditor.Addon.moveWindowToSetting(target);
+				if (isFinite(x) && x >= 0
+				 && isFinite(y) && y >= 0
+				 && isFinite(w) && w >= 0
+				 && isFinite(h) && h >= 0) {
+					// 창 위치를 명시해 준 경우
+					binder.moveWindow(target, x, y, w, h, true);
+				} else {
+					SmiEditor.Addon.moveWindowToSetting(target);
+				}
 			}, 1);
 			binder.focus(target);
 		}
@@ -4484,7 +4548,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260421", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260505", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4541,7 +4605,7 @@ SmiEditor.Addon = {
 			});
 		}
 };
-window.openAddon = function(name, target) { SmiEditor.Addon.open(name, target); }
+window.openAddon = function(name, target, x, y, w, h) { SmiEditor.Addon.open(name, target, x, y, w, h); }
 window.extSubmit = function(method, url, values, withoutTag=true) {
 	if (typeof values == "string") {
 		let name = values;
@@ -4613,7 +4677,7 @@ window.extSubmit = function(method, url, values, withoutTag=true) {
 	}
 }
 window.extSubmitSpeller = function () {
-	if (binder._ && (typeof binder._ != "function")) {
+	if (!window.chrome?.webview && binder._) {
 		// 웹샘플인 경우 신버전 사용 불가
 		extSubmit("post", "https://nara-speller.co.kr/old_speller/results", "text1");
 		setTimeout(() => { alert("웹샘플에서는 구버전으로 보여줍니다."); }, 1000);

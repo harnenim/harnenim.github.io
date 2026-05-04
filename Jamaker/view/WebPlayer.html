@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>플레이어</title>
-<script src="lib/webview.js?260421"></script>
-<script src="lib/MenuStrip.js?260421" type="module"></script>
+<script src="lib/webview.js?260505"></script>
+<script src="lib/MenuStrip.js?260505" type="module"></script>
 <script>
 window.video = null;
 window.playStatus = 0;
@@ -67,7 +67,7 @@ ready(() => {
 		binder.setTime(getTime());
 	}, 5);
 
-	if (window.binder && (!binder._ || (typeof binder._ == "function"))) {
+	if (window.chrome?.webview || (window.binder && (!binder._ || (typeof binder._ == "function")))) {
 		// C#일 경우 별도 창틀 활성화
 		document.addEventListener("mouseover", (e) => {
 			const title = e.target.closest("#title");

@@ -4,6 +4,17 @@ window.Combine = {
 	css: 'font-family: 맑은 고딕;'
 ,	defaultSize: 18 // TODO: 설정에서 바뀌도록... 하려면 서브 프로그램에서도 설정을 불러와야 하는데...
 };
+
+if (!Uint8Array.fromBase64) {
+	// WebView2 구버전에서 업데이트 안 됐을 경우
+	Uint8Array.fromBase64 = (base64) => {
+		return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+	};
+	Uint8Array.prototype.toBase64 = function() {
+		return btoa(String.fromCharCode(...this));
+	};
+}
+
 {
 	const STIME = 0;
 	const STYPE = 1;
@@ -450,15 +461,10 @@ window.Combine = {
 									for (let l = 1; l < attrLines.length; l++) {
 										attr = new Attr(attr, attrLines[l], true);
 										const isEmptyAttr = (attr.text.replaceAll("​", "").trim().length == 0);
-										if ((l == attrLines.length - 1) && isEmptyAttr) {
-											// 마지막 줄바꿈 후에 내용 없으면 건너뜀
-											trimedLines.push(trimedLine = { attrs: [], isEmpty: true });
-										} else {
-											attr.splitted = wasClear; // 재결합 대상
-											trimedLines.push(trimedLine = { attrs: [attr], isEmpty: isEmptyAttr });
-											if (!isEmptyAttr) {
-												isEmpty = false;
-											}
+										attr.splitted = wasClear; // 재결합 대상
+										trimedLines.push(trimedLine = { attrs: [attr], isEmpty: isEmptyAttr });
+										if (!isEmptyAttr) {
+											isEmpty = false;
 										}
 									}
 									
@@ -517,7 +523,7 @@ window.Combine = {
 												// 해당 줄에 속성이 하나일 때
 												let attr = trimedLine.attrs[0];
 												if (isClear(attr, br)) {
-													// 속성에 공백문자 포함
+													// 속성에 공백문자 포함 가능
 													if (attr.splitted) {
 														// 재결합 대상
 														padsAttrs.pop(); // 미리 추가한 줄바꿈 제거
@@ -541,7 +547,7 @@ window.Combine = {
 												// 처음 속성
 												let attr = trimedLine.attrs[0];
 												if (isClear(attr, br)) {
-													// 속성에 공백문자 포함
+													// 속성에 공백문자 포함 가능
 													if (attr.splitted) {
 														// 재결합 대상
 														padsAttrs.pop(); // 미리 추가한 줄바꿈 제거
@@ -960,7 +966,8 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 	// withComment: 원래 true/false였는데
 	// 1: true / 0: false / -1: Jamaker 전용 싱크 표시 같은 것까지 제거하도록 변경
 	// 2: jmk 저장 시 <P> 태그 제외
-	const jmk = (withComment == 2);
+	// 3: jmk 저장 시 싱크 태그도 삭제, 구분자와 숫자만 남김
+	const jmk = (withComment >= 2) ? withComment - 1 : 0;
 	
 	const funcFrom = window.log ? log("holdsToParts start") : 0;
 	
@@ -992,7 +999,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 			let text = holdText;
 			if (jmk) {
 				// jmk 저장 시 <P> 태그 제외
-				text = new SmiFile(text).toText(true);
+				text = new SmiFile(text).toText(jmk);
 			}
 			hold.exportName = hold.name;
 			if (hold.style) {
@@ -1170,8 +1177,8 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 		// 단, 아래쪽부터 쌓아야 함
 		const holds = origHolds.slice(0);
 		holds.sort((a, b) => {
-			let aPos = a.viewPos;
-			let bPos = b.viewPos;
+			let aPos = a.viewPos ? a.viewPos : a.pos;
+			let bPos = b.viewPos ? b.viewPos : b.pos;
 			if (aPos < 0) {
 				if (bPos > 0) {
 					return -1;
@@ -1498,7 +1505,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 }
 SmiFile.holdsToTexts = (holds, withNormalize=true, withCombine=true, withComment=1) => {
 	const parts = SmiFile.holdsToParts(holds, withNormalize, withCombine, withComment);
-	parts[0] = parts[0].toText(withComment == 2);
+	parts[0] = parts[0].toText((withComment >= 2) ? withComment - 1 : 0);
 	return parts;
 }
 SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=1, additional="", withFs=false, withKfs=false) => {
@@ -1511,6 +1518,7 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 			smis.forEach((smi, j) => {
 				const index = Subtitle.findSyncIndex(smi.start);
 				if ((last.text.indexOf("fade"  ) > 0)
+				 || (last.text.indexOf("flow"  ) > 0)
 				 || (last.text.indexOf("typing") > 0)
 				 || (last.text.indexOf("shake" ) > 0)
 				) { // 정확한 문법 체크를 안 해서 과도하게 들어갈 싱크는 얼마 되지 않을 것
@@ -1648,7 +1656,7 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 	}
 	return SmiFile.holdsToTexts(holds, withNormalize, withCombine, withComment).join("\n") + additional;
 }
-SmiFile.partsToText = (parts, jmk=false) => {
+SmiFile.partsToText = (parts, jmk=0) => {
 	parts[0] = parts[0].toText(jmk);
 	return parts.join("\n");
 }

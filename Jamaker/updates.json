@@ -1,4 +1,35 @@
-[ { "version": "2026.04.21"
+[ { "version": "2026.05.05"
+  , "comment":
+    [ "WebView2 구버전인 경우 base64 함수 선언"
+    , "화면 싱크 매니저 렌더링 중복 실행 시 멈추는 문제 수정"
+    , "플레이어 종료 시 열려있는 동영상 파일 없도록 수정"
+    , "홀드 다중 결합 시 공백문자 잘못 삭제되는 문제 수정"
+    , "흐르는 자막 효과 특수태그 지원"
+    , "ASS 태그 자동완성 지원"
+    , "ASS 변환 시 특정 상황에서 태그 누락 현상 수정"
+    , "홀드 선택기 높이 조절 기능 추가"
+    , "jmk 저장 시 싱크 표현 간략화"
+    ]
+  , "files":
+    [ "view/addon/SyncManager.html"
+    , "view/help/aboutTag.html"
+    , "view/help/update.html"
+    , "view/lib/Jamaker.css"
+    , "view/lib/Jamaker.js"
+    , "view/lib/Jamaker.size.css"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/Jamaker.html"
+    , "view/WebPlayer.html"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+, { "version": "2026.04.21"
   , "comment":
     [ "홀드 결합 시 RUBY 태그 누락 등의 문제 수정"
     , "작업표시줄에 프레임 분석, 섬네일 생성 진행상태 표시"

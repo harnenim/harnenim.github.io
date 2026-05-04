@@ -812,6 +812,7 @@ window.Attr = Subtitle.Attr = function(old, text="") {
 		this.fc   = old.fc;
 		this.ass  = old.ass;
 		this.fade = old.fade;
+		this.flow = old.flow;
 		this.shake = old.shake;
 		this.typing = old.typing;
 		this.furigana = old.furigana;
@@ -826,6 +827,7 @@ window.Attr = Subtitle.Attr = function(old, text="") {
 		this.fc   = ""; // Fontcolor
 		this.ass  = null;
 		this.fade = 0; // 형식> in: 1 / out: -1 / #ABCDEF / #ABCDEF~#FEDCBA / nn%
+		this.flow = null;
 		this.shake = null;
 		this.typing = null;
 	}
@@ -879,6 +881,13 @@ Attr.getWidths = (attrs) => {
 	});
 	widths.push(width);
 	return widths;
+}
+Attr.getSumWidth = (attrs) => {
+	let sum = 0;
+	Attr.getWidths(attrs).forEach((w) => {
+		sum += w;
+	});
+	return sum;
 }
 
 Attr.fromSubtitle = (subtitle) => {
@@ -1558,14 +1567,16 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 	// ASS 변환용 속성 먼저 처리
 	let assEnd = 0;
 	if (checkAss) {
-		let last1 = null;
-		let last2 = null;
+		let last = null;
+		let lastBeforeString = null;
 		for (let i = 0; i < attrs.length; i++) {
 			const attr = attrs[i];
 			
 			if (typeof attr.ass == "string") {
 				// ASS 속성 이전 부분 처리
-				text += AssEvent.inFromAttrs(attrs.slice(assEnd, i), false, false, false, last2);
+				text += AssEvent.inFromAttrs(attrs.slice(assEnd, i), false, false, false, lastBeforeString);
+				// TODO: 최종 상태는 .ass 값 기반으로 재계산하는 게 맞을 듯?
+				lastBeforeString = last;
 				
 				// ASS 속성 처리
 				for (; i < attrs.length; i++) {
@@ -1584,8 +1595,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 					text += `{\\ass1}${attr.ass}{\\ass0}`;
 				}
 			} else {
-				last2 = last1;
-				last1 = attr;
+				last = attr;
 			}
 		}
 	}
@@ -2376,18 +2386,23 @@ TypeParser[SyncType.frame] = " ";
 TypeParser[SyncType.inner] = "\t";
 TypeParser[SyncType.split] = "  ";
 Smi.syncPreset = "<Sync Start={sync}><P Class=KRCC{type}>";
+Smi.flowForced = true;
 
 Smi.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
-Smi.prototype.toText = function(jmk=false) {
+Smi.prototype.toText = function(jmk=0) {
 	if (this.syncType == SyncType.comment) { // Normalize 시에만 존재
 		return `<!--${ this.text }-->`;
 	}
-	if (jmk) {
-		return `<Sync Start=${this.start}${ TypeParser[this.syncType] }>\n` + this.text;
+	if (jmk > 0) {
+		if (jmk == 1) {
+			return `<Sync Start=${this.start}${ TypeParser[this.syncType] }>\n` + this.text;
+		} else {
+			return `​${this.start}${ TypeParser[this.syncType] }\n` + this.text;
+		}
 	}
 	return Smi.syncPreset.replaceAll("{sync}", this.start).replaceAll("{type}", TypeParser[this.syncType]) + "\n" + this.text;
 }
-Smi.smi2txt = (smis, jmk=false) => {
+Smi.smi2txt = (smis, jmk=0) => {
 	let result = "";
 	smis.forEach((smi) => {
 		result += smi.toText(jmk) + "\n";
@@ -2566,6 +2581,7 @@ Smi.Status = function() {
 	this.fc = [];
 	this.ass = []; // ASS 변환 시에만 쓰이는 속성
 	this.fade = [];
+	this.flow = [];
 	this.shake = [];
 	this.typing = [];
 	this.fontAttrs = [];
@@ -2651,6 +2667,22 @@ Smi.Status.prototype.setFont = function(attrs) {
 						}
 					}
 					this.fade.push(fade);
+					break;
+				
+				case "flow":
+					let flow = { width: 60, from: 0, to: 0, span: 1 };
+					if (orig[1]) {
+						const attr = orig[1].split(",");
+						if (isFinite(attr[0])) flow.width = Number(attr[0]);
+						if (isFinite(attr[1])) flow.from = flow.to = Number(attr[1]);
+						if (isFinite(attr[2])) flow.to   = Number(attr[2]);
+						if (isFinite(attr[3])) flow.span = Number(attr[3]);
+						if (flow.width < 1) flow.width = 60;
+						if (flow.from  < 1) flow.from  = 0;
+						if (flow.to    < 1) flow.to    = 0;
+						if (flow.span  < 1) flow.span  = 1;
+					}
+					this.flow.push(flow);
 					break;
 					
 				case "shake": {
@@ -2751,6 +2783,9 @@ Smi.Status.prototype.setFont = function(attrs) {
 				case "fade":
 					this.fade.pop();
 					break;
+				case "flow":
+					this.flow.pop();
+					break;
 				case "shake":
 					this.shake.pop();
 					break;
@@ -2773,6 +2808,7 @@ Smi.setStyle = (attr, status) => {
 	attr.fc = (status.fc.length > 0) ? status.fc[status.fc.length - 1] : "";
 	attr.ass = (status.ass.length > 0) ? status.ass[status.ass.length - 1] : null;
 	attr.fade = (status.fade.length > 0) ? status.fade[status.fade.length - 1] : 0;
+	attr.flow = (status.flow.length > 0) ? status.flow[status.flow.length - 1] : null;
 	attr.shake = (status.shake.length > 0) ? status.shake[status.shake.length - 1] : null;
 	attr.typing = (status.typing.length > 0) ? status.typing[status.typing.length - 1] : null;
 }
@@ -3301,6 +3337,7 @@ Smi.fromAttrs = (attrs, fontSize=0, checkRuby=true, forConvert=false) => { // fo
 		let fcLen     = 0; if (attr.fc    ) for (fcLen     = 1; i + fcLen     < attrs.length; fcLen++    ) { if (!attrs[i + fcLen    ].fc) break; }
 		*/
 		let fadeLen   = 0; if (attr.fade  ) for (fadeLen   = 1; i + fadeLen   < attrs.length; fadeLen++  ) { if (!attrs[i + fadeLen  ].fade) break; }
+		let flowLen   = 0; if (attr.flow  ) for (flowLen   = 1; i + flowLen   < attrs.length; flowLen++  ) { if (!attrs[i + flowLen  ].flow) break; }
 		let shakeLen  = 0; if (attr.shake ) for (shakeLen  = 1; i + shakeLen  < attrs.length; shakeLen++ ) { if (!attrs[i + shakeLen ].shake) break; }
 		let typingLen = 0; if (attr.typing) for (typingLen = 1; i + typingLen < attrs.length; typingLen++) { if (!attrs[i + typingLen].typing) break; }
 		
@@ -3316,6 +3353,7 @@ Smi.fromAttrs = (attrs, fontSize=0, checkRuby=true, forConvert=false) => { // fo
 		if (fnLen     >= limit) { tag = "FONT"; (fnLen     > len) ? (font = ["fn"    ]) : font.push("fn"    ); limit = len = fnLen    ; }
 		if (fcLen     >= limit) { tag = "FONT"; (fcLen     > len) ? (font = ["fc"    ]) : font.push("fc"    ); limit = len = fcLen    ; }
 		if (fadeLen   >= limit) { tag = "FONT"; (fadeLen   > len) ? (font = ["fade"  ]) : font.push("fade"  ); limit = len = fadeLen  ; }
+		if (flowLen   >= limit) { tag = "FONT"; (flowLen   > len) ? (font = ["flow"  ]) : font.push("flow"  ); limit = len = flowLen  ; }
 		if (shakeLen  >= limit) { tag = "FONT"; (shakeLen  > len) ? (font = ["shake" ]) : font.push("shake" ); limit = len = shakeLen ; }
 		if (typingLen >= limit) { tag = "FONT"; (typingLen > len) ? (font = ["typing"]) : font.push("typing"); limit = len = typingLen; }
 		if (len == 0) {
@@ -3372,6 +3410,7 @@ Smi.fromAttrs = (attrs, fontSize=0, checkRuby=true, forConvert=false) => { // fo
 							case "fn"    : { opener += ` face="${   attr.fn }"`; break; }
 							case "fc"    : { opener += ` color="${  Smi.colorFromAttr(attr.fc) }"`; break; }
 							case "fade"  : { opener += ` fade="${   (attr.fade == 1 ? "in" : (attr.fade == -1 ? "out" : attr.fade)) }"`; break; }
+							case "flow"  : { opener += ` flow="${   attr.flow.width },${ attr.flow.from },${ attr.flow.to },${ attr.flow.span }"`; break; }
 							case "shake" : { opener += ` shake="${  attr.shake.ms },${ attr.shake.size }"`; break; }
 							case "typing": { opener += ` typing="${ Typing.Mode.toString[attr.typing.mode] }(${ attr.typing.start },${ attr.typing.end }) ${ Typing.Cursor.toString[attr.typing.cursor] }"`; break; }
 							case "ass"   : { opener += ` ass="${    attr.ass }"`; break; }
@@ -3521,6 +3560,7 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 		return [smi];
 	}
 	
+	let hasFlow = false;
 	let hasFade = false;
 	let hasTyping = false;
 	let shakeRange = null;
@@ -3541,6 +3581,9 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 			} else if (shakeRange[1] == j) {
 				shakeRange[1]++;
 			}
+		}
+		if (attr.flow) {
+			hasFlow = true;
 		}
 	});
 	
@@ -3918,6 +3961,9 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 			}
 		}
 		
+	} else if (!forConvert && hasFlow) {
+		this.hasFlow = true;
+		
 	} else {
 		if (hasGradation) {
 			this.origin = smiText;
@@ -3998,6 +4044,445 @@ Smi.normalize = (smis, withComment=false, forConvert=false) => {
 		smis[smis.length - 1] = smis[smis.length - 1].normalize(-1, forConvert, withComment)[0];
 	}
 	
+	// 흐르는 자막 처리 - Smi 객체 하나가 아닌 여러 개 기반으로 돌려야 함
+	for (let i = smis.length - 1; i >= 0; i--) {
+		const smi = smis[i];
+		if (smi.hasFlow) {
+			const start = smi.start;
+			const attrs = smi.toAttrs();
+			
+			let afterFlows = smis.slice(i + 1);
+			
+			// 흐르는 자막 효과는 다른 내용물을 무시함
+			// 아래쪽에 있는 걸 먼저 생성하고, 위에 있는 걸 배경으로 깔아줌
+			for (let j = attrs.length - 1; j >= 0; j--) {
+				const attr = attrs[j];
+				if (!attr.flow) continue;
+				if (i + attr.flow.span >= result.result.length) continue;
+				
+				// 흐르는 효과 생성 전인 result.result를 기반으로 함
+				const end = result.result[i + attr.flow.span].start;
+				const length = end - start;
+				
+				let zwsp = new Attr(null, "​");
+				let left   = new Attr();     // 왼쪽 여백
+				let center = new Attr(attr); // 보이는 범위
+				let right  = new Attr();     // 오른쪽 여백
+				center.flow = null;
+				
+				// 전체 공백으로 초기화
+				for (let i = 0; i < attr.flow.width; i++) {
+					left.text += " ";
+				}
+				const targetWidth = left.getWidth();
+				const space = targetWidth / attr.flow.width;
+				const half = space / 2;
+				
+				let flows = [];
+				let c = 0;
+				while (left.text.length && (c < attr.text.length)) {
+					left.text = left.text.substring(1);
+					center.text += attr.text[c];
+					let width = Attr.getSumWidth([left, center]);
+					if (width < targetWidth + half) {
+						// 보이는 글자 추가
+						c++;
+						right.text = "";
+						// 추가된 글자의 크기에 따라 공백 추가
+						while (width < targetWidth - half) {
+							right.text += " ";
+							width = Attr.getSumWidth([left, center, right]);
+						}
+						
+					} else {
+						// 글자 추가하지 않고 이동
+						center.text = center.text.substring(0, c);
+						right.text += " ";
+					}
+					if (center.text.length) {
+						flows.push([left.text, center.text, right.text]);
+					}
+				}
+				// 내용물이 짧아서 여전히 왼쪽 여백이 남았을 때
+				while (left.text.length) {
+					left.text = left.text.substring(1);
+					right.text += " ";
+					flows.push([left.text, center.text, right.text]);
+				}
+				// 내용물이 길어서 내용물이 한 번에 안 보일 때
+				while (c < attr.text.length) {
+					if (left.text.length) {
+						// 왼쪽 여백 있으면 한 칸 이동
+						left.text = left.text.substring(1);
+					} else {
+						// 왼쪽 여백 없으면 한 글자 삭제
+						center.text = center.text.substring(1);
+						if (!center.text.length) break;
+						let width = Attr.getSumWidth([center, right]);
+						// 빠진 글자의 크기에 따라 공백 추가
+						while (width < targetWidth - half) {
+							left.text += " ";
+							width = Attr.getSumWidth([left, center, right]);
+						}
+						// 재계산 결과에서 한 칸 이동
+						left.text = left.text.substring(1);
+					}
+					
+					// 오른쪽에 글자 추가 시도
+					center.text += attr.text[c];
+					let width = Attr.getSumWidth([left, center]);
+					if (width < targetWidth + half) {
+						// 보이는 글자 추가
+						c++;
+						right.text = "";
+						// 추가된 글자의 크기에 따라 공백 추가
+						while (width < targetWidth - half) {
+							right.text += " ";
+							width = Attr.getSumWidth([left, center, right]);
+						}
+						
+					} else {
+						// 글자 추가하지 않고 이동
+						right.text += " ";
+						center.text = center.text.substring(0, center.text.length - 1);
+					}
+					
+					flows.push([left.text, center.text, right.text]);
+				}
+				// 남은 내용물 끝까지 이동
+				while (center.text.length) {
+					if (left.text.length) {
+						left.text = left.text.substring(1);
+						right.text += " ";
+						flows.push([left.text, center.text, right.text]);
+					} else {
+						center.text = center.text.substring(1);
+						if (!center.text.length) break;
+						right.text += " ";
+						let width = Attr.getSumWidth([center, right]);
+						// 빠진 글자의 크기에 따라 공백 추가
+						while (width < targetWidth - half) {
+							left.text += " ";
+							width = Attr.getSumWidth([left, center, right]);
+						}
+						flows.push([left.text, center.text, right.text]);
+					}
+				}
+				const flowCount = flows.length - attr.flow.to - attr.flow.from;
+				
+				const count = Subtitle.video.fs.length
+					? (Subtitle.findSyncIndex(end) - Subtitle.findSyncIndex(start)) // 실제 프레임 개수
+					: Math.round(length * 24 / 1001) // 프레임 싱크 없으면 23.976fps로 가정
+					;
+				
+				const tAttr = new Attr(attr);
+				tAttr.flow = null;
+				const flowSmis = [];
+				let lastFlowIndex = -1;
+				for (let j = 0; j < count; j++) {
+					const sync = Subtitle.video.fs.length
+						?  Subtitle.video.fs[Subtitle.findSyncIndex(start) + j] // 프레임 싱크 있으면 가져오기
+						: ((start * (count - j) + end * (j)) / count) // 프레임 싱크 없으면 중간 싱크 계산
+						;
+					const ratio = Subtitle.video.fs.length
+						? ((sync - start) / (end - start)) // 프레임 싱크 있으면 VFR일 경우를 고려하여 진행률 재계산
+						: (j / count)
+						;
+					const flowIndex = Math.floor(flowCount * ratio);
+					if (flowIndex <= lastFlowIndex) continue;
+					lastFlowIndex = flowIndex;
+					
+					const flow = flows[attr.flow.from + flowIndex];
+					tAttr.text = flow[1];
+					const tSmi = new Smi(sync, SyncType.inner, "​" + flow[0] + Smi.fromAttrs([tAttr]) + flow[2] + "​");
+					flowSmis.push(tSmi);
+				}
+				flowSmis[0].syncType = smi.syncType;
+				let afterComment = null;
+				
+				if (attr.flow.span > 1) {
+					// span 있으면 완성된 뒤쪽 내용과 겹치는 결 확인 후 배경으로 깔림
+					let combined = [];
+					let time = afterFlows[0].start;
+					let fi = 0;
+					let ai = 0;
+					// 겹치지 않는 범위
+					for (; fi < flowSmis.length; fi++) {
+						if (flowSmis[fi].start < time) {
+							if (Smi.flowForced) { // MX 플레이어 등에선 연속 공백문자 무시당하므로 zwsp 끼워줌
+								flowSmis[fi].text = flowSmis[fi].text.replaceAll("  ", " ​ ").replaceAll("  ", " ​ ");
+							}
+							combined.push(flowSmis[fi]);
+						} else {
+							if (flowSmis[fi].start > time) {
+								// 겹치는 범위로 넘어갔으면 결합 필요
+								fi--;
+							}
+							break;
+						}
+					}
+					// 겹치는 범위
+					for (; fi < flowSmis.length; fi++) {
+						const limit = (fi + 1 < flowSmis.length) ? flowSmis[fi + 1].start : end;
+						let backAttrs = Smi.toAttrs(flowSmis[fi].text.replaceAll("​", ""));
+						do {
+							if (afterFlows[ai].isEmpty()) {
+								if (Smi.flowForced) {
+									flowSmis[fi].text = flowSmis[fi].text.replaceAll("  ", " ​ ").replaceAll("  ", " ​ ");
+								}
+								combined.push(flowSmis[fi]);
+							} else {
+								let backWidth = Attr.getSumWidth(backAttrs);
+								let frontAttrs = Smi.toAttrs(afterFlows[ai].text.replaceAll("​", ""));
+								let frontWidth = Attr.getSumWidth(frontAttrs);
+								
+								left.text = right.text = "";
+								if (backWidth < frontWidth - space) {
+									// 왼쪽 여백 left 객체로 꺼내기
+									do {
+										let cleared = false;
+										let backLeft = backAttrs[0];
+										if (backLeft.text) {
+											while (backLeft.text.startsWith(' ') || backLeft.text.startsWith('　')) {
+												left.text += backLeft.text[0];
+												backLeft.text = backLeft.text.substring(1);
+												if (backLeft.text.length == 0) {
+													cleared = true;
+													break;
+												}
+											}
+										} else {
+											cleared = true;
+										}
+										if (cleared) {
+											backAttrs = backAttrs.slice(1);
+										} else {
+											break;
+										}
+									} while (backAttrs.length);
+									
+									// 오른쪽 여백 right 객체로 꺼내기
+									do {
+										let cleared = false;
+										let backRight = backAttrs[backAttrs.length - 1];
+										if (backRight.text) {
+											while (backRight.text.endsWith(' ') || backRight.text.endsWith('　')) {
+												right.text += backRight.text[backRight.text.length - 1];
+												backRight.text = backRight.text.substring(0, backRight.text.length - 1);
+												if (backRight.text.length == 0) {
+													cleared = true;
+													break;
+												}
+											}
+										} else {
+											cleared = true;
+										}
+										if (cleared) {
+											backAttrs.length--;
+										} else {
+											break;
+										}
+									} while (backAttrs.length);
+									
+									backAttrs = [left].concat(backAttrs).concat([right]);
+									while (backWidth < frontWidth - space) {
+										left.text += " ";
+										right.text += " ";
+										backWidth = Attr.getSumWidth(backAttrs);
+									}
+									left = new Attr();
+									right = new Attr();
+									
+								}
+								
+								// 왼쪽 여백 left 객체로 꺼내기
+								do {
+									let cleared = false;
+									let frontLeft = frontAttrs[0];
+									if (frontLeft.text) {
+										while (frontLeft.text.startsWith(' ') || frontLeft.text.startsWith('　')) {
+											left.text += frontLeft.text[0];
+											frontLeft.text = frontLeft.text.substring(1);
+											if (frontLeft.text.length == 0) {
+												cleared = true;
+												break;
+											}
+										}
+									} else {
+										cleared = true;
+									}
+									if (cleared) {
+										frontAttrs = frontAttrs.slice(1);
+									} else {
+										break;
+									}
+								} while (frontAttrs.length);
+								
+								// 오른쪽 여백 right 객체로 꺼내기
+								do {
+									let cleared = false;
+									let frontRight = frontAttrs[frontAttrs.length - 1];
+									if (frontRight.text) {
+										while (frontRight.text.endsWith(' ') || frontRight.text.endsWith('　')) {
+											right.text += frontRight.text[frontRight.text.length - 1];
+											frontRight.text = frontRight.text.substring(0, frontRight.text.length - 1);
+											if (frontRight.text.length == 0) {
+												cleared = true;
+												break;
+											}
+										}
+									} else {
+										cleared = true;
+									}
+									if (cleared) {
+										frontAttrs.length--;
+									} else {
+										break;
+									}
+								} while (frontAttrs.length);
+								
+								let displayAttrs = [left].concat(frontAttrs).concat([right]);
+								while (frontWidth < backWidth - space) {
+									left.text += " ";
+									right.text += " ";
+									frontWidth = Attr.getSumWidth(displayAttrs);
+								}
+								
+								// 앞쪽에 보여야 하는 것 좌우 여백 원래 크기에 맞춰서
+								// 뒤쪽에 보여야 하는 것 내용물 좌우에 채우기
+								const leftWidth  = left .getWidth();
+								const rightWidth = right.getWidth();
+								const leftAttrs  = [];
+								const rightAttrs = [];
+								
+								for (let j = 0; j < backAttrs.length; j++) {
+									let filled = false;
+									const ba = backAttrs[j];
+									const lastLeft = new Attr(ba);
+									leftAttrs.push(lastLeft);
+									for (let k = 0; k < ba.text.length; k++) {
+										lastLeft.text += ba.text[k];
+										if (Attr.getSumWidth(leftAttrs) >= leftWidth + half) {
+											if (Attr.getSumWidth(leftAttrs) > leftWidth + half) {
+												// 과하게 들어간 경우 마지막 글자 빼고 다시 공백 적절히 채우기
+												lastLeft.text = lastLeft.text.substring(0, lastLeft.text.length - 1);
+												while (Attr.getSumWidth(leftAttrs) < leftWidth - half) {
+													lastLeft.text += " ";
+												}
+											}
+											filled = true;
+											break;
+										}
+									}
+									if (filled) {
+										break;
+									}
+								}
+								for (let j = backAttrs.length - 1; j >= 0; j--) {
+									let filled = false;
+									const ba = backAttrs[j];
+									const lastRight = new Attr(ba);
+									rightAttrs.push(lastRight);
+									for (let k = ba.text.length - 1; k >= 0; k--) {
+										lastRight.text = ba.text[k] + lastRight.text;
+										if (Attr.getSumWidth(rightAttrs) >= rightWidth + half) {
+											if (Attr.getSumWidth(rightAttrs) > rightWidth + half) {
+												// 과하게 들어간 경우 마지막 글자 빼고 다시 공백 적절히 채우기
+												lastRight.text = lastRight.text.substring(1);
+												while (Attr.getSumWidth(leftAttrs) < leftWidth - half) {
+													lastRight.text = " " + lastRight.text;
+												}
+											}
+											filled = true;
+											break;
+										}
+									}
+									if (filled) {
+										break;
+									}
+								}
+								
+								let cSmi = new Smi(Math.max(flowSmis[fi].start, afterFlows[ai].start), flowSmis[fi].syncType).fromAttr(leftAttrs.concat(frontAttrs).concat(rightAttrs));
+								if (Smi.flowForced) { // MX 플레이어 등에선 연속 공백문자 무시당하므로 zwsp 끼워줌
+									cSmi.text = cSmi.text.replaceAll("  ", " ​ ").replaceAll("  ", " ​ ");
+								}
+								combined.push(cSmi);
+							}
+							
+							if (afterFlows[ai+1].start < limit) {
+								// 덮어 쓸 내용물 교체
+								ai++;
+							} else {
+								if (afterFlows[ai+1].start == limit) {
+									// 덮어 쓸 내용물 교체
+									ai++;
+								} else {
+									// 덮어 쓸 내용물 유지
+								}
+								// 다음으로 진행
+								break;
+							}
+							
+						} while (true);
+					}
+					for (let j = 0; j < ai; j++) {
+						// span 범위에 주석 있었으면 통합 처리 해줘야 함
+						if (afterFlows[j].text.startsWith("<!-- End=")) {
+							afterComment = [afterFlows[j].start, afterFlows[j].text.split("\n-->\n")[0].substring(9).replaceAll("​", "")];
+							break;
+						}
+					}
+					for (; ai < afterFlows.length; ai++) {
+						combined.push(afterFlows[ai]);
+					}
+					afterFlows = combined;
+					
+				} else {
+					// span 없었으면 일단 완성된 뒤쪽에 합류시킴
+					if (Smi.flowForced) {
+						flowSmis.forEach((flowSmi, fi) => {
+							flowSmis[fi].text = flowSmis[fi].text.replaceAll("  ", " ​ ").replaceAll("  ", " ​ ");
+						});
+					}
+					afterFlows = flowSmis.concat(afterFlows);
+				}
+				
+				// 원형 주석 보존
+				if (withComment) {
+					let commentEnd = end;
+					let comment = smi.text;
+					result.result.slice(i+1, i+attr.flow.span).forEach((spanned) => {
+						comment += "\n" + spanned.toText();
+					});
+					if (afterComment) {
+						// span 범위에 주석 있었을 경우 통합
+						commentEnd = Number(afterComment[1].split("\n")[0]);
+						if (commentEnd <= end) {
+							// 내포된 경우엔 통합 필요 없음
+							commentEnd = end
+						} else {
+							const commentOrig = new SmiFile(comment);
+							const afterCommentOrig = new SmiFile(afterComment[1]);
+							for (let j = 0; j < commentOrig.body.length; j++) {
+								if (commentOrig.body[j].start >= afterCommentOrig.body[0].start) {
+									// 주석 겹치는 범위가 있으면 제거
+									commentOrig.body.length = j;
+									break;
+								}
+							}
+							commentOrig.body = commentOrig.body.concat(afterCommentOrig.body);
+							comment = commentOrig.toText();
+						}
+					}
+					flowSmis[0].text = `<!-- End=${commentEnd}\n${comment.replaceAll("<", "<​").replaceAll(">", "​>")}\n-->\n` + flowSmis[0].text;
+				}
+			}
+			
+			smis = smis.slice(0, i).concat(afterFlows);
+		}
+	}
+	result.result = smis;
+	
 	return result;
 }
 Smi.fillEmptySync = (smis) => {
@@ -4029,7 +4514,7 @@ window.SmiFile = Subtitle.SmiFile = function(text) {
 	}
 }
 SmiFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
-SmiFile.prototype.toText = function(jmk=false) {
+SmiFile.prototype.toText = function(jmk=0) {
 	return this.text
 	   = ( this.header.replaceAll("\r\n", "\n")
 	     + Smi.smi2txt(this.body, jmk)
@@ -4061,6 +4546,30 @@ SmiFile.prototype.fromText = function(text) {
 	let index = 0;
 	let pos = 0;
 	let last = null;
+	
+	// jmk 싱크 간략화 버전 복원
+	{
+		let isSimplified = false;
+		const lines = text.split("\n");
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (line.startsWith("​")) {
+				let sync = line.substring(1);
+				let type = "";
+				if (sync.endsWith(" ") || sync.endsWith("\t")) {
+					type = sync[sync.length - 1];
+					sync = sync.substring(0, sync.length - 1);
+				}
+				if (isFinite(sync)) {
+					lines[i] = `<Sync Start=${sync}${ type }>`;
+					isSimplified = true;
+				}
+			}
+		}
+		if (isSimplified) {
+			text = lines.join("\n");
+		}
+	}
 	
 	while ((pos = text.indexOf('<', index)) >= 0) {
 		if (text.length > pos + 6 && text.substring(pos, pos + 6).toUpperCase() == ("<SYNC ")) {
