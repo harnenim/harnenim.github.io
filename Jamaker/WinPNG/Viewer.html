@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
 <!--
 <link rel="shortcut icon" href="icon72.png" />
 <link rel="apple-touch-icon" href="icon.png" />
@@ -13,13 +13,6 @@
 <script src="jszip.min.js?260505" type="module"></script>
 <script src="WinPNG.js?260505" type="module"></script>
 <script>
-if (!Uint8Array.fromBase64) {
-	// 삼성브라우저 같은 경우 아직 base64 관련 함수 미지원
-	Uint8Array.fromBase64 = (base64) => {
-		return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-	};
-}
-
 {
 	const userAgent = clientInformation.userAgent.toLowerCase();
 	const redirect = (() => {
@@ -91,6 +84,7 @@ let cbJamaker;
 let areaSettingZip;
 let viewFileList;
 let previewImg;
+let toConverts;
 let popup;
 let popupUrl;
 
@@ -134,9 +128,11 @@ input.onload = async function() {
 		parsed.containers.sort((cont1, cont2) => {
 			return compare(cont1.path, cont2.path);
 		});
+		toConverts = [];
 		for (let cont of parsed.containers) {
 			await addFile(cont);
 		}
+		convert(0);
 		
 		resizeViewFileList();
 		
@@ -151,6 +147,54 @@ input.onload = async function() {
 input.onerror = function(err) {
 	loadExternal(inputUrl.value);
 }
+function convert(i) {
+	if (i >= toConverts.length) return;
+	const toConvert = toConverts[i];
+	const holds = toConvert.holds;
+	if (toConvert.type == "smi") {
+		const smiText = SmiFile.holdsToText(holds, true, true, -1);
+		const smiFile = new File([new Blob(["\uFEFF" + smiText], { type: "text/plain;charset=utf-8" })], toConvert.filename);
+		const smiUrl = URL.from(smiFile);
+		toConvert.a.setAttribute("data-smi", smiUrl);
+		toConvert.subA.href = smiUrl;
+		toConvert.subA.classList.remove("processing");
+	} else if (toConvert.type == "ass") {
+		const append = new AssFile(holds[0].ass ?? "");
+		const appendParts = [];
+		append.parts.forEach((part) => {
+			switch (part.name) {
+				case "Script Info":
+				case "V4+ Styles":
+				case "Events":
+					break;
+				default: {
+					appendParts.push(part);
+				}
+			}
+		});
+		let x = 1920;
+		let y = 1080;
+		const info = append.getInfo();
+		if (info) {
+			let playResX = info.get("PlayResX");
+			let playResY = info.get("PlayResY");
+			if (playResX && playResY) {
+				x = playResX;
+				y = playResY;
+			}
+		}
+		holds.forEach((hold) => {
+			hold.smiFile = new SmiFile(hold.text);
+		});
+		const assText = SmiFile.holdsToAss(holds, appendParts, append.getStyles().body, append.getEvents().body, x, y).toText();
+		const assFile = new File([new Blob(["\uFEFF" + assText], { type: "text/plain;charset=utf-8" })], toConvert.filename);
+		const assUrl = URL.from(assFile);
+		toConvert.a.setAttribute("data-ass", assUrl);
+		toConvert.subA.href = assUrl;
+		toConvert.subA.classList.remove("processing");
+	}
+	setTimeout(() => { convert(i + 1); });
+}
 async function unzip(zipFile) {
 	let result = false;
 	try {
@@ -164,12 +208,14 @@ async function unzip(zipFile) {
 		viewFileList.style.minWidth = "";
 		
 		const zip = await JSZip.loadAsync(zipFile);
+		toConverts = [];
 		for (key in zip.files) {
 			const file = zip.files[key];
 			if (file.dir) continue;
 			
 			await addFile({ path: file.name, binary: await file.async("uint8array") });
 		}
+		convert(0);
 		
 		resizeViewFileList();
 		
@@ -192,7 +238,9 @@ async function setOne(file, filename=null) {
 		viewFileList.innerHTML = "";
 		viewFileList.style.minWidth = "";
 		
+		toConverts = [];
 		await addFile({ path: filename ? filename : (file.name ? file.name : "unknown"), binary: new Uint8Array(await file.arrayBuffer()) });
+		convert(0);
 		
 		resizeViewFileList();
 		
@@ -359,56 +407,23 @@ async function addFile(cont) {
 				
 				if (withSmi) {
 					const smiFilename = filename.substring(0, extIndex) + "smi";
-					const smiText = SmiFile.holdsToText(holds, true, true, -1);
-					const smiFile = new File([new Blob(["\uFEFF" + smiText], { type: "text/plain;charset=utf-8" })], smiFilename);
-					const smiUrl = URL.from(smiFile);
-					a.setAttribute("data-smi", smiUrl);
-					
 					const smiA = document.createElement("a");
-					smiA.href = smiUrl;
+					smiA.classList.add("processing");
+					smiA.href = "javascript:alert('생성 중...')";
 					smiA.download = smiFilename;
 					smiA.innerText = "[SMI] ";
 					labelFile.before(smiA);
+					toConverts.push({ type: "smi", a: a, subA: smiA, holds: holds, filename: smiFilename });
 				}
 				if (withAss) {
-					const append = new AssFile(holds[0].ass ?? "");
-					const appendParts = [];
-					append.parts.forEach((part) => {
-						switch (part.name) {
-							case "Script Info":
-							case "V4+ Styles":
-							case "Events":
-								break;
-							default: {
-								appendParts.push(part);
-							}
-						}
-					});
-					let x = 1920;
-					let y = 1080;
-					const info = append.getInfo();
-					if (info) {
-						let playResX = info.get("PlayResX");
-						let playResY = info.get("PlayResY");
-						if (playResX && playResY) {
-							x = playResX;
-							y = playResY;
-						}
-					}
-					holds.forEach((hold) => {
-						hold.smiFile = new SmiFile(hold.text);
-					});
 					const assFilename = filename.substring(0, extIndex) + "ass";
-					const assText = SmiFile.holdsToAss(holds, appendParts, append.getStyles().body, append.getEvents().body, x, y).toText();
-					const assFile = new File([new Blob(["\uFEFF" + assText], { type: "text/plain;charset=utf-8" })], assFilename);
-					const assUrl = URL.from(assFile);
-					a.setAttribute("data-ass", assUrl);
-					
 					const assA = document.createElement("a");
-					assA.href = assUrl;
+					assA.classList.add("processing");
+					assA.href = "javascript:alert('생성 중...')";
 					assA.download = assFilename;
 					assA.innerText = "[ASS] ";
 					labelFile.before(assA);
+					toConverts.push({ type: "ass", a: a, subA: assA, holds: holds, filename: assFilename });
 				}
 				if (ext == "jmk" && (withSmi || withAss)) {
 					// JMK 원본 다운로드는 ZIP 다운로드에서만 제공
@@ -657,8 +672,6 @@ async function onload() {
 						}
 					});
 					if (urlItem) {
-						let filename = e.dataTransfer.getData("text/uri-list").split('?')[0].split('/');
-						filename = decodeURIComponent(filename[filename.length - 1]);
 						urlItem.getAsString(async (url) => {
 							try {
 								const response = await fetch(url);
@@ -679,6 +692,8 @@ async function onload() {
 										ivTarget.append(comment);
 										inputUrl.value = URL.reset(file);
 										if (!await unzip(file)) {
+											let filename = url.split('?')[0].split('/');
+											filename = decodeURIComponent(filename[filename.length - 1]);
 											comment.innerText = "단일 파일입니다.";
 											setOne(file, filename);
 										}
@@ -1015,7 +1030,7 @@ fieldset button[type=submit] {
 	left: 50%;
 }
 #comment {
-	width: 200px;;
+	width: 200px;
 	margin: -24px -100px;
 	line-height: 24px;
 	text-align: center;
@@ -1064,6 +1079,9 @@ fieldset button[type=submit] {
 }
 #viewFileList > a:hover {
 	background: linear-gradient(#cef, #bde);
+}
+#viewFileList > a > a.processing {
+	color: #888;
 }
 #viewFileList > a > span {
 	color: #aaa;
