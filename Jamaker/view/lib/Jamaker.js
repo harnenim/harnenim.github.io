@@ -13,7 +13,7 @@ import "./AssEditor.js";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260505", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260514", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1289,7 +1289,7 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 	
 	const parts = text.split('{');
 	parts.forEach((part, i) => {
-		// ASS 태그 안의 \pos, \orig, \move, \clip 좌표 변환
+		// ASS 태그 안의 \pos, \org, \move, \clip 좌표 변환
 		part = part.split('}');
 		
 		const tags = part[0].split('\\');
@@ -1300,12 +1300,16 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 			let tagName = null;
 			if (tag.startsWith("pos(")) {
 				tagName = "pos(";
-			} else if (tag.startsWith("orig(")) {
-				tagName = "orig(";
+			} else if (tag.startsWith("org(")) {
+				tagName = "org(";
 			} else if (tag.startsWith("move(")) {
 				tagName = "move(";
 			} else if (tag.startsWith("clip(")) {
 				tagName = "clip(";
+			} else if (tag.startsWith("dpos(")) {
+				tagName = "dpos(";
+			} else if (tag.startsWith("dmove(")) {
+				tagName = "dmove(";
 			}
 			if (!tagName) return;
 			
@@ -1406,6 +1410,16 @@ SmiEditor.prototype.rename = function() {
 		) {
 			alert("예약어입니다.");
 			return;
+		}
+		for (let i = 0; i < this.owner.holds.length; i++) {
+			const aHold = this.owner.holds[i];
+			if (this == aHold) continue;
+			if (input == aHold.name) {
+				confirm("같은 이름의 홀드가 있습니다.\n스타일을 통일할까요?", () => {
+					hold.setStyle(JSON.parse(JSON.stringify(aHold.style)));
+				});
+				break;
+			}
 		}
 		hold.selector.querySelector(".hold-name > span").innerText = (hold.owner.holds.indexOf(hold) + "." + (hold.name = input));
 		hold.selector.title = hold.name;
@@ -1875,6 +1889,9 @@ window.init = function(jsonSetting, isBackup=true) {
 		});
 		window.addEventListener("mouseup", (e) => {
 			if (!from) return;
+			from.tab.holds.forEach((hold) => {
+				hold.refreshScroll();
+			});
 			from = null;
 		});
 	}
@@ -2046,7 +2063,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260505").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260514").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2124,7 +2141,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260505").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260514").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2296,7 +2313,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260505", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260514", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4548,7 +4565,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260505", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260514", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

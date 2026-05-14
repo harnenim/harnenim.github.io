@@ -514,11 +514,20 @@ if (!Uint8Array.fromBase64) {
 										if (trimedLine.isEmpty) {
 											// 빈 줄이면 그대로 추가
 											padsAttrs.push(...trimedLine.attrs);
-												
+											
 										} else {
+											// zwsb 다시 채워주고 진행
+											trimedLine.attrs.forEach((attr) => {
+												if (attr.text) {
+													attr.text = attr.text.replaceAll("  ", " ​ ");
+												} else {
+													// RUBY 태그 있을 때 attr.attrs에는 연속 공백문자 들어갈 일 없을 듯함
+												}
+											});
+											
 											if (trimedLine.attrs.length == 0) {
 												// 해당 줄에 속성이 없을 때..는 없는 게 맞음
-													
+												
 											} else if (trimedLine.attrs.length == 1) {
 												// 해당 줄에 속성이 하나일 때
 												let attr = trimedLine.attrs[0];
@@ -540,10 +549,10 @@ if (!Uint8Array.fromBase64) {
 													padsAttrs.push(attr);
 													padsAttrs.push(new Attr(br, pad + "​"));
 												}
-													
+												
 											} else {
 												// 해당 줄에 속성이 여러 개일 때
-													
+												
 												// 처음 속성
 												let attr = trimedLine.attrs[0];
 												if (isClear(attr, br)) {
@@ -563,12 +572,12 @@ if (!Uint8Array.fromBase64) {
 													padsAttrs.push(new Attr(br, "​" + pad));
 													padsAttrs.push(attr);
 												}
-													
+												
 												// 중간 속성은 그대로 넣음
 												for (let k = 1; k < trimedLine.attrs.length - 1; k++) {
 													padsAttrs.push(trimedLine.attrs[k]);
 												}
-													
+												
 												// 마지막 속성
 												attr = trimedLine.attrs[trimedLine.attrs.length - 1];
 												if (isClear(attr, br)) {
@@ -1339,11 +1348,19 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 		
 		// 임시 중간 싱크 정상화
 		main.body.forEach((smi) => {
+			/*
 			if (smi.syncType == SyncType.combinedNormal) {
 				smi.syncType = SyncType.normal;
 			} else if (smi.syncType == SyncType.combinedFrame) {
 				smi.syncType = SyncType.frame;
 			} else if (smi.syncType == SyncType.combinedInner) {
+				smi.syncType = SyncType.inner;
+			}
+			*/
+			// 결합 후엔 임시 중간 싱크는 모두 중간 싱크로 처리
+			if (smi.syncType == SyncType.combinedNormal
+			 || smi.syncType == SyncType.combinedFrame
+			 || smi.syncType == SyncType.combinedInner) {
 				smi.syncType = SyncType.inner;
 			}
 		});
@@ -1888,8 +1905,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		assComments.forEach((item) => {
 			{	// 자체 fadein/out 태그 처리
 				const fadeLength = item.end - item.start;
-				item.text = item.text.replaceAll("\\fadein" , `\\fade(${fadeLength},0)`)
-				                     .replaceAll("\\fadeout", `\\fade(0,${fadeLength})`);
+				item.text = item.text.replaceAll("\\fadein" , `\\fad(${fadeLength},0)`)
+				                     .replaceAll("\\fadeout", `\\fad(0,${fadeLength})`);
 			}
 			const event = new AssEvent(item.start, item.end, item.style, item.text, item.layer);
 			event.owner = item.smi;
@@ -2046,7 +2063,138 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		}
 		
 		eventsBody.forEach((item) => {
+			// 뒤쪽에 붙은 군더더기 종료태그 삭제
 			item.clearEnds();
+			
+			{	// 자체 카메라 원점 조절 태그 처리
+				let isTag = false;
+				let last = { isTag: false, text: "" };
+				const tokens = [last];
+				const tagTokens = [];
+				for (let i = 0; i < item.Text.length; i++) {
+					const c = item.Text[i];
+					if (isTag) {
+						if (c == '}') {
+							tokens.push(last = { isTag: (isTag = false), text: "" });
+						} else {
+							last.text += c
+						}
+					} else {
+						if (c == '{') {
+							tokens.push(last = { isTag: (isTag = true), text: "" });
+							tagTokens.push(last);
+						} else {
+							last.text += c
+						}
+					}
+				}
+				// org는 없으면서 frx or fry, pos, cam 태그가 있을 때만 동작
+				let frx = 0;
+				let fry = 0;
+				let frz = 0;
+				let org = null;
+				let pos = null;
+				let dpos = null;
+				for (let i = 0; i < tagTokens.length; i++) {
+					const tags = tagTokens[i].tags = tagTokens[i].text.split("\\");
+					for (let j = 0; j < tags.length; j++) {
+						const tag = tags[j];
+						if (!frx && tag.startsWith("frx")) {
+							const value = tag.substring(3);
+							if (isFinite(value)) {
+								frx = Number(value);
+							}
+						} else if (!fry && tag.startsWith("fry")) {
+							const value = tag.substring(3);
+							if (isFinite(value)) {
+								fry = Number(value);
+							}
+						} else if (!frz && tag.startsWith("frz")) {
+							const value = tag.substring(3);
+							if (isFinite(value)) {
+								frz = Number(value);
+							}
+						} else if (!frz && tag.startsWith("fr")) {
+							const value = tag.substring(2);
+							if (isFinite(value)) {
+								frz = Number(value);
+							}
+						} else if (!org && tag.startsWith("org(") && tag.endsWith(")")) {
+							const values = tag.substring(4, tag.length - 1).split(",");
+							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
+								org = { i: i, j: j, values: values
+									,	x: values[0] = Number(values[0])
+									,	y: values[1] = Number(values[1])
+								};
+							}
+						} else if (!pos && tag.startsWith("pos(") && tag.endsWith(")")) {
+							const values = tag.substring(4, tag.length - 1).split(",");
+							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
+								pos = { i: i, j: j, values: values, tag: "pos"
+									,	x: values[0] = Number(values[0])
+									,	y: values[1] = Number(values[1])
+								};
+							}
+						} else if (!pos && tag.startsWith("move(") && tag.endsWith(")")) {
+							const values = tag.substring(5, tag.length - 1).split(",");
+							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
+								pos = { i: i, j: j, values: values, tag: "move"
+									,	x: values[0] = Number(values[0])
+									,	y: values[1] = Number(values[1])
+								};
+							}
+						} else if (!dpos && tag.startsWith("dpos(") && tag.endsWith(")")) {
+							const values = tag.substring(5, tag.length - 1).split(",");
+							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
+								dpos = { i: i, j: j, values: values, tag: "pos"
+									,	x: values[0] = Number(values[0])
+									,	y: values[1] = Number(values[1])
+								};
+							}
+						} else if (!dpos && tag.startsWith("dmove(") && tag.endsWith(")")) {
+							const values = tag.substring(6, tag.length - 1).split(",");
+							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
+								dpos = { i: i, j: j, values: values, tag: "move"
+									,	x: values[0] = Number(values[0])
+									,	y: values[1] = Number(values[1])
+								};
+								if (values.length >= 4 && isFinite(values[2]) && isFinite(values[3])) {
+									dpos.x2 = values[2] = Number(values[2]);
+									dpos.y2 = values[3] = Number(values[3]);
+								}
+							}
+						}
+					}
+				}
+				
+				if (org && (frx || fry || frz) && dpos && !pos) {
+					if (dpos.x != null) {
+						const newPos = reverseRotate(org.x, org.y, frx, fry, frz, dpos.x, dpos.y);
+						if (newPos) {
+							dpos.values[0] = newPos.x.toFixed(2);
+							dpos.values[1] = newPos.y.toFixed(2);
+						}
+					}
+					if (dpos.tag == "move" && dpos.x2 != null) {
+						const newPos = reverseRotate(org.x, org.y, frx, fry, frz, dpos.x2, dpos.y2);
+						if (newPos) {
+							dpos.values[2] = newPos.x.toFixed(2);
+							dpos.values[3] = newPos.y.toFixed(2);
+						}
+					}
+					tagTokens[dpos.i].tags[dpos.j] = `${dpos.tag}(${dpos.values.join(",")})`;
+					
+					let text = "";
+					tokens.forEach((token, i) => {
+						if (i % 2 == 0) {
+							text += token.text;
+						} else {
+							text += "{" + token.tags.join("\\") + "}";
+						}
+					});
+					item.Text = text;
+				}
+			}
 		});
 	}
 	
@@ -2096,4 +2244,84 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		});
 	}
 	return assFile;
+}
+function reverseRotate(ox, oy, frx, fry, frz, px, py) {
+	const oz = -312.5; // ASS 자막 원근 왜곡 기준 거리
+	const dx = px - ox;
+	const dy = py - oy;
+	
+	const degToRad = Math.PI / 180;
+	const rx = frx * degToRad;
+	const ry = fry * degToRad;
+	const rz = frz * degToRad;
+	
+	// 기본 평면: z=0
+	// frx 회전: (0, Math.sin(rx), Math.cos(rx))
+	// fry 회전: ( -Math.sin(ry) * Math.cos(rx)
+	//           ,  Math.sin(rx)
+	//           ,  Math.cos(ry) * Math.cos(rx)
+	//           )
+	const A = -Math.sin(ry) * Math.cos(rx);
+	const B =  Math.sin(rx);
+	const C =  Math.cos(ry) * Math.cos(rx);
+	// 새 평면: Ax + By + Cz = 0;
+	
+	let x=0, y=0, z=0;
+	if (dx == 0) {
+		// (0,0,oz)와 (0,dy,0)을 잇는 투시 직선
+		// y / dy = (z-oz) / -oz
+		
+		// 새 평면과 직선의 교점
+		//   z = oz - oz/dy*y
+		//     B*y + C*oz - C*oz/dy*y = 0
+		//     (B - C*oz/dy)*y + C*oz = 0
+		//   y = -C*oz / (B - C*oz/dy)
+		const bunmo = (B - C*oz/dy);
+		if (Math.abs(bunmo) < 1e-6) {
+			// 표현 불가능한 좌표
+			return null;
+		}
+		y = -C * oz / bunmo;
+		z = oz - oz/dy*y;
+		
+	} else {
+		// (0,0,oz)와 (dx,dy,0)을 잇는 투시 직선
+		// x / dx = y / dy = (z-oz) / -oz
+		
+		// 새 평면과 직선의 교점
+		//   y = x * dy / dx = dy/dx*x
+		//   z = oz - x*oz/dx = -oz/dx*x + oz
+		//     A*x + B*dy/dx*x - C*oz/dx*x + C*oz = 0
+		//     (A + B*dy/dx - C*oz/dx)*x + C*oz = 0
+		//   x = -C*oz / (A + B*dy/dx - C*oz/dx);
+		const bunmo = (A + B*dy/dx - C*oz/dx);
+		if (Math.abs(bunmo) < 1e-6) {
+			// 표현 불가능한 좌표
+			return null;
+		}
+		x = -C * oz / bunmo;
+		y = x * dy / dx;
+		z = oz - x*oz/dx;
+	}
+	
+	// 회전했을 때 해당 교점에 맞춰지는 좌표 역산
+	let t;
+	if (ry) {
+		t = x * Math.cos(ry) + z * Math.sin(ry);
+		z = z * Math.cos(ry) - x * Math.sin(ry);
+		x = t;
+	}
+	if (rx) {
+		t = y * Math.cos(rx) - z * Math.sin(rx);
+		z = z * Math.cos(rx) + y * Math.sin(rx);
+		y = t;
+	}
+	if (rz) {
+		t = x * Math.cos(rz) - y * Math.sin(rz);
+		y = y * Math.cos(rz) + x * Math.sin(rz);
+		x = t;
+	}
+	
+	// org 좌표에 더한 결과 반환
+	return { x: ox+x, y: oy+y };
 }

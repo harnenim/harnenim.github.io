@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -9,9 +9,9 @@
 <link rel="manifest" href="manifest.webmanifest" />
 -->
 <title>WinPNG 뷰어</title>
-<script src="../view/lib/Subtitle.Converter.js" type="module"></script>
-<script src="jszip.min.js" type="module"></script>
-<script src="WinPNG.js" type="module"></script>
+<script src="../view/lib/Subtitle.Converter.js?260514" type="module"></script>
+<script src="jszip.min.js?260514" type="module"></script>
+<script src="WinPNG.js?260514" type="module"></script>
 <script>
 {
 	const userAgent = clientInformation.userAgent.toLowerCase();
@@ -154,6 +154,10 @@ function convert(i) {
 	}
 	const toConvert = toConverts[i];
 	const holds = toConvert.holds;
+	
+    Subtitle.video.fs  = holds[0].fs;
+	Subtitle.video.kfs = holds[0].kfs ?? [];
+	
 	if (toConvert.type == "smi") {
 		const smiText = SmiFile.holdsToText(holds, true, true, -1);
 		const smiFile = new File([new Blob(["\uFEFF" + smiText], { type: "text/plain;charset=utf-8" })], toConvert.filename);
@@ -161,6 +165,7 @@ function convert(i) {
 		toConvert.a.setAttribute("data-smi", smiUrl);
 		toConvert.subA.href = smiUrl;
 		toConvert.subA.classList.remove("processing");
+		
 	} else if (toConvert.type == "ass") {
 		const append = new AssFile(holds[0].ass ?? "");
 		const appendParts = [];
@@ -404,9 +409,6 @@ async function addFile(cont) {
 						}
 					});
 				}
-
-				Subtitle.video.fs  = holds[0].fs;
-				Subtitle.video.kfs = holds[0].kfs ?? [];
 				
 				if (withSmi) {
 					const smiFilename = filename.substring(0, extIndex) + "smi";
@@ -1189,7 +1191,7 @@ fieldset button[type=submit] {
 		<label><input type="radio" name="priority" value="ass" />ASS</label>
 	</div>
 	<div id="areaSetting">
-		<label title="MPC-HC, VLC 등 smi 파일의 주석이 노출되는 플레이어를 이용하는 경우에 필요합니다."><input type="checkbox" id="cbJamaker"> .smi 내 Jamaker용 주석 제거</label>
+		<label title="MPC-HC, VLC 등 smi 파일의 주석이 노출되는 플레이어를 이용하는 경우에 필요합니다."><input type="checkbox" id="cbJamaker" checked> .smi 내 Jamaker용 주석 제거</label>
 		<a href="javascript:downloadZip()">[ZIP으로 받기]</a>
 	</div>
 	<div id="areaFileList">
