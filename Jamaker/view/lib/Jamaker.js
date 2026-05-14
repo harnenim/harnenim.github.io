@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js";
-import "./Subtitle.Converter.js";
-import "./AutoCompleteCodeMirror.js";
-import "./SmiEditor.js";
-import "./AssEditor.js";
+﻿import "./MenuStrip.js?260514";
+import "./Subtitle.Converter.js?260514";
+import "./AutoCompleteCodeMirror.js?260514";
+import "./SmiEditor.js?260514";
+import "./AssEditor.js?260514";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {

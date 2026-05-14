@@ -1,10 +1,10 @@
-﻿import "./SubtitleObject.js";
+﻿import "./SubtitleObject.js?260514";
 
-import "./highlight/cm/codemirror.js";
-import "./highlight/cm/scrollpastend.js";
-import "./highlight/cm/mark-selection.js";
-import "./highlight/cm/active-line.js";
-import "./highlight/cm/sami.js";
+import "./highlight/cm/codemirror.js?260514";
+import "./highlight/cm/scrollpastend.js?260514";
+import "./highlight/cm/mark-selection.js?260514";
+import "./highlight/cm/active-line.js?260514";
+import "./highlight/cm/sami.js?260514";
 
 {
 	let link = document.createElement("link");

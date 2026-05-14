@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js";
+﻿import "./SubtitleObject.js?260514";
 
 {
 	const link = document.createElement("link");
