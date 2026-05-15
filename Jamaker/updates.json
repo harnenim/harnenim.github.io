@@ -1,4 +1,27 @@
-[ { "version": "2026.05.05"
+[ { "version": "2026.05.16"
+  , "comment":
+    [ "홀드 선택기 크기 조절 가능하도록 보완"
+    , "홀드명 변경 시 이름 중복될 경우 스타일 가져오기"
+    , "흐르는 자막 공백문자 무시되지 않도록 중간 Zero-Width-Space 추가"
+    , "홀드 결합 시 Zero-Width-Space 보존"
+    , "페이드 효과 ASS 변환 시 태그 표준에 맞춰 수정"
+    , "ASS 자막 공간 좌표 변형 역보정 지원 등"
+    ]
+  , "files":
+    [ "view/help/img/ass10.png"
+    , "view/help/img/ass11.png"
+    , "view/help/img/ass12.png"
+    , "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    ]
+  }
+, { "version": "2026.05.05"
   , "comment":
     [ "WebView2 구버전인 경우 base64 함수 선언"
     , "화면 싱크 매니저 렌더링 중복 실행 시 멈추는 문제 수정"
