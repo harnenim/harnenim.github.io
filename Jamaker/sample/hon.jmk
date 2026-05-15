@@ -179,7 +179,7 @@ END
 요사노 케이코
 <​Sync Start=12012​><​P Class=KRCC ​>
 <​!-- ASS
-0,,,화면 글씨,{\fade(2000,0)\an8\3c&H005BFF&\bord5\blur10\fs72}　거대한 서고{\fs100}｛미쿠라관｝
+0,,,화면 글씨,{\fad(2000,0)\an8\3c&H005BFF&\bord5\blur10\fs72}　거대한 서고{\fs100}｛미쿠라관｝
 END
 --​>
 거대한 서고 미쿠라관
@@ -194,7 +194,7 @@ END
 &nbsp;
 <​Sync Start=30072​><​P Class=KRCC ​>
 <​!-- ASS
-0,,,화면 글씨,{\fade(2000,0)\an8\c&HFFD6E4&\bord1\shad4\4c&HA9525E&\blur2\fs60}북커스\N\N{\fs100}책의 저주
+0,,,화면 글씨,{\fad(2000,0)\an8\c&HFFD6E4&\bord1\shad4\4c&HA9525E&\blur2\fs60}북커스\N\N{\fs100}책의 저주
 END
 --​>
 북커스
@@ -211,7 +211,7 @@ END
 <​Sync Start=35577​><​P Class=KRCC ​>
 &nbsp;
 <​Sync Start=36286​><​P Class=KRCC ​>
-<​FONT ass="{\fade(1000,0)\an2\blur5\fs66\pos(960,790)}"​><​/FONT​>
+<​FONT ass="{\fad(1000,0)\an2\blur5\fs66\pos(960,790)}"​><​/FONT​>
 마을 사람
 <​Sync Start=37788​><​P Class=KRCC ​>
 <​FONT ass="{\an2\blur5\fs66\pos(960,570)\fry180}"​><​/FONT​>
@@ -261,7 +261,7 @@ END
 <​Sync Start=70696​><​P Class=KRCC ​>
 &nbsp;
 <​Sync Start=77578​><​P Class=KRCC ​>
-<​FONT ass="{\fade(1000,0)\an2\pos(960,420)\3c&H808080&\blur5}"​><​/FONT​>
+<​FONT ass="{\fad(1000,0)\an2\pos(960,420)\3c&H808080&\blur5}"​><​/FONT​>
 이 책을 훔치는 자는
 <​Sync Start=80497​><​P Class=KRCC ​>
 <​!-- ASS
