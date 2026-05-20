@@ -9,9 +9,9 @@
 <link rel="manifest" href="manifest.webmanifest" />
 -->
 <title>WinPNG 뷰어</title>
-<script src="../view/lib/Subtitle.Converter.js?260515" type="module"></script>
-<script src="jszip.min.js?260515" type="module"></script>
-<script src="WinPNG.js?260515" type="module"></script>
+<script src="../view/lib/Subtitle.Converter.js?260520" type="module"></script>
+<script src="jszip.min.js?260520" type="module"></script>
+<script src="WinPNG.js?260520" type="module"></script>
 <script>
 {
 	const userAgent = clientInformation.userAgent.toLowerCase();
@@ -83,7 +83,8 @@ let ivTarget;
 let cbJamaker;
 let areaSettingZip;
 let viewFileList;
-let previewImg;
+let previewLayer;
+let alertLayer;
 let toConverts = [];
 let popup;
 let popupUrl;
@@ -122,7 +123,7 @@ input.onload = async function() {
 			}
 		}
 		
-		previewImg.style.display = "";
+		previewLayer.style.display = "";
 		showTargetImage(parsed.targetImage);
 		
 		parsed.containers.sort((cont1, cont2) => {
@@ -147,7 +148,7 @@ input.onload = async function() {
 input.onerror = function(err) {
 	loadExternal(inputUrl.value);
 }
-function convert(i) {
+async function convert(i) {
 	if (i >= toConverts.length) {
 		toConverts = [];
 		return;
@@ -155,7 +156,7 @@ function convert(i) {
 	const toConvert = toConverts[i];
 	const holds = toConvert.holds;
 	
-    Subtitle.video.fs  = holds[0].fs;
+	Subtitle.video.fs  = holds[0].fs;
 	Subtitle.video.kfs = holds[0].kfs ?? [];
 	
 	if (toConvert.type == "smi") {
@@ -198,7 +199,9 @@ function convert(i) {
 		const assFile = new File([new Blob(["\uFEFF" + assText], { type: "text/plain;charset=utf-8" })], toConvert.filename);
 		const assUrl = URL.from(assFile);
 		toConvert.a.setAttribute("data-ass", assUrl);
-		toConvert.subA.href = assUrl;
+		// 폰에서 .ass 파일이 .ass.txt로 받아지는 것 방지
+//		toConvert.subA.href = assUrl;
+		toConvert.subA.href = `data:application/x-download;base64,${new Uint8Array(await assFile.arrayBuffer()).toBase64()}`;
 		toConvert.subA.classList.remove("processing");
 	}
 	setTimeout(() => { convert(i + 1); });
@@ -414,7 +417,7 @@ async function addFile(cont) {
 					const smiFilename = filename.substring(0, extIndex) + "smi";
 					const smiA = document.createElement("a");
 					smiA.classList.add("processing");
-					smiA.href = "javascript:alert('생성 중입니다.')";
+					smiA.href = "javascript:vAlert('파일 생성 중입니다.')";
 					smiA.download = smiFilename;
 					smiA.innerText = "[SMI] ";
 					labelFile.before(smiA);
@@ -424,7 +427,7 @@ async function addFile(cont) {
 					const assFilename = filename.substring(0, extIndex) + "ass";
 					const assA = document.createElement("a");
 					assA.classList.add("processing");
-					assA.href = "javascript:alert('생성 중입니다.')";
+					assA.href = "javascript:vAlert('파일 생성 중입니다.')";
 					assA.download = assFilename;
 					assA.innerText = "[ASS] ";
 					labelFile.before(assA);
@@ -499,7 +502,7 @@ window.downloadZip = function() {
 		return;
 	}
 	if (toConverts.length) {
-		alert("파일 생성이 끝나지 않았습니다.");
+		vAlert("파일 생성이 끝나지 않았습니다.");
 		return;
 	}
 	
@@ -599,7 +602,8 @@ async function onload() {
 	ivTarget = document.getElementById("ivTarget");
 	areaSettingZip = document.getElementById("areaSettingZip");
 	viewFileList = document.getElementById("viewFileList");
-	previewImg = document.getElementById("previewImg");
+	previewLayer = document.getElementById("previewLayer");
+	alertLayer = document.getElementById("alertLayer");
 	
 	// 포커스 상관없이 붙여넣기 이벤트 동작
 	document.addEventListener("paste", paste);
@@ -819,7 +823,7 @@ async function onload() {
 						previewContent.innerText = await URL.files[url].text();
 						previewSelector.style.visibility = "hidden";
 					}
-					previewImg.style.display = "block";
+					previewLayer.style.display = "block";
 					break;
 				}
 				case "image": {
@@ -827,7 +831,7 @@ async function onload() {
 					const img = new Image();
 					img.src = url;
 					previewContent.append(img);
-					previewImg.style.display = "block";
+					previewLayer.style.display = "block";
 					break;
 				}
 			}
@@ -838,11 +842,11 @@ async function onload() {
 			previewContent.innerText = await URL.files[url].text();
 		});
 		document.getElementById("btnClosePreview").addEventListener("click", (e) => {
-			previewImg.style.display = "";
+			previewLayer.style.display = "";
 		});
 		document.addEventListener("keydown", (e) => {
 			if (e.keyCode == 27) { // ESC
-				previewImg.style.display = "";
+				previewLayer.style.display = "";
 			}
 		});
 		
@@ -878,6 +882,28 @@ async function onload() {
 			} else if (cookie[0] == "priority") {
 				form.priority.value = cookie[1];
 			}
+		});
+	}
+	
+	{	// 자체 alert
+		let focused = null;
+		window.vAlert = function(msg) {
+			focused = document.activeElement;
+			document.getElementById("alertContent").innerText = msg;
+			alertLayer.style.display = "block";
+			document.getElementById("btnCloseAlert").focus();
+		}
+		alertLayer.addEventListener("click", (e) => {
+			if (e.target.closest("#alertWindow") && !e.target.closest("#btnCloseAlert")) {
+				document.getElementById("btnCloseAlert").focus();
+				return;
+			}
+			alertLayer.style.display = "";
+			focused?.focus();
+		});
+		document.getElementById("btnCloseAlert").addEventListener("keydown", (e) => {
+			alertLayer.style.display = "";
+			focused?.focus();
 		});
 	}
 	
@@ -929,7 +955,7 @@ form {
 	position: relative;
 	margin: 0 auto;
 	width: 100%;
-	max-width: 800px;
+	max-width: 960px;
 	height: 100%;
 }
 
@@ -939,7 +965,7 @@ body.withExternal form { height: 55%; }
 body.withPopup #externalFrame {
 	display: block;
 	float: left;
-	width: calc(100% - 800px);
+	width: calc(100% - 960px);
 	height: 100%;
 }
 body.withPopup #externalFrame > div {
@@ -983,7 +1009,7 @@ body.withImage form {
 	100% { transform: rotate(360deg); }
 }
 
-@media (max-width:1600px) { body.withPopup #externalFrame { width: 50%;                } body.withPopup form, body.withImage form { width: 50%;   } }
+@media (max-width:1920px) { body.withPopup #externalFrame { width: 50%;                } body.withPopup form, body.withImage form { width: 50%;   } }
 @media (max-width:1200px) { body.withPopup #externalFrame { width: calc(100% - 600px); } body.withPopup form, body.withImage form { width: 600px; } }
 
 fieldset {
@@ -1048,6 +1074,7 @@ fieldset button[type=submit] {
 	display: block;
 	position: relative;
 	margin-top: -200px;
+	padding: 0 4px;
 	text-align: right;
 	line-height: 20px;
 	margin-bottom: 180px;
@@ -1073,6 +1100,7 @@ fieldset button[type=submit] {
 	line-height: 30px;
 	background: linear-gradient(#fff, #eee);
 	border-bottom: 1px solid #ccc;
+	padding: 0 4px;
 }
 #areaSetting a {
 	display: block;
@@ -1123,7 +1151,8 @@ fieldset button[type=submit] {
 	padding: 0 10px;
 	cursor: pointer;
 }
-#previewImg {
+#previewLayer,
+#alertLayer {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -1132,15 +1161,24 @@ fieldset button[type=submit] {
 	background: rgba(127, 127, 127, 0.1);
 	display: none;
 }
-#previewWindow {
+#alertLayer {
+	background: rgba(127, 127, 127, 0.3);
+}
+#previewWindow,
+#alertWindow {
 	margin: 10px auto;
 	width: calc(100% - 20px);
-	max-width: 780px;
-	height: calc(100% - 20px);
+	max-width: 940px;
 	border: 1px solid #000;
 	border-radius: 10px;
 	background: #fff;
 	padding: 10px;
+}
+#previewWindow {
+	height: calc(100% - 20px);
+}
+#alertWindow {
+	max-width: 400px;
 }
 #previewSelector {
 	width: 100%;
@@ -1152,20 +1190,31 @@ fieldset button[type=submit] {
 	height: calc(100% - 30px);
 	overflow: auto;
 	white-space: pre;
+	line-height: 18px;
+}
+#alertContent {
+	text-align: center;
 }
 #btnClosePreview {
 	position: fixed;
 	top: 10px;
-	right: calc(50% - 390px);
+	right: calc(50% - 470px);
 	width: 50px;
 	height: 50px;
 	border: 0;
 	background: transparent;
+	font-family: Arial;
 	font-size: 40px;
+	color: #000;
 	cursor: pointer;
 }
+#btnCloseAlert {
+	display: block;
+	margin: 10px auto 0;
+	width: 60px;
+}
 
-@media (max-width: 800px) {
+@media (max-width: 960px) {
 	#btnClosePreview {
 		right: 10px;
 	}
@@ -1197,7 +1246,7 @@ fieldset button[type=submit] {
 	<div id="areaFileList">
 		<div id="viewFileList"></div>
 	</div>
-	<div id="previewImg">
+	<div id="previewLayer">
 		<div id="previewWindow">
 			<div id="previewSelector">
 				<label><input type="radio" name="type" value="jmk" />JMK</label>
@@ -1206,6 +1255,12 @@ fieldset button[type=submit] {
 			</div>
 			<div id="previewContent"></div>
 			<button type="button" id="btnClosePreview">×</button>
+		</div>
+	</div>
+	<div id="alertLayer">
+		<div id="alertWindow">
+			<div id="alertContent">Alert 메시지</div>
+			<button type="button" id="btnCloseAlert">확인</button>
 		</div>
 	</div>
 	<div id="winPNGprogress"><div class="spinner"></div></div>

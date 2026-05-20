@@ -1,5 +1,5 @@
 ﻿document.head.querySelectorAll("link").forEach((el) => {
-	if (el.href.endsWith("/popup.css?260515")) {
+	if (el.href.endsWith("/popup.css?260520")) {
 		el.remove();
 	}
 });
@@ -1209,7 +1209,7 @@ ready(() => {
 			});
 			
 			preview.innerHTML = (`<p>${ html.join("</p><p>") }</p>`);
-			output.value = html.join("\n").replaceAll("<RT>", "<RP>(</RP><RT>").replaceAll("</RT>", "</RT><RP>)</RP>");
+			output.value = html.join("\n").replaceAll("<RT>", "<RT><RP>(</RP>").replaceAll("</RT>", "<RP>)</RP></RT>");
 		}
 		runs[4] = run;
 		

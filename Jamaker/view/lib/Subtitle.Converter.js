@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260515";
+﻿import "./SubtitleObject.js?260520";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -629,9 +629,7 @@ if (!Uint8Array.fromBase64) {
 								if (LOG) console.log(padsAttrs, width);
 							}
 							
-							sync[TEXT] = Smi.fromAttr(padsAttrs).replaceAll("\n", "<br>")
-								.split("<RUBY><B>　</B><RT><RP>(</RP>　<RP>)</RP></RT></RUBY>")
-								.join("<RUBY><B>　</B><RT>　</RT></RUBY>");
+							sync[TEXT] = Smi.fromAttr(padsAttrs).replaceAll("\n", "<br>").replaceAll(/<RP>(^<)*<\/RP>/gi, "");
 							
 						} else {
 							sync[TEXT] = Smi.fromAttr(attrs).replaceAll("\n", "<br>");
@@ -1498,14 +1496,23 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 			// export 속성 제거
 			main.header = main.header.replace(/<sami( [^>]*)*>/gi, "<SAMI>");
 			main.body.forEach((smi) => {
-				// 싱크 타입까지 제거
+				// 싱크 타입 제거
 				smi.syncType = SyncType.normal;
-				// ASS 변환용 주석도 제거
-				if (smi.text.startsWith("<!-- ASS")) {
-					const commentEnd = smi.text.indexOf("-->");
-					if (commentEnd > 0) {
-						smi.text = smi.text.substring(commentEnd + 3).trim();
-					}
+				
+				// ASS 변환용 속성 제거
+				const attrs = smi.toAttrs();
+				attrs.forEach((attr) => {
+					attr.ass = null;
+				});
+				// ASS 변환용 주석 제거
+				if (attrs[0].comment?.startsWith("<!-- ASS")) {
+					attrs[0].comment = null;
+				}
+				
+				// SMI 재구성
+				smi.fromAttrs(attrs, true);
+				if (!smi.text.trim()) {
+					smi.text = "&nbsp;";
 				}
 			});
 		}
