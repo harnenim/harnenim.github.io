@@ -1,4 +1,18 @@
-[ { "version": "2026.05.16"
+[ { "version": "2026.05.21"
+  , "comment":
+    [ "SMI 내보내기 군더더기 제거 등"
+    ]
+  , "files":
+    [ "view/addon/Karaoke.js"
+    , "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/setting.html"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    ]
+  }
+, { "version": "2026.05.16"
   , "comment":
     [ "홀드 선택기 크기 조절 가능하도록 보완"
     , "홀드명 변경 시 이름 중복될 경우 스타일 가져오기"
