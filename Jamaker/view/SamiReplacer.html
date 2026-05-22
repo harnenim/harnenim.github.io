@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>SAMI 자막 내용 일괄 치환</title>
-	<script src="lib/webview.js?260520"></script>
-	<script src="lib/ListView.js?260520"></script>
-	<script src="lib/Subtitle.Converter.js?260520" type="module"></script>
+	<script src="lib/webview.js?260522"></script>
+	<script src="lib/ListView.js?260522"></script>
+	<script src="lib/Subtitle.Converter.js?260522" type="module"></script>
 	<script>
 let listFiles;
 
@@ -129,8 +129,8 @@ function replace(index, text) {
 		if (holds[0].ass) {
 			assFoot = "\n<!-- ASS\n" + holds[0].ass + "\n-->";
 		}
-		
-		text = SmiFile.holdsToText(holds) + assFoot; // 여기서 fps 값 가져오긴 어렵나...
+		const isSmi = !listFiles.list[index].value.endsWith(".jmk");
+		text = SmiFile.holdsToText(holds, isSmi, isSmi, isSmi ? 1 : 3) + assFoot; // 여기서 fps 값 가져오긴 어렵나...
 	} else {
 		text = null;
 	}

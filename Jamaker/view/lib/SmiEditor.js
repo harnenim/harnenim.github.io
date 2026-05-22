@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?260520";
+﻿import "./SubtitleObject.js?260522";
 
-import "./highlight/cm/codemirror.js?260520";
-import "./highlight/cm/scrollpastend.js?260520";
-import "./highlight/cm/mark-selection.js?260520";
-import "./highlight/cm/active-line.js?260520";
-import "./highlight/cm/sami.js?260520";
+import "./highlight/cm/codemirror.js?260522";
+import "./highlight/cm/scrollpastend.js?260522";
+import "./highlight/cm/mark-selection.js?260522";
+import "./highlight/cm/active-line.js?260522";
+import "./highlight/cm/sami.js?260522";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260520", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260522", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260520", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260522", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1452,11 +1452,17 @@ SmiEditor.prototype.inputText = function(input, standCursor=false) {
 	const selection = [this.cm.getCursor("start"), this.cm.getCursor("end")];
 	if (selection[0].line == selection[1].line) {
 		const text = this.cm.getLine(selection[0].line);
-		if (input.length == 7 && input[0] == "#"
-			&& selection[0].ch > 0 && text[selection[0].ch - 1] == "&"
-			&& selection[1].ch < text.length && text[selection[1].ch] == "&") {
-			// ASS 색상코드 블록지정한 상태일 경우 ASS 색상코드 입력
-			input = "H" + input.substring(5,7) + input.substring(3,5) + input.substring(1,3);
+		if (input.length == 7 && input[0] == "#") {
+			// 색상코드 입력일 때
+			if (selection[0].ch > 0) {
+				if (text[selection[0].ch - 1] == "&" && selection[1].ch < text.length && text[selection[1].ch] == "&") {
+					// ASS 색상코드 블록지정한 상태일 경우 ASS 색상코드 입력
+					input = "H" + input.substring(5,7) + input.substring(3,5) + input.substring(1,3);
+				} else if (text[selection[0].ch - 1] == "#") {
+					// 앞 글자가 #일 경우 중복된 # 제외
+					input = input.substring(1);
+				}
+			}
 		}
 	}
 	this.cm.replaceRange(input, selection[0], selection[1]);
@@ -2570,7 +2576,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260520", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260522", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2763,7 +2769,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260520", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260522", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
