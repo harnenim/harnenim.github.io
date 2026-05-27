@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AutoComplete.css?260522", import.meta.url).href;
+	link.href = new URL("./AutoComplete.css?260527", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -173,6 +173,14 @@ AutoCompleteCodeMirror.prototype.onKeydown = function(e) {
 			e.preventDefault();
 			break;
 		}
+		case "Alt":
+		case "Control":
+		case "Escape": {
+			e.preventDefault();
+			// 선택 취소
+			this.close();
+			break;
+		}
 	}
 };
 AutoCompleteCodeMirror.prototype.onKeyup = function(e) {
@@ -182,6 +190,7 @@ AutoCompleteCodeMirror.prototype.onKeyup = function(e) {
 			// keydown에서 동작 완료
 			e.preventDefault();
 			break;
+		/*
 		case "Control":
 			if (this.openedByCtrl) {
 				// Ctrl+SpaceBar로 연 직후
@@ -197,6 +206,7 @@ AutoCompleteCodeMirror.prototype.onKeyup = function(e) {
 			this.close();
 			break;
 		}
+		*/
 		case "Enter": {
 			if (e.altKey || e.ctrlKey || e.shiftKey) {
 				// 선택 취소로 간주

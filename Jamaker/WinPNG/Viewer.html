@@ -9,9 +9,9 @@
 <link rel="manifest" href="manifest.webmanifest" />
 -->
 <title>WinPNG 뷰어</title>
-<script src="../view/lib/Subtitle.Converter.js?260522" type="module"></script>
-<script src="jszip.min.js?260522" type="module"></script>
-<script src="WinPNG.js?260522" type="module"></script>
+<script src="../view/lib/Subtitle.Converter.js?260527" type="module"></script>
+<script src="jszip.min.js?260527" type="module"></script>
+<script src="WinPNG.js?260527" type="module"></script>
 <script>
 {
 	const userAgent = clientInformation.userAgent.toLowerCase();
@@ -195,7 +195,7 @@ async function convert(i) {
 		holds.forEach((hold) => {
 			hold.smiFile = new SmiFile(hold.text);
 		});
-		const assText = SmiFile.holdsToAss(holds, appendParts, append.getStyles().body, append.getEvents().body, x, y).toText();
+		const assText = SmiFile.holdsToAss(holds, appendParts, append.getStyles().body, append.getEvents().body, x, y).toText(true);
 		const assFile = new File([new Blob(["\uFEFF" + assText], { type: "text/plain;charset=utf-8" })], toConvert.filename);
 		const assUrl = URL.from(assFile);
 		toConvert.a.setAttribute("data-ass", assUrl);
@@ -573,7 +573,9 @@ window.downloadZip = function() {
 		}
 		if (!completed) {
 			let href = a.href;
-			if (!href) href = a.getAttribute("data-href");
+			if (!href || href.startsWith("data:application/x-download;base64,")) {
+				href = a.getAttribute("data-href");
+			}
 			if (href) zip.file(name, URL.files[href], opt);
 		}
 	});
@@ -768,7 +770,7 @@ async function onload() {
 			
 			const a = e.srcElement.parentElement;
 			let url = a.href;
-			if (!url) { // JMK 파일 링크 제거한 경우
+			if (!url || url.startsWith("data:application/x-download;base64,")) {
 				url = a.getAttribute("data-href");
 			}
 			

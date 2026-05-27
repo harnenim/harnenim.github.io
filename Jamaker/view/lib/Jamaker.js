@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260522";
-import "./Subtitle.Converter.js?260522";
-import "./AutoCompleteCodeMirror.js?260522";
-import "./SmiEditor.js?260522";
-import "./AssEditor.js?260522";
+﻿import "./MenuStrip.js?260527";
+import "./Subtitle.Converter.js?260527";
+import "./AutoCompleteCodeMirror.js?260527";
+import "./SmiEditor.js?260527";
+import "./AssEditor.js?260527";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260522";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260522", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260527", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -472,16 +472,30 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 					}
 					hold.style[input.name] = value;
 					hold.refreshStyle();
+					
+					if (input.name == "PrimaryColour") {
+						// 색상 태그는 미리보기 갱신
+						if (SmiEditor.Viewer.window) {
+							SmiEditor.Viewer.refresh();
+						}
+					}
 					return;
 				}
+				let isRange = false;
 				input = e.target.closest("input[type=number]");
-				if (!input) input = e.target.closest("input[type=range]");
+				if (!input) {
+					input = e.target.closest("input[type=range]");
+					isRange = !!input;
+				}
 				if (input) {
 					let value = input.value;
 					if (isFinite(value)) {
 						value = Number(value);
 					} else {
 						value = 0;
+					}
+					if (isRange) {
+						input.title = value;
 					}
 					hold.style[input.name] = value;
 					hold.refreshStyle();
@@ -493,6 +507,10 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 				if (input) {
 					hold.style[input.name] = input.checked;
 					hold.refreshStyle();
+					if (SmiEditor.Viewer.window) {
+						// 체크박스 중에 굵게는 ASS 전용이긴 하지만...
+						SmiEditor.Viewer.refresh();
+					}
 					return;
 				}
 				input = e.target.closest("input[type=radio]");
@@ -566,9 +584,13 @@ SmiEditor.prototype.setStyle = function(style) {
 	{ const input = area.querySelector("input[name=OutlineColour]"  ); input.value = input.nextSibling.value = style.OutlineColour  ; }
 	{ const input = area.querySelector("input[name=BackColour]"     ); input.value = input.nextSibling.value = style.BackColour     ; }
 	area.querySelector("input[name=PrimaryOpacity]  ").value = style.PrimaryOpacity  ;
+	area.querySelector("input[name=PrimaryOpacity]  ").title = style.PrimaryOpacity  ;
 	area.querySelector("input[name=SecondaryOpacity]").value = style.SecondaryOpacity;
+	area.querySelector("input[name=SecondaryOpacity]").title = style.SecondaryOpacity;
 	area.querySelector("input[name=OutlineOpacity]  ").value = style.OutlineOpacity  ;
+	area.querySelector("input[name=OutlineOpacity]  ").title = style.OutlineOpacity  ;
 	area.querySelector("input[name=BackOpacity]     ").value = style.BackOpacity     ;
+	area.querySelector("input[name=BackOpacity]     ").title = style.BackOpacity     ;
 	area.querySelector("input[name=ScaleX]     ").value   = style.ScaleX ;
 	area.querySelector("input[name=ScaleY]     ").value   = style.ScaleY ;
 	area.querySelector("input[name=Spacing]    ").value   = style.Spacing;
@@ -2067,7 +2089,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260522").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260527").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2145,7 +2167,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260522").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260527").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2317,7 +2339,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260522", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260527", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2757,7 +2779,7 @@ window.saveFile = function(asNew, isExport) {
 			}
 			if (withAss) {
 			    if (Subtitle.video.fs.length) {
-					const assText = currentTab.toAss().toText();
+					const assText = currentTab.toAss().toText(true);
 					
 					const saveAssFrom = log("binder.save ass start");
 					binder.save(tabIndex, assText, assPath, 2/*ass*/);
@@ -4569,7 +4591,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260522", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260527", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

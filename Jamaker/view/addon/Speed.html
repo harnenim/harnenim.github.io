@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>재생 속도 조절</title>
-	<script src="../lib/popup.js?260522"></script>
-	<script src="../lib/setting.js?260522"></script>
-	<script src="../lib/SmiEditor.js?260522" type="module"></script>
+	<script src="../lib/popup.js?260527"></script>
+	<script src="../lib/setting.js?260527"></script>
+	<script src="../lib/SmiEditor.js?260527" type="module"></script>
 	<script>
 windowName = "addon";
 
@@ -161,8 +161,8 @@ function convert() {
 				return;
 			}
 			
-			values[1] = toAssTime(Math.floor((parseTime(values[1]) * 100 * inputSpeed / outputSpeed) + 0.5) / 100);
-			values[2] = toAssTime(Math.floor((parseTime(values[2]) * 100 * inputSpeed / outputSpeed) + 0.5) / 100);
+			values[1] = toAssTime(Math.round(parseTime(values[1]) * 100 * inputSpeed / outputSpeed) / 100);
+			values[2] = toAssTime(Math.round(parseTime(values[2]) * 100 * inputSpeed / outputSpeed) / 100);
 			outputLines.push(values.join(","));
 		});
 	}

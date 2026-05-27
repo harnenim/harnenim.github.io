@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>흔들기 효과</title>
-	<script src="../lib/popup.js?260522"></script>
-	<script src="../lib/setting.js?260522"></script>
-	<script src="../lib/SmiEditor.js?260522" type="module"></script>
+	<script src="../lib/popup.js?260527"></script>
+	<script src="../lib/setting.js?260527"></script>
+	<script src="../lib/SmiEditor.js?260527" type="module"></script>
 	<script>
 windowName = "addon";
 
@@ -132,7 +132,7 @@ function shake() {
 					shaked.push({ time: group.start, type: group.type, text: "&nbsp;" });
 					
 				} else {
-					const count = Math.floor(((group.end - group.start) / speed) + 0.5);
+					const count = Math.round((group.end - group.start) / speed);
 					const lines = text.split(/<br>/gi);
 					shaked.push({ time: group.start, type: group.type, text: shakeSync(lines, index++, size) });
 					for (let j = 1; j < count; j++) {

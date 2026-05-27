@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260522";
+﻿import "./SubtitleObject.js?260527";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -70,31 +70,70 @@ if (!Uint8Array.fromBase64) {
 		    && !attr.typing // 타이핑 같은 건 결합 전에 사라져야 함
 		    && !attr.furigana;
 	}
-	function getAttrWidth(attrs, withFs=false) {
-		const cAttrs = [];
-		function append(attr) {
-			const cAttr = new Attr(attr, attr.text.replaceAll("&nbsp;", " "), true);
-			cAttr.fs = ((withFs && cAttr.fs) ? cAttr.fs : Combine.defaultSize);
-			if (cAttr.fn && cAttr.fn != "맑은 고딕") {
-				// 팟플레이어 폰트 크기 보정
-				cAttr.fs = cAttr.fs * 586 / 456;
-			}
-			cAttr.furigana = null;
-			cAttrs.push(cAttr);
+	const LOG_SIZE = 2000;
+	const wLogs = window.wLogs = {};
+	let wCount = 0;
+	let cAttrs = [];
+	function append(attr, withFs) {
+		const cAttr = new Attr(attr, attr.text.replaceAll("&nbsp;", " "), true);
+		cAttr.fs = ((withFs && cAttr.fs) ? cAttr.fs : Combine.defaultSize);
+		if (!Subtitle.USE_CANVAS
+		 && cAttr.fn && cAttr.fn != "맑은 고딕") {
+			// 팟플레이어 폰트 크기 보정
+			cAttr.fs = cAttr.fs * 586 / 456;
 		}
+		cAttr.fc = null; // 색상은 크기에 영향을 미치지 않고, 페이드 같은 게 불필요한 연산을 만듦
+		cAttr.furigana = null;
+		cAttrs.push(cAttr);
+	}
+	function getAttrWidth(attrs, withFs=false) {
+		cAttrs = [];
 		attrs.forEach((attr) => {
 			if (attr.attrs) {
 				attr.attrs.forEach((subAttr) => {
-					append(subAttr);
+					append(subAttr, withFs);
 				});
 			} else {
-				append(attr);
+				append(attr, withFs);
 			}
 		});
-		Combine.checker.innerHTML = Smi.fromAttr(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>");
-		const width = Combine.checker.clientWidth;
-		if (LOG) console.log(width, attrs);
+		let width = 0;
+		if (Subtitle.USE_CANVAS) {
+			const canvas = Subtitle.canvas ?? (Subtitle.canvas = document.createElement("canvas"));
+			const ctx = canvas.getContext("2d");
+			cAttrs.forEach((cAttr) => {
+				ctx.font = ["bold", `${cAttr.fs}px`, cAttr.fn ?? "맑은 고딕"].join(" ");
+				const m = ctx.measureText(cAttr.text);
+				console.log(cAttr.text, m);
+				width += m.width * m.fontBoundingBoxAscent;
+			});
+		} else {
+			let html = Smi.fromAttr(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>");
+			const log = wLogs[html];
+			if (log) {
+				log.index = wCount++;
+				return log.width;
+			}
+			Combine.checker.innerHTML = html;
+			width = Combine.checker.clientWidth;
+			wLogs[html] = {
+					index: wCount++
+				,	width: width
+			};
+			if (wCount > LOG_SIZE && wCount % LOG_SIZE == 0) {
+				clearWidthLogs(LOG_SIZE);
+			}
+			if (LOG) console.log(width, attrs);
+		}
 		return width;
+	}
+	window.clearWidthLogs = function(remains=2000) {
+		const limit = wCount - remains;
+		for (let html in wLogs) {
+			if (wLogs[html].index < limit) {
+				delete wLogs[html];
+			}
+		}
 	}
 	function initChecker() {
 		if (!Combine.checker) {
@@ -1587,7 +1626,7 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 					}
 				}
 				if (assTexts.length == 0) return;
-	
+				
 				// ASS 싱크 확장 확인
 				assTexts.forEach((assText) => {
 					let ass = assText.split(",");
@@ -1697,6 +1736,8 @@ SmiFile.partsToText = (parts, jmk=0) => {
 SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEvents=[], playResX=1920, playResY=1080, orderByEndSync=false) {
 	const funcSince = window.log ? log("holdsToAss start") : 0;
 	
+	playResX = isFinite(playResX) ? Number(playResX) : 1920;
+	playResY = isFinite(playResY) ? Number(playResY) : 1080;
 	const assFile = new AssFile(null, playResX, playResY);
 	
 	// 스타일/이벤트는 뺐다가
@@ -2078,6 +2119,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			}
 		}
 		
+		const defaultPos = {};
+		
 		eventsBody.forEach((item) => {
 			// 뒤쪽에 붙은 군더더기 종료태그 삭제
 			item.clearEnds();
@@ -2111,6 +2154,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				let org = null;
 				let pos = null;
 				let dpos = null;
+				let shake = null;
 				for (let i = 0; i < tagTokens.length; i++) {
 					const tags = tagTokens[i].tags = tagTokens[i].text.split("\\");
 					for (let j = 0; j < tags.length; j++) {
@@ -2180,13 +2224,29 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									dpos.y2 = values[3] = Number(values[3]);
 								}
 							}
+						} else if (!shake && tag.startsWith("shake") && tag.endsWith(")")) {
+							const values = tag.substring(6, tag.length - 1).split(",");
+							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
+								shake = { i: i, j: j
+									,	x: values[0] = Number(values[0])
+									,	y: values[1] = Number(values[1])
+								};
+								tagTokens[i].tags[j] = "";
+							}
 						}
 					}
 				}
 				
+				let transformed = false;
 				if (dpos && !pos) {
 					if (org && (frx || fry || frz)) {
-						const newPos = reverseRotate(org.x, org.y, frx, fry, frz, dpos.x, dpos.y);
+						let x = dpos.x;
+						let y = dpos.y;
+						if (shake) { // 흔들기 효과 추가 적용
+							x += (shake.x * playResY / 300);
+							y += (shake.y * playResY / 300);
+						}
+						const newPos = reverseRotate(org.x, org.y, frx, fry, frz, x, y);
 						if (newPos) {
 							dpos.values[0] = newPos.x.toFixed(2);
 							dpos.values[1] = newPos.y.toFixed(2);
@@ -2203,7 +2263,56 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 					}
 					
 					tagTokens[dpos.i].tags[dpos.j] = `${dpos.tag}(${dpos.values.join(",")})`;
+					transformed = true;
 					
+				} else if (shake) {
+					 // 흔들기 효과 추가 적용
+					if (!pos) {
+						// pos 태그 없었으면 스타일 기반으로 기본 위치 찾기
+						if (!(dpos = defaultPos[item.Style])) {
+							dpos = defaultPos[item.Style] = { x: playResX / 2, y: playResY / 2 };
+							for (let i = 0; i < assStyles.body.length; i++) {
+								const style = assStyles.body[i];
+								if (style.Name == item.Style) {
+									switch (style.Alignment % 3) {
+										case 1: {
+											dpos.x = style.MarginL;
+											break;
+										}
+										case 2: {
+											dpos.x = (style.MarginR + playResX - style.MarginR) / 2;
+											break;
+										}
+										case 0: {
+											dpos.x = playResX - style.MarginR;
+											break;
+										}
+									}
+									switch (Math.floor((style.Alignment - 1) / 3)) {
+										case 2: {
+											dpos.y = style.MarginV;
+											break;
+										}
+										case 0: {
+											dpos.y = playResY - style.MarginV;
+											break;
+										}
+									}
+									break;
+								}
+							}
+						}
+						pos = { i: shake.i, j: shake.j, x: dpos.x, y: dpos.y };
+					}
+					if (pos) {
+						const x = (pos.x + (shake.x * playResY / 300)).toFixed(2);
+						const y = (pos.y + (shake.y * playResY / 300)).toFixed(2);
+						tagTokens[pos.i].tags[pos.j] = `pos(${ x }, ${ y })`;
+						transformed = true;
+					}
+				}
+				
+				if (transformed) {
 					let text = "";
 					tokens.forEach((token, i) => {
 						if (i % 2 == 0) {

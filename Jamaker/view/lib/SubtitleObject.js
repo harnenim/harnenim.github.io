@@ -720,25 +720,36 @@ SyncAttr.prototype.getTextOnly = function () {
 	});
 	return text;
 }
+Subtitle.USE_CANVAS = false;
 Subtitle.Width =
 {	DEFAULT_FONT: { fontFamily: "맑은 고딕", fontSize: "72px", fontWeight: "bold" }
 ,	getWidth: function(input, font) {
 		if (typeof input == "string") {
 			if (!font) font = this.DEFAULT_FONT;
-			if (!this.div) {
-				this.div = document.createElement("div");
-				this.div.style.position = "absolute";
-				this.div.style.top = "-100px";
-				this.div.style.height = "100px";
-				this.div.style.whiteSpace = "pre";
-				document.body.append(this.div);
+			if (Subtitle.USE_CANVAS) {
+				const canvas = Subtitle.canvas ?? (Subtitle.canvas = document.createElement("canvas"));
+				const ctx = canvas.getContext("2d");
+				ctx.font = [font.fontWeight, font.fontSize, font.fontFamily].join(" ");
+				const m = ctx.measureText(input);
+				console.log(input, m);
+				return m.width;
+			} else {
+				if (!this.div) {
+					this.div = document.createElement("div");
+					this.div.style.position = "absolute";
+					this.div.style.top = "-100px";
+					this.div.style.height = "100px";
+					this.div.style.whiteSpace = "pre";
+					document.body.append(this.div);
+				}
+				for (let name in font) {
+					this.div.style[name] = font[name];
+				}
+				this.div.innerText = input;
+				return this.div.clientWidth;
 			}
-			for (let name in font) {
-				this.div.style[name] = font[name];
-			}
-			this.div.innerText = input;
-			return this.div.clientWidth;
 		} else {
+			// [Attr] 배열
 			let width = 0;
 			input.forEach((item) => {
 				width += item.getWidth();
@@ -958,6 +969,7 @@ Attr.toText = (attrs) => {
 
 window.Color = Subtitle.Color = function(target, color, index=0) {
 	this.index = index; // 페이드 index가 아니라, 속성의 index를 변칙적으로 사용 중...
+	this.target = target;
 	
 	if (color.length == 7 && color[0] == "#") {
 		color = color.substring(1);
@@ -974,14 +986,17 @@ window.Color = Subtitle.Color = function(target, color, index=0) {
 	}
 	
 	if (target == 1) {
+		this.target = 255;
 		this.r = this.g = this.b = 0;
 	} else if (target == -1) {
+		this.target = 0;
 		this.tr = this.tg = this.tb = 0;
 	} else if (typeof target == "string") {
 		if (target.endsWith("%")) {
 			let ratio = target.substring(0, target.length - 1);
 			if (isFinite(ratio)) {
 				ratio = Math.max(0, Math.min(Number(ratio), 100)) / 100;
+				this.target = Math.round(ratio * 255);
 				this.tr = this.r * ratio;
 				this.tg = this.g * ratio;
 				this.tb = this.b * ratio;
@@ -1038,6 +1053,16 @@ Color.prototype.smi = function(value, total) {
 	return `#${this.get(value, total)}`;
 }
 Color.prototype.ass = function(value, total) {
+	if (isFinite(this.target)) {
+		// 색상 페이드가 아닌 경우 투명도로 처리함
+		let opacity = 0;
+		if (this.target == 255) { // 페이드인
+			opacity = Math.round(255 * value / total);
+		} else {
+			opacity = Math.round(this.target + ((255 - this.target) * (total - value) / total));
+		}
+		return `&H${ Color.hex(opacity) }&`;
+	}
 	const color = this.getColor(value, total);
 	return `&H${ Color.hex(color[2]) }${ Color.hex(color[1]) }${ Color.hex(color[0]) }&`;
 }
@@ -1892,7 +1917,7 @@ AssEvent.fromSync = function(sync, style=null) {
 					// 강제로 pos 태그 잡혀있으면 추가 적용하지 않음
 					// an 태그로 정렬 바꾼 경우에도 적용하지 않음
 				} else {
-					text = `{\\pos(${x},${y})}` + text;
+					text = `{\\pos(${ Math.round(x * 100) / 100 },${ Math.round(y * 100) / 100 })}` + text;
 				}
 			}
 		}
@@ -2114,13 +2139,32 @@ window.AssFile = Subtitle.AssFile = function(text, width=0, height=0) {
 	}
 }
 AssFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
-AssFile.prototype.toText = function() {
+AssFile.prototype.toText = function(usedStylesOnly=false) {
+	const styles = this.getStyles();
+	const stylesBody = styles.body;
+	if (usedStylesOnly) {
+		// 실제 쓰이는 스타일만 남겨서 저장
+		const usedStyles = {};
+		this.getEvents().body.forEach((event) => {
+			usedStyles[event.Style] = true;
+		});
+		styles.body = [];
+		stylesBody.forEach((style) => {
+			if (usedStyles[style.Name]) {
+				styles.body.push(style);
+			}
+		});
+	}
 	const result = [];
 	this.parts.forEach((part) => {
 		if (part.body.length) {
 			result.push(part.toText());
 		}
 	});
+	if (usedStylesOnly) {
+		// 원래 스타일 복원
+		styles.body = stylesBody;
+	}
 	return result.join("\n\n");
 }
 AssFile.prototype.fromTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
@@ -2400,152 +2444,17 @@ window.sToAttrColor = function(soColor) {
 	if (typeof soColor != 'string') {
 		return "FFFFFF";
 	}
-	if (soColor[0] == '#' && soColor.length == 7) {
+	if (soColor.length == 6 && /^[a-fA-F0-9]{6}$/.test(soColor)) {
+		return soColor;
+	}
+	if (soColor.length == 7 && /^#[a-fA-F0-9]{6}$/.test(soColor)) {
 		return soColor.substring(1);
 	}
-	switch (soColor) {
-		case "red"                 : return "FF0000";
-		case "crimson"             : return "DC143C";
-		case "firebrick"           : return "B22222";
-		case "maroon"              : return "800000";
-		case "darkred"             : return "8B0000";
-		case "brown"               : return "A52A2A";
-		case "sienna"              : return "A0522D";
-		case "saddlebrown"         : return "8B4513";
-		case "indianred"           : return "CD5C5C";
-		case "rosybrown"           : return "BC8F8F";
-		case "lightcoral"          : return "F08080";
-		case "salmon"              : return "FA8072";
-		case "darksalmon"          : return "E9967A";
-		case "coral"               : return "FF7F50";
-		case "tomato"              : return "FF6347";
-		case "sandybrown"          : return "F4A460";
-		case "lightsalmon"         : return "FFA07A";
-		case "peru"                : return "CD853F";
-		case "chocolate"           : return "D2691E";
-		case "orangered"           : return "FF4500";
-		case "orange"              : return "FFA500";
-		case "darkorange"          : return "FF8C00";
-		case "tan"                 : return "D2B48C";
-		case "peachpuff"           : return "FFDAB9";
-		case "bisque"              : return "FFE4C4";
-		case "moccasin"            : return "FFE4B5";
-		case "navajowhite"         : return "FFDEAD";
-		case "wheat"               : return "F5DEB3";
-		case "burlywood"           : return "DEB887";
-		case "darkgoldenrod"       : return "B8860B";
-		case "goldenrod"           : return "DAA520";
-		case "gold"                : return "FFD700";
-		case "yellow"              : return "FFFF00";
-		case "lightgoldenrodyellow": return "FAFAD2";
-		case "palegoldenrod"       : return "EEE8AA";
-		case "khaki"               : return "F0E68C";
-		case "darkkhaki"           : return "BDB76B";
-		case "lawngreen"           : return "7CFC00";
-		case "greenyellow"         : return "ADFF2F";
-		case "chartreuse"          : return "7FFF00";
-		case "lime"                : return "00FF00";
-		case "limegreen"           : return "32CD32";
-		case "yellowgreen"         : return "9ACD32";
-		case "olive"               : return "808000";
-		case "olivedrab"           : return "6B8E23";
-		case "darkolivegreen"      : return "556B2F";
-		case "forestgreen"         : return "228B22";
-		case "darkgreen"           : return "006400";
-		case "green"               : return "008000";
-		case "seagreen"            : return "2E8B57";
-		case "mediumseagreen"      : return "3CB371";
-		case "darkseagreen"        : return "8FBC8F";
-		case "lightgreen"          : return "90EE90";
-		case "palegreen"           : return "98FB98";
-		case "springgreen"         : return "00FF7F";
-		case "mediumspringgreen"   : return "00FA9A";
-		case "teal"                : return "008080";
-		case "darkcyan"            : return "008B8B";
-		case "lightseagreen"       : return "20B2AA";
-		case "mediumaquamarine"    : return "66CDAA";
-		case "cadetblue"           : return "5F9EA0";
-		case "steelblue"           : return "4682B4";
-		case "aquamarine"          : return "7FFFD4";
-		case "powderblue"          : return "B0E0E6";
-		case "paleturquoise"       : return "AFEEEE";
-		case "lightblue"           : return "ADD8E6";
-		case "lightsteelblue"      : return "B0C4DE";
-		case "skyblue"             : return "87CEEB";
-		case "lightskyblue"        : return "87CEFA";
-		case "mediumturquoise"     : return "48D1CC";
-		case "turquoise"           : return "40E0D0";
-		case "darkturquoise"       : return "00CED1";
-		case "aqua"                : return "00FFFF";
-		case "cyan"                : return "00FFFF";
-		case "deepskyblue"         : return "00BFFF";
-		case "dodgerblue"          : return "1E90FF";
-		case "cornflowerblue"      : return "6495ED";
-		case "royalblue"           : return "4169E1";
-		case "blue"                : return "0000FF";
-		case "mediumblue"          : return "0000CD";
-		case "navy"                : return "000080";
-		case "darkblue"            : return "00008B";
-		case "midnightblue"        : return "191970";
-		case "darkslateblue"       : return "483D8B";
-		case "slateblue"           : return "6A5ACD";
-		case "mediumslateblue"     : return "7B68EE";
-		case "mediumpurple"        : return "9370DB";
-		case "darkorchid"          : return "9932CC";
-		case "darkviolet"          : return "9400D3";
-		case "blueviolet"          : return "8A2BE2";
-		case "mediumorchid"        : return "BA55D3";
-		case "plum"                : return "DDA0DD";
-		case "lavender"            : return "E6E6FA";
-		case "thistle"             : return "D8BFD8";
-		case "orchid"              : return "DA70D6";
-		case "violet"              : return "EE82EE";
-		case "indigo"              : return "4B0082";
-		case "darkmagenta"         : return "8B008B";
-		case "purple"              : return "800080";
-		case "mediumvioletred"     : return "C71585";
-		case "deeppink"            : return "FF1493";
-		case "fuchsia"             : return "FF00FF";
-		case "magenta"             : return "FF00FF";
-		case "hotpink"             : return "FF69B4";
-		case "palevioletred"       : return "DB7093";
-		case "lightpink"           : return "FFB6C1";
-		case "pink"                : return "FFC0CB";
-		case "mistyrose"           : return "FFE4E1";
-		case "blanchedalmond"      : return "FFEBCD";
-		case "lightyellow"         : return "FFFFE0";
-		case "cornsilk"            : return "FFF8DC";
-		case "antiquewhite"        : return "FAEBD7";
-		case "papayawhip"          : return "FFEFD5";
-		case "lemonchiffon"        : return "FFFACD";
-		case "beige"               : return "F5F5DC";
-		case "linen"               : return "FAF0E6";
-		case "oldlace"             : return "FDF5E6";
-		case "lightcyan"           : return "E0FFFF";
-		case "aliceblue"           : return "F0F8FF";
-		case "whitesmoke"          : return "F5F5F5";
-		case "lavenderblush"       : return "FFF0F5";
-		case "floralwhite"         : return "FFFAF0";
-		case "mintcream"           : return "F5FFFA";
-		case "ghostwhite"          : return "F8F8FF";
-		case "honeydew"            : return "F0FFF0";
-		case "seashell"            : return "FFF5EE";
-		case "ivory"               : return "FFFFF0";
-		case "azure"               : return "F0FFFF";
-		case "snow"                : return "FFFAFA";
-		case "white"               : return "FFFFFF";
-		case "gainsboro"           : return "DCDCDC";
-		case "lightgrey"           : return "D3D3D3";
-		case "silver"              : return "C0C0C0";
-		case "darkgray"            : return "A9A9A9";
-		case "lightslategray"      : return "778899";
-		case "slategray"           : return "708090";
-		case "gray"                : return "808080";
-		case "dimgray"             : return "696969";
-		case "darkslategray"       : return "2F4F4F";
-		case "black"               : return "000000";
-	}
-	return soColor;
+	const canvas = Subtitle.canvas ?? (Subtitle.canvas = document.createElement("canvas"));
+	const ctx = canvas.getContext("2d");
+	ctx.fillStyle = "#FFFFFF"; // 기본값
+	ctx.fillStyle = soColor;
+	return ctx.fillStyle.substring(1).toUpperCase();
 }
 Smi.colorToAttr = (soColor) => {
 	return sToAttrColor(soColor);
@@ -3592,6 +3501,11 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 			attr.fc = attr.fadeColor.get(1 + 2 * j, 2 * count);
 		}
 	}
+	function getConvertFadeColor(attr, j, count) {
+		if (attr.fadeColor) {
+			return attr.fadeColor.ass(1 + 2 * j, 2 * count);
+		}
+	}
 	
 	const smis = [];
 	if (shakeRange) {
@@ -3603,133 +3517,232 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 				attrs[j].furigana.shake = null;
 			}
 		}
-		// 줄 앞뒤에 {SL}, {SR}뿐만 아니라 Zero-Width-Space도 넣어줌
-		// 팟플 SMI에선 문제없었는데, ASS 변환 기능을 만들려니 공백문자가 무시당함...
-		attrs[shakeRange[0]  ].text = "​{SL}" + attrs[shakeRange[0]].text;
-		attrs[shakeRange[1]-1].text = attrs[shakeRange[1]-1].text + "{SR}​";
-		for (let j = shakeRange[0]; j < shakeRange[1]; j++) {
-			if (attrs[j].text.indexOf("\n") >= 0) {
-				attrs[j].text = attrs[j].text.replaceAll("\n", "{SR}​\n​{\SL}");
-			}
-		}
 		
 		const start = smi.start;
-		const count = Math.floor(((end - start) / shake.ms) + 0.5);
+		const count = Math.round((end - start) / shake.ms);
 		
-		let j = shakeRange[0] - 1;
-		for (; j >= 0; j--) {
-			const text = attrs[j].text;
-			const brIndex = text.lastIndexOf("\n");
-			if (brIndex >= 0) {
-				attrs[j].text = text.substring(0, brIndex + 1) + "{ST}" + text.substring(brIndex + 1);
-				break;
-			}
-		}
-		if (j < 0) {
-			attrs[0].text = "{ST}" + attrs[0].text;
-		}
-		for (j = shakeRange[1]; j < attrs.length; j++) {
-			const text = attrs[j].text;
-			const brIndex = text.indexOf("\n");
-			if (brIndex >= 0) {
-				attrs[j].text = text.substring(0, brIndex) + "{SB}" + text.substring(brIndex);
-				break;
-			}
-		}
-		if (j >= attrs.length) {
-			attrs[attrs.length - 1].text = attrs[attrs.length - 1].text + "{SB}";
-		}
-		
-		// 페이드 효과 추가 처리
-		if (hasFade) {
-			let countFades = 0;
-			attrs.forEach((attr) => {
-				if (attr.attrs) {
-					attr.attrs.forEach((item) => {
-						countFades += normalizeFade(item);
-					});
-					attr.furigana.forEach((item) => {
-						countFades += normalizeFade(item);
-					});
-				} else {
-					countFades += normalizeFade(attr);
+		if (forConvert) {
+			// SMI용이 아닌 ASS 변환용 흔들기 효과
+			if (hasFade) {
+				let countFades = 0;
+				attrs.forEach((attr) => {
+					if (attr.attrs) {
+						attr.attrs.forEach((item) => {
+							countFades += normalizeFade(item);
+						});
+						attr.furigana.forEach((item) => {
+							countFades += normalizeFade(item);
+						});
+					} else {
+						countFades += normalizeFade(attr);
+					}
+				});
+				if (!countFades) {
+					return [smi];
 				}
-			});
-			if (!countFades) {
-				return [smi];
 			}
-		}
-		
-		// 좌우로 흔들기
-		// 플레이어에서 사이즈 미지원해도 좌우로는 흔들리도록
-		const LRmin = `<font size="${ 3 * shake.size }"></font>`;
-		const LRmid = `<font size="${ 3 * shake.size }"> </font>`;
-		const LRmax = `<font size="${ 3 * shake.size }">  </font>`;
-		
-		// 상하로 흔들기
-		// 플레이어에서 사이즈 미지원하면 상하로 흔들리지 않음
-		// size 0은 리스크가 있으므로 +1
-		const TBmin = `<font size="${ 0 * shake.size + 1 }">　</font>`;
-		const TBmid = `<font size="${ 1 * shake.size + 1 }">　</font>`;
-		const TBmax = `<font size="${ 2 * shake.size + 1 }">　</font>`;
-		
-		for (let j = 0; j < count; j++) {
-			/*
-			 * ５０３
-			 * ２※６
-			 * ７４１
-			 */
-			const step = j % 8;
+			
+			for (let j = 0; j < count; j++) {
+				/*
+				 * ５０３
+				 * ２※６
+				 * ７４１
+				 */
+				const step = j % 8;
+				
+				
+				// 페이드 효과 추가 처리
+				let attrText = null;
+				attrs.forEach((attr) => {
+					let fadeColor = null;
+					if (attr.attrs) {
+						attr.attrs.forEach((item) => {
+							fadeColor = getConvertFadeColor(item, j, count);
+						});
+						attr.furigana.forEach((item) => {
+							fadeColor = getConvertFadeColor(item, j, count);
+						});
+					} else {
+						fadeColor = getConvertFadeColor(attr, j, count);
+					}
+					if (fadeColor) {
+						if (fadeColor.length == 5) {
+							// 투명도
+							attr.oText = attr.text;
+							attr.text = `{\\1a${fadeColor}\\3a${fadeColor}\\4a${fadeColor}}` + attr.text + `{\\1a\\3a\\4a}`;
+						} else {
+							// 색상
+							attr.fc = fadeColor;
+						}
+					}
+				});
+				
+				let x = 0, y = 0;
+				// 좌우로 흔들기
+				switch (step) {
+					case 2:
+					case 5:
+					case 7:
+						x = -shake.size;
+						break;
+					case 1:
+					case 3:
+					case 6:
+						x = shake.size;
+						break;
+				}
+				
+				// 상하로 흔들기
+				switch (step) {
+					case 0:
+					case 3:
+					case 5:
+						y = -shake.size;
+						break;
+					case 1:
+					case 4:
+					case 7:
+						y = shake.size;
+						break;
+				}
+				
+				let text = Smi.fromAttrs(attrs).replaceAll("\n", "<br>");
+				text = `{\\shake(${x},${y})}` + text;
+				attrs.forEach((attr) => {
+					if (attr.oText) {
+						attr.text = attr.oText;
+					}
+				});
+				
+				smis.push(new Smi((start * (count - j) + end * (j)) / count, (j == 0 ? smi.syncType : SyncType.inner), text));
+			}
+			
+		} else {
+			// 줄 앞뒤에 {SL}, {SR}뿐만 아니라 Zero-Width-Space도 넣어줌
+			// 팟플 SMI에선 문제없었는데, ASS 변환 기능을 만들려니 공백문자가 무시당함...
+			attrs[shakeRange[0]  ].text = "​{SL}" + attrs[shakeRange[0]].text;
+			attrs[shakeRange[1]-1].text = attrs[shakeRange[1]-1].text + "{SR}​";
+			for (let j = shakeRange[0]; j < shakeRange[1]; j++) {
+				if (attrs[j].text.indexOf("\n") >= 0) {
+					attrs[j].text = attrs[j].text.replaceAll("\n", "{SR}​\n​{\SL}");
+				}
+			}
+			
+			let j = shakeRange[0] - 1;
+			for (; j >= 0; j--) {
+				const text = attrs[j].text;
+				const brIndex = text.lastIndexOf("\n");
+				if (brIndex >= 0) {
+					attrs[j].text = text.substring(0, brIndex + 1) + "{ST}" + text.substring(brIndex + 1);
+					break;
+				}
+			}
+			if (j < 0) {
+				attrs[0].text = "{ST}" + attrs[0].text;
+			}
+			for (j = shakeRange[1]; j < attrs.length; j++) {
+				const text = attrs[j].text;
+				const brIndex = text.indexOf("\n");
+				if (brIndex >= 0) {
+					attrs[j].text = text.substring(0, brIndex) + "{SB}" + text.substring(brIndex);
+					break;
+				}
+			}
+			if (j >= attrs.length) {
+				attrs[attrs.length - 1].text = attrs[attrs.length - 1].text + "{SB}";
+			}
 			
 			// 페이드 효과 추가 처리
-			attrs.forEach((attr) => {
-				if (attr.attrs) {
-					attr.attrs.forEach((item) => {
-						setFadeColor(item, j, count);
-					});
-					attr.furigana.forEach((item) => {
-						setFadeColor(item, j, count);
-					});
-				} else {
-					setFadeColor(attr, j, count);
+			if (hasFade) {
+				let countFades = 0;
+				attrs.forEach((attr) => {
+					if (attr.attrs) {
+						attr.attrs.forEach((item) => {
+							countFades += normalizeFade(item);
+						});
+						attr.furigana.forEach((item) => {
+							countFades += normalizeFade(item);
+						});
+					} else {
+						countFades += normalizeFade(attr);
+					}
+				});
+				if (!countFades) {
+					return [smi];
 				}
-			});
-			let text = Smi.fromAttrs(attrs).replaceAll("\n", "<br>");
+			}
 			
 			// 좌우로 흔들기
-			switch (step) {
-				case 2:
-				case 5:
-				case 7:
-					text = text.replaceAll("{SL}", LRmin).replaceAll("{SR}", LRmax);
-					break;
-				case 0:
-				case 4:
-					text = text.replaceAll("{SL}", LRmid).replaceAll("{SR}", LRmid);
-					break;
-				default:
-					text = text.replaceAll("{SL}", LRmax).replaceAll("{SR}", LRmin);
-			}
+			// 플레이어에서 사이즈 미지원해도 좌우로는 흔들리도록
+			const LRmin = `<font size="${ 3 * shake.size }"></font>`;
+			const LRmid = `<font size="${ 3 * shake.size }"> </font>`;
+			const LRmax = `<font size="${ 3 * shake.size }">  </font>`;
 			
 			// 상하로 흔들기
-			switch (step) {
-				case 0:
-				case 3:
-				case 5:
-					text = text.replaceAll("{ST}", TBmin + "<br>").replaceAll("{SB}", "<br>" + TBmax);
-					break;
-				case 2:
-				case 6:
-					text = text.replaceAll("{ST}", TBmid + "<br>").replaceAll("{SB}", "<br>" + TBmid);
-					break;
-				default:
-					text = text.replaceAll("{ST}", TBmax + "<br>").replaceAll("{SB}", "<br>" + TBmin);
-			}
+			// 플레이어에서 사이즈 미지원하면 상하로 흔들리지 않음
+			// size 0은 리스크가 있으므로 +1
+			const TBmin = `<font size="${ 0 * shake.size + 1 }">　</font>`;
+			const TBmid = `<font size="${ 1 * shake.size + 1 }">　</font>`;
+			const TBmax = `<font size="${ 2 * shake.size + 1 }">　</font>`;
 			
-			smis.push(new Smi((start * (count - j) + end * (j)) / count, (j == 0 ? smi.syncType : SyncType.inner), text));
-		}
-		if (withComment) {
-			smis[0].text = `<!-- End=${end}\n${ smiText.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + smis[0].text;
+			for (let j = 0; j < count; j++) {
+				/*
+				 * ５０３
+				 * ２※６
+				 * ７４１
+				 */
+				const step = j % 8;
+				
+				// 페이드 효과 추가 처리
+				attrs.forEach((attr) => {
+					if (attr.attrs) {
+						attr.attrs.forEach((item) => {
+							setFadeColor(item, j, count);
+						});
+						attr.furigana.forEach((item) => {
+							setFadeColor(item, j, count);
+						});
+					} else {
+						setFadeColor(attr, j, count);
+					}
+				});
+				let text = Smi.fromAttrs(attrs).replaceAll("\n", "<br>");
+				
+				// 좌우로 흔들기
+				switch (step) {
+					case 2:
+					case 5:
+					case 7:
+						text = text.replaceAll("{SL}", LRmin).replaceAll("{SR}", LRmax);
+						break;
+					case 0:
+					case 4:
+						text = text.replaceAll("{SL}", LRmid).replaceAll("{SR}", LRmid);
+						break;
+					default:
+						text = text.replaceAll("{SL}", LRmax).replaceAll("{SR}", LRmin);
+				}
+				
+				// 상하로 흔들기
+				switch (step) {
+					case 0:
+					case 3:
+					case 5:
+						text = text.replaceAll("{ST}", TBmin + "<br>").replaceAll("{SB}", "<br>" + TBmax);
+						break;
+					case 2:
+					case 6:
+						text = text.replaceAll("{ST}", TBmid + "<br>").replaceAll("{SB}", "<br>" + TBmid);
+						break;
+					default:
+						text = text.replaceAll("{ST}", TBmax + "<br>").replaceAll("{SB}", "<br>" + TBmin);
+				}
+				
+				smis.push(new Smi((start * (count - j) + end * (j)) / count, (j == 0 ? smi.syncType : SyncType.inner), text));
+			}
+			if (withComment) {
+				smis[0].text = `<!-- End=${end}\n${ smiText.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + smis[0].text;
+			}
 		}
 		
 	} else if (hasTyping) {
@@ -3891,69 +3904,77 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 			smis[0].text = `<!-- End=${end}\n${ smiText.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + smis[0].text;
 		}
 		
-	} else if (!forConvert && hasFade) {
-		const start = smi.start;
-		
-		let countFades = 0;
-		attrs.forEach((attr) => {
-			if (attr.attrs) {
-				attr.attrs.forEach((item) => {
-					countFades += normalizeFade(item);
-				});
-				attr.furigana.forEach((item) => {
-					countFades += normalizeFade(item);
-				});
-			} else {
-				countFades += normalizeFade(attr);
-			}
-		});
-		if (!countFades) {
-			return [smi];
-		}
-		
-		const length = end - start;
-		let startIndex = -1;
-		const count = Subtitle.video.fs.length
-			? (Subtitle.findSyncIndex(end) - (startIndex = Subtitle.findSyncIndex(start))) // 실제 프레임 개수
-			: Math.round(length * 24 / 1001) // 프레임 싱크 없으면 23.976fps로 가정
-			;
-		
-		for (let j = 0; j < count; j++) {
-			const sync = Subtitle.video.fs.length
-				? Subtitle.video.fs[startIndex + j] // 프레임 싱크 가져오기
-				: (start + (length * j / count)) // 프레임 싱크 없을 땐 진행률에 따라 계산
-				;
-			const pass = (sync - start) / length * count;
+	} else if (hasFade) {
+		if (forConvert) {
+			smis.push(this);
+		} else {
+			const start = smi.start;
 			
+			let countFades = 0;
 			attrs.forEach((attr) => {
 				if (attr.attrs) {
 					attr.attrs.forEach((item) => {
-						setFadeColor(item, pass, count);
+						countFades += normalizeFade(item);
 					});
 					attr.furigana.forEach((item) => {
-						setFadeColor(item, pass, count);
+						countFades += normalizeFade(item);
 					});
 				} else {
-					setFadeColor(attr, pass, count);
+					countFades += normalizeFade(attr);
 				}
 			});
-			if (j == 0) {
-				smis.push(new Smi(start, smi.syncType).fromAttrs(attrs));
-			} else {
-				smis.push(new Smi(sync, SyncType.inner).fromAttrs(attrs));
+			if (!countFades) {
+				return [smi];
+			}
+			
+			const length = end - start;
+			let startIndex = -1;
+			const count = Subtitle.video.fs.length
+				? (Subtitle.findSyncIndex(end) - (startIndex = Subtitle.findSyncIndex(start))) // 실제 프레임 개수
+				: Math.round(length * 24 / 1001) // 프레임 싱크 없으면 23.976fps로 가정
+				;
+			
+			for (let j = 0; j < count; j++) {
+				const sync = Subtitle.video.fs.length
+					? Subtitle.video.fs[startIndex + j] // 프레임 싱크 가져오기
+					: (start + (length * j / count)) // 프레임 싱크 없을 땐 진행률에 따라 계산
+					;
+				const pass = (sync - start) / length * count;
+				
+				attrs.forEach((attr) => {
+					if (attr.attrs) {
+						attr.attrs.forEach((item) => {
+							setFadeColor(item, pass, count);
+						});
+						attr.furigana.forEach((item) => {
+							setFadeColor(item, pass, count);
+						});
+					} else {
+						setFadeColor(attr, pass, count);
+					}
+				});
+				if (j == 0) {
+					smis.push(new Smi(start, smi.syncType).fromAttrs(attrs));
+				} else {
+					smis.push(new Smi(sync, SyncType.inner).fromAttrs(attrs));
+				}
+			}
+			
+			if (withComment) {
+				if (smis.length) {
+					smis[0].text = `<!-- End=${end}\n${ smiText.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + smis[0].text;
+				} else {
+					// 싱크 길이가 1프레임 미만이면 변환결과가 없을 수도 있음
+				}
 			}
 		}
 		
-		if (withComment) {
-			if (smis.length) {
-				smis[0].text = `<!-- End=${end}\n${ smiText.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + smis[0].text;
-			} else {
-				// 싱크 길이가 1프레임 미만이면 변환결과가 없을 수도 있음
-			}
+	} else if (hasFlow) {
+		if (forConvert) {
+			smis.push(this);
+		} else {
+			this.hasFlow = true;
 		}
-		
-	} else if (!forConvert && hasFlow) {
-		this.hasFlow = true;
 		
 	} else {
 		if (hasGradation) {
