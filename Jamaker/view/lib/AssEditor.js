@@ -1,9 +1,9 @@
-﻿import "./SubtitleObject.js?260527";
+﻿import "./SubtitleObject.js?260530";
 
 {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AssEditor.css?260527", import.meta.url).href;
+	link.href = new URL("./AssEditor.css?260530", import.meta.url).href;
 	document.head.append(link);
 }
 

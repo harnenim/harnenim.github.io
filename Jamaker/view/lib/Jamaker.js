@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260527";
-import "./Subtitle.Converter.js?260527";
-import "./AutoCompleteCodeMirror.js?260527";
-import "./SmiEditor.js?260527";
-import "./AssEditor.js?260527";
+﻿import "./MenuStrip.js?260530";
+import "./Subtitle.Converter.js?260530";
+import "./AutoCompleteCodeMirror.js?260530";
+import "./SmiEditor.js?260530";
+import "./AssEditor.js?260530";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260527";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260527", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260530", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -161,18 +161,18 @@ window.Tab = function(text, path) {
 					return a.events.length - b.events.length;
 				});
 				
-				const popup = document.getElementById("assSplitHoldSelectorPopup");
-				popup.innerHTML = "";
+				const modal = document.getElementById("assSplitHoldSelector");
+				modal.innerHTML = "";
 				let el;
 				styleList.forEach((style) => {
-					popup.append(el = document.createElement("button"));
+					modal.append(el = document.createElement("button"));
 					el.innerText = (`${style.name} (${ style.events.length }개)`);
 					eData(el, { tab: tab, style: style.name });
 				});
-				popup.append(el = document.createElement("button"));
+				modal.append(el = document.createElement("button"));
 				el.innerText = "취소";
 				
-				document.getElementById("assSplitHoldSelector").style.display = "block";
+				modal.showModal();
 			});
 		}
 		
@@ -351,7 +351,7 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	}
 	
 	hold.owner = this;
-	hold.pos   = hold.savedPos   = info.pos;
+	hold.pos = hold.savedPos = info.pos;
 	
 	const style = hold.style = (info.style ? info.style : JSON.parse(JSON.stringify(Subtitle.DefaultStyle)));
 	if (style.Fontname == Subtitle.DefaultStyle.Fontname) {
@@ -1922,14 +1922,14 @@ window.init = function(jsonSetting, isBackup=true) {
 		});
 	}
 	
-	document.getElementById("assSplitHoldSelectorPopup").addEventListener("click", (e) => {
+	document.getElementById("assSplitHoldSelector").addEventListener("click", (e) => {
 		const btn = e.target.closest("button");
 		if (btn) {
 			const data = eData(btn);
 			if (data.tab && data.style) {
 				splitHold(data.tab, data.style);
 			}
-			document.getElementById("assSplitHoldSelector").style.display = "none";
+			document.getElementById("assSplitHoldSelector").close();
 		}
 	});
 	
@@ -2089,7 +2089,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260527").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260530").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2167,7 +2167,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260527").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260530").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2339,7 +2339,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260527", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260530", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2454,14 +2454,14 @@ window.resizeTabSelector = function(scrollToEnd=false) {
 }
 
 window.newFile = function() {
-	document.getElementById("assSplitHoldSelector").style.display = "none";
+	document.getElementById("assSplitHoldSelector").close();
 	runIfCanOpenNewTab(openNewTab);
 }
 
 window.openFile = function(path, text, forVideo, confirmed=false) {
 	const funcSince = log("openFile start");
 
-	document.getElementById("assSplitHoldSelector").style.display = "none"
+	document.getElementById("assSplitHoldSelector").close();
 	
 	if (path?.toLowerCase().endsWith(".ass")) {
 		// 연동 ASS 파일 열기
@@ -4591,7 +4591,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260527", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260530", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
