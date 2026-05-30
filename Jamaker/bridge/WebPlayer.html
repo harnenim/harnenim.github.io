@@ -115,7 +115,14 @@ window.main = new WebForm();
 		}
 	}
 	main.openFile = async function(file) {
-		main.mainView.contentWindow.openFile(file);
+		if (main.mainView.contentWindow.openFile) {
+			main.mainView.contentWindow.openFile(file);
+		} else {
+			// 웹샘플 로딩 덜 됐으면 1초 후 재시도
+			setTimeout(() => {
+				main.openFile(file);
+			}, 1000);
+		}
 		this.droppedFiles = null;
 	}
 	
