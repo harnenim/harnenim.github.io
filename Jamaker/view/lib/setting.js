@@ -40,7 +40,11 @@
 }
 
 window.DEFAULT_SETTING =
+<<<<<<< HEAD
 {	version: "2026.05.30"
+=======
+{	version: "2026.05.28"
+>>>>>>> branch 'main' of https://github.com/harnenim/harnenim.github.io.git
 ,	menu:
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
