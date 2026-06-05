@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260530";
-import "./Subtitle.Converter.js?260530";
-import "./AutoCompleteCodeMirror.js?260530";
-import "./SmiEditor.js?260530";
-import "./AssEditor.js?260530";
+﻿import "./MenuStrip.js?260606";
+import "./Subtitle.Converter.js?260606";
+import "./AutoCompleteCodeMirror.js?260606";
+import "./SmiEditor.js?260606";
+import "./AssEditor.js?260606";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260530";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260530", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260606", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1130,6 +1130,12 @@ Tab.prototype.getAdditionalToAss = function(forSave=false) {
 					}
 				});
 			} else {
+				if (appendPart.name == "Aegisub Project Garbage") {
+					if (!Subtitle.video.path?.endsWith(appendPart.get("Video File"))) {
+						// 현재 열려있는 동영상 기준이 아닐 경우 불필요한 정보이므로 제외
+						return;
+					}
+				}
 				const part = assFile.getPart(appendPart.name);
 				if (part) {
 					part.body.push(...appendPart.body);
@@ -1138,6 +1144,9 @@ Tab.prototype.getAdditionalToAss = function(forSave=false) {
 				}
 			}
 		});
+	}
+	if (forSave) {
+		this.area.querySelector(".tab-ass-appends textarea").value = assFile.toText();
 	}
 	
 	let events = this.assHold.assEditor.toEvents();
@@ -1198,7 +1207,7 @@ Tab.prototype.getSaveText = function(withNormalize=true, withCombine=true, withC
 	if ((withComment > 0) && this.withAss) {
 		additional += this.getAdditionalToAss(true); // ASS 추가 내용 footer에 넣어주기
 	}
-	return SmiFile.holdsToText(this.holds, withNormalize, withCombine, withComment, additional, withFs, withKfs);
+	return SmiFile.holdsToText(this.holds, withNormalize, withCombine, withComment, additional, withFs, withKfs, this.assHold);
 }
 Tab.prototype.onChangeSaved = function(hold) {
 	if (this.isSaved()) {
@@ -2089,7 +2098,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260530").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260606").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2167,7 +2176,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260530").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260606").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2339,7 +2348,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260530", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260606", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2778,15 +2787,15 @@ window.saveFile = function(asNew, isExport) {
 				}
 			}
 			if (withAss) {
-			    if (Subtitle.video.fs.length) {
+				if (Subtitle.video.fs.length) {
 					const assText = currentTab.toAss().toText(true);
 					
 					const saveAssFrom = log("binder.save ass start");
 					binder.save(tabIndex, assText, assPath, 2/*ass*/);
 					log("binder.save ass end", saveAssFrom);
 					
-			    } else {
-			        alert("동영상 프레임 분석이 끝나야 ASS 파일을 생성할 수 있습니다.");
+				} else {
+					alert("동영상 프레임 분석이 끝나야 ASS 파일을 생성할 수 있습니다.");
 				}
 			}
 			
@@ -4591,7 +4600,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260530", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260606", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

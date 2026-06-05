@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260530";
+﻿import "./SubtitleObject.js?260606";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -70,8 +70,8 @@ if (!Uint8Array.fromBase64) {
 		    && !attr.typing // 타이핑 같은 건 결합 전에 사라져야 함
 		    && !attr.furigana;
 	}
-	const LOG_SIZE = 2000;
-	const wLogs = window.wLogs = {};
+	const LOG_SIZE = 5000; // 샘플 테스트로 정한 값
+	const wLogs = {}; // width 측정 기록을 남겨서 재활용
 	let wCount = 0;
 	let cAttrs = [];
 	function append(attr, withFs) {
@@ -81,13 +81,7 @@ if (!Uint8Array.fromBase64) {
 		// 폰트에 따른 가중치 계산 필요
 		cAttr.fs *= Subtitle.getFontRatio((cAttr.fn && cAttr.fn.length) ? cAttr.fn : Subtitle.Width.DEFAULT_FONT.fontFamily);
 		
-		/*
-		if (cAttr.fn && cAttr.fn != "맑은 고딕") {
-			// 팟플레이어 폰트 크기 보정
-			cAttr.fs = cAttr.fs * 586 / 458;
-		}
-		*/
-		cAttr.fc = null; // 색상은 크기에 영향을 미치지 않고, 페이드 같은 게 불필요한 연산을 만듦
+		cAttr.fc = null; // width엔 영향을 미치지 않고 색상만 변하는 페이드 같은 곳에서 불필요한 연산을 만들지 않도록 색상값 무시
 		cAttr.furigana = null;
 		cAttrs.push(cAttr);
 	}
@@ -105,28 +99,38 @@ if (!Uint8Array.fromBase64) {
 			}
 		});
 		let html = Smi.fromAttr(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>");
+		let width = 0;
 		const log = wLogs[html];
 		if (log) {
 			log.index = wCount++;
-			return log.width;
+			width = log.width;
+		} else {
+			Combine.checker.innerHTML = html;
+			width = Combine.checker.clientWidth;
+			wLogs[html] = {
+					index: wCount++
+				,	width: width
+			};
 		}
-		Combine.checker.innerHTML = html;
-		const width = Combine.checker.clientWidth;
-		wLogs[html] = {
-				index: wCount++
-			,	width: width
-		};
-		if (wCount > LOG_SIZE && wCount % LOG_SIZE == 0) {
+		if (wCount >= LOG_SIZE && wCount % LOG_SIZE == 0) {
 			clearWidthLogs(LOG_SIZE);
 		}
 		if (LOG) console.log(width, attrs);
 		return width;
 	}
-	window.clearWidthLogs = function(remains=2000) {
+	// 저장된 값이 일정 수준을 넘지 않도록 함
+	window.clearWidthLogs = function(remains=5000) {
+		let count = Object.keys(wLogs).length - remains;
+		if (count <= 0) return; // 안 지워도 되는 경우
+		
 		const limit = wCount - remains;
 		for (let html in wLogs) {
 			if (wLogs[html].index < limit) {
 				delete wLogs[html];
+				if (--count == 0) {
+					// 지울 만큼 지웠으면 멈춰도 됨
+					break;
+				}
 			}
 		}
 	}
@@ -1575,7 +1579,7 @@ SmiFile.holdsToTexts = (holds, withNormalize=true, withCombine=true, withComment
 	parts[0] = parts[0].toText((withComment >= 2) ? withComment - 1 : 0);
 	return parts;
 }
-SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=1, additional="", withFs=false, withKfs=false) => {
+SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=1, additional="", withFs=false, withKfs=false, assHold=null) => {
 	if (Subtitle.video.fs.length && withFs) {
 		// 프레임 싱크 함께 저장
 		let fs = [];
@@ -1677,6 +1681,17 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 				});
 			});
 		});
+		if (assHold) {
+			assHold.assEditor.syncs.forEach((sync) => {
+				let index = Subtitle.findSyncIndex(sync.start);
+				if (index > 0) fs.push(Subtitle.video.fs[index - 1]);
+				fs.push(Subtitle.video.fs[index]);
+				
+				index = Subtitle.findSyncIndex(sync.end);
+				if (index > 0) fs.push(Subtitle.video.fs[index - 1]);
+				fs.push(Subtitle.video.fs[index]);
+			});
+		}
 		fs.push(Subtitle.video.fs[Subtitle.video.fs.length - 1]); // 마지막 싱크는 무조건 추가해서 계산 범위 넘치지 않도록 함
 		(fs = [...new Set(fs)]).sort((a, b) => { return a - b; }); // 중복 제외 후 정렬
 		
@@ -1740,7 +1755,15 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 	const assEvents = assFile.getEvents();
 	assFile.parts.length = 1;
 	// ASS 홀드 추가 스크립트 먼저 추가하고
-	assFile.parts.push(...appendParts);
+	appendParts.forEach((part) => {
+		if (part.name == "Aegisub Project Garbage") {
+			if (!Subtitle.video.path || !Subtitle.video.path.endsWith(part.get("Video File"))) {
+				// 현재 열려있는 동영상 기준이 아닐 경우 불필요한 정보이므로 제외
+				return;
+			}
+		}
+		assFile.parts.push(part);
+	});
 	// 뒤쪽에 다시 추가
 	assFile.parts.push(assStyles);
 	assFile.parts.push(assEvents);

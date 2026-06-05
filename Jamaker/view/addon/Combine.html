@@ -4,10 +4,10 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>겹치는 싱크 결합</title>
-	<script src="../lib/popup.js?260530"></script>
-	<script src="../lib/setting.js?260530"></script>
-	<script src="../lib/Subtitle.Converter.js?260530" type="module"></script>
-	<script src="../lib/SmiEditor.js?260530" type="module"></script>
+	<script src="../lib/popup.js?260606"></script>
+	<script src="../lib/setting.js?260606"></script>
+	<script src="../lib/Subtitle.Converter.js?260606" type="module"></script>
+	<script src="../lib/SmiEditor.js?260606" type="module"></script>
 	<script>
 windowName = "addon";
 if (!window.LOG) {
@@ -38,15 +38,15 @@ ready(() => {
 		const inputLower = document.getElementById("inputLower");
 		upper  = new SmiEditor(inputUpper.value, inputUpper);
 		lower  = new SmiEditor(inputLower.value, inputLower);
-        output = new SmiEditor("", document.getElementById("output"));
+		output = new SmiEditor("", document.getElementById("output"));
 		SmiEditor.activateKeyEvent();
 	}
 	
-    if (opener) {
-        const setting = JSON.parse(JSON.stringify(opener.setting));
-        delete setting.command;
-        setSetting(setting);
-    }
+	if (opener) {
+		const setting = JSON.parse(JSON.stringify(opener.setting));
+		delete setting.command;
+		setSetting(setting);
+	}
 	
 	document.getElementById("btnCombine").addEventListener("click", () => {
 		const main = new SmiFile(Combine.combine(upper.getValue(), lower.getValue()).join("\n"));

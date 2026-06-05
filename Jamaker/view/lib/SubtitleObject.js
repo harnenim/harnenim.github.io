@@ -752,7 +752,6 @@ Subtitle.Width =
 				this.div.style[name] = font[name];
 			}
 			this.div.innerText = input;
-//			return this.div.clientWidth;
 			return this.div.clientWidth * Subtitle.getFontRatio(font.fontFamily);
 			
 		} else {
@@ -771,6 +770,15 @@ Subtitle.Width =
 		});
 		return widths;
 	}
+,	"　": {}
+,	getOneWidth: function(font) {
+		const key = `${font.fontFamily} ${font.fontWeight} ${font.fontSize}`;
+		let w = this["　"][key];
+		if (!w) {
+			this["　"][key] = w = Subtitle.Width.getWidth("　", font);
+		}
+		return w;
+	}
 ,	getAppend: function(targetWidth, isBoth, font) {
 		if (!font) font = this.DEFAULT_FONT;
 	
@@ -783,21 +791,28 @@ Subtitle.Width =
 			return whiteSpace;
 		}
 		
+		// 기본적으로 전각 공백 width를 기준으로 필요한 개수 카운트
+		const count = Math.floor((targetWidth - thisWidth) / this.getOneWidth(font));
+		for (let i = 0; i < count; i++) {
+			whiteSpace += "　";
+		}
+		lastWidth = thisWidth = Subtitle.Width.getWidth(whiteSpace, font);
+		
+		// 문자가 아닌 실제 문자열 폭 계산에선 부정확할 수 있으므로 후처리 필요
 		while (thisWidth < targetWidth) {
 			lastWidth = thisWidth;
 			whiteSpace += "　";
-			thisWidth = Subtitle.Width.getWidth(whiteSpace);
+			thisWidth = Subtitle.Width.getWidth(whiteSpace, font);
 		}
-		
 		thisWidth = lastWidth;
 		whiteSpace = whiteSpace.substring(0, whiteSpace.length - 1);
 		
+		// 반각 공백 적절한 만큼 추가
 		while (thisWidth < targetWidth) {
 			lastWidth = thisWidth;
 			whiteSpace += " ";
-			thisWidth = Subtitle.Width.getWidth(whiteSpace);
+			thisWidth = Subtitle.Width.getWidth(whiteSpace, font);
 		}
-		
 		if (thisWidth - targetWidth > targetWidth - lastWidth) {
 			whiteSpace = whiteSpace.substring(0, whiteSpace.length - 1);
 		}
@@ -1049,8 +1064,8 @@ Color.prototype.getColor = function(value, total) {
 	return [
 		(Math.ceil(((this.r * (total - value)) + (this.tr * value)) / total))
 	,	(Math.ceil(((this.g * (total - value)) + (this.tg * value)) / total))
-    ,	(Math.ceil(((this.b * (total - value)) + (this.tb * value)) / total))
-    ];
+	,	(Math.ceil(((this.b * (total - value)) + (this.tb * value)) / total))
+	];
 }
 Color.prototype.get = function(value, total) {
 	const color = this.getColor(value, total);
@@ -1986,7 +2001,7 @@ AssEvent.fromSync = function(sync, style=null) {
 					// 줄표 달린 게 2개 이상일 때
 					if (pureLines.length >= 2) {
 						const wStyle = { fontFamily: style.Fontname, fontSize: style.Fontsize + "px", fontWeight: (style.Bold == 0 ? "normal" : "bold") };
-						const oneWidth = Subtitle.Width.getWidth("　", wStyle);
+						const oneWidth = Subtitle.Width.getOneWidth(wStyle);
 						let maxWidth = 0;
 						pureLines.forEach((line) => {
 							const width = line.width = Subtitle.Width.getWidth(line.text, wStyle);
@@ -2011,7 +2026,8 @@ AssEvent.fromSync = function(sync, style=null) {
 				}
 			}
 			// 후리가나 구분자 제거
-			text = text.replaceAll("{\\furigana", "{");
+			// 따로 문법 검사는 없지만, 자막 내용물로 이런 문자열을 쓰진 않을 것
+			text = text.replaceAll("\\furigana", "");
 			
 			if (sync.origin && sync.origin.skip) {
 				// 이쪽으로 빠진 경우 주석 기반 생성물만 있고, 완전 자동 생성물은 사용하지 않음
@@ -2236,6 +2252,10 @@ AssFile.prototype.fromText = function(text) {
 									item[key] = Number(v);
 									break;
 							}
+							switch (key) {
+								case "start": item.Start = AssEvent.toAssTime(item.start, true); break;
+								case "end"  : item.End   = AssEvent.toAssTime(item.end  , true); break;
+							}
 						} else {
 							switch (key) {
 								case "Start": item.start = AssEvent.fromAssTime(v, true); break;
@@ -2447,6 +2467,7 @@ Smi.prototype.isEmpty = function() {
 	return (this.text.replaceAll("&nbsp;", "").trim().length == 0);
 }
 
+const colorMap = { white: "FFFFFF" }
 window.sToAttrColor = function(soColor) {
 	if (typeof soColor != 'string') {
 		return "FFFFFF";
@@ -2457,11 +2478,20 @@ window.sToAttrColor = function(soColor) {
 	if (soColor.length == 7 && /^#[a-fA-F0-9]{6}$/.test(soColor)) {
 		return soColor.substring(1);
 	}
+	let color = colorMap[soColor];
+	if (color) {
+		return color;
+	}
 	const canvas = Subtitle.canvas ?? (Subtitle.canvas = document.createElement("canvas"));
 	const ctx = canvas.getContext("2d");
 	ctx.fillStyle = "#FFFFFF"; // 기본값
 	ctx.fillStyle = soColor;
-	return ctx.fillStyle.substring(1).toUpperCase();
+	color = ctx.fillStyle.substring(1).toUpperCase();
+	if (color == "FFFFFF") {
+		// 유효하지 않은 색상값
+		return (colorMap[soColor] = soColor);
+	}
+	return (colorMap[soColor] = color);
 }
 Smi.colorToAttr = (soColor) => {
 	return sToAttrColor(soColor);
@@ -3385,11 +3415,16 @@ Smi.getConvertFadeColor = (attr, j, count) => {
 		return attr.fadeColor.ass(1 + 2 * j, 2 * count);
 	}
 }
+Smi.Normalizer = function(name, initChecker, check, run) {
+	this.name = name;
+	this.initChecker = initChecker;
+	this.check = check;
+	this.run = run;
+}
 Smi.normalizers = [];
-Smi.normalizers.push({
-		name: "shake"
-	,	initChecker: function(checker) { checker.shakeRange = null; }
-	,	check: function(checker, attr, j) {
+Smi.normalizers.push(new Smi.Normalizer("shake"
+	,	function(checker) { checker.shakeRange = null; }
+	,	function(checker, attr, j) {
 			if (attr.shake) {
 				// 흔들기는 연속된 그룹으로 처리
 				if (!checker.shakeRange) {
@@ -3399,7 +3434,7 @@ Smi.normalizers.push({
 				}
 			}
 		}
-	,	run: function(checker, org, smi, attrs, end, forConvert, withComment) {
+	,	function(checker, org, smi, attrs, end, forConvert, withComment) {
 			if (!checker.shakeRange) return null;
 			const shakeRange = checker.shakeRange;
 			const smis = [];
@@ -3641,17 +3676,15 @@ Smi.normalizers.push({
 			}
 			return smis;
 		}
-	
-});
-Smi.normalizers.push({
-		name: "typing"
-	,	initChecker: function(checker) { checker.hasTyping = false; }
-	,	check: function(checker, attr) {
+));
+Smi.normalizers.push(new Smi.Normalizer("typing"
+	,	function(checker) { checker.hasTyping = false; }
+	,	function(checker, attr) {
 			if (attr.typing) {
 				checker.hasTyping = true;
 			}
 		}
-	,	run: function(checker, org, smi, attrs, end, forConvert, withComment) {
+	,	function(checker, org, smi, attrs, end, forConvert, withComment) {
 			if (!checker.hasTyping) return null;
 			
 			// 타이핑은 한 싱크에 하나만 가능
@@ -3755,13 +3788,33 @@ Smi.normalizers.push({
 				const text = textLines.join("<br>");
 				{
 					const attrTextLines = [];
-					for (let k = 0; k < widths.length; k++) {
-						if (k < textLines.length - 1) {
-							// 건너뛰기
-						} else if (k == textLines.length - 1) {
-							attrTextLines.push(Subtitle.Width.getAppendToTarget(Smi.getLineWidth(textLines[k]), widths[k]));
-						} else {
-							attrTextLines.push(Subtitle.Width.getAppendToTarget(0, widths[k]));
+					if (forConvert && false) {
+						// SMI와 별개로 \fscx 계산... \fn 값은 어떻게?
+						// \an1,4,7 쓰면 문제없긴 한데...
+						const oneWidth = Subtitle.Width.getOneWidth();
+						for (let k = 0; k < widths.length; k++) {
+							if (k < textLines.length - 1) {
+								// 건너뛰기
+							} else {
+								let targetWidth = widths[k];
+								if (k == textLines.length - 1) {
+									targetWidth -= Smi.getLineWidth(textLines[k]);
+								}
+								if (targetWidth > 0) {
+									attrTextLines.push(`{\\fscx${ Math.floor(add / oneWidth * 100) }}　{${
+										((k < textLines.length - 1) ? "\\fscx" : "") }}`); // 마지막 줄이면 {}으로 끝내기
+								}
+							}
+						}
+					} else {
+						for (let k = 0; k < widths.length; k++) {
+							if (k < textLines.length - 1) {
+								// 건너뛰기
+							} else if (k == textLines.length - 1) {
+								attrTextLines.push(Subtitle.Width.getAppendToTarget(Smi.getLineWidth(textLines[k]), widths[k]));
+							} else {
+								attrTextLines.push(Subtitle.Width.getAppendToTarget(0, widths[k]));
+							}
 						}
 					}
 					attr.text = attrTextLines.join("​\n​");
@@ -3815,16 +3868,15 @@ Smi.normalizers.push({
 			
 			return smis;
 		}
-});
-Smi.normalizers.push({
-		name: "fade"
-	,	initChecker: function(checker) { checker.hasFade = false; }
-	,	check: function(checker, attr) {
+));
+Smi.normalizers.push(new Smi.Normalizer("fade"
+	,	function(checker) { checker.hasFade = false; }
+	,	function(checker, attr) {
 			if (attr.fade != 0 && attr.text) {
 				checker.hasFade = true;
 			}
 		}
-	,	run: function(checker, org, smi, attrs, end, forConvert, withComment) {
+	,	function(checker, org, smi, attrs, end, forConvert, withComment) {
 			if (!checker.hasFade) return null;
 
 			if (forConvert) {
@@ -3894,16 +3946,15 @@ Smi.normalizers.push({
 			
 			return smis;
 		}
-});
-Smi.normalizers.push({
-		name: "flow"
-	,	initChecker: function(checker) { checker.hasFlow = false; }
-	,	check: function(checker, attr) {
+));
+Smi.normalizers.push(new Smi.Normalizer("flow"
+	,	function(checker) { checker.hasFlow = false; }
+	,	function(checker, attr) {
 			if (attr.flow) {
 				checker.hasFlow = true;
 			}
 		}
-	,	run: function(checker, org, smi, attrs, end, forConvert, withComment) {
+	,	function(checker, org, smi, attrs, end, forConvert, withComment) {
 			if (!checker.hasFlow) return null;
 
 			if (forConvert) {
@@ -3913,7 +3964,7 @@ Smi.normalizers.push({
 			org.hasFlow = true;
 			return [];
 		}
-});
+));
 
 // 여기선 forConvert를 앞으로 가져옴
 Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
@@ -3972,7 +4023,7 @@ Smi.prototype.normalize = function(end, forConvert=false, withComment=false) {
 					const fTo   = attr.fade.substring(8, 15);
 					const fColor = new Color(fTo, fFrom);
 					for (let k = 0; k < gAttrs.length; k++) {
-						gAttrs[k].fade = fColor.smi(k, gAttrs.length - 1);
+						gAttrs[k].fade = fColor.smi(k + 0.5, gAttrs.length);
 					}
 				}
 			} else {

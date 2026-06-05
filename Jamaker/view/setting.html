@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/popup.js?260530"></script>
-<script src="lib/SmiEditor.js?260530" type="module"></script>
-<script src="lib/highlight/cm/javascript.js?260530" type="module"></script>
+<script src="lib/popup.js?260606"></script>
+<script src="lib/SmiEditor.js?260606" type="module"></script>
+<script src="lib/highlight/cm/javascript.js?260606" type="module"></script>
 <script>
 windowName = "setting";
 
@@ -165,7 +165,7 @@ function init() {
 					el.value = value.join("\n");
 				}
 				if (el.type == "range") {
-                    el.title = `${el.value * 100}%`;
+					el.title = `${el.value * 100}%`;
 				}
 			} else if (el.type == "checkbox") {
 				if (name.indexOf("what")) {
@@ -1315,8 +1315,8 @@ function init() {
 				opt.value = dll[0].trim();
 				opt.innerText = dll[1].trim();
 				select.append(opt);
-            }
-            select.value = select.dataset.value;
+			}
+			select.value = select.dataset.value;
 		}
 		select.addEventListener("change", (e) => {
 			const dll = select.value;
@@ -1729,7 +1729,7 @@ fieldset li { margin-bottom: 2px; }
 	padding: 0;
 }
 #areaInputCommandFunc .CodeMirror-code span {
-    height: 14px;
+	height: 14px;
 }
 #areaInputCommandFunc .CodeMirror pre.CodeMirror-line {
 	padding: 0;
@@ -2200,7 +2200,7 @@ body:not(.hl) .CodeMirror .CodeMirror-cursor,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?260530")</h4>
+					<h4>openAddon("~~.html?260606")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>

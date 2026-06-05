@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>겹치는 싱크 분리</title>
-	<script src="../lib/popup.js?260530"></script>
-	<script src="../lib/SmiEditor.js?260530" type="module"></script>
+	<script src="../lib/popup.js?260606"></script>
+	<script src="../lib/SmiEditor.js?260606" type="module"></script>
 	<script>
 windowName = "addon";
 
@@ -26,16 +26,16 @@ async function init() {
 	}
 	
 	{	// 에디터 교체
-        inputOrigin = new SmiEditor("", document.getElementById("input"));
-        outputUpper = new SmiEditor("", document.getElementById("outputUpper"));
-        outputLower = new SmiEditor("", document.getElementById("outputLower"));
+		inputOrigin = new SmiEditor("", document.getElementById("input"));
+		outputUpper = new SmiEditor("", document.getElementById("outputUpper"));
+		outputLower = new SmiEditor("", document.getElementById("outputLower"));
 		SmiEditor.activateKeyEvent();
-    }
+	}
 	
-    SmiEditor.setSetting({});
-    if (opener.setting) {
-        SmiEditor.setHighlight(opener.setting.highlight, [inputOrigin, outputUpper, outputLower]);
-    }
+	SmiEditor.setSetting({});
+	if (opener.setting) {
+		SmiEditor.setHighlight(opener.setting.highlight, [inputOrigin, outputUpper, outputLower]);
+	}
 	
 	let start = 0;
 	let end = 0;
