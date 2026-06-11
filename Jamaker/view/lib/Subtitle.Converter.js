@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260606";
+﻿import "./SubtitleObject.js?260611";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -98,7 +98,7 @@ if (!Uint8Array.fromBase64) {
 				append(attr, withFs);
 			}
 		});
-		let html = Smi.fromAttr(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>");
+		let html = Smi.fromAttrs(cAttrs, Combine.defaultSize).replaceAll("\n", "<br>");
 		let width = 0;
 		const log = wLogs[html];
 		if (log) {
@@ -431,7 +431,7 @@ if (!Uint8Array.fromBase64) {
 								if (sync[WIDTH] > groupMaxWidth) {
 									// 크기 조절 안 했을 때의 폭을 이미 넘어섰으면 작업 안 함
 									if (LOG) console.log("width over");
-									sync[TEXT] = Smi.fromAttr(attrs).replaceAll("\n", "<br>");
+									sync[TEXT] = Smi.fromAttrs(attrs).replaceAll("\n", "<br>");
 									continue;
 								}
 								*/
@@ -676,10 +676,10 @@ if (!Uint8Array.fromBase64) {
 								if (LOG) console.log(padsAttrs, width);
 							}
 							
-							sync[TEXT] = Smi.fromAttr(padsAttrs).replaceAll("\n", "<br>").replaceAll(/<RP>(^<)*<\/RP>/gi, "");
+							sync[TEXT] = Smi.fromAttrs(padsAttrs).replaceAll("\n", "<br>").replaceAll(/<RP>(^<)*<\/RP>/gi, "");
 							
 						} else {
-							sync[TEXT] = Smi.fromAttr(attrs).replaceAll("\n", "<br>");
+							sync[TEXT] = Smi.fromAttrs(attrs).replaceAll("\n", "<br>");
 						}
 					});
 				});
@@ -1886,13 +1886,14 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						smi: smi
 					,	ass: assText
 					,	layer: 0
+					,	index: i
+					,	span: 1
 					,	start: smi.start
 					,	end: 0
 					,	addEnd: 0
 					,	style: name
 					,	text: ""
 				};
-				let span = 1;
 				
 				if (isFinite(ass[0])) {
 					item.layer = ass[0];
@@ -1908,7 +1909,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 								
 							} else if (isFinite(ass[2])) {
 								// [Layer, -, span, Style, Text]
-								span = Number(ass[2]);
+								item.span = Number(ass[2]);
 								if (ass[3]) item.style = ass[3];
 								item.text = ass.slice(4).join(",");
 								
@@ -1921,7 +1922,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 								 && isFinite(ass3[0])
 								) {
 									// [Layer, -, span(add, add), Style, Text]
-									span = Number(ass2[0]);
+									item.span = Number(ass2[0]);
 									item.start += Number(ass2[1]);
 									item.addEnd = Number(ass3[0]);
 									if (ass[4]) item.style = ass[4];
@@ -1958,9 +1959,9 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				}
 				
 				// span만큼 경과한 싱크에 기반해서 종료싱크 부여해야 함
-				let toAssEnd = toAssEnds[i + span];
+				let toAssEnd = toAssEnds[i + item.span];
 				if (toAssEnd == null) {
-					toAssEnd = toAssEnds[i + span] = [];
+					toAssEnd = toAssEnds[i + item.span] = [];
 				}
 				toAssEnd.push(item);
 				assComments.push(item);
@@ -1982,6 +1983,41 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				const fadeLength = item.end - item.start;
 				item.text = item.text.replaceAll("\\fadein" , `\\fad(${fadeLength},0)`)
 				                     .replaceAll("\\fadeout", `\\fad(0,${fadeLength})`);
+			}
+			{	// span 페이드 처리
+				const fadBegin = item.text.indexOf("\\fad(");
+				if (fadBegin > 0) {
+					const fadEnd = item.text.indexOf(")", fadBegin);
+					if (fadEnd > 0) {
+						const fadLengths = item.text.substring(fadBegin + 5, fadEnd).split(",");
+						if (fadLengths.length == 2) {
+							let converted = false;
+							if (fadLengths[0].startsWith("[") && fadLengths[0].endsWith("]")) {
+								const f = fadLengths[0].substring(1, fadLengths[0].length - 1);
+								if (isFinite(f)) {
+									const span = Number(f);
+									if ((span <= item.span) && (item.index + span < smis.length)) {
+										fadLengths[0] = smis[item.index + span].start - smis[item.index].start;
+									}
+									converted = true;
+								}
+							}
+							if (fadLengths[1].startsWith("[") && fadLengths[1].endsWith("]")) {
+								const f = fadLengths[1].substring(1, fadLengths[1].length - 1);
+								if (isFinite(f)) {
+									const span = Number(f);
+									if ((span <= item.span) && (item.index + item.span < smis.length)) {
+										fadLengths[1] = smis[item.index + item.span].start - smis[item.index + item.span - span].start;
+									}
+									converted = true;
+								}
+							}
+							if (converted) {
+								item.text = item.text.substring(0, fadBegin + 5) + fadLengths.join(",") + item.text.substring(fadEnd);
+							}
+						}
+					}
+				}
 			}
 			const event = new AssEvent(item.start, item.end, item.style, item.text, item.layer);
 			event.owner = item.smi;
@@ -2109,7 +2145,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		assFile.addFromSyncs(syncs[h], holds[h].name);
 	}
 	// 메인 홀드를 마지막에 추가
-	assFile.addFromSync(syncs[0], "Default");
+	assFile.addFromSyncs(syncs[0], "Default");
 	
 	// 홀드에 없는 스타일 추가
 	assStyles.body.push(...appendStyles);
@@ -2325,7 +2361,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 					if (pos) {
 						const x = (pos.x + (shake.x * playResY / 300)).toFixed(2);
 						const y = (pos.y + (shake.y * playResY / 300)).toFixed(2);
-						tagTokens[pos.i].tags[pos.j] = `pos(${ x }, ${ y })`;
+						tagTokens[pos.i].tags[pos.j] = `pos(${x},${y})`;
 						transformed = true;
 					}
 				}
@@ -2336,7 +2372,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						if (i % 2 == 0) {
 							text += token.text;
 						} else {
-							text += "{" + token.tags.join("\\") + "}";
+							text += "{" + token.tags.join("\\").replaceAll("\\\\", "\\") + "}";
 						}
 					});
 					item.Text = text;

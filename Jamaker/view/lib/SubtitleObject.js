@@ -791,12 +791,12 @@ Subtitle.Width =
 			return whiteSpace;
 		}
 		
-		// 기본적으로 전각 공백 width를 기준으로 필요한 개수 카운트
+		// 기본적으로 전각 공백 width를 기준으로 필요한 개수 카운트, 하나 모자란 상태까지 확인
 		const count = Math.floor((targetWidth - thisWidth) / this.getOneWidth(font));
-		for (let i = 0; i < count; i++) {
+		for (let i = 0; i < count - 1; i++) {
 			whiteSpace += "　";
 		}
-		lastWidth = thisWidth = Subtitle.Width.getWidth(whiteSpace, font);
+		thisWidth = Subtitle.Width.getWidth(whiteSpace, font);
 		
 		// 문자가 아닌 실제 문자열 폭 계산에선 부정확할 수 있으므로 후처리 필요
 		while (thisWidth < targetWidth) {
@@ -1259,16 +1259,13 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 			let count = 0;
 			let fscx = "";
 			let fscy = "";
-			let bord = "";
-			let shad = "";
-			let _1a_ = "";
 			lines.forEach((line) => {
 				line.furigana = [];
 				line.attrs.forEach((attr, j) => {
 					if (attr.furigana) {
 						const furigana = [];
 						if (j > 0) {
-							furigana.push(Attr.junkAss(`{\\furigana\\fscy${ fscy ? fscy/2 : 50 }\\bord0\\shad0\\1a&HFF&}`));
+							furigana.push(Attr.junkAss(`{\\furigana\\fscy${ fscy ? fscy/2 : 50 }\\alpha&HFF&}`));
 							// 기존의 태그는 삭제
 							const sliceds = line.attrs.slice(0, j);
 							sliceds.forEach((sliced, s) => {
@@ -1280,10 +1277,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 										const tags = inPart[0].split('\\');
 										for (let t = 0; t < tags.length; t++) {
 											const tag = tags[t];
-											if (tag.startsWith("fscy")
-											 || tag.startsWith("bord")
-											 || tag.startsWith("shad")
-											 || tag.startsWith("1a")) {
+											if (tag.startsWith("fscy")) {
 												tags.splice(t--, 1);
 											}
 										}
@@ -1294,7 +1288,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 								}
 							});
 							furigana.push(...sliceds);
-							furigana.push(Attr.junkAss(`{\\1a${_1a_}\\bord${bord ? bord : ''}\\shad${shad ? shad : ''}\\fscx${ fscx ? fscx/2 : 50 }}`));
+							furigana.push(Attr.junkAss(`{\\alpha\\fscx${ fscx ? fscx/2 : 50 }}`));
 						} else {
 							furigana.push(Attr.junkAss(`{\\furigana\\fscy${ fscy ? fscy/2 : 50 }\\fscx${ fscx ? fscx/2 : 50 }}`));
 						}
@@ -1306,9 +1300,9 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 						}
 						
 						if (j < line.attrs.length - 1) {
-							furigana.push(Attr.junkAss(`{\\fscx${ fscx ? fscx : "" }\\bord0\\shad0\\1a&HFF&}`));
+							furigana.push(Attr.junkAss(`{\\fscx${ fscx ? fscx : "" }\\alpha&HFF&}`));
 							furigana.push(...line.attrs.slice(j + 1));
-							furigana.push(Attr.junkAss(`{\\1a\\bord\\shad\\fscx\\fscy}\\N`));
+							furigana.push(Attr.junkAss(`{\\alpha\\fscx\\fscy}\\N`));
 						} else {
 							furigana.push(Attr.junkAss(`{\\fscx\\fscy}\\N`));
 						}
@@ -1324,14 +1318,6 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 								} else if (tag.startsWith("fscy")) {
 									let v = tag.substring(4);
 									fscy = isFinite(v) ? Number(v) : "";
-								} else if (tag.startsWith("bord")) {
-									let v = tag.substring(4);
-									bord = isFinite(v) ? Number(v) : "";
-								} else if (tag.startsWith("shad")) {
-									let v = tag.substring(4);
-									shad = isFinite(v) ? Number(v) : "";
-								} else if (tag.startsWith("1a")) {
-									_1a_ = tag.substring(2);
 								}
 							});
 						});
@@ -1367,9 +1353,9 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 					if (c == 0) {
 						push(combined, line.attrs);
 					} else {
-						combined.push(Attr.junkAss("{\\bord0\\shad0\\1a&HFF&}"));
+						combined.push(Attr.junkAss("{\\alpha&HFF&}"));
 						push(combined, line.attrs);
-						combined.push(Attr.junkAss("{\\1a\\bord\\shad}"));
+						combined.push(Attr.junkAss("{\\alpha}"));
 					}
 				});
 				texts.push(AssEvent.inFromAttrs(combined, false)[0]);
@@ -1417,7 +1403,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 							base.hide = true;
 							// 페이드 대상 활성화
 							if (countHide > 0) {
-								fadeAttrs.push(Attr.junkAss("{\\1a\\bord\\shad}"));
+								fadeAttrs.push(Attr.junkAss("{\\alpha}"));
 							}
 							wasFade = true;
 						}
@@ -1426,7 +1412,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 						if (wasFade || isFirst) {
 							// 페이드 비대상 비활성화
 							isFirst = false;
-							fadeAttrs.push(Attr.junkAss("{\\shad0\\bord0\\1a&HFF&}"));
+							fadeAttrs.push(Attr.junkAss("{\\alpha&HFF&}"));
 							wasFade = false;
 							countHide++;
 						}
@@ -1457,7 +1443,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 							base.hide = true;
 							// 페이드 대상 활성화
 							if (countHide > 0) {
-								fadeAttrs.push(Attr.junkAss("{\\1a\\bord\\shad}"));
+								fadeAttrs.push(Attr.junkAss("{\\alpha}"));
 							}
 							wasFade = true;
 						}
@@ -1466,7 +1452,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 						if (wasFade || isFirst) {
 							// 페이드 비대상 비활성화
 							isFirst = false;
-							fadeAttrs.push(Attr.junkAss("{\\shad0\\bord0\\1a&HFF&}"));
+							fadeAttrs.push(Attr.junkAss("{\\alpha&HFF&}"));
 							wasFade = false;
 							countHide++;
 						}
@@ -1504,7 +1490,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 							// 페이드 대상 활성화
 							const alpha = Math.round(255 * (100 - ratio) / 100);
 							const junk = new Attr(attr);
-							junk.ass = `{${ isFirst ? '' : '\\1a\\bord\\shad' }\\fade(0,0,${alpha},0,0,0,[FADE_LENGTH])}`;
+							junk.ass = `{${ isFirst ? '' : '\\alpha' }\\fade(0,0,${alpha},0,0,0,[FADE_LENGTH])}`;
 							fadeAttrs.push(junk);
 							wasFade = true;
 						}
@@ -1514,7 +1500,7 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 							// 페이드 비대상 비활성화
 							isFirst = false;
 							const junk = new Attr(attr);
-							junk.ass = "{\\shad0\\bord0\\1a&HFF&}";
+							junk.ass = "{\\alpha&HFF&}";
 							fadeAttrs.push(junk);
 							wasFade = false;
 							countHide++;
@@ -1541,10 +1527,10 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 				baseAttrs.forEach((base, i) => {
 					let tag = "";
 					if (!wasHide && base.hide) {
-						tag = "{\\shad0\\bord0\\1a&HFF&}";
+						tag = "{\\alpha&HFF&}";
 						wasHide = true;
 					} else if (wasHide && !base.hide) {
-						tag = "{\\1a\\bord\\shad}";
+						tag = "{\\alpha}";
 						wasHide = false;
 					}
 					if (isFadeOnly && !base.hide && base.text) {
@@ -1890,6 +1876,7 @@ AssEvent.fromSync = function(sync, style=null) {
 						continue;
 					}
 					
+					// TODO: 공백문자 개수가 아니라, 실제 width 기반으로 고치는 게?
 					let left = 0;
 					for (let k = 0; k < line.length; k++) {
 						if (line[k] == "　") {
@@ -2091,7 +2078,6 @@ AssPart.prototype.set = function(key, value) {
 	}
 	this.body.push({ key: key, value: value });
 }
-AssPart.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 AssPart.prototype.toText = function(withName=true, withFormat=true) {
 	const result = [];
 	if (withFormat) {
@@ -2161,7 +2147,6 @@ window.AssFile = Subtitle.AssFile = function(text, width=0, height=0) {
 		this.parts.push(new AssPart("Events"    , AssPart.EventsFormat));
 	}
 }
-AssFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 AssFile.prototype.toText = function(usedStylesOnly=false) {
 	const styles = this.getStyles();
 	const stylesBody = styles.body;
@@ -2190,7 +2175,6 @@ AssFile.prototype.toText = function(usedStylesOnly=false) {
 	}
 	return result.join("\n\n");
 }
-AssFile.prototype.fromTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 AssFile.prototype.fromText = function(text) {
 	const lines = text.replaceAll("\r\n", "\n").split("\n");
 	
@@ -2283,7 +2267,6 @@ AssFile.prototype.fromText = function(text) {
 	});
 	return this;
 }
-AssFile.prototype.addFromSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 AssFile.prototype.addFromSyncs = function(syncs, styleName) {
 	let playResX = 1920;
 	let playResY = 1080;
@@ -2321,7 +2304,6 @@ AssFile.prototype.addFromSyncs = function(syncs, styleName) {
 		part.body.push(...events);
 	});
 }
-AssFile.prototype.toSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 AssFile.prototype.toSyncs = function() {
 	let part = null;
 	for (let i = 0; i < this.parts.length; i++) {
@@ -2442,7 +2424,6 @@ TypeParser[SyncType.split] = "  ";
 Smi.syncPreset = "<Sync Start={sync}><P Class=KRCC{type}>";
 Smi.flowForced = true;
 
-Smi.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Smi.prototype.toText = function(jmk=0) {
 	if (this.syncType == SyncType.comment) { // Normalize 시에만 존재
 		return `<!--${ this.text }-->`;
@@ -3148,11 +3129,9 @@ Smi.toAttrs = (text) => {
 	
 	return result;
 }
-Smi.prototype.toAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Smi.prototype.toAttrs = function(keepTags=true) {
 	return Smi.toAttrs(this.text, keepTags);
 }
-Smi.prototype.fromAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Smi.prototype.fromAttrs = function(attrs, forConvert=false) {
 	let text = "";
 	// 주석 살려야 되는지 확인
@@ -3170,7 +3149,6 @@ Smi.prototype.fromAttrs = function(attrs, forConvert=false) {
 	this.text = text;
 	return this;
 }
-Smi.fromAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Smi.fromAttrs = (attrs, fontSize=0, checkRuby=true, forConvert=false) => { // fontSize를 넣으면 html로 % 크기 출력
 	let text = "";
 	
@@ -3499,7 +3477,7 @@ Smi.normalizers.push(new Smi.Normalizer("shake"
 							if (fadeColor.length == 5) {
 								// 투명도
 								attr.oText = attr.text;
-								attr.text = `{\\1a${fadeColor}\\3a${fadeColor}\\4a${fadeColor}}` + attr.text + `{\\1a\\3a\\4a}`;
+								attr.text = `{\\alpha${fadeColor}}` + attr.text + `{\\alpha}`;
 							} else {
 								// 색상
 								attr.fc = fadeColor;
@@ -3691,6 +3669,7 @@ Smi.normalizers.push(new Smi.Normalizer("typing"
 			let attrIndex = -1;
 			let attr = null;
 			let isLastAttr = false;
+			let tLength = 1;
 			for (let j = 0; j < attrs.length; j++) {
 				if (!attr) {
 					// 타이핑 찾기 전
@@ -3716,6 +3695,10 @@ Smi.normalizers.push(new Smi.Normalizer("typing"
 						}
 					}
 				} else {
+					// 동일 타이핑 객체인 경우 연결
+					if (attrs[j].typing == attr.typing) {
+						tLength++;
+					}
 					// 타이핑 찾은 후 나머지에 대해 타이핑 제거
 					attrs[j].typing = null;
 				}
@@ -3724,11 +3707,58 @@ Smi.normalizers.push(new Smi.Normalizer("typing"
 				return [smi];
 			}
 			
-			const types = Typing.toType(attr.text, attr.typing.mode, attr.typing.cursor);
+			let moveAttr = null;
+			if (forConvert) {
+				// ass 변환해야 할 경우, \move 태그 있으면 체크
+				for (let j = 0; j < attrs.length; j++) {
+					const ass = attrs[j].ass;
+					if (!ass || ass.indexOf("{") < 0) continue;
+					if (ass.indexOf("\\pos(") > 0) break; // \pos 태그 쓴 경우 필요 없음
+					const index = ass.indexOf("\\move(");
+					if (index > 0) {
+						const endIndex = ass.indexOf(")", index);
+						if (endIndex > 0) {
+							const values = ass.substring(index + 6, endIndex).split(",");
+							if (values.length == 4
+							 && isFinite(values[0])
+							 && isFinite(values[1])
+							 && isFinite(values[2])
+							 && isFinite(values[3])) {
+								moveAttr = {
+										attr: attrs[j]
+									,	org: ass
+									,	range: [index, endIndex + 1]
+									,	x1: Number(values[0])
+									,	y1: Number(values[1])
+									,	x2: Number(values[2])
+									,	y2: Number(values[3])
+								};
+								break;
+							}
+						}
+					}
+				}
+			}
+			
+			// ass 변환해야 할 경우, 중간에 ass 속성 섞였으면 추가로 변환할 내역 체크
+			let typingText = "";
+			let typingAss = "";
+			const assReplacer = [];
+			for (let j = 0; j < tLength; j++) {
+				const tAttr = attrs[attrIndex + j];
+				typingText += tAttr.text;
+				typingAss += tAttr.ass ?? tAttr.text;
+				assReplacer.push({ text: typingText, ass: typingAss });
+			}
+			assReplacer.sort((a, b) => {
+				return b.text.length - a.text.length;
+			});
+			
+			const types = Typing.toType(typingText, attr.typing.mode, attr.typing.cursor);
 			const widths = [];
-			{	const attrTexts = attr.text.split("\n");
-				attrTexts.forEach((attrText) => {
-					widths.push(Smi.getLineWidth(attrText));
+			{	const typingLines = typingText.split("\n");
+				typingLines.forEach((typingLine) => {
+					widths.push(Smi.getLineWidth(typingLine));
 				});
 			}
 			
@@ -3740,6 +3770,7 @@ Smi.normalizers.push(new Smi.Normalizer("typing"
 			}
 			
 			const typeStart = attr.typing.start;
+			const cursor = attr.typing.cursor;
 			attr.typing = null;
 			
 			// 페이드 효과 추가 처리
@@ -3784,28 +3815,21 @@ Smi.normalizers.push(new Smi.Normalizer("typing"
 				if (!checker.hasFade && (typeIndex <= lastTypeIndex)) continue;
 				lastTypeIndex = typeIndex;
 				
-				const textLines = types[typeStart + typeIndex].split("\n");
-				const text = textLines.join("<br>");
+				const type = types[typeStart + typeIndex];
+				const textLines = type.split("\n");
+				let text = textLines.join("<br>");
 				{
 					const attrTextLines = [];
-					if (forConvert && false) {
-						// SMI와 별개로 \fscx 계산... \fn 값은 어떻게?
-						// \an1,4,7 쓰면 문제없긴 한데...
-						const oneWidth = Subtitle.Width.getOneWidth();
-						for (let k = 0; k < widths.length; k++) {
-							if (k < textLines.length - 1) {
-								// 건너뛰기
-							} else {
-								let targetWidth = widths[k];
-								if (k == textLines.length - 1) {
-									targetWidth -= Smi.getLineWidth(textLines[k]);
-								}
-								if (targetWidth > 0) {
-									attrTextLines.push(`{\\fscx${ Math.floor(add / oneWidth * 100) }}　{${
-										((k < textLines.length - 1) ? "\\fscx" : "") }}`); // 마지막 줄이면 {}으로 끝내기
-								}
-							}
+					if (forConvert) {
+						// ASS 변환 시엔 투명 글자로 공간 차지
+						if (cursor == Typing.Cursor.visible) {
+							Subtitle._tmp.innerHTML = type; // 커서 있으면 <u> 제거해야 함
+							const margin = type.endsWith("<U> </U>") ? typingText.substring(Subtitle._tmp.innerText.length - 1) : (" " +  typingText.substring(Subtitle._tmp.innerText.length));
+							attrTextLines.push(`{\\alpha&HFF&}${margin}{\\alpha}`);
+						} else {
+							attrTextLines.push(`{\\alpha&HFF&}${typingText.substring(type.length)}{\\alpha}`);
 						}
+						attr.text = attrTextLines.join("\n");
 					} else {
 						for (let k = 0; k < widths.length; k++) {
 							if (k < textLines.length - 1) {
@@ -3816,10 +3840,25 @@ Smi.normalizers.push(new Smi.Normalizer("typing"
 								attrTextLines.push(Subtitle.Width.getAppendToTarget(0, widths[k]));
 							}
 						}
+						attr.text = attrTextLines.join("\n")
+								.replaceAll("　\n", "　​\n")
+								.replaceAll(" \n" , " ​\n" )
+								.replaceAll("\n " , "\n​ " )
+								.replaceAll("\n　", "\n​　");
+						if (isLastAttr && (attr.text.endsWith(" ") || attr.text.endsWith("　"))) {
+							attr.text += "​";
+						}
 					}
-					attr.text = attrTextLines.join("​\n​");
-					if (isLastAttr) {
-						attr.text += "​";
+					if (forConvert) {
+						// ass 변환해야 할 경우, 중간에 ass 속성 섞인 것 변환
+						text = type;
+						for (let k = 0; k < assReplacer.length; k++) {
+							const replacer = assReplacer[k];
+							if (type.startsWith(replacer.text)) {
+								text = replacer.ass + type.substring(replacer.text.length);
+								break;
+							}
+						}
 					}
 				}
 				const newAttrs = new Smi(null, null, text).toAttrs(false);
@@ -3846,12 +3885,22 @@ Smi.normalizers.push(new Smi.Normalizer("typing"
 					}
 				});
 				
+				if (forConvert && moveAttr) {
+					// ass 변환해야 할 경우, \move 태그 있으면 각 싱크별 \pos 태그로 분할 적용
+					const x = Math.round((moveAttr.x1 * (count - 1 - j) + moveAttr.x2 * j) / (count - 1) * 100) / 100;
+					const y = Math.round((moveAttr.y1 * (count - 1 - j) + moveAttr.y2 * j) / (count - 1) * 100) / 100;
+					moveAttr.attr.ass = moveAttr.org.substring(0, moveAttr.range[0]) + `\\pos(${x},${y})` + moveAttr.org.substring(moveAttr.range[1]);
+				}
 				const tAttrs = attrs.slice(0, attrIndex);
 				tAttrs.push(...newAttrs);
 				tAttrs.push(attr);
-				tAttrs.push(...attrs.slice(attrIndex + 1));
+				tAttrs.push(...attrs.slice(attrIndex + tLength));
 				
-				smis.push(new Smi(sync, (j == 0 ? smi.syncType : SyncType.inner)).fromAttrs(tAttrs, forConvert));
+				const newSmi = new Smi(sync, (j == 0 ? smi.syncType : SyncType.inner)).fromAttrs(tAttrs, forConvert);
+				if (forConvert) {
+					newSmi.text = newSmi.text.replaceAll("​", "{}");
+				}
+				smis.push(newSmi);
 				if (j == 0) {
 					// 첫 항목에만 주석 남기고 나머지는 제거
 					for (let k = 0; k < attrs.length; k++) {
@@ -4523,7 +4572,7 @@ Smi.normalize = (smis, withComment=false, forConvert=false) => {
 									}
 								}
 								
-								let cSmi = new Smi(Math.max(flowSmis[fi].start, afterFlows[ai].start), flowSmis[fi].syncType).fromAttr(leftAttrs.concat(frontAttrs).concat(rightAttrs));
+								let cSmi = new Smi(Math.max(flowSmis[fi].start, afterFlows[ai].start), flowSmis[fi].syncType).fromAttrs(leftAttrs.concat(frontAttrs).concat(rightAttrs));
 								if (Smi.flowForced) { // MX 플레이어 등에선 연속 공백문자 무시당하므로 zwsp 끼워줌
 									cSmi.text = cSmi.text.replaceAll("  ", " ​ ").replaceAll("  ", " ​ ");
 								}
@@ -4634,7 +4683,6 @@ window.SmiFile = Subtitle.SmiFile = function(text) {
 		this.fromText(this.text = text);
 	}
 }
-SmiFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SmiFile.prototype.toText = function(jmk=0) {
 	return this.text
 	   = ( this.header.replaceAll("\r\n", "\n")
@@ -4657,7 +4705,6 @@ Smi.getSyncType = function(syncLine) {
 	}
 	return SyncType.normal;
 }
-SmiFile.prototype.fromTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SmiFile.prototype.fromText = function(text) {
 	text = (this.text = text).replaceAll("\r\n", "\n");
 	this.header = "";
@@ -4777,7 +4824,6 @@ SmiFile.prototype.fromText = function(text) {
 	return this;
 }
 
-SmiFile.prototype.toSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SmiFile.prototype.toSyncs = function() {
 	const result = [];
 	
@@ -4820,7 +4866,6 @@ SmiFile.prototype.toSyncs = function() {
 
 	return result;
 }
-SmiFile.prototype.fromSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SmiFile.prototype.fromSyncs = function(syncs) {
 	const smis = [];
 	
@@ -5244,11 +5289,9 @@ window.Srt = Subtitle.Srt = function(start, end, text) {
 	this.text = text ? text : "";
 }
 
-Srt.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Srt.prototype.toText = function() {
 	return `${Srt.toSrtTime(this.start)} --> ${Srt.toSrtTime(this.end)}\n${this.text}\n`;
 }
-Srt.srt2txt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Srt.srt2text = (srts) => {
 	let result = "";
 	srts.forEach((srt) => {
@@ -5259,9 +5302,7 @@ Srt.srt2text = (srts) => {
 // 팟플레이어에서 SRT 자막에서 태그 읽힌다고 SMI 태그 쓰는 경우가 있음
 Srt.colorToAttr   = Smi.colorToAttr;
 Srt.colorFromAttr = Smi.colorFromAttr
-Srt.prototype.toAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Srt.prototype.toAttrs = function() { return Smi.toAttrs(this.text.replaceAll("\n", "<br>")); };
-Srt.prototype.fromAttr = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 Srt.prototype.fromAttrs = Smi.prototype.fromAttrs;
 
 Srt.prototype.toSync = function() {
@@ -5293,7 +5334,6 @@ window.SrtFile = Subtitle.SrtFile = function(text) {
 		this.fromText(text);
 	}
 }
-SrtFile.prototype.toTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SrtFile.prototype.toText = function() {
 	const items = [];
 	this.body.forEach((srt, i) => {
@@ -5302,7 +5342,6 @@ SrtFile.prototype.toText = function() {
 	return items.join("\n");
 }
 SrtFile.REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*$/;
-SrtFile.prototype.fromTxt = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SrtFile.prototype.fromText = function(text) {
 	const lines = text.replaceAll("\r\n", "\n").split("\n");
 	const items = [];
@@ -5362,7 +5401,6 @@ SrtFile.prototype.fromText = function(text) {
 	return this;
 }
 
-SrtFile.prototype.toSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SrtFile.prototype.toSyncs = function() {
 	const result = [];
 	this.body.forEach((srt) => {
@@ -5371,7 +5409,6 @@ SrtFile.prototype.toSyncs = function() {
 	return result;
 }
 
-SrtFile.prototype.fromSync = // 처음에 함수명 잘못 지은 걸 레거시 호환으로 일단 유지함
 SrtFile.prototype.fromSyncs = function(syncs) {
 	this.body = [];
 	syncs.forEach((sync) => {
