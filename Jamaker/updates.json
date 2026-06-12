@@ -1,4 +1,32 @@
-[ { "version": "2026.06.06"
+[ { "version": "2026.06.13"
+  , "comment":
+    [ "alert 중복 발생 시 동작 개선"
+    , "타이핑 효과 ASS 변환 기능 보완"
+    , "ASS 변칙 페이드 문법 추가"
+    , "ASS 변환 결과물 개선 등"
+    ]
+  , "files":
+    [ "runtimes/*"
+    , "view/help/img/ass13.png"
+    , "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "Jamaker.deps.json"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "Microsoft.Web.WebView2.Core.dll"
+    , "Microsoft.Web.WebView2.Core.xml"
+    , "Microsoft.Web.WebView2.WinForms.dll"
+    , "Microsoft.Web.WebView2.WinForms.xml"
+    , "Microsoft.Web.WebView2.Wpf.dll"
+    , "WebViewForm.deps.json"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+, { "version": "2026.06.06"
   , "comment":
     [ "선택된 줄 UI 표시 영역 오른쪽 끝까지 확장"
     , "불필요한 [Aegisub Project Garbage] 삭제"

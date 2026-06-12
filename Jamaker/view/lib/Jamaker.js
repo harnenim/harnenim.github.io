@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260611";
-import "./Subtitle.Converter.js?260611";
-import "./AutoCompleteCodeMirror.js?260611";
-import "./SmiEditor.js?260611";
-import "./AssEditor.js?260611";
+﻿import "./MenuStrip.js?260613";
+import "./Subtitle.Converter.js?260613";
+import "./AutoCompleteCodeMirror.js?260613";
+import "./SmiEditor.js?260613";
+import "./AssEditor.js?260613";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260611";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260611", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260613", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2098,7 +2098,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260611").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260613").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2176,7 +2176,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260611").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260613").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2348,7 +2348,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260611", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260613", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4204,6 +4204,9 @@ window.srt2smi = function(text) {
  * frameSyncOnly: 화면 싱크만 맞춰주기
  * add: 과거 반프레임 보정치 안 넣었던 것들을 위해 추가
  * ... 아마도 나만 쓸 기능 같아서 기본 설정엔 안 넣음
+ * 
+ * ASS 역변환 기능 사용자에겐 필수인가?
+ * ... 새 자막이 아닌 기존 자막에 대해서만 필요함
  */
 window.fitSyncsToFrame = function(frameSyncOnly=false, add=0) {
 	if (!Subtitle.video.fs.length) {
@@ -4600,7 +4603,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260611", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260613", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
