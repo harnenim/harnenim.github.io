@@ -1,4 +1,16 @@
-[ { "version": "2026.06.13"
+[ { "version": "2026.06.17"
+  , "comment":
+    [ "주석 있을 때 Ctrl+Shift+↔ 동작 보완"
+    , "ASS 변환 시 [TEXT] 사용성 개선 등"
+    ]
+  , "files":
+    [ "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    ]
+  }
+, { "version": "2026.06.13"
   , "comment":
     [ "alert 중복 발생 시 동작 개선"
     , "타이핑 효과 ASS 변환 기능 보완"
