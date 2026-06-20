@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260613";
-import "./Subtitle.Converter.js?260613";
-import "./AutoCompleteCodeMirror.js?260613";
-import "./SmiEditor.js?260613";
-import "./AssEditor.js?260613";
+﻿import "./MenuStrip.js?260620";
+import "./Subtitle.Converter.js?260620";
+import "./AutoCompleteCodeMirror.js?260620";
+import "./SmiEditor.js?260620";
+import "./AssEditor.js?260620";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260613";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260617", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260620", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -374,14 +374,14 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 			let withAss = false;
 			
 			if (match && match[1]) {
-				const attrs = match[1].toUpperCase().split(" ");
+				const attrs = match[1].split(" ");
 				attrs.forEach((attr) => {
-					if (attr == "SMI") {
-						withSmi = true;
-					} else if (attr == "SRT") {
-						withSrt = true;
-					} else if (attr == "ASS") {
-						withAss = true;
+					if (attr.toUpperCase() == "SRT") {
+						withSrt = attr;
+					} else if (attr.toUpperCase() == "SMI" || attr.toUpperCase() == "SAMI") {
+						withSmi = attr;
+					} else if (attr.toUpperCase() == "ASS" || attr.toUpperCase() == "SSA") {
+						withAss = attr;
 					}
 				});
 			}
@@ -389,14 +389,13 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 			tab.withSrt = withSrt;
 			if (tab.withAss != withAss) {
 				if (withAss) {
-					tab.withAss = true;
 					tab.area.classList.add("ass");
 					tab.updateHoldSelector();
 				} else {
-					tab.withAss = false;
 					tab.area.classList.remove("ass");
 					tab.updateHoldSelector();
 				}
+				tab.withAss = withAss;
 			}
 		}
 		
@@ -2098,7 +2097,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260617").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260620").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2176,7 +2175,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260617").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260620").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2348,7 +2347,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260617", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260620", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2555,7 +2554,7 @@ window.saveFile = function(asNew, isExport) {
 			}
 		}
 		
-		let withSmi = !isExport && currentTab.withSmi; // SMI 내보내기 시엔 처리하지 않음
+		let withSmi = isExport ? null : currentTab.withSmi; // SMI 내보내기 시엔 처리하지 않음
 		let smiPath = "";
 		if (withSmi) {
 			// 프로젝트 파일 경로 기반으로
@@ -2567,10 +2566,11 @@ window.saveFile = function(asNew, isExport) {
 				} else {
 					if (path.indexOf("\\") > 0 || path.indexOf("/") >= 0) {
 						// 웹샘플 파일명이면 여기로 못 들어옴
+						const ext = withSmi; // smi 대신 sami일 수도 있음
 						if (path.toLowerCase().endsWith(".jmk")) {
-							smiPath = path.substring(0, path.length - 3) + "smi";
+							smiPath = path.substring(0, path.length - 3) + ext;
 						} else {
-							smiPath = path + ".smi";
+							smiPath = path + "." + ext;
 						}
 					} else if (currentTab.smiPath) {
 						// 웹샘플에서 이미 저장한 적 있을 경우
@@ -2584,21 +2584,22 @@ window.saveFile = function(asNew, isExport) {
 			}
 		}
 		
-		let withSrt = !isExport && currentTab.withSrt; // SMI 내보내기 시엔 처리하지 않음
+		let withSrt = isExport ? null : currentTab.withSrt; // SMI 내보내기 시엔 처리하지 않음
 		let srtPath = "";
 		if (withSrt) {
 			// 프로젝트 파일 경로 기반으로
 			if (path) {
 				if (path.indexOf("\\") > 0 || path.indexOf("/") >= 0) {
 					// 웹샘플 파일명이면 여기로 못 들어옴
+					const ext = withSrt;
 					if (path.toLowerCase().endsWith(".sami")) {
-						srtPath = path.substring(0, path.length - 4) + "srt";
+						srtPath = path.substring(0, path.length - 4) + ext;
 					} else if (path.toLowerCase().endsWith(".smi")) {
-						srtPath = path.substring(0, path.length - 3) + "srt";
+						srtPath = path.substring(0, path.length - 3) + ext;
 					} else if (path.toLowerCase().endsWith(".jmk")) {
-						srtPath = path.substring(0, path.length - 3) + "srt";
+						srtPath = path.substring(0, path.length - 3) + ext;
 					} else {
-						srtPath = path + ".srt";
+						srtPath = path + "." + ext;
 					}
 				} else if (currentTab.srtPath) {
 					// 웹샘플에서 이미 저장한 적 있을 경우
@@ -2611,7 +2612,7 @@ window.saveFile = function(asNew, isExport) {
 			}
 		}
 		
-		let withAss = !isExport && currentTab.withAss; // SMI 내보내기 시엔 처리하지 않음
+		let withAss = isExport ? null : currentTab.withAss; // SMI 내보내기 시엔 처리하지 않음
 		if (withAss) {
 			const appendFile = currentTab.getAdditionalToAss();
 			const appendStyles = appendFile.getStyles();
@@ -2724,14 +2725,15 @@ window.saveFile = function(asNew, isExport) {
 			if (path) {
 				if (path.indexOf("\\") > 0 || path.indexOf("/") >= 0) {
 					// 웹샘플 파일명이면 여기로 못 들어옴
+					const ext = withAss; // ass 대신 ssa일 수도 있음
 					if (path.toLowerCase().endsWith(".sami")) {
-						assPath = path.substring(0, path.length - 4) + "ass";
+						assPath = path.substring(0, path.length - 4) + ext;
 					} else if (path.toLowerCase().endsWith(".smi")) {
-						assPath = path.substring(0, path.length - 3) + "ass";
+						assPath = path.substring(0, path.length - 3) + ext;
 					} else if (path.toLowerCase().endsWith(".jmk")) {
-						assPath = path.substring(0, path.length - 3) + "ass";
+						assPath = path.substring(0, path.length - 3) + ext;
 					} else {
-						assPath = path + ".ass";
+						assPath = path + "." + ext;
 					}
 				} else if (currentTab.assPath) {
 					// 웹샘플에서 이미 저장한 적 있을 경우
@@ -2750,7 +2752,7 @@ window.saveFile = function(asNew, isExport) {
 			lastSave = new Date().getTime();
 			
 			let saveText = "";
-			if (path.endsWith(".jmk")) {
+			if (path.toLowerCase().endsWith(".jmk")) {
 				const withFs = setting.sync.jmk && Subtitle.video.fs;
 				const withKfs = withFs && setting.sync.kfs;
 				// 프로젝트 파일에선 정규화하지 않고 원본 저장만 진행
@@ -4603,7 +4605,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260617", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260620", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
