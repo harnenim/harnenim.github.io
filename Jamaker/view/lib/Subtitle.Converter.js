@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260620";
+﻿import "./SubtitleObject.js?260627";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -966,19 +966,20 @@ SmiFile.textToHolds = (text) => {
 		let output = 3;
 		if (names.length > 1) {
 			holds[i].name = names[0];
-			if (names[1] == "X") {
-				// 처음에 방향성을 잘못 잡음... 극히 일부 샘플에만 들어간 값
-				output = 1;
-			} else {
-				output = Number(names[1]);
-			}
+			output = Number(names[1]);
 		}
 		// 홀드 스타일: antiNormalize 단계에서 가져옴
 		let style = holds[i].style;
 		if (!style) {
 			holds[i].style = style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
 		}
-		style.output = output;
+		if (output & 0b100) {
+			style.followMain = true;
+			style.output = output % 4;
+		} else {
+			style.followMain = false;
+			style.output = output;
+		}
 	}
 	for (let i = 1; i < exportedHoldsLength; i++) {
 		const hold = new SmiFile(holds[i].text).antiNormalize()[0];
@@ -990,12 +991,7 @@ SmiFile.textToHolds = (text) => {
 		let output = 3;
 		if (names.length > 1) {
 			holds[i].name = names[0];
-			if (names[1] == "X") {
-				// 처음에 방향성을 잘못 잡음... 극히 일부 샘플에만 들어간 값
-				output = 1;
-			} else {
-				output = Number(names[1]);
-			}
+			output = Number(names[1]);
 		}
 		// 홀드 스타일: header 확인
 		{	let style = null;
@@ -1005,7 +1001,13 @@ SmiFile.textToHolds = (text) => {
 			} else {
 				style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
 			}
-			style.output = output;
+			if (output & 0b100) {
+				style.followMain = true;
+				style.output = output % 4;
+			} else {
+				style.followMain = false;
+				style.output = output;
+			}
 			holds[i].style = style;
 		}
 		holds[i].text = text;
@@ -1057,13 +1059,16 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 			}
 			hold.exportName = hold.name;
 			if (hold.style) {
-				const style = SmiFile.toSaveStyle(hold.style);
-				if (style) {
-					text = `<!-- Style\n${style}\n-->\n` + text;
+				if (!hold.style.followMain) {
+					const style = SmiFile.toSaveStyle(hold.style);
+					if (style) {
+						text = `<!-- Style\n${style}\n-->\n` + text;
+					}
 				}
-				if (hold.style.output != 3) {
+				const output = Number(hold.style.output) + (hold.style.followMain ? 4 : 0);
+				if (output != 3) {
 					// 출력 선택
-					hold.exportName += "|" + hold.style.output;
+					hold.exportName += "|" + output;
 				}
 			}
 			result[hold.resultIndex = (hi + 1)] = `<!-- Hold=${hold.pos}|${hold.exportName}\n${text.replaceAll("<", "<​").replaceAll(">", "​>")}\n-->`;
@@ -1780,7 +1785,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 	const styles = {};
 	
 	holds.forEach((hold, h) => {
-		const name = (h == 0) ? "Default" : hold.name;
+		const name = (h == 0 || hold.style.followMain) ? "Default" : hold.name;
 		const style = hold.style ?? Subtitle.DefaultStyle;
 		
 		/* SMI 전용 홀드여도 ASS 변환 주석은 동작하도록 함
@@ -1994,6 +1999,9 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		
 		// 주석 기반 스크립트
 		assComments.forEach((item) => {
+			// TODO: 원래 {} 안의 문법 요소가 맞는지도 검증해야 되는데, 편의상 일단 넘김
+			// 장기적으로는 아예 ASS 문법 파서를 만드는 게 맞을 듯?
+			
 			{	// 자체 fadein/out 태그 처리
 				const fadeLength = item.end - item.start;
 				item.text = item.text.replaceAll("\\fadein" , `\\fad(${fadeLength},0)`)
@@ -2034,6 +2042,39 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 					}
 				}
 			}
+			{	// span t 처리
+				let c = 0;
+				do {
+					const tBegin = item.text.indexOf("\\t(", c);
+					if (tBegin > 0) {
+						const tEnd = item.text.indexOf(")", tBegin);
+						if (tEnd > 0) {
+							const tValues = item.text.substring(tBegin + 3, tEnd).split(",");
+							if (tValues.length >= 3) {
+								let converted = false;
+								for (let i = 0; i < 2; i++) {
+									if (tValues[i].startsWith("[") && tValues[i].endsWith("]")) {
+										const f = tValues[i].substring(1, tValues[i].length - 1);
+										if (isFinite(f)) {
+											const span = Number(f);
+											if ((span <= item.span) && (item.index + span < smis.length)) {
+												tValues[i] = smis[item.index + span].start - smis[item.index].start;
+											}
+											converted = true;
+										}
+									}
+								}
+								if (converted) {
+									item.text = item.text.substring(0, tBegin + 3) + tValues.join(",") + item.text.substring(tEnd);
+								}
+							}
+							c = tEnd;
+							continue;
+						}
+					}
+				} while (false);
+			}
+			
 			const event = new AssEvent(item.start, item.end, item.style, item.text, item.layer);
 			event.owner = item.smi;
 			event.comment = item.ass;
@@ -2060,9 +2101,13 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 	{	// 홀드 결합 pos 자동 조정
 		const an2Holds = [];
 		holds.forEach((hold) => {
-			if (hold.style
-			 && !(   hold.style.Alignment == 2
-			      || hold.style.Alignment == 5
+			let style = hold.style;
+			if (style?.followMain) {
+				style = holds[0].style ? holds[0].style : Subtitle.DefaultStyle;
+			}
+			if (style
+			 && !(   style.Alignment == 2
+			      || style.Alignment == 5
 			     )
 			) return; // ASS에서 정중앙 혹은 중앙 하단이 아니면 제외
 			an2Holds.push(hold);
@@ -2075,6 +2120,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		if (an2Holds.length > 1) {
 			const usedLines = []; // 각 싱크에 사용된 줄 수
 			an2Holds.forEach((hold) => {
+				let style = hold.style?.followMain ? holds[0].style : hold.style;
+				if (!style) style = Subtitle.DefaultStyle;
 				hold.syncs.forEach((sync) => {
 					let useBottom = true; // an2Holds에 애초에 걸러진 것만 있음
 					for (let j = 0; j < sync.text.length; j++) {
@@ -2102,16 +2149,16 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						return;
 					}
 					
-					let used = 0;
+					let bottom = 0;
 					
 					// 이미 확인된 줄과 비교
 					let j = 0
 					for (; j < usedLines.length; j++) {
 						if (sync.start == usedLines[j].start) {
-							used = usedLines[j].used;
+							bottom = usedLines[j].bottom;
 							break;
 						} else if (sync.start < usedLines[j].start) {
-							used = (j > 0) ? usedLines[j - 1].used : 0;
+							bottom = (j > 0) ? usedLines[j - 1].bottom : 0;
 							break;
 						}
 					}
@@ -2122,27 +2169,41 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						if (sync.end == usedLines[k].start) {
 							break;
 						} else if (sync.end < usedLines[k].start) {
-							nextLines.push({ start: sync.end, used: ((k > 0) ? usedLines[k - 1].used : 0) });
+							nextLines.push({
+									start: sync.end
+								,	bottom: ((k > 0) ? usedLines[k - 1].bottom : 0)
+							});
 							break;
 						}
-						used = Math.max(used, usedLines[k].used);
+						bottom = Math.max(bottom, usedLines[k].bottom);
 					}
 					if (k == usedLines.length) {
 						// 뒤쪽이 없었으면 끝내기 잡아줌
-						nextLines.push({ start: sync.end, used: 0 });
+						nextLines.push({
+								start: sync.end
+							,	bottom: 0
+						});
 					}
 					
-					sync.bottom = used;
+					sync.bottom = bottom;
 					if (!sync.origin.skip) { // SMI 무시한 경우엔 더하지 않음
-						used += sync.getTextOnly().split("\n").length;
+						const lines = sync.getLineCount();
+						if (bottom == 0) {
+							bottom = style.MarginV;
+						}
+						bottom += lines * style.Fontsize;
 					}
 					
 					nextLines.push(...usedLines.slice(k));
 					usedLines.length = j;
-					if (j > 0 && usedLines[j - 1].used == used) {
+					if (j > 0
+					 && usedLines[j - 1].bottom == bottom) {
 						// 앞쪽이랑 같으면 건너뜀
 					} else {
-						usedLines.push({ start: sync.start, used: used });
+						usedLines.push({
+								start: sync.start
+							,	bottom: bottom
+						});
 					}
 					usedLines.push(...nextLines);
 				});
@@ -2157,7 +2218,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			});
 		});
 		// 홀드 내용물 추가
-		assFile.addFromSyncs(syncs[h], holds[h].name);
+		assFile.addFromSyncs(syncs[h], holds[h].style?.followMain ? "Default" : holds[h].name);
 	}
 	// 메인 홀드를 마지막에 추가
 	assFile.addFromSyncs(syncs[0], "Default");

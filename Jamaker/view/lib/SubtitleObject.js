@@ -732,14 +732,18 @@ window.SyncAttr = Subtitle.SyncAttr = function(start, end, startType, endType, t
 	this.text = text ? text : null; // 이것도 옛날에 왜 text라고 했지... attrs 같은 걸로 할걸...
 	this.origin = origin;
 }
-SyncAttr.prototype.getTextOnly = function () {
-	if (!this.text) return "";
-
-	let text = "";
+SyncAttr.prototype.getLineCount = function () {
+	if (!this.text) return 0;
+	
+	let count = 1;
 	this.text.forEach((attr) => {
-		text += attr.text;
+		if (attr.attrs && attr.furigana) {
+			count += 0.5;
+		} else {
+			count += attr.text.split("\n").length - 1;
+		}
 	});
-	return text;
+	return count;
 }
 Subtitle.metrics = {};
 Subtitle.getMetrics = function(fn) {
@@ -1756,9 +1760,8 @@ AssEvent.fromSync = function(sync, style=null) {
 			let moved = (texts.length > 1);
 			
 			// 다른 홀드랑 겹쳐서 기본적으로 올려야 하는 내용물
-			// 스타일 자체에서 200 이상 띄운 경우엔 계산하지 않음
-			if (sync.bottom && style.MarginV < 200) {
-				y -= sync.bottom * style.Fontsize * 1.1;
+			if (style.Alignment == 2 && sync.bottom > style.MarginV) {
+				y = style.pos[3] - sync.bottom;
 				moved = true;
 			}
 			
@@ -2040,6 +2043,12 @@ AssEvent.fromSync = function(sync, style=null) {
 			// 따로 문법 검사는 없지만, 자막 내용물로 이런 문자열을 쓰진 않을 것
 			text = text.replaceAll("\\furigana", "");
 			
+			{	// 자체 fadein/out 태그 처리
+				const fadeLength = end - start;
+				text = text.replaceAll("\\fadein" , `\\fad(${fadeLength},0)`)
+				           .replaceAll("\\fadeout", `\\fad(0,${fadeLength})`);
+			}
+			
 			if (sync.origin && sync.origin.skip) {
 				// 이쪽으로 빠진 경우 주석 기반 생성물만 있고, 완전 자동 생성물은 사용하지 않음
 			} else {
@@ -2317,7 +2326,7 @@ AssFile.prototype.addFromSyncs = function(syncs, styleName) {
 			case 2: y = style.MarginV; break;
 		}
 		// 후리가나 등 겹치는 항목을 생성할 경우 위치 고정
-		style.pos = [x, y];
+		style.pos = [x, y, playResX, playResY];
 	}
 	
 	const part = this.getEvents();
@@ -5121,6 +5130,7 @@ window.DefaultStyle = {
 	,	MarginR: 64
 	,	MarginV: 40
 	,	output: 3 // 0b01: SMI / 0b10: ASS / 0b11: SMI+ASS
+	,	followMain: false
 };
 Subtitle.DefaultStyle = JSON.parse(JSON.stringify(DefaultStyle));
 Subtitle.DefaultStyle.Fontname = "맑은 고딕";

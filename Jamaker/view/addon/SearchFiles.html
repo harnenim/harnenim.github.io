@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>여러 SMI 파일에서 찾기</title>
-	<script src="../lib/popup.js?260620"></script>
-	<script src="../lib/Subtitle.Converter.js?260620" type="module"></script>
-	<script src="../lib/SmiEditor.js?260620" type="module"></script>
+	<script src="../lib/popup.js?260627"></script>
+	<script src="../lib/Subtitle.Converter.js?260627" type="module"></script>
+	<script src="../lib/SmiEditor.js?260627" type="module"></script>
 	<script>
 windowName = "addon";
 
@@ -201,8 +201,10 @@ ready(() => {
 			
 			const li = document.createElement("li");
 			li.classList.add("line");
+			li.innerText = query;
+			const queryHTML = li.innerHTML;
 			li.innerText = line;
-			li.innerHTML = (`Line ${i+1}: ` + li.innerHTML.replaceAll(query, `<b>${query}</b>`));
+			li.innerHTML = (`Line ${i+1}: ` + li.innerHTML.replaceAll(queryHTML, `<b>${queryHTML}</b>`));
 			eData(li, { line: i, pos: offset + index });
 			ol.append(li);
 			

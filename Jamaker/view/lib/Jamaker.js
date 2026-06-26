@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260620";
-import "./Subtitle.Converter.js?260620";
-import "./AutoCompleteCodeMirror.js?260620";
-import "./SmiEditor.js?260620";
-import "./AssEditor.js?260620";
+﻿import "./MenuStrip.js?260627";
+import "./Subtitle.Converter.js?260627";
+import "./AutoCompleteCodeMirror.js?260627";
+import "./SmiEditor.js?260627";
+import "./AssEditor.js?260627";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260620";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260620", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260627", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -388,14 +388,13 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 			tab.withSmi = withSmi;
 			tab.withSrt = withSrt;
 			if (tab.withAss != withAss) {
-				if (withAss) {
+				if (tab.withAss = withAss) {
 					tab.area.classList.add("ass");
 					tab.updateHoldSelector();
 				} else {
 					tab.area.classList.remove("ass");
 					tab.updateHoldSelector();
 				}
-				tab.withAss = withAss;
 			}
 		}
 		
@@ -504,6 +503,13 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 			styleEditor.addEventListener("change", (e) => {
 				let input = e.target.closest("input[type=checkbox]");
 				if (input) {
+					if (input.name == "followMain") {
+						[...hold.area.querySelectorAll("input")].forEach((item) => {
+							if (item == input) return;
+							if (item.name == "output") return;
+							item.disabled = input.checked;
+						});
+					}
 					hold.style[input.name] = input.checked;
 					hold.refreshStyle();
 					if (SmiEditor.Viewer.window) {
@@ -577,6 +583,7 @@ SmiEditor.prototype.setStyle = function(style) {
 	
 	area.querySelector("input[name=Fontname]").value = style.Fontname;
 	[...area.querySelectorAll("input[name=output]")].forEach((el) => { if (el.value == style.output) el.click(); });
+	area.querySelector("input[name=followMain]").checked = style.followMain;
 	area.querySelector("input[name=Fontsize]").value = style.Fontsize;
 	area.querySelector("input[name=Bold]    ").checked = style.Bold;
 	{ const input = area.querySelector("input[name=SecondaryColour]"); input.value = input.nextSibling.value = style.SecondaryColour; }
@@ -601,6 +608,12 @@ SmiEditor.prototype.setStyle = function(style) {
 	area.querySelector("input[name=MarginL]").value = style.MarginL;
 	area.querySelector("input[name=MarginR]").value = style.MarginR;
 	area.querySelector("input[name=MarginV]").value = style.MarginV;
+	
+	[...area.querySelectorAll("input")].forEach((input) => {
+		if (input.name == "followMain") return;
+		if (input.name == "output") return;
+		input.disabled = style.followMain;
+	});
 	
 	this.refreshStyle();
 }
@@ -1319,7 +1332,8 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 	
 	const parts = text.split('{');
 	parts.forEach((part, i) => {
-		// ASS 태그 안의 \pos, \org, \move, \clip 좌표 변환
+		// ASS 태그 안의 \pos, \org, \move, \clip, \iclip 좌표 변환
+		// \p1 태그는 일반적으로 \pos와 같이 쓰이므로 별도 처리 필요 없음
 		part = part.split('}');
 		
 		const tags = part[0].split('\\');
@@ -1336,6 +1350,8 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 				tagName = "move(";
 			} else if (tag.startsWith("clip(")) {
 				tagName = "clip(";
+			} else if (tag.startsWith("iclip(")) {
+				tagName = "iclip(";
 			} else if (tag.startsWith("dpos(")) {
 				tagName = "dpos(";
 			} else if (tag.startsWith("dmove(")) {
@@ -1343,7 +1359,7 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 			}
 			if (!tagName) return;
 			
-			if (tag.startsWith("clip(m ")) {
+			if (tag.startsWith("clip(m ") || tag.startsWith("iclip(m ")) {
 				const ps = [];
 				tag.substring(tagName.length, tagEnd).split(" ").forEach((v) => {
 					if (isFinite(v)) {
@@ -1354,7 +1370,7 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 				ps.forEach((p, k) => {
 					ps[k] = Number(p) + (k % 2 == 0 ? x : y); // 0,2번째는 x / 1,3번째는 y
 				});
-				tags[j] = "clip(m " + [ps[0], ps[1], "l"].concat(ps.slice(2)).join(" ") + ")";
+				tags[j] = (tag[0] == "i" ? "iclip" : "clip") + "(m " + [ps[0], ps[1], "l"].concat(ps.slice(2)).join(" ") + ")";
 			} else {
 				const ps = tag.substring(tagName.length, tagEnd).split(",");
 				ps.forEach((p, k) => {
@@ -2097,7 +2113,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260620").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260627").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2175,7 +2191,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260620").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260627").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2275,6 +2291,7 @@ window.setSetting = function(setting, initial=false) {
 			,	"MarginR": 64
 			,	"MarginV": 40
 			,	"output": 3
+			,	"followMain": false
 		}
 	}
 	Subtitle.DefaultStyle = setting.defStyle;
@@ -2347,7 +2364,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260620", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260627", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4605,7 +4622,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260620", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260627", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4824,4 +4841,137 @@ window.extSubmitSpeller = function () {
 			].join("\n")
 		);
 	}
+}
+
+// mode 0: 점 / 1: 사각형 / 2: 다각형 / -1: 자동
+window.runPosPicker = function(mode = -1) {
+	const editor = SmiEditor.selected;
+	if (!editor) return;
+	
+	let ox = 0, oy = 0;
+	
+	let value = "";
+	const lineNo = editor.cm.getCursor().line;
+	const line = editor.cm.getLine(lineNo);
+	
+	if (mode != 0) {
+		do { // \clip, \iclip 태그 찾기
+			let begin = line.indexOf("\\clip(");
+			if (begin < 0) {
+				begin = line.indexOf("\\iclip(");
+				if (begin < 0) {
+					break;
+				} else {
+					begin += 7;
+				}
+			} else {
+				begin += 6;
+			}
+			let end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+			value = line.substring(begin, end).trim().replaceAll("  ", " ");
+			if (value == "0,0,0,0") {
+				value = ""; // 자동완성 기본값 무시
+			} else {
+				const values = value.split(",");
+				while (values.length == 4) {
+					// x1,y1,x2,y2 사각형 좌표일 경우 다각형 좌표로 치환
+					if (!isFinite(values[0])) break; const x1 = Number(values[0]);
+					if (!isFinite(values[1])) break; const y1 = Number(values[1]);
+					if (!isFinite(values[2])) break; const x2 = Number(values[2]);
+					if (!isFinite(values[3])) break; const y2 = Number(values[3]);
+					value = `m ${x1} ${y1} l ${x2} ${y1} ${x2} ${y2} ${x1} ${y2}`;
+					if (mode < 0) mode = 1; // 자동이면 사각형 선택기
+					break;
+				}
+			}
+			if (mode < 0) mode = 2; // 자동 \clip이면 다각형 선택기
+			
+			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		} while (false);
+		
+		if (!value) do { // \p1 태그 찾기
+			let begin = line.indexOf("\\p1");
+			if (begin < 0) {
+				break;
+			} else {
+				begin = line.indexOf("}", begin);
+				if (begin < 0) {
+					break;
+				} else {
+					begin++;
+				}
+			}
+			let end = line.indexOf("{", begin);
+			if (end < 0) {
+				end = line.length;
+			}
+			value = line.substring(begin, end).trim().replaceAll("  ", " ");
+			if (mode < 0) mode = 2; // 자동 \p1이면 다각형 선택기
+			
+			// TODO: \p1 태그로 그린 도형은 \pos 확인 필요
+			
+			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		} while (false);
+		
+		if (mode < 0) mode = 0; // 위에서 해당 없으면 좌표 선택기
+	}
+	
+	if (mode == 0) {
+		do { // \pos 태그 찾기
+			let begin = line.indexOf("\\pos(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 5;
+			}
+			let end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+			value = "pos";
+			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		} while (false);
+		
+		if (!value) do { // \move 태그 찾기
+			let begin = line.indexOf("\\move(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 6;
+			}
+			let end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+			const values = line.substring(begin, end).split(",");
+			if (values.length > 2) {
+				// (x1,y1,x2,y2) 있으면 x2,y2를 선택
+				begin += values[0].length + values[1].length + 2;
+			}
+			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		} while (false);
+	}
+	
+	let vw = Subtitle.video.width;
+	let vh = Subtitle.video.height;
+	const assHold = editor.owner.assHold;
+	const w = assHold.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+	const h = assHold.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+	if (isFinite(w) && isFinite(h)) {
+		// ASS 기준점 따로 있으면 가져옴
+		vw = Number(w);
+		vh = Number(h);
+	}
+	
+	binder.runPosPicker(
+			mode, ox, oy, value
+		,	setting.player.window.x    , setting.player.window.y
+		,	setting.player.window.width, setting.player.window.height
+		,	vw, vh
+		,	setting.window.x    , setting.window.y
+		,	setting.window.width, setting.window.height
+	);
 }

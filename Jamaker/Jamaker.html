@@ -11,10 +11,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260620" />
-<script src="bridge/WinAPI.js?260620"></script>
-<script src="bridge/Binder.js?260620"></script>
-<script src="bridge/WebPlayerBridge.js?260620"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260627" />
+<script src="bridge/WinAPI.js?260627"></script>
+<script src="bridge/Binder.js?260627"></script>
+<script src="bridge/WebPlayerBridge.js?260627"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -120,6 +120,7 @@ Binder.prototype.moveTo  = function(time) { this._.player.moveTo(time); }
 
 // 부가기능
 Binder.prototype.runColorPicker = function() { this._.runColorPicker(); }
+Binder.prototype.runPosPicker = function(mode, ox, oy, value, px, py, pw, ph, vw, vh, ix, iy, iw, ih) { this._.runPosPicker(mode, ox, oy, value, px, py, pw, ph, vw, vh, ix, iy, iw, ih); }
 
 // 웹샘플용
 Binder.prototype.openTempDir = function() { this._.openTempDir() };
@@ -127,7 +128,7 @@ Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260620"></script>
+<script src="bridge/WebForm.js?260627"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -179,7 +180,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260620";
+			editor.mainView.src = "view/Jamaker.html?260627";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -953,7 +954,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260620", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260627", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
@@ -961,6 +962,82 @@ window.MB = 9;
 	editor.runColorPicker = function() {
 		const color = prompt("색상 입력 테스트", "#ABCDEF");
 		editor.script("SmiEditor.inputText", color);
+	}
+	const posPicker = {};
+	editor.runPosPicker = function(mode, ox, oy, value, px, py, pw, ph, vw, vh, ix, iy, iw, ih) {
+		let pos = "";
+		switch (mode) {
+			case 1:   // 사각형
+			case 2: { // 다각형
+				let text = "";
+				if (value) {
+					const values = value.split(" ");
+					let status = null;
+					let d = 0;
+					for (let i = 0; i < values.length; i++) {
+						value = values[i];
+						if (isFinite(value)) {
+							if (status == "b") {
+								// Bezier 곡선 값은 한 줄로 씀
+								text += " " + value;
+								if (i == d + 3) {
+									// 좌표값 x1 y1 x2 y2 다 나왔으면 다시 l로 변경
+									status = "l";
+									d = i + 1;
+								}
+							} else {
+								if ((i - d) % 2 == 0) {
+									text += "\n" + value;
+								} else {
+									text += " " + value;
+								}
+							}
+						} else {
+							// m, l, b만 나와야 함
+							text += (i == 0 ? "" : "\n") + (status = value);
+							d = i + 1;
+						}
+					}
+				}
+				if (posPicker.layer) {
+					posPicker.layer.style.display = "block";
+				} else {
+					const layer = posPicker.layer = document.createElement("div");
+					const input = posPicker.input = document.createElement("textarea");
+					const btnOk = posPicker.btnOk = document.createElement("button");
+					layer.style.position = "fixed";
+					layer.style.top = 0;
+					layer.style.left = 0;
+					layer.style.width = "100%";
+					layer.style.height = "100%";
+					layer.style.background = "#0000007f";
+					input.style.position = "fixed";
+					input.style.top = 0;
+					input.style.left = 0;
+					input.style.width = "200px";
+					input.style.height = "100%";
+					btnOk.style.position = "fixed";
+					btnOk.style.top = 0;
+					btnOk.style.left = "200px";
+					btnOk.style.width = "50px";
+					btnOk.style.height = "22px";
+					btnOk.innerText = "입력";
+					layer.append(input);
+					layer.append(btnOk);
+					document.body.append(layer);
+					btnOk.addEventListener("click", () => {
+						editor.script("SmiEditor.inputText", input.value.replaceAll("\n", " "));
+						layer.style.display = "none";
+					});
+				}
+				posPicker.input.value = text;
+				break;
+			}
+			default: {
+				pos = prompt("좌표 입력 테스트", `${vw/2},${vh/2}`);
+				editor.script("SmiEditor.inputText", pos);
+			}
+		}
 	}
 }
 {	// Designer
