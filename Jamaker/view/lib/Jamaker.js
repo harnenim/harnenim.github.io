@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260627";
-import "./Subtitle.Converter.js?260627";
-import "./AutoCompleteCodeMirror.js?260627";
-import "./SmiEditor.js?260627";
-import "./AssEditor.js?260627";
+﻿import "./MenuStrip.js?260630";
+import "./Subtitle.Converter.js?260630";
+import "./AutoCompleteCodeMirror.js?260630";
+import "./SmiEditor.js?260630";
+import "./AssEditor.js?260630";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260627";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260627", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260630", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2113,7 +2113,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260627").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260630").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2191,7 +2191,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260627").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260630").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2364,7 +2364,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260627", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260630", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4622,7 +4622,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260627", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260630", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4911,7 +4911,29 @@ window.runPosPicker = function(mode = -1) {
 			value = line.substring(begin, end).trim().replaceAll("  ", " ");
 			if (mode < 0) mode = 2; // 자동 \p1이면 다각형 선택기
 			
-			// TODO: \p1 태그로 그린 도형은 \pos 확인 필요
+			// \p1 태그로 그린 도형은 \pos 확인 필요
+			// \an7이 아닌 경우는 고려하지 않음. 도형 크기에 따라 위치가 유동적임
+			ox = editor.style.MarginL;
+			oy = editor.style.MarginV;
+			do { // \pos 태그 찾기
+				let begin = line.indexOf("\\pos(");
+				if (begin < 0) {
+					break;
+				} else {
+					begin += 5;
+				}
+				let end = line.indexOf(")", begin);
+				if (end < 0) {
+					break;
+				}
+				let value = line.substring(begin, end).trim().replaceAll("  ", " ").split(",");
+				if (value.length == 2) {
+					if (isFinite(value[0]) && isFinite(value[1])) {
+						ox = Number(value[0]);
+						oy = Number(value[1]);
+					}
+				}
+			} while (false);
 			
 			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 		} while (false);
@@ -4935,6 +4957,21 @@ window.runPosPicker = function(mode = -1) {
 			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 		} while (false);
 		
+		if (!value) do { // \dpos 태그 찾기
+			let begin = line.indexOf("\\dpos(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 6;
+			}
+			let end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+			value = "dpos";
+			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		} while (false);
+		
 		if (!value) do { // \move 태그 찾기
 			let begin = line.indexOf("\\move(");
 			if (begin < 0) {
@@ -4951,6 +4988,27 @@ window.runPosPicker = function(mode = -1) {
 				// (x1,y1,x2,y2) 있으면 x2,y2를 선택
 				begin += values[0].length + values[1].length + 2;
 			}
+			value = "move";
+			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		} while (false);
+		
+		if (!value) do { // \dmove 태그 찾기
+			let begin = line.indexOf("\\dmove(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 7;
+			}
+			let end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+			const values = line.substring(begin, end).split(",");
+			if (values.length > 2) {
+				// (x1,y1,x2,y2) 있으면 x2,y2를 선택
+				begin += values[0].length + values[1].length + 2;
+			}
+			value = "dmove";
 			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 		} while (false);
 	}
