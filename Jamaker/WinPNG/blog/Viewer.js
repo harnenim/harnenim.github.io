@@ -707,28 +707,30 @@ async function onload() {
 				}
 			}
 		});
-		const main = document.getElementsByTagName("main");
-		if (main) {
+		const mains = document.getElementsByTagName("main");
+		if (mains.length) {
 			// blogspot
 			[...document.querySelectorAll("main img")].forEach((img) => {
 				img.crossOrigin = "annonymous";
 			    img.src = img.srcset = img.src.split("=")[0];
 			});
-			main.addEventListener("click", (e) => {
-				const img = e.target.closest("img");
-				if (img) {
-					/*
-					if (img.src.split("?")[0].toLowerCase().endsWith(".png")) {
-						e.preventDefault();
-						if (!winPNG.classList.contains("on")) {
-							winPNG.classList.add("on");
+			[...mains].forEach((main) => {
+				main.addEventListener("click", (e) => {
+					const img = e.target.closest("img");
+					if (img) {
+						/*
+						if (img.src.split("?")[0].toLowerCase().endsWith(".png")) {
+							e.preventDefault();
+							if (!winPNG.classList.contains("on")) {
+								winPNG.classList.add("on");
+							}
+							dropUrl(img.src);
 						}
-						dropUrl(img.src);
+						*/
+						inputUrl.value = "클릭으로 가져온 이미지";
+						parseImg(img);
 					}
-					*/
-					inputUrl.value = "클릭으로 가져온 이미지";
-					parseImg(img);
-				}
+				});
 			});
 		}
 	}
