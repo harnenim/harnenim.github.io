@@ -728,8 +728,17 @@ async function onload() {
 							dropUrl(img.src);
 						}
 						*/
-						inputUrl.value = "클릭으로 가져온 이미지";
-						parseImg(img);
+						// inputUrl.value = "클릭으로 가져온 이미지";
+						// parseImg(img);
+						const myProxyUrl = "https://script.google.com/macros/library/d/1kvjuTEs0KnBMw6FK1ciOLUWoNEKRaEtmTzGz1pDdkzNXPuxEGmGdnDVu/1?url=";
+					    try {
+					        const response = await fetch(`${myProxyUrl}?url=${encodeURIComponent(img.src)}`);
+					        const base64String = await response.text();
+					        const dataUrl = `data:image/png;base64,${base64String}`;
+					        input.src = dataUrl;
+					    } catch(e) {
+					        console.error(e);
+					    }
 					}
 				});
 			});
