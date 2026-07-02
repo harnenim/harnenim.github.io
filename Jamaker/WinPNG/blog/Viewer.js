@@ -693,8 +693,8 @@ async function onload() {
 			cover.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: e.dataTransfer }));
 		});
 		
-		// 이미지 클릭으로 열기
-		document.getElementById("content").addEventListener("click", (e) => {
+		// 티스토리 이미지 클릭으로 열기
+		document.getElementById("content")?.addEventListener("click", (e) => {
 			const img = e.target.closest("img");
 			if (img) {
 				if (img.src.split("?")[0].toLowerCase().endsWith(".png")) {
