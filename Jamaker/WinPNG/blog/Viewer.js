@@ -711,7 +711,7 @@ async function onload() {
 		if (mains.length) {
 			// blogspot
 			[...document.querySelectorAll("main img")].forEach((img) => {
-				img.crossOrigin = "annonymous";
+				// img.crossOrigin = "annonymous";
 			    img.src = img.srcset = img.src.split("=")[0];
 			});
 			[...mains].forEach((main) => {
