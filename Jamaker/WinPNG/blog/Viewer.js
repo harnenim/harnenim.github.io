@@ -34,7 +34,7 @@ let popup;
 const input = new Image();
 input.crossorigin = "anonymous";
 const canvas = document.createElement("canvas");
-input.onload = async function() {
+async function parseImg(img) {
 	try {
 		winPNG.classList.add("progress");
 		
@@ -87,6 +87,7 @@ input.onload = async function() {
 	}
 	winPNG.classList.remove("progress");
 }
+input.onload = async function() { parseImg(this) };
 input.onerror = function(err) {
 	alert("열지 못했습니다.");
 }
@@ -708,9 +709,15 @@ async function onload() {
 		});
 		const main = document.getElementsByTagName("main");
 		if (main) {
+			// blogspot
+			[...document.querySelectorAll("main img")].forEach((img) => {
+				img.crossOrigin = "annonymous";
+			    img.src = img.srcset = img.src.split("=")[0];
+			});
 			main.addEventListener("click", (e) => {
 				const img = e.target.closest("img");
 				if (img) {
+					/*
 					if (img.src.split("?")[0].toLowerCase().endsWith(".png")) {
 						e.preventDefault();
 						if (!winPNG.classList.contains("on")) {
@@ -718,6 +725,9 @@ async function onload() {
 						}
 						dropUrl(img.src);
 					}
+					*/
+					inputUrl.value = "클릭으로 가져온 이미지";
+					parseImg(img);
 				}
 			});
 		}
