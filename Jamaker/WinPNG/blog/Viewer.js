@@ -730,7 +730,7 @@ async function onload() {
 						*/
 						// inputUrl.value = "클릭으로 가져온 이미지";
 						// parseImg(img);
-						const myProxyUrl = "https://script.google.com/macros/s/AKfycby7g5oRMv4EYzKPRsgSr1TN5brrBqnK5vN9D9x2VwU5eoJlLKEjgFXsOa-sKxmq_pGZ/exec";
+						const myProxyUrl = "https://script.google.com/macros/s/AKfycbwJ1H0qSuuxve28vBSevIFa01vo4Vnp_DwoRkyS-wfuHpeqD0SGJwZwOBBQ64-NBMp5/exec";
 					    try {
 					        const response = await fetch(`${myProxyUrl}?url=${encodeURIComponent(img.src)}`);
 					        const base64String = await response.text();
