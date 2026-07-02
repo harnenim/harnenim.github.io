@@ -706,6 +706,21 @@ async function onload() {
 				}
 			}
 		});
+		const main = document.getElementsByTagName("main");
+		if (main) {
+			main.addEventListener("click", (e) => {
+				const img = e.target.closest("img");
+				if (img) {
+					if (img.src.split("?")[0].toLowerCase().endsWith(".png")) {
+						e.preventDefault();
+						if (!winPNG.classList.contains("on")) {
+							winPNG.classList.add("on");
+						}
+						dropUrl(img.src);
+					}
+				}
+			});
+		}
 	}
 	
 	{	// 미리보기
