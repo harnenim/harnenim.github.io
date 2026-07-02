@@ -716,7 +716,7 @@ async function onload() {
 			    img.src = img.srcset = img.src.split("=")[0];
 			});
 			[...mains].forEach((main) => {
-				main.addEventListener("click", (e) => {
+				main.addEventListener("click", async (e) => {
 					const img = e.target.closest("img");
 					if (img) {
 						/*
@@ -730,7 +730,7 @@ async function onload() {
 						*/
 						// inputUrl.value = "클릭으로 가져온 이미지";
 						// parseImg(img);
-						const myProxyUrl = "https://script.google.com/macros/library/d/1kvjuTEs0KnBMw6FK1ciOLUWoNEKRaEtmTzGz1pDdkzNXPuxEGmGdnDVu/1?url=";
+						const myProxyUrl = "https://script.google.com/macros/s/AKfycby7g5oRMv4EYzKPRsgSr1TN5brrBqnK5vN9D9x2VwU5eoJlLKEjgFXsOa-sKxmq_pGZ/exec";
 					    try {
 					        const response = await fetch(`${myProxyUrl}?url=${encodeURIComponent(img.src)}`);
 					        const base64String = await response.text();
