@@ -65,7 +65,8 @@ async function parseImg(img) {
 		showTargetImage(parsed.targetImage);
 		winPNG.classList.add("open");
 		setTimeout(() => {
-			document.querySelector(".phocus-close-btn").click();
+			// 티스토리 이미지 뷰어 닫기
+			document.querySelector(".phocus-close-btn")?.click();
 		}, 1);
 		
 		parsed.containers.sort((cont1, cont2) => {
