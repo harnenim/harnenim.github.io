@@ -719,17 +719,11 @@ async function onload() {
 				main.addEventListener("click", async (e) => {
 					const img = e.target.closest("img");
 					if (img) {
-						/*
-						if (img.src.split("?")[0].toLowerCase().endsWith(".png")) {
-							e.preventDefault();
-							if (!winPNG.classList.contains("on")) {
-								winPNG.classList.add("on");
-							}
-							dropUrl(img.src);
+						// 확장자 구분 안 되므로, 일단 이미지면 무조건 뷰어 실행
+						if (!winPNG.classList.contains("on")) {
+							winPNG.classList.add("on");
+							winPNG.classList.add("progress");
 						}
-						*/
-						// inputUrl.value = "클릭으로 가져온 이미지";
-						// parseImg(img);
 						const myProxyUrl = "https://script.google.com/macros/s/AKfycbwJ1H0qSuuxve28vBSevIFa01vo4Vnp_DwoRkyS-wfuHpeqD0SGJwZwOBBQ64-NBMp5/exec";
 					    try {
 					        const response = await fetch(`${myProxyUrl}?url=${encodeURIComponent(img.src)}`);
