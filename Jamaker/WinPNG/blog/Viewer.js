@@ -42,7 +42,7 @@ async function parseImg(img) {
 		viewFileList.innerHTML = "";
 		viewFileList.style.minWidth = "";
 		
-		const bmp = new BufferedImage(this);
+		const bmp = new BufferedImage(img);
 		const possibility = WithTarget.possibility(bmp);
 		let parsed = await WithTarget.fromBitmap(bmp, possibility);
 		
