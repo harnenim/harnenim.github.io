@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260630";
-import "./Subtitle.Converter.js?260630";
-import "./AutoCompleteCodeMirror.js?260630";
-import "./SmiEditor.js?260630";
-import "./AssEditor.js?260630";
+﻿import "./MenuStrip.js?260712";
+import "./Subtitle.Converter.js?260712";
+import "./AutoCompleteCodeMirror.js?260712";
+import "./SmiEditor.js?260712";
+import "./AssEditor.js?260712";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260630";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260630", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260712", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1437,6 +1437,10 @@ SmiEditor.prototype.rename = function() {
 		// 메인 홀드는 이름 변경 X
 		return;
 	}
+	if (this == this.owner.assHold) {
+		// ASS 추가 스크립트 이름 변경 X
+		return;
+	}
 	const hold = this;
 	prompt("홀드 이름 변경", (input) => {
 		if (!input) {
@@ -1957,6 +1961,41 @@ window.init = function(jsonSetting, isBackup=true) {
 		}
 	});
 	
+	{	const colorPicker = document.getElementById("colorPicker");
+		colorPicker.addEventListener("keydown", (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (e.key == "Enter") {
+				colorPicker.querySelector("button").click();
+			} else if (e.key == "Escape") {
+				colorPicker.close();
+				SmiEditor.selected.cm.focus();
+			}
+		});
+		colorPicker.querySelector("button").addEventListener("click", () => {
+			SmiEditor.inputText(colorPicker.querySelector("input[type=color]").value.toUpperCase());
+			colorPicker.close();
+			SmiEditor.selected.cm.focus();
+		});
+		colorPicker.querySelector("input[type=color]").addEventListener("input", (e) => {
+			const input = e.target;
+			input.nextSibling.value = input.value.toUpperCase();
+		});
+		colorPicker.querySelector("input.color").addEventListener("input", (e) => {
+			const input = e.target;
+			const color = input.value;
+			if (color.startsWith("#") && color.length == 7) {
+				if (isFinite("0x" + color.substring(1))) {
+					input.previousSibling.value = color;
+				} else {
+					return;
+				}
+			} else {
+				return;
+			}
+		});
+	}
+	
 	// 스크롤바에 마우스 올렸을 때 표현
 	document.body.addEventListener("mousemove", (e) => {
 		const textarea = e.target.closest("textarea");
@@ -1994,7 +2033,6 @@ window.init = function(jsonSetting, isBackup=true) {
 	
 	SmiEditor.activateKeyEvent();
 	
-	// Win+방향키 이벤트 직후 창 위치 초기화
 	window.addEventListener("keydown", (e) => {
 		if (e.key == "Escape") {
 			if (SmiEditor.selected) {
@@ -2113,7 +2151,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260630").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260712").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2191,7 +2229,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260630").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260712").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2364,7 +2402,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260630", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260712", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4334,22 +4372,23 @@ window.generateSmiFromAss = function(keepHoldsAss=true) {
 		const keepHoldAss = (origin.hold.name == "메인") ? false : keepHoldsAss;
 		
 		origin.smiFile.body.forEach((item) => {
-			if (!item.text.startsWith("<!-- ASS\n")) return;
+			const itemText = item.text.replaceAll("\t", "\n"); // 스크립트 내의 탭문자는 줄바꿈과 동일시함
+			if (!itemText.startsWith("<!-- ASS\n")) return;
 			
-			const commentEnd = item.text.indexOf("\n-->");
+			const commentEnd = itemText.indexOf("\n-->");
 			if (commentEnd < 0) return;
 			
-			if (item.text.indexOf("\nEND\n-->") > 0) {
+			if (itemText.indexOf("\nEND\n-->") > 0) {
 				// 원래 SMI 무시하는 거였으면 건너뛰기
 				return;
 			}
 			
-			if (item.text.substring(commentEnd + 4).trim()) {
+			if (itemText.substring(commentEnd + 4).trim()) {
 				// 원래 SMI 내용물 있었으면 건너뛰기
 				return;
 			}
 			
-			const assComment = item.text.substring(9, commentEnd);
+			const assComment = itemText.substring(9, commentEnd);
 			const assTexts = assComment.split("\n");
 			const texts = [];
 			let keepAss = keepHoldAss;
@@ -4622,7 +4661,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260630", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260712", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4841,6 +4880,48 @@ window.extSubmitSpeller = function () {
 			].join("\n")
 		);
 	}
+}
+
+window.runColorPicker = function() {
+	const editor = SmiEditor.selected;
+	if (!editor) return;
+	
+	const modal = document.getElementById("colorPicker");
+	const input = modal.querySelector("input[type=color]");
+	
+	const selection = [editor.cm.getCursor("start"), editor.cm.getCursor("end")];
+	if (selection[0].line == selection[1].line) {
+		const line = selection[0].line;
+		const text = editor.cm.getLine(line);
+		const ch = selection[0].ch;
+		if (ch > 0) {
+			// 현재 커서 위치 직전의 색상코드 찾기
+			for (let c = ch; c > 0; c--) {
+				if (text[c] == "#" && text.length > c + 7) {
+					const rgb = text.substring(c + 1, c + 7);
+					if (isFinite("0x" + rgb)) {
+						input.value = "#" + rgb;
+					}
+					console.log({ line: line, ch: c }, { line: line, ch: c + 7 });
+					editor.cm.setSelection({ line: line, ch: c }, { line: line, ch: c + 7 });
+					break;
+				}
+				if (text[c] == "H" && text[c-1] == "&" && text[c+7] == "&") {
+					// ASS 색상코드
+					const bgr = text.substring(c + 1, c + 7);
+					if (isFinite("0x" + bgr)) {
+						input.value = "#" + bgr.substring(4,6) + bgr.substring(2,4) + bgr.substring(0,2);
+					}
+					console.log({ line: line, ch: c }, { line: line, ch: c + 7 });
+					editor.cm.setSelection({ line: line, ch: c }, { line: line, ch: c + 7 });
+					break;
+				}
+			}
+		}
+	}
+	
+	modal.showModal();
+	input.click();
 }
 
 // mode 0: 점 / 1: 사각형 / 2: 다각형 / -1: 자동

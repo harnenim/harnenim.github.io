@@ -1,4 +1,37 @@
-[ { "version": "2026.06.30"
+[ { "version": "2026.07.12"
+  , "comment":
+    [ "라이브러리 업데이트"
+    , "ASS 변환 시 기본 위치 계산식 일부 보완"
+    , "ASS 전용 스크립트에 줄바꿈 대신 탭문자 사용 가능하도록 수정"
+    , "ASS 추가 스크립트 홀드명 변경 방지"
+    , "WebView2 기반 색상 선택기 추가 등"
+    ]
+  , "files":
+    [ "runtimes/*"
+    , "view/help/aboutAss.html"
+    , "view/lib/AutoCompleteCodeMirror.js"
+    , "view/lib/Jamaker.css"
+    , "view/lib/Jamaker.js"
+    , "view/lib/Jamaker.size.css"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/Jamaker.html"
+    , "Jamaker.deps.json"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "Microsoft.CodeAnalysis.CSharp.dll"
+    , "Microsoft.CodeAnalysis.dll"
+    , "Microsoft.Web.WebView2.Core.dll"
+    , "Microsoft.Web.WebView2.WinForms.dll"
+    , "Microsoft.Web.WebView2.Wpf.dll"
+    , "WebViewForm.deps.json"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+, { "version": "2026.06.30"
   , "comment":
     [ "좌표 입력기 dpos/dmove 지원"
     , "좌표 입력기 도형 전체 이동 기능 지원 등"
