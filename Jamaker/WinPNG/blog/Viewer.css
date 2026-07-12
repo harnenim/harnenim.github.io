@@ -108,6 +108,10 @@
 	100% { transform: rotate(360deg); }
 }
 
+main img {
+	cursor: pointer;
+}
+
 @media (max-width:1920px) {
 	#winPNG.on #toggleWinPNG {
 		left: calc(50% - 30px);

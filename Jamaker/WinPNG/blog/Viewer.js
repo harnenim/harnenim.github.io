@@ -34,7 +34,7 @@ let popup;
 const input = new Image();
 input.crossorigin = "anonymous";
 const canvas = document.createElement("canvas");
-input.onload = async function() {
+async function parseImg(img) {
 	try {
 		winPNG.classList.add("progress");
 		
@@ -42,7 +42,7 @@ input.onload = async function() {
 		viewFileList.innerHTML = "";
 		viewFileList.style.minWidth = "";
 		
-		const bmp = new BufferedImage(this);
+		const bmp = new BufferedImage(img);
 		const possibility = WithTarget.possibility(bmp);
 		let parsed = await WithTarget.fromBitmap(bmp, possibility);
 		
@@ -65,7 +65,8 @@ input.onload = async function() {
 		showTargetImage(parsed.targetImage);
 		winPNG.classList.add("open");
 		setTimeout(() => {
-			document.querySelector(".phocus-close-btn").click();
+			// 티스토리 이미지 뷰어 닫기
+			document.querySelector(".phocus-close-btn")?.click();
 		}, 1);
 		
 		parsed.containers.sort((cont1, cont2) => {
@@ -87,6 +88,7 @@ input.onload = async function() {
 	}
 	winPNG.classList.remove("progress");
 }
+input.onload = async function() { parseImg(this) };
 input.onerror = function(err) {
 	alert("열지 못했습니다.");
 }
@@ -693,8 +695,8 @@ async function onload() {
 			cover.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: e.dataTransfer }));
 		});
 		
-		// 이미지 클릭으로 열기
-		document.getElementById("content").addEventListener("click", (e) => {
+		// 티스토리 이미지 클릭으로 열기
+		document.getElementById("content")?.addEventListener("click", (e) => {
 			const img = e.target.closest("img");
 			if (img) {
 				if (img.src.split("?")[0].toLowerCase().endsWith(".png")) {
@@ -706,6 +708,35 @@ async function onload() {
 				}
 			}
 		});
+		const mains = document.getElementsByTagName("main");
+		if (mains.length) {
+			// blogspot
+			[...document.querySelectorAll("main img")].forEach((img) => {
+				// img.crossOrigin = "annonymous";
+			    img.src = img.srcset = img.src.split("=")[0];
+			});
+			[...mains].forEach((main) => {
+				main.addEventListener("click", async (e) => {
+					const img = e.target.closest("img");
+					if (img) {
+						// 확장자 구분 안 되므로, 일단 이미지면 무조건 뷰어 실행
+						if (!winPNG.classList.contains("on")) {
+							winPNG.classList.add("on");
+							winPNG.classList.add("progress");
+						}
+						const myProxyUrl = "https://script.google.com/macros/s/AKfycbwJ1H0qSuuxve28vBSevIFa01vo4Vnp_DwoRkyS-wfuHpeqD0SGJwZwOBBQ64-NBMp5/exec";
+					    try {
+					        const response = await fetch(`${myProxyUrl}?url=${encodeURIComponent(img.src)}`);
+					        const base64String = await response.text();
+					        const dataUrl = `data:image/png;base64,${base64String}`;
+					        input.src = dataUrl;
+					    } catch(e) {
+					        console.error(e);
+					    }
+					}
+				});
+			});
+		}
 	}
 	
 	{	// 미리보기
