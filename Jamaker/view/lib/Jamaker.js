@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260712";
-import "./Subtitle.Converter.js?260712";
-import "./AutoCompleteCodeMirror.js?260712";
-import "./SmiEditor.js?260712";
-import "./AssEditor.js?260712";
+﻿import "./MenuStrip.js?260717";
+import "./Subtitle.Converter.js?260717";
+import "./AutoCompleteCodeMirror.js?260717";
+import "./SmiEditor.js?260717";
+import "./AssEditor.js?260717";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260712";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260712", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260717", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2151,7 +2151,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260712").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260717").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2229,7 +2229,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260712").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260717").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2402,7 +2402,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260712", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260717", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4661,7 +4661,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260712", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260717", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4882,13 +4882,14 @@ window.extSubmitSpeller = function () {
 	}
 }
 
-window.runColorPicker = function() {
+window.runColorPicker = function(useWvPicker=false) {
 	const editor = SmiEditor.selected;
 	if (!editor) return;
 	
 	const modal = document.getElementById("colorPicker");
 	const input = modal.querySelector("input[type=color]");
 	
+	// 색상코드 찾아서 블록지정
 	const selection = [editor.cm.getCursor("start"), editor.cm.getCursor("end")];
 	if (selection[0].line == selection[1].line) {
 		const line = selection[0].line;
@@ -4920,8 +4921,12 @@ window.runColorPicker = function() {
 		}
 	}
 	
-	modal.showModal();
-	input.click();
+	if (useWvPicker) {
+		modal.showModal();
+		input.click();
+	} else {
+		binder.runColorPicker();
+	}
 }
 
 // mode 0: 점 / 1: 사각형 / 2: 다각형 / -1: 자동
