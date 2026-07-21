@@ -1,5 +1,5 @@
 ﻿import "./Subtitle.Converter.js?260709";
-import "./jszip.min.js?260721";
+import "./jszip.min.js?260722";
 import "./WinPNG.js?260708";
 
 URL.files = {};

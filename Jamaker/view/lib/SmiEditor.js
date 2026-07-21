@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?260721";
+﻿import "./SubtitleObject.js?260722";
 
-import "./highlight/cm/codemirror.js?260721";
-import "./highlight/cm/scrollpastend.js?260721";
-import "./highlight/cm/mark-selection.js?260721";
-import "./highlight/cm/active-line.js?260721";
-import "./highlight/cm/sami.js?260721";
+import "./highlight/cm/codemirror.js?260722";
+import "./highlight/cm/scrollpastend.js?260722";
+import "./highlight/cm/mark-selection.js?260722";
+import "./highlight/cm/active-line.js?260722";
+import "./highlight/cm/sami.js?260722";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260721", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260722", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260721", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260722", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -828,6 +828,7 @@ SmiEditor.prototype.refreshScroll = function() {
 			}
 			// 위치 계산은 새로 해줌
 			left.style.top = top;
+			left.setAttribute("data-index", i);
 		}
 	}
 	// 0번은 colSyncSizer
@@ -2602,7 +2603,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260721", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260722", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2798,7 +2799,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260721", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260722", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}

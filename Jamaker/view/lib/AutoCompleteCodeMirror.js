@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AutoComplete.css?260721", import.meta.url).href;
+	link.href = new URL("./AutoComplete.css?260722", import.meta.url).href;
 	document.head.append(link);
 
 	// 자동완성 이외의 영역 클릭 시 자동완성 닫기
