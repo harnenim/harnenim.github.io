@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260717";
+﻿import "./SubtitleObject.js?260721";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -1846,7 +1846,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 							assCmTexts.push(line);
 						}
 					});
-					smiText = smiText.substring(commentEnd + 3).trim();
+					smi.originAssComment = smi.text.substring(0, commentEnd + 3);
+					smi.origin = smiText = smiText.substring(commentEnd + 3).trim(); // 역반영 시 origin 활용
 					for (let j = 0; j < assCmTexts.length; j++) {
 						const assLine = assCmTexts[j].trim();
 						if (assLine == "") {

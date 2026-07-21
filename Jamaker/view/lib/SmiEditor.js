@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?260717";
+﻿import "./SubtitleObject.js?260721";
 
-import "./highlight/cm/codemirror.js?260717";
-import "./highlight/cm/scrollpastend.js?260717";
-import "./highlight/cm/mark-selection.js?260717";
-import "./highlight/cm/active-line.js?260717";
-import "./highlight/cm/sami.js?260717";
+import "./highlight/cm/codemirror.js?260721";
+import "./highlight/cm/scrollpastend.js?260721";
+import "./highlight/cm/mark-selection.js?260721";
+import "./highlight/cm/active-line.js?260721";
+import "./highlight/cm/sami.js?260721";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260717", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260721", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260717", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260721", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1853,12 +1853,16 @@ SmiEditor.prototype.tagging = function(tag=null, fromCursor=null) {
 	} else {
 		// 선택 영역에 대해
 		const selected = line.text.substring(line.selection[0], line.selection[1]);
-		if (selected.substring(0, tag.length) == tag && selected.substring(selected.length - closer.length) == closer) {
+		if (selected.substring(0, tag.length).toLowerCase() == tag.toLowerCase()
+		 && selected.substring(selected.length - closer.length).toLowerCase() == closer.toLowerCase()
+		) {
+			// 기존에 감싸였던 태그 삭제
 			this.setLine(line.text.substring(0, line.selection[0])
 				+	selected.substring(tag.length, selected.length - closer.length)
 				+	line.text.substring(line.selection[1])
 				,	[line.selection[0], line.selection[1] - (tag.length + closer.length)]);
 		} else {
+			// 새 태그로 감싸기
 			this.setLine(line.text.substring(0, line.selection[0])
 				+	tag + selected + closer
 				+	line.text.substring(line.selection[1])
@@ -2598,7 +2602,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260717", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260721", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2613,12 +2617,14 @@ SmiEditor.Finder = {
 				const selection = editor.getCursor();
 				const length = selection[1] - selection[0];
 				if (length) {
-					this.last.find = editor.getValue().substring(selection[0], selection[1]);
+					// 일회성 검색어
+					this.last.override = editor.getValue().substring(selection[0], selection[1]);
 					this.last.toFocus = (isReplace ? "[name=replace]" : ".button-find");
 				}
 			}
 			
 			binder.onloadFinder(JSON.stringify(this.last));
+			this.last.override = null; // 일회성 검색어 삭제
 		}
 	,	openChange: function() {
 			this.open(true);
@@ -2709,6 +2715,7 @@ SmiEditor.Finder = {
 				this.afterFind();
 			} else {
 				this.sendMsgAfterRun("찾을 수 없습니다.");
+				this.last.find = this.finding.find; // 못 찾았어도 마지막 검색어 바꿔줌
 			}
 		}
 	,	runReplace: function(params) {
@@ -2791,7 +2798,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260717", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260721", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
