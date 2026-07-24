@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260722";
-import "./Subtitle.Converter.js?260722";
-import "./AutoCompleteCodeMirror.js?260722";
-import "./SmiEditor.js?260722";
-import "./AssEditor.js?260722";
+﻿import "./MenuStrip.js?260724";
+import "./Subtitle.Converter.js?260724";
+import "./AutoCompleteCodeMirror.js?260724";
+import "./SmiEditor.js?260724";
+import "./AssEditor.js?260724";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260722";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260722", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260724", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2090,7 +2090,14 @@ window.setSetting = function(setting, initial=false) {
 		document.body.classList.remove("use-tab");
 	}
 	
-	SmiEditor.setSetting(setting);
+	// 에디터 세팅은 고유명사도 자동완성에 포함
+	const editorSetting = JSON.parse(JSON.stringify(setting));
+	delete editorSetting.autoComplete.name;
+	delete editorSetting.autoComplete.word;
+	editorSetting.autoComplete["0"][1].push(...setting.autoComplete.name.list);
+	editorSetting.autoComplete["0"][1].push(...setting.autoComplete.word.list);
+	editorSetting.autoComplete["0"][1].sort();
+	SmiEditor.setSetting(editorSetting);
 	Smi.syncPreset = setting.sync.preset.replaceAll("{lang}", setting.sync.lang);
 	
 	if (initial) {
@@ -2151,7 +2158,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260722").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260724").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2229,7 +2236,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260722").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260724").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2402,7 +2409,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260722", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260724", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4676,7 +4683,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260722", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260724", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4867,6 +4874,66 @@ window.extSubmitSpeller = function () {
 		while (value.indexOf("  ") >= 0) { // &nbsp;에서 만들어진 건 이쪽으로 옴
 			value = value.replaceAll("  ", " ");
 		}
+
+		// 고유명사 전처리
+		const ac = setting.autoComplete;
+		const groups = [
+				{ list: [...ac.name.list], "0": ac.name.replace0, "1": ac.name.replace1 }
+			,	{ list: [...ac.word.list], "0": ac.word.replace0, "1": ac.word.replace1 }
+		];
+		groups.forEach((group) => {
+			const replaceList = [];
+			group.list.sort((a, b) => { // 긴 단어를 먼저 변환하도록 정렬
+				return a.length < b.length ? 1 :
+				       a.length > b.length ? -1 : 0;
+			});
+			group.list.forEach((word) => {
+				word = word.trim();
+				if (!word) return;
+
+				const last = word[word.length - 1];
+				if ('가' <= last && last <= '힣') {
+					const c = (last.charCodeAt() - 44032) % 28;
+					if (c == 0) {
+						replaceList.push([word, "0"]);
+					} else {
+						replaceList.push([word, "1"]);
+					}
+
+				} else if (('a' <= last && 'z' <= last)
+					|| ('A' <= last && 'Z' <= last)) {
+					const c = last.charCodeAt() % 32;
+					switch (c) {
+						case 3: // C
+						case 11: // K
+						case 12: // L
+						case 13: // M
+						case 14: // N
+						case 16: // P
+							replaceList.push([word, "1"]);
+							break;
+						default:
+							replaceList.push([word, "0"]);
+					}
+				} else if ('0' <= last && last <= '9') {
+					const c = last.charCodeAt() - 48;
+					switch (c) {
+						case 2: // 이
+						case 4: // 사
+						case 5: // 오
+						case 9: // 구
+							replaceList.push([word, "0"]);
+							break;
+						default:
+							replaceList.push([word, "1"]);
+					}
+				}
+			});
+
+			replaceList.forEach((item) => {
+				value = value.replaceAll(item[0], group[item[1]]);
+			});
+		});
 		
 		// 신버전 창 켜진 후 스크립트로 검사 실행
 		SmiEditor.Addon.openExt("https://nara-speller.co.kr/speller"
