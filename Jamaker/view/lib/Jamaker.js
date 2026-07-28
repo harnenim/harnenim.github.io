@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260724";
-import "./Subtitle.Converter.js?260724";
-import "./AutoCompleteCodeMirror.js?260724";
-import "./SmiEditor.js?260724";
-import "./AssEditor.js?260724";
+﻿import "./MenuStrip.js?260728";
+import "./Subtitle.Converter.js?260728";
+import "./AutoCompleteCodeMirror.js?260728";
+import "./SmiEditor.js?260728";
+import "./AssEditor.js?260728";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260724";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260724", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260728", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2158,7 +2158,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260724").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260728").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2236,7 +2236,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260724").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260728").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2348,6 +2348,13 @@ window.setSetting = function(setting, initial=false) {
 	{
 		if (!menustrip) {
 			document.body.append((menustrip = new MenuStrip()).view);
+			MenuStrip.prototype._unfocus = MenuStrip.prototype.unfocus;
+			MenuStrip.prototype.unfocus = function() {
+				if (!this._unfocus() && SmiEditor.selected) {
+					// 포커스 반환 실패 시 에디터 활성화
+					SmiEditor.selected.focus();
+				}
+			}
 		}
 		menustrip.setMenus(setting.menu);
 	}
@@ -2409,7 +2416,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260724", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260728", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -2839,7 +2846,7 @@ window.saveFile = function(asNew, isExport) {
 				
 				if (withSmi) {
 					const saveSmiFrom = log("binder.save smi start");
-					binder.save(tabIndex, smiFile.toText(), smiPath, 1/*smi*/);
+					binder.save(tabIndex, smiFile.toText(-1), smiPath, 1/*smi*/);
 					log("binder.save smi end", saveSmiFrom);
 				}
 				if (withSrt) {
@@ -4683,7 +4690,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260724", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260728", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -4874,7 +4881,7 @@ window.extSubmitSpeller = function () {
 		while (value.indexOf("  ") >= 0) { // &nbsp;에서 만들어진 건 이쪽으로 옴
 			value = value.replaceAll("  ", " ");
 		}
-
+		
 		// 고유명사 전처리
 		const ac = setting.autoComplete;
 		const groups = [
@@ -4883,14 +4890,14 @@ window.extSubmitSpeller = function () {
 		];
 		groups.forEach((group) => {
 			const replaceList = [];
-			group.list.sort((a, b) => { // 긴 단어를 먼저 변환하도록 정렬
-				return a.length < b.length ? 1 :
+			group.list.sort((a,b) => { // 긴 단어를 먼저 변환하도록 정렬
+				return a.length < b.length ?  1 :
 				       a.length > b.length ? -1 : 0;
 			});
 			group.list.forEach((word) => {
 				word = word.trim();
 				if (!word) return;
-
+				
 				const last = word[word.length - 1];
 				if ('가' <= last && last <= '힣') {
 					const c = (last.charCodeAt() - 44032) % 28;
@@ -4899,12 +4906,12 @@ window.extSubmitSpeller = function () {
 					} else {
 						replaceList.push([word, "1"]);
 					}
-
+					
 				} else if (('a' <= last && 'z' <= last)
-					|| ('A' <= last && 'Z' <= last)) {
+				        || ('A' <= last && 'Z' <= last)) {
 					const c = last.charCodeAt() % 32;
 					switch (c) {
-						case 3: // C
+						case  3: // C
 						case 11: // K
 						case 12: // L
 						case 13: // M
@@ -4929,7 +4936,7 @@ window.extSubmitSpeller = function () {
 					}
 				}
 			});
-
+			
 			replaceList.forEach((item) => {
 				value = value.replaceAll(item[0], group[item[1]]);
 			});

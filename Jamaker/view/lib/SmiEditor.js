@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?260724";
+﻿import "./SubtitleObject.js?260728";
 
-import "./highlight/cm/codemirror.js?260724";
-import "./highlight/cm/scrollpastend.js?260724";
-import "./highlight/cm/mark-selection.js?260724";
-import "./highlight/cm/active-line.js?260724";
-import "./highlight/cm/sami.js?260724";
+import "./highlight/cm/codemirror.js?260728";
+import "./highlight/cm/scrollpastend.js?260728";
+import "./highlight/cm/mark-selection.js?260728";
+import "./highlight/cm/active-line.js?260728";
+import "./highlight/cm/sami.js?260728";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260724", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260728", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260724", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260728", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1052,7 +1052,7 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 						}
 						const c = text[cursor.ch - 1];
 						switch (c) {
-							case '>': {
+							case '>': { // 태그 단위 건너뛰기
 								const index = text.substring(0, cursor.ch).lastIndexOf('<');
 								if (index >= 0) {
 									const tag = text.substring(index, cursor.ch - 1);
@@ -1063,7 +1063,7 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 								}
 								break;
 							}
-							case ';': {
+							case ';': { // &nbsp; 등 건너뛰기
 								const index = text.substring(0, cursor.ch).lastIndexOf('&');
 								if (index >= 0) {
 									const tag = text.substring(index, cursor.ch - 1);
@@ -1073,6 +1073,18 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 									}
 								}
 								break;
+							}
+							default: { // ASS 태그 건너뛰기
+								if (cursor.ch > 2) {
+									const bsIndex = text.substring(0, cursor.ch - 1).lastIndexOf('\\');
+									if (bsIndex > 0) {
+										const wsIndex = text.substring(0, cursor.ch).lastIndexOf(' ');
+										if (wsIndex < bsIndex) {
+											cm.setCursor({ line: cursor.line, ch: bsIndex + 1 });
+											e.preventDefault();
+										}
+									}
+								}
 							}
 						}
 					}
@@ -1117,7 +1129,7 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 						text = text.substring(cursor.ch);
 						const c = text[0];
 						switch (c) {
-							case '<': {
+							case '<': { // 태그 단위 건너뛰기
 								const index = text.indexOf('>') + 1;
 								if (index > 0) {
 									cm.setCursor({ line: cursor.line, ch: cursor.ch + index });
@@ -1125,7 +1137,7 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 								}
 								break;
 							}
-							case '&': {
+							case '&': { // &nbsp; 등 건너뛰기
 								const index = text.indexOf(';') + 1;
 								if (index > 0) {
 									cm.setCursor({ line: cursor.line, ch: cursor.ch + index });
@@ -1134,19 +1146,34 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 								break;
 							}
 							default: {
-								const spaceIndex = text.indexOf(' ');
+								const wsIndex = text.indexOf(' ');
 								const tagIndex = text.indexOf('<');
-								if (spaceIndex <= 0) {
-									if (tagIndex < 0) {
+								const bsIndex = text.indexOf('\\');
+								if (wsIndex <= 0) {
+									if (tagIndex < 0 && bsIndex < 0) {
+										// 줄 끝으로 이동
 										cm.setCursor({ line: cursor.line });
 									} else {
-										cm.setCursor({ line: cursor.line, ch: cursor.ch + tagIndex });
+										if (bsIndex < 0 || (tagIndex > 0 && tagIndex < bsIndex)) {
+											// 태그 시작점으로 이동
+											cm.setCursor({ line: cursor.line, ch: cursor.ch + tagIndex });
+										} else {
+											// ASS 태그 시작점으로 이동
+											cm.setCursor({ line: cursor.line, ch: cursor.ch + bsIndex + 1 });
+										}
 									}
 								} else {
-									if ((tagIndex < 0) || (spaceIndex < tagIndex)) {
-										cm.setCursor({ line: cursor.line, ch: cursor.ch + spaceIndex + 1 });
+									if ((tagIndex < 0 || wsIndex < tagIndex) && (bsIndex < 0 || wsIndex < bsIndex)) {
+										// 공백문자 단위 이동
+										cm.setCursor({ line: cursor.line, ch: cursor.ch + wsIndex + 1 });
 									} else {
-										cm.setCursor({ line: cursor.line, ch: cursor.ch + tagIndex });
+										if (bsIndex < 0 || (tagIndex > 0 && tagIndex < bsIndex)) {
+											// 태그 시작점으로 이동
+											cm.setCursor({ line: cursor.line, ch: cursor.ch + tagIndex });
+										} else {
+											// ASS 태그 시작점으로 이동
+											cm.setCursor({ line: cursor.line, ch: cursor.ch + bsIndex + 1 });
+										}
 									}
 								}
 								e.preventDefault();
@@ -2603,7 +2630,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260724", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260728", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2799,7 +2826,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260724", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260728", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
