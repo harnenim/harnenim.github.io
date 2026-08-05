@@ -1159,6 +1159,7 @@ window.AssEvent = Subtitle.AssEvent = function(start, end, style, text, layer=0)
 	this.Text = text;
 }
 AssEvent.useAlignDialogue = true;
+AssEvent.rubyPos = 0;
 AssEvent.toAssTime = (time=0, fromFrameSync=false) => {
 	time = Subtitle.optimizeSync(time, fromFrameSync);
 	const h = Math.floor( time / 3600000);
@@ -1362,6 +1363,18 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 			}
 			
 			const texts = [];
+			if (AssEvent.rubyPos) {
+				// 위치 조정 있으면 기본값은 별도로 생성
+				const combined = [];
+				lines.forEach((line, i) => {
+					if (i > 0) {
+						combined.push(Attr.junkAss("\\N"));
+					}
+					combined.push(Attr.junkAss("{\\fscy50\\fscx50}　{\\furifree\\fscx\\fscy}\\N"));
+					push(combined, line.attrs);
+				});
+				texts.push(AssEvent.inFromAttrs(combined, false)[0]);
+			}
 			for (let c = 0; c < count; c++) {
 				const combined = [];
 				lines.forEach((line, i) => {
@@ -1372,15 +1385,15 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 						if (c < line.furigana.length) {
 							push(combined, line.furigana[c]);
 						} else {
-							combined.push(Attr.junkAss("{\\fscy50\\fscx50}　{\\fscx\\fscy}\\N"));
+							combined.push(Attr.junkAss("{\\fscy50\\fscx50}　{\\furifree\\fscx\\fscy}\\N"));
 						}
 					}
-					if (c == 0) {
-						push(combined, line.attrs);
-					} else {
+					if (c || AssEvent.rubyPos) {
 						combined.push(Attr.junkAss("{\\alpha&HFF&}"));
 						push(combined, line.attrs);
 						combined.push(Attr.junkAss("{\\alpha}"));
+					} else {
+						push(combined, line.attrs);
 					}
 				});
 				texts.push(AssEvent.inFromAttrs(combined, false)[0]);
@@ -2047,7 +2060,35 @@ AssEvent.fromSync = function(sync, style=null) {
 				}
 			} while (false);
 			
-			if (moved) {
+			if (AssEvent.rubyPos && text.indexOf("\\furigana") > 0) {
+				// 후리가나 설정에 따라 높이 조절
+				const add = -(style.Fontsize * AssEvent.rubyPos);
+				if (text.indexOf("\\pos(") > 0) {
+					const p1 = text.split("\\pos(");
+					const p2 = p1[1].split(")");
+					const p3 = p2[0].split(",");
+					if (p3.length == 2 && isFinite(p3[0]) && isFinite(p3[1])) {
+						p3[1] = Math.round((Number(p3[1]) + add) * 100) / 100;
+						p2[0] = p3.join(",");
+						p1[1] = p2.join(")");
+						text = p1.join("\\pos(");
+					}
+				} else if (text.indexOf("\\move(") > 0) {
+					const p1 = text.split("\\move(");
+					const p2 = p1[1].split(")");
+					const p3 = p2[0].split(",");
+					if (p3.length >= 4 && isFinite(p3[0]) && isFinite(p3[1]) && isFinite(p3[2]) && isFinite(p3[3])) {
+						p3[1] = Math.round((Number(p3[1]) + add) * 100) / 100;
+						p3[3] = Math.round((Number(p3[3]) + add) * 100) / 100;
+						p2[0] = p3.join(",");
+						p1[1] = p2.join(")");
+						text = p1.join("\\move(");
+					}
+				} else {
+					y += add;
+					text = `{\\pos(${ Math.round(x * 100) / 100 },${ Math.round(y * 100) / 100 })}` + text;
+				}
+			} else if (moved) {
 				if (text.indexOf("\\pos(") > 0
 				 || text.indexOf("\\move(") > 0
 				 || text.indexOf("\\an") > 0
@@ -2086,6 +2127,7 @@ AssEvent.fromSync = function(sync, style=null) {
 				lines = lines.split("\\N");
 				lines.forEach((line) => {
 					if (line.startsWith("{\\furigana")) return;
+					if (line.indexOf("\\furifree") > 0) return;
 					if (line.indexOf("\\fs") > 0) {
 						hasFs = true;
 					}
@@ -2098,6 +2140,9 @@ AssEvent.fromSync = function(sync, style=null) {
 							wasFurigana = true;
 							return;
 						}
+						if (line.indexOf("\\furifree") > 0) {
+							return;
+						}
 						let pureLine = htmlToText(line.replaceAll("{", "<span ").replaceAll("}", ">"));
 						if (pureLine.startsWith("-")) {
 							pureLines.push({ i: i, text: pureLine, furigana: (wasFurigana ? i-1 : null) });
@@ -2108,6 +2153,7 @@ AssEvent.fromSync = function(sync, style=null) {
 						// 반각 줄표 없으면 전각 줄표로 재확인
 						lines.forEach((line, i) => {
 							if (line.startsWith("{\\furigana")) return;
+							if (line.indexOf("\\furifree") > 0) return;
 							let pureLine = htmlToText(line.replaceAll("{", "<span ").replaceAll("}", ">"));
 							if (pureLine.startsWith("－")) {
 								pureLines.push({ i: i, text: pureLine });
@@ -2146,7 +2192,7 @@ AssEvent.fromSync = function(sync, style=null) {
 			}
 			// 후리가나 구분자 제거
 			// 따로 문법 검사는 없지만, 자막 내용물로 이런 문자열을 쓰진 않을 것
-			text = text.replaceAll("\\furigana", "");
+			text = text.replaceAll("\\furigana", "").replaceAll("\\furifree", "");
 			
 			{	// 자체 fadein/out 태그 처리
 				const fadeLength = end - start;
@@ -5235,7 +5281,7 @@ window.DefaultStyle = {
 	,	MarginR: 64
 	,	MarginV: 40
 	,	output: 3 // 0b01: SMI / 0b10: ASS / 0b11: SMI+ASS
-	,	followMain: false
+	,	follow: ""
 };
 Subtitle.DefaultStyle = JSON.parse(JSON.stringify(DefaultStyle));
 Subtitle.DefaultStyle.Fontname = "맑은 고딕";
@@ -5297,50 +5343,56 @@ SmiFile.fromAssStyle = function(assStyle, smiStyle=null) {
 }
 
 
-SmiFile.toSaveStyle = function(style) {
+SmiFile.toSaveStyle = function(style, isMain=false) {
 	if (!style) return "";
+	if (style.follow == "default") return "";
 	
 	const styleForSmi = ["PrimaryColour","Italic","Underline","StrikeOut"];
 	const styleForAss = ["Fontname","Fontsize","SecondaryColour","OutlineColour","BackColour","PrimaryOpacity","SecondaryOpacity","OutlineOpacity","BackOpacity","Bold","ScaleX","ScaleY","Spacing","Angle","BorderStyle","Outline","Shadow","Alignment","MarginL","MarginR","MarginV"];
-	
-	let forSmi = false;
-	for (let i = 0; i < styleForSmi.length; i++) {
-		const name = styleForSmi[i];
-		if (style[name] != Subtitle.DefaultStyle[name]) {
-			forSmi = true;
-			break;
-		}
-	}
-	let forAss = false;
-	for (let i = 0; i < styleForAss.length; i++) {
-		const name = styleForAss[i];
-		if (style[name] != Subtitle.DefaultStyle[name]) {
-			if (name == "Fontname" && style.Fontname == "") {
-				// 폰트 기본값
-				continue;
-			} else if (name == "Fontsize" && style.Fontsize == 0) {
-				// 글씨크기 0은 ASS 출력 제외를 위한 속성
-				continue;
-			}
-			forAss = true;
-			break;
-		}
-	}
-	
 	const result = [];
+	
+	let forAss = style.withAss; // ASS 활성화 시 스타일 전체 저장
+	if (!forAss) { // ASS 스타일 건드린 후 비활성화한 경우 값 보존
+		for (let i = 0; i < styleForAss.length; i++) {
+			const name = styleForAss[i];
+			if (style[name] != Subtitle.DefaultStyle[name]) {
+				if (name == "Fontname" && style.Fontname == "") {
+					// 폰트 기본값
+					continue;
+				} else if (name == "Fontsize" && style.Fontsize == 0) {
+					// 글씨크기 0은 ASS 출력 제외를 위한 속성
+					continue;
+				}
+				forAss = true;
+				break;
+			}
+		}
+	}
+	
 	if (forAss) {
 		const assStyle = SmiFile.toAssStyle(style);
 		SmiFile.StyleFormat.forEach((key) => {
 			result.push(assStyle[key]);
 		});
 		
-	} else if (forSmi) {
-		// 기본 스타일
-		result.push(style.Fontname);
-		result.push(style.PrimaryColour);
-		result.push(style.Italic    ? 1 : 0);
-		result.push(style.Underline ? 1 : 0);
-		result.push(style.StrikeOut ? 1 : 0);
+	} else if (!isMain) { // 메인 홀드는 SMI 스타일만 건드릴 수 없음
+		let forSmi = false;
+		for (let i = 0; i < styleForSmi.length; i++) {
+			const name = styleForSmi[i];
+			if (style[name] != Subtitle.DefaultStyle[name]) {
+				forSmi = true;
+				break;
+			}
+		}
+		
+		if (forSmi) {
+			// SMI 기본 스타일
+			result.push(style.Fontname);
+			result.push(style.PrimaryColour);
+			result.push(style.Italic    ? 1 : 0);
+			result.push(style.Underline ? 1 : 0);
+			result.push(style.StrikeOut ? 1 : 0);
+		}
 	}
 	
 	return result.join(",");
@@ -5411,7 +5463,7 @@ SmiFile.prototype.normalize = function(withComment=false) {
 	{
 		const lines = this.header.split("\n");
 		if (lines.length >= 3
-		 && (lines[0] == "<!-- Style" || lines[0] == "<!-- Preset") // 처음 개발할 때 혼용함...
+		 && lines[0] == "<!-- Style"
 		 && lines[2] == "-->") {
 			preset = SmiFile.styleToSmi(SmiFile.parseStyle(lines[1].trim()));
 		}
@@ -5541,6 +5593,9 @@ SmiFile.prototype.antiNormalize = function() {
 			let style = null;
 			if (comment.length > 1) {
 				style = SmiFile.parseStyle(comment[1]);
+			} else {
+				style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
+				style.follow = "setting";
 			}
 			comment = comment[0];
 			
@@ -5562,7 +5617,7 @@ SmiFile.prototype.antiNormalize = function() {
 			hold.body[0].text = afterComment;
 			hold.antiNormalize();
 			hold.next = this.body[removeStart];
-			if (style) hold.style = style;
+			hold.style = style;
 			
 			hold.name = comment = comment.substring(5);
 			hold.pos = 1;

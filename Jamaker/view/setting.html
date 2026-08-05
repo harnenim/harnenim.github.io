@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/popup.js?260728"></script>
-<script src="lib/SmiEditor.js?260728" type="module"></script>
-<script src="lib/highlight/cm/javascript.js?260728" type="module"></script>
+<script src="lib/popup.js?260806"></script>
+<script src="lib/SmiEditor.js?260806" type="module"></script>
+<script src="lib/highlight/cm/javascript.js?260806" type="module"></script>
 <script>
 windowName = "setting";
 
@@ -1252,6 +1252,7 @@ function init() {
 			
 			setting.viewer.useAlign   = document.querySelector("input[name=viewer_useAlign]").checked;
 			setting.viewer.background = document.querySelector("input[name=viewer_background]").value;
+			setting.viewer.rubyPos    = document.querySelector("input[name=viewer_rubyPos]").value;
 			
 			setting.newFile           = editorNewFile.getValue();
 			
@@ -1278,8 +1279,8 @@ function init() {
 							// 기본 스타일이면 적용
 							defaultHolds.push(hold);
 						} else {
-							if (opener.SmiFile.toSaveStyle(hold.style, setting.defStyle) == "") {
-								// 기본 스타일이면 적용
+							if (hold.style.follow == "setting") {
+								// 설정 스타일 따라갈 경우 적용
 								defaultHolds.push(hold);
 							}
 						}
@@ -1311,7 +1312,12 @@ function init() {
 			SmiEditor.scrollShow = setting.scrollShow;
 			
 			for (let i = 0; i < defaultHolds.length; i++) {
-				defaultHolds[i].setStyle(JSON.parse(JSON.stringify(setting.defStyle)));
+				const holdStyle = JSON.parse(JSON.stringify(setting.defStyle));
+				holdStyle.follow = "setting";
+				if (defaultHolds[i].style) { // 출력 선택은 원래값 유지
+					holdStyle.output = defaultHolds[i].style.output;
+				}
+				defaultHolds[i].setStyle(holdStyle);
 			}
 		};
 	}
@@ -2269,7 +2275,7 @@ body:not(.hl) .CodeMirror .CodeMirror-cursor,
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?260728")</h4>
+					<h4>openAddon("~~.html?260806")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -2452,6 +2458,9 @@ body:not(.hl) .CodeMirror .CodeMirror-cursor,
 			</div>
 			<div id="preview">
 				<div id="preview_main" contenteditable="true" spellcheck="false">Jamaker 0123 語 한글</div>
+			</div>
+			<div>
+				<label><span>RUBY 태그 ASS 변환 위치 </span><input type="number" name="viewer_rubyPos" min="-50" max="50" />%</label>
 			</div>
 		</fieldset>
 	</form>
