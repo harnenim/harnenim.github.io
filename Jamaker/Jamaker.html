@@ -11,7 +11,7 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<link rel="icon" type="image/x-icon" href="jamaker.ico" />
+<link rel="icon" type="image/x-icon" href="view/jamaker.ico" />
 <link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260806" />
 <script src="bridge/WinAPI.js?260806"></script>
 <script src="bridge/Binder.js?260806"></script>
@@ -71,8 +71,8 @@ Binder.prototype.setPathAndCheckLoadVideoFile = function(smiPath) {
 Binder.prototype.loadVideoFile = function(path) {
 	this._.loadVideoFile(path);
 }
-Binder.prototype.requestFrames = function(path) {
-	this._.requestFrames(path);
+Binder.prototype.requestFrames = function(path, forced) {
+	this._.requestFrames(path, forced);
 }
 Binder.prototype.setThumbnailSize = function(width, height) {
 	this._.setThumbnailSize(width, height);
@@ -756,7 +756,11 @@ window.MB = 9;
 	}
 	editor.checkLoadVideoFile = function() { /* native */ }
 	editor.loadVideoFile = function(path) { /* native */ }
-	editor.requestFrames = function(path) { /* native */ }
+	editor.requestFrames = function(path, forced) {
+		if (forced) {
+			alert("웹샘플에선 진행할 수 없습니다.");
+		}
+	}
 	editor.setThumbnailSize = function(width, height) {
 		this.TX = width;
 		this.TY = height;
