@@ -1,9 +1,32 @@
-[ { "version": "2026.07.29"
+[ { "version": "2026.08.08"
+  , "comment":
+    [ "창 위치 기억 조건 변경"
+    , "프레임 강제 재분석 기능 추가"
+    , "ruby태그 ass 변환 시 상하 위치 조절 설정 추가"
+    , "ass 변환 시 move 태그 span 시간값 변환 추가"
+    , "ass 스타일 저장 방식 보완 등"
+    ]
+  , "files":
+    [ "view/help/aboutAss.html"
+    , "view/lib/Jamaker.color.css"
+    , "view/lib/Jamaker.css"
+    , "view/lib/Jamaker.js"
+    , "view/lib/Jamaker.size.css"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/Jamaker.html"
+    , "view/setting.html"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    ]
+  }
+, { "version": "2026.07.29"
   , "comment":
     [ "특정 조건에서 메뉴에서 에디터로 포커스 반환 못 하는 현상 수정"
     , "Ctrl+↔ 동작 보완"
     , "주석 문법 호환성 보완 등"
-    , "└ 최신 버전에서 저장한 파일은 구버전에서 정상적으로 읽지 못합니다."
     ]
   , "files":
     [ "view/lib/Jamaker.js"
