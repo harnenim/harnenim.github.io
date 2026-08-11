@@ -1263,8 +1263,18 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 		}
 		if (hasFurigana) {
 			let line = { attrs: [] };
+			let isPrev = true;
+			const prevAttrs = [];
 			const lines = [line];
 			attrs.forEach((attr) => {
+				if (isPrev) {
+					if (attr.text || attr.attrs) {
+						isPrev = false;
+					} else {
+						prevAttrs.push(attr);
+						return;
+					}
+				}
 				if (attr.attrs || attr.text.indexOf("\n") < 0) {
 					line.attrs.push(attr);
 					
@@ -1366,17 +1376,21 @@ AssEvent.inFromAttrs = (attrs, checkFurigana=true, checkFade=true, checkAss=true
 			if (AssEvent.rubyPos) {
 				// 위치 조정 있으면 기본값은 별도로 생성
 				const combined = [];
+				combined.push(...prevAttrs);
 				lines.forEach((line, i) => {
 					if (i > 0) {
 						combined.push(Attr.junkAss("\\N"));
 					}
-					combined.push(Attr.junkAss("{\\fscy50\\fscx50}　{\\furifree\\fscx\\fscy}\\N"));
+					if (line.furigana.length) {
+						combined.push(Attr.junkAss("{\\fscy50\\fscx50}　{\\furifree\\fscx\\fscy}\\N"));
+					}
 					push(combined, line.attrs);
 				});
 				texts.push(AssEvent.inFromAttrs(combined, false)[0]);
 			}
 			for (let c = 0; c < count; c++) {
 				const combined = [];
+				combined.push(...prevAttrs);
 				lines.forEach((line, i) => {
 					if (i > 0) {
 						combined.push(Attr.junkAss("\\N"));
@@ -2062,7 +2076,15 @@ AssEvent.fromSync = function(sync, style=null) {
 			
 			if (AssEvent.rubyPos && text.indexOf("\\furigana") > 0) {
 				// 후리가나 설정에 따라 높이 조절
-				const add = -(style.Fontsize * AssEvent.rubyPos);
+				let fs = style.Fontsize;
+				const fsIndex = text.replaceAll("\\fsc", "\\___").indexOf("\\fs");
+				if (fsIndex > 0) {
+					let textFs = text.substring(fsIndex + 3).split("}")[0].split("\\")[0];
+					if (isFinite(textFs)) {
+						fs = Number(textFs);
+					}
+				}
+				const add = -(fs * AssEvent.rubyPos);
 				if (text.indexOf("\\pos(") > 0) {
 					const p1 = text.split("\\pos(");
 					const p2 = p1[1].split(")");

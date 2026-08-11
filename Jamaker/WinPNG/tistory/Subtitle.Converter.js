@@ -1,4 +1,4 @@
-import "./SubtitleObject.js?260709";
+import "./SubtitleObject.js?260812";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -868,7 +868,7 @@ SmiFile.textToHolds = (text) => {
 		holds.push({
 				pos: pos
 			,	name: name
-			,	text: hold.substring(begin, end).trim().replaceAll("<​", "<").replaceAll("​>", ">")
+			,	text: hold.substring(begin, end).trim().replaceAll("-​-", "--").replaceAll("<​", "<").replaceAll("​>", ">")
 		});
 	}
 	
@@ -890,12 +890,17 @@ SmiFile.textToHolds = (text) => {
 				const commentEnd = footer[1].indexOf("\n-->");
 				if (commentEnd > 0) {
 					holds[0].style = SmiFile.parseStyle(footer[1].substring(0, commentEnd).trim());
+					holds[0].style.follow = "";
 					footer = footer[0] + footer[1].substring(commentEnd + 4); // 뒤에 추가로 주석 남아있을 수 있음
 				} else {
 					footer = footer[0]; // 닫는 태그 없으면 군더더기로 간주해 제거
 				}
 			} else {
 				footer = footer[0];
+			}
+			if (!holds[0].style) {
+				holds[0].style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
+				holds[0].style.follow = "setting";
 			}
 		}
 		{	// ASS 추가 스크립트
@@ -970,14 +975,10 @@ SmiFile.textToHolds = (text) => {
 		}
 		// 홀드 스타일: antiNormalize 단계에서 가져옴
 		let style = holds[i].style;
-		if (!style) {
-			holds[i].style = style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
-		}
 		if (output & 0b100) {
-			style.followMain = true;
-			style.output = output % 4;
+			style.follow = "main";
+			style.output = output & 0b11;
 		} else {
-			style.followMain = false;
 			style.output = output;
 		}
 	}
@@ -995,17 +996,17 @@ SmiFile.textToHolds = (text) => {
 		}
 		// 홀드 스타일: header 확인
 		{	let style = null;
-			if ((lines[0] == "<!-- Style" || lines[0] == "<!-- Preset") && lines[2] == "-->") {
-				style = holds[i].style = SmiFile.parseStyle(lines[1].trim());
+			if ((lines[0] == "<!-- Style") && (lines[2] == "-->")) {
+				style = SmiFile.parseStyle(lines[1].trim());
 				text = (lines = lines.slice(3)).join("\n");
 			} else {
 				style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
+				style.follow = "setting";
 			}
 			if (output & 0b100) {
-				style.followMain = true;
-				style.output = output % 4;
+				style.follow = "main";
+				style.output = output & 0b11;
 			} else {
-				style.followMain = false;
 				style.output = output;
 			}
 			holds[i].style = style;
@@ -1034,9 +1035,12 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 	const main = new SmiFile(origHolds[0].text);
 	if (withComment > 0) {
 		// 메인 홀드 스타일 저장
-		const style = SmiFile.toSaveStyle(origHolds[0].style);
-		if (style) {
-			main.footer += `\n<!-- Style\n${style}\n-->`;
+		const hold = origHolds[0];
+		if (!hold.style.follow) {
+			const style = SmiFile.toSaveStyle(hold.style, true);
+			if (style) {
+				main.footer += `\n<!-- Style\n${style}\n-->`;
+			}
 		}
 	}
 	
@@ -1059,19 +1063,19 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 			}
 			hold.exportName = hold.name;
 			if (hold.style) {
-				if (!hold.style.followMain) {
+				if (!hold.style.follow) {
 					const style = SmiFile.toSaveStyle(hold.style);
 					if (style) {
 						text = `<!-- Style\n${style}\n-->\n` + text;
 					}
 				}
-				const output = Number(hold.style.output) + (hold.style.followMain ? 4 : 0);
+				const output = Number(hold.style.output) + (hold.style.follow == "main" ? 4 : 0);
 				if (output != 3) {
 					// 출력 선택
 					hold.exportName += "|" + output;
 				}
 			}
-			result[hold.resultIndex = (hi + 1)] = `<!-- Hold=${hold.pos}|${hold.exportName}\n${text.replaceAll("<", "<​").replaceAll(">", "​>")}\n-->`;
+			result[hold.resultIndex = (hi + 1)] = `<!-- Hold=${hold.pos}|${hold.exportName}\n${text.replaceAll("<", "<​").replaceAll(">", "​>").replaceAll("--", "-​-")}\n-->`;
 			hold.imported = false;
 			hold.afterMain = false;
 			
@@ -1236,19 +1240,12 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 		// 단, 아래쪽부터 쌓아야 함
 		const holds = origHolds.slice(0);
 		holds.sort((a, b) => {
-			let aPos = a.viewPos ? a.viewPos : a.pos;
-			let bPos = b.viewPos ? b.viewPos : b.pos;
-			if (aPos < 0) {
-				if (bPos > 0) {
-					return -1;
-				}
-			} else {
-				if (bPos < 0) {
-					return 1;
-				}
-			}
-			if (aPos < 0) aPos = -aPos;
-			if (bPos < 0) bPos = -bPos;
+			let aPos = a.viewPos ?? a.pos;
+			let bPos = b.viewPos ?? b.pos;
+			if (aPos < 0 && bPos > 0) return -1;
+			if (aPos > 0 && bPos < 0) return 1;
+			aPos = Math.abs(aPos);
+			bPos = Math.abs(bPos);
 			if (aPos < bPos) return -1;
 			if (aPos > bPos) return 1;
 			return 0;
@@ -1531,7 +1528,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 				origin.body = originBody.slice(log.from[0], log.from[1]);
 				let comment = origin.toText(jmk).trim();
 				
-				main.body[log.to[0]].text = `<!-- End=${log.end}\n${ comment.replaceAll("<", "<​").replaceAll(">", "​>") }\n-->\n` + main.body[log.to[0]].text;
+				main.body[log.to[0]].text = `<!-- End=${log.end}\n${ comment.replaceAll("<", "<​").replaceAll(">", "​>").replaceAll("--", "-​-") }\n-->\n` + main.body[log.to[0]].text;
 			});
 		}
 	}
@@ -1785,17 +1782,15 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 	const styles = {};
 	
 	holds.forEach((hold, h) => {
-		const name = (h == 0 || hold.style.followMain) ? "Default" : hold.name;
-		const style = hold.style ?? Subtitle.DefaultStyle;
-		
-		/* SMI 전용 홀드여도 ASS 변환 주석은 동작하도록 함
-		if ((style.output & 0b10) == 0) {
-			// ASS 변환 대상 제외
-			syncs.push(hold.syncs = []);
-			hold.smiFile = null;
-			return;
+		// SMI 전용 홀드에서도 ASS 변환 주석은 동작하도록 함
+		const name = (h == 0 || hold.style.follow == "main") ? "Default" : hold.name;
+		let style = hold.style;
+		if (style.follow == "main") {
+			style = (holds[0].follow == "setting") ? Subtitle.DefaultStyle : holds[0].style;
+		} else if (style.follow == "setting") {
+			style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
+			style.output = hold.style.output;
 		}
-		*/
 		
 		if (styles[name]) {
 			// 이미 추가한 스타일은 건너뜀
@@ -1846,7 +1841,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 							assCmTexts.push(line);
 						}
 					});
-					smiText = smiText.substring(commentEnd + 3).trim();
+					smi.originAssComment = smi.text.substring(0, commentEnd + 3);
+					smi.origin = smiText = smiText.substring(commentEnd + 3).trim(); // 역반영 시 origin 활용
 					for (let j = 0; j < assCmTexts.length; j++) {
 						const assLine = assCmTexts[j].trim();
 						if (assLine == "") {
@@ -2045,15 +2041,45 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			}
 			{	// span t 처리
 				let c = 0;
+				let tBegin = 0;
+				while ((tBegin = item.text.indexOf("\\t(", c, tBegin)) > 0) {
+					const tEnd = item.text.indexOf(")", tBegin);
+					if (tEnd > 0) {
+						const tValues = item.text.substring(tBegin + 3, tEnd).split(",");
+						if (tValues.length >= 3) {
+							let converted = false;
+							for (let i = 0; i < 2; i++) {
+								if (tValues[i].startsWith("[") && tValues[i].endsWith("]")) {
+									const f = tValues[i].substring(1, tValues[i].length - 1);
+									if (isFinite(f)) {
+										const span = Number(f);
+										if ((span <= item.span) && (item.index + span < smis.length)) {
+											tValues[i] = smis[item.index + span].start - smis[item.index].start;
+										}
+										converted = true;
+									}
+								}
+							}
+							if (converted) {
+								item.text = item.text.substring(0, tBegin + 3) + tValues.join(",") + item.text.substring(tEnd);
+							}
+						}
+						c = tEnd;
+						continue;
+					}
+				}
+			}
+			{	// span move 처리
+				let c = 0;
 				do {
-					const tBegin = item.text.indexOf("\\t(", c);
+					const tBegin = item.text.indexOf("\\move(", c);
 					if (tBegin > 0) {
 						const tEnd = item.text.indexOf(")", tBegin);
 						if (tEnd > 0) {
-							const tValues = item.text.substring(tBegin + 3, tEnd).split(",");
-							if (tValues.length >= 3) {
+							const tValues = item.text.substring(tBegin + 6, tEnd).split(",");
+							if (tValues.length >= 6) {
 								let converted = false;
-								for (let i = 0; i < 2; i++) {
+								for (let i = 4; i < 6; i++) {
 									if (tValues[i].startsWith("[") && tValues[i].endsWith("]")) {
 										const f = tValues[i].substring(1, tValues[i].length - 1);
 										if (isFinite(f)) {
@@ -2066,7 +2092,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									}
 								}
 								if (converted) {
-									item.text = item.text.substring(0, tBegin + 3) + tValues.join(",") + item.text.substring(tEnd);
+									item.text = item.text.substring(0, tBegin + 6) + tValues.join(",") + item.text.substring(tEnd);
 								}
 							}
 							c = tEnd;
@@ -2103,14 +2129,15 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		const an2Holds = [];
 		holds.forEach((hold) => {
 			let style = hold.style;
-			if (style?.followMain) {
-				style = holds[0].style ? holds[0].style : Subtitle.DefaultStyle;
+			if (style.follow == "main") {
+				style = (holds[0].follow == "setting") ? Subtitle.DefaultStyle : holds[0].style;
+			} else if (style.follow == "setting") {
+				style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
 			}
-			if (style
-			 && !(   style.Alignment == 2
-			      || style.Alignment == 5
-			     )
-			) return; // ASS에서 정중앙 혹은 중앙 하단이 아니면 제외
+			if (style.Alignment != 2 && style.Alignment != 5) {
+				// ASS에서 정중앙 혹은 중앙 하단이 아니면 제외
+				return;
+			}
 			an2Holds.push(hold);
 		});
 		// 아래인 것부터 정렬
@@ -2121,8 +2148,12 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		if (an2Holds.length > 1) {
 			const usedLines = []; // 각 싱크에 사용된 줄 수
 			an2Holds.forEach((hold) => {
-				let style = hold.style?.followMain ? holds[0].style : hold.style;
-				if (!style) style = Subtitle.DefaultStyle;
+				let style = hold.style;
+				if (style.follow == "main") {
+					style = (holds[0].follow == "setting") ? Subtitle.DefaultStyle : holds[0].style;
+				} else if (style.follow == "setting") {
+					style = JSON.parse(JSON.stringify(Subtitle.DefaultStyle));
+				}
 				hold.syncs.forEach((sync) => {
 					let useBottom = true; // an2Holds에 애초에 걸러진 것만 있음
 					let isEmpty = true; // 주석만 있는 싱크도 남아 있을 수 있음
@@ -2226,7 +2257,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			});
 		});
 		// 홀드 내용물 추가
-		assFile.addFromSyncs(syncs[h], holds[h].style?.followMain ? "Default" : holds[h].name);
+		assFile.addFromSyncs(syncs[h], (holds[h].style.follow == "main") ? "Default" : holds[h].name);
 	}
 	// 메인 홀드를 마지막에 추가
 	assFile.addFromSyncs(syncs[0], "Default");

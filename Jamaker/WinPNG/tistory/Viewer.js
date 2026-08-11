@@ -1,6 +1,17 @@
-﻿import "./Subtitle.Converter.js?260709";
-import "./jszip.min.js?260807";
+﻿import "./Subtitle.Converter.js?260812";
+import "./jszip.min.js?260811";
 import "./WinPNG.js?260708";
+
+function initialSetting() {
+	// 기본 폰트: 맑은 고딕
+	Subtitle.DefaultStyle.Fontname = "맑은 고딕";
+	// 기본 폰트 크기: 팟플레이어 18 기준
+	Subtitle.DefaultStyle.Fontsize = Math.round(18 / 5.86 * (25.5 * 1.001) * 100) / 100;
+	// ASS 줄표 들어간 대사 왼쪽 정렬 활성화
+	AssEvent.useAlignDialogue = true;
+	// ASS 후리가나 기본 위치에서 아래로 10%
+	AssEvent.rubyPos = -0.1;
+};
 
 URL.files = {};
 URL.from = function(blob) {
@@ -567,7 +578,7 @@ async function dropUrl(url) {
 }
 
 async function onload() {
-	Subtitle.DefaultStyle.Fontsize = Math.round(18 / 5.86 * (25.5 * 1.001) * 100) / 100;
+	initialSetting();
 	
 	inputUrl = document.getElementById("inputUrl");
 	ivTarget = document.getElementById("ivTarget");
@@ -704,6 +715,18 @@ async function onload() {
 					}
 					dropUrl(img.src);
 				}
+			}
+		});
+		
+		// zip 파일 뷰어로 열기
+		document.addEventListener("click", (e) => {
+			const a = e.target.closest("a");
+			if (a && a.href && a.href.endsWith(".zip")) {
+				e.preventDefault();
+				if (!winPNG.classList.contains("on")) {
+					winPNG.classList.add("on");
+				}
+				dropUrl(a.href);
 			}
 		});
 	}
@@ -931,7 +954,7 @@ window.addEventListener("load", () => {
 	setTimeout(() => {
 		const link = document.createElement("link");
 		link.rel = "stylesheet";
-		link.href = new URL("./Viewer.css?260710", import.meta.url).href;
+		link.href = new URL("./Viewer.css?260721", import.meta.url).href;
 		document.head.append(link);
 		
 		// 사이드바 뷰 구성
