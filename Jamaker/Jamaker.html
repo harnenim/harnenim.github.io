@@ -12,10 +12,10 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 
 -->
 <link rel="icon" type="image/x-icon" href="view/jamaker.ico" />
-<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260811" />
-<script src="bridge/WinAPI.js?260811"></script>
-<script src="bridge/Binder.js?260811"></script>
-<script src="bridge/WebPlayerBridge.js?260811"></script>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css?260814" />
+<script src="bridge/WinAPI.js?260814"></script>
+<script src="bridge/Binder.js?260814"></script>
+<script src="bridge/WebPlayerBridge.js?260814"></script>
 <script>
 Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
 	this._.moveWindow(name, x, y, w, h, resize);
@@ -129,7 +129,7 @@ Binder.prototype.exportSetting = function() { this._.exportSetting() };
 Binder.prototype.importSetting = function() { this._.importSetting() };
 Binder.prototype.openSamples = function(samples) { this._.openSamples(samples) };
 </script>
-<script src="bridge/WebForm.js?260811"></script>
+<script src="bridge/WebForm.js?260814"></script>
 <script>
 // bridge/list.txt
 //const playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
@@ -181,7 +181,7 @@ const window_open = function(url, name, options, opener) {
 		}
 		
 		this.loadSetting(() => {
-			editor.mainView.src = "view/Jamaker.html?260811";
+			editor.mainView.src = "view/Jamaker.html?260814";
 			editor.mainView.onload = function() {
 				// 브라우저 샘플에선 url 변형 필요
 				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
@@ -957,7 +957,7 @@ window.MB = 9;
 		localStorage.setItem(key, text);
 	}
 	editor.openTempDir = function() {
-		const hwnd = window.open("../bridge/tempDir.html?260811", "tempDir", "location=no,width=1,height=1");
+		const hwnd = window.open("../bridge/tempDir.html?260814", "tempDir", "location=no,width=1,height=1");
 		const rect = editor.mainView.contentWindow.setting.player.window;
 		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
 	}
