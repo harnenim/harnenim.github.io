@@ -1,4 +1,25 @@
-[ { "version": "2026.08.08"
+[ { "version": "2026.08.15"
+  , "comment":
+    [ "Fn 단축키 설정 기본값으로 초기화 안 되던 문제 수정"
+    , "단축키 설정 개별로 기본값 가져올 수 있도록 수정"
+    , "ASS 변환 시 \\t태그 2개 이상일 때 시간값 변환 기능 누락 문제 수정"
+    , "ASS 후리가나 변환 처리 개선"
+    , "색상 확장 선택기 초기화 미비점 수정"
+    , "좌표입력기 가이드라인 추가"
+    ]
+  , "files":
+    [ "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/setting.html"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+, { "version": "2026.08.08"
   , "comment":
     [ "창 위치 기억 조건 변경"
     , "프레임 강제 재분석 기능 추가"
