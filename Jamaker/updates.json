@@ -1,4 +1,13 @@
-[ { "version": "2026.08.15"
+[ { "version": "2026.08.16"
+  , "comment":
+    [ "홀드 ASS 스타일로 인해 SMI 스타일 설정 비활성화되던 문제 수정"
+    ]
+  , "files":
+    [ "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    ]
+  }
+, { "version": "2026.08.15"
   , "comment":
     [ "Fn 단축키 설정 기본값으로 초기화 안 되던 문제 수정"
     , "단축키 설정 개별로 기본값 가져올 수 있도록 수정"
