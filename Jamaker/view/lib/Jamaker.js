@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260816";
-import "./Subtitle.Converter.js?260816";
-import "./AutoCompleteCodeMirror.js?260816";
-import "./SmiEditor.js?260816";
-import "./AssEditor.js?260816";
+﻿import "./MenuStrip.js?260819";
+import "./Subtitle.Converter.js?260819";
+import "./AutoCompleteCodeMirror.js?260819";
+import "./SmiEditor.js?260819";
+import "./AssEditor.js?260819";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260816";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260816", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260819", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1385,6 +1385,8 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 				tagName = "dpos(";
 			} else if (tag.startsWith("dmove(")) {
 				tagName = "dmove(";
+			} else if (tag.startsWith("zoom(")) {
+				tagName = "zoom(";
 			}
 			if (!tagName) return;
 			
@@ -1400,6 +1402,14 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 					ps[k] = Number(p) + (k % 2 == 0 ? x : y); // 0,2번째는 x / 1,3번째는 y
 				});
 				tags[j] = (tag[0] == "i" ? "iclip" : "clip") + "(m " + [ps[0], ps[1], "l"].concat(ps.slice(2)).join(" ") + ")";
+			} else if (tag.startsWith("zoom(")) {
+				const values = tag.substring(tagName.length, tagEnd).split(",");
+				if (values.length >= 3) {
+					// \zoom(x,y,ratio) 문법일 때 동작
+					values[0] = Number(values[0]) + x;
+					values[1] = Number(values[1]) + y;
+				}
+				tags[j] = tagName + values.join(",") + ")";
 			} else {
 				const ps = tag.substring(tagName.length, tagEnd).split(",");
 				ps.forEach((p, k) => {
@@ -2219,7 +2229,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260816").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260819").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2297,7 +2307,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260816").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260819").then(async (response) => {
 			let preset = await response.text();
 
 			let styleSize = document.getElementById("styleSize");
@@ -2480,7 +2490,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260816", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260819", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4754,7 +4764,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260816", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260819", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5087,27 +5097,56 @@ window.runPosPicker = function(mode = -1) {
 	
 	let ox = 0, oy = 0;
 	
+	let rMode = 0;
 	let value = "";
-	const lineNo = editor.cm.getCursor().line;
+	const cursor = editor.cm.getCursor();
+	const lineNo = cursor.line;
 	const line = editor.cm.getLine(lineNo);
+	let found = -1;
 	
 	if (mode != 0) {
 		do { // \clip, \iclip 태그 찾기
-			let begin = line.lastIndexOf("\\clip(");
-			if (begin < 0) {
-				begin = line.lastIndexOf("\\iclip(");
+			let begin = -1;
+			let end = -1;
+			
+			do {
+				// 커서보다 앞에서 찾기
+				begin = line.substring(0, cursor.ch).lastIndexOf("\\clip(");
 				if (begin < 0) {
-					break;
+					begin = line.substring(0, cursor.ch).lastIndexOf("\\iclip(");
+					if (begin < 0) {
+						break;
+					} else {
+						begin += 7;
+					}
 				} else {
-					begin += 7;
+					begin += 6;
 				}
-			} else {
-				begin += 6;
+				end = line.indexOf(")", begin);
+				if (end < 0) {
+					break;
+				}
+			} while (false);
+			
+			if (begin < 0 || end < 0) {
+				// 커서보다 뒤에 있는 것도 찾기
+				begin = line.indexOf("\\clip(");
+				if (begin < 0) {
+					begin = line.indexOf("\\iclip(");
+					if (begin < 0) {
+						break;
+					} else {
+						begin += 7;
+					}
+				} else {
+					begin += 6;
+				}
+				end = line.indexOf(")", begin);
+				if (end < 0) {
+					break;
+				}
 			}
-			let end = line.indexOf(")", begin);
-			if (end < 0) {
-				break;
-			}
+			
 			value = line.substring(begin, end).trim().replaceAll("  ", " ");
 			if (value == "0,0,0,0") {
 				value = ""; // 자동완성 기본값 무시
@@ -5120,33 +5159,66 @@ window.runPosPicker = function(mode = -1) {
 					if (!isFinite(values[2])) break; const x2 = Number(values[2]);
 					if (!isFinite(values[3])) break; const y2 = Number(values[3]);
 					value = `m ${x1} ${y1} l ${x2} ${y1} ${x2} ${y2} ${x1} ${y2}`;
-					if (mode < 0) mode = 1; // 자동이면 사각형 선택기
+					rMode = 1; // 자동이면 사각형 선택기
 					break;
 				}
 			}
-			if (mode < 0) mode = 2; // 자동 \clip이면 다각형 선택기
+			rMode = 2; // 자동 \clip이면 다각형 선택기
 			
 			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+			found = begin;
+			
 		} while (false);
 		
-		if (!value) do { // \p1 태그 찾기
-			let begin = line.indexOf("\\p1");
-			if (begin < 0) {
-				break;
-			} else {
-				begin = line.indexOf("}", begin);
+		do { // \p1 태그 찾기
+			let begin = -1;
+			let end = -1;
+			
+			do {
+				// 커서보다 앞에서 찾기
+				begin = line.substring(0, cursor.ch).lastIndexOf("\\p1");
 				if (begin < 0) {
 					break;
 				} else {
-					begin++;
+					begin = line.indexOf("}", begin);
+					if (begin < 0) {
+						break;
+					} else {
+						begin++;
+					}
+				}
+				end = line.indexOf("{", begin);
+				if (end < 0) {
+					end = line.length;
+				}
+			} while (false);
+			
+			if (begin < found) {
+				// 위에서 찾은 다른 태그가 더 커서에 가까움
+				break;
+			}
+			
+			if (begin < 0 || end < 0) {
+				// 커서보다 뒤에 있는 것도 찾기
+				let begin = line.indexOf("\\p1");
+				if (begin < 0) {
+					break;
+				} else {
+					begin = line.indexOf("}", begin);
+					if (begin < 0) {
+						break;
+					} else {
+						begin++;
+					}
+				}
+				let end = line.indexOf("{", begin);
+				if (end < 0) {
+					end = line.length;
 				}
 			}
-			let end = line.indexOf("{", begin);
-			if (end < 0) {
-				end = line.length;
-			}
+			
 			value = line.substring(begin, end).trim().replaceAll("  ", " ");
-			if (mode < 0) mode = 2; // 자동 \p1이면 다각형 선택기
+			rMode = 2; // 자동 \p1이면 다각형 선택기
 			
 			// \p1 태그로 그린 도형은 \pos 확인 필요
 			// \an7이 아닌 경우는 고려하지 않음. 도형 크기에 따라 위치가 유동적임
@@ -5173,82 +5245,195 @@ window.runPosPicker = function(mode = -1) {
 			} while (false);
 			
 			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+			found = begin;
+			
 		} while (false);
-		
-		if (mode < 0) mode = 0; // 위에서 해당 없으면 좌표 선택기
 	}
 	
-	if (mode == 0) {
-		do { // \pos 태그 찾기
-			let begin = line.indexOf("\\pos(");
+	do { // \pos 태그 찾기
+		let begin = -1;
+		let end = -1;
+
+		do {
+			// 커서보다 앞에서 찾기
+			begin = line.substring(0, cursor.ch).lastIndexOf("\\pos(");
 			if (begin < 0) {
 				break;
 			} else {
 				begin += 5;
 			}
-			let end = line.indexOf(")", begin);
+			end = line.indexOf(")", begin);
 			if (end < 0) {
 				break;
 			}
-			value = "pos";
-			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 		} while (false);
+
+		if (begin < found) {
+			// 위에서 찾은 다른 태그가 더 커서에 가까움
+			break;
+		}
 		
-		if (!value) do { // \dpos 태그 찾기
-			let begin = line.indexOf("\\dpos(");
+		if (begin < 0 || end < 0) {
+			// 커서보다 뒤에 있는 것도 찾기
+			begin = line.indexOf("\\pos(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 5;
+			}
+			end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+		}
+		
+		value = "pos";
+		rMode = 0;
+		editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		found = begin;
+	} while (false);
+	
+	do { // \dpos 태그 찾기
+		let begin = -1;
+		let end = -1;
+		
+		do {
+			// 커서보다 앞에서 찾기
+			begin = line.substring(0, cursor.ch).lastIndexOf("\\dpos(");
 			if (begin < 0) {
 				break;
 			} else {
 				begin += 6;
 			}
-			let end = line.indexOf(")", begin);
+			end = line.indexOf(")", begin);
 			if (end < 0) {
 				break;
 			}
-			value = "dpos";
-			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 		} while (false);
 		
-		if (!value) do { // \move 태그 찾기
-			let begin = line.indexOf("\\move(");
+		if (begin < found) {
+			// 위에서 찾은 다른 태그가 더 커서에 가까움
+			break;
+		}
+		
+		if (begin < 0 || end < 0) {
+			// 커서보다 뒤에 있는 것도 찾기
+			begin = line.indexOf("\\dpos(");
 			if (begin < 0) {
 				break;
 			} else {
 				begin += 6;
 			}
-			let end = line.indexOf(")", begin);
+			end = line.indexOf(")", begin);
 			if (end < 0) {
 				break;
 			}
-			const values = line.substring(begin, end).split(",");
-			if (values.length > 2) {
-				// (x1,y1,x2,y2) 있으면 x2,y2를 선택
-				begin += values[0].length + values[1].length + 2;
+		}
+		
+		value = "dpos";
+		rMode = 0;
+		editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		found = begin;
+	} while (false);
+	
+	do { // \move 태그 찾기
+		let begin = -1;
+		let end = -1;
+		
+		do {
+			// 커서보다 앞에서 찾기
+			begin = line.substring(0, cursor.ch).lastIndexOf("\\move(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 6;
 			}
-			value = "move";
-			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+			end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
 		} while (false);
 		
-		if (!value) do { // \dmove 태그 찾기
-			let begin = line.indexOf("\\dmove(");
+		if (begin < found) {
+			// 위에서 찾은 다른 태그가 더 커서에 가까움
+			break;
+		}
+		
+		if (begin < 0 || end < 0) {
+			// 커서보다 뒤에 있는 것도 찾기
+			begin = line.indexOf("\\move(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 6;
+			}
+			end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+		}
+		const values = line.substring(begin, end).split(",");
+		if (values.length > 2) {
+			// (x1,y1,x2,y2) 있으면 x2,y2를 선택
+			begin += values[0].length + values[1].length + 2;
+		}
+		value = "move";
+		rMode = 0;
+		editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		found = begin;
+	} while (false);
+	
+	do { // \dmove 태그 찾기
+		let begin = -1;
+		let end = -1;
+		
+		do {
+			// 커서보다 앞에서 찾기
+			begin = line.substring(0, cursor.ch).lastIndexOf("\\dmove(");
 			if (begin < 0) {
 				break;
 			} else {
 				begin += 7;
 			}
-			let end = line.indexOf(")", begin);
+			end = line.indexOf(")", begin);
 			if (end < 0) {
 				break;
 			}
-			const values = line.substring(begin, end).split(",");
-			if (values.length > 2) {
-				// (x1,y1,x2,y2) 있으면 x2,y2를 선택
-				begin += values[0].length + values[1].length + 2;
-			}
-			value = "dmove";
-			editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 		} while (false);
 		
+		if (begin < found) {
+			// 위에서 찾은 다른 태그가 더 커서에 가까움
+			break;
+		}
+		
+		if (begin < 0 || end < 0) {
+			// 커서보다 뒤에 있는 것도 찾기
+			begin = line.indexOf("\\dmove(");
+			if (begin < 0) {
+				break;
+			} else {
+				begin += 7;
+			}
+			end = line.indexOf(")", begin);
+			if (end < 0) {
+				break;
+			}
+		}
+		
+		const values = line.substring(begin, end).split(",");
+		if (values.length > 2) {
+			// (x1,y1,x2,y2) 있으면 x2,y2를 선택
+			begin += values[0].length + values[1].length + 2;
+		}
+		value = "dmove";
+		rMode = 0;
+		editor.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
+		found = begin;
+	} while (false);
+	
+	if (mode < 0) mode = rMode;
+	
+	if (mode == 0) {
 		do { // \frz 태그 찾기
 			let begin = line.indexOf("\\frz");
 			if (begin < 0) {
