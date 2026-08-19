@@ -1,4 +1,21 @@
-[ { "version": "2026.08.16"
+[ { "version": "2026.08.20"
+  , "comment":
+    [ "좌표 입력기 Alt키가 의도와 다르게 동작하던 문제 수정"
+    , "커서 위치에 따른 좌표 입력기 활용성 개선"
+    , "ASS 자체 문법 \\shift, \\zoom 태그 추가"
+    ]
+  , "files":
+    [ "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    ]
+  }
+, { "version": "2026.08.16"
   , "comment":
     [ "홀드 ASS 스타일로 인해 SMI 스타일 설정 비활성화되던 문제 수정"
     ]
