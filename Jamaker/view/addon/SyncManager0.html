@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저 (구버전)</title><!-- 웹샘플에서 작업이 필요할 때를 위해 남겨둠 -->
-	<script src="../lib/popup.js?260819"></script>
-	<script src="../lib/SmiEditor.js?260819" type="module"></script>
+	<script src="../lib/popup.js?260821"></script>
+	<script src="../lib/SmiEditor.js?260821" type="module"></script>
 	<script>
 windowName = "addon";
 
@@ -52,7 +52,7 @@ function getSync(line) {
 
 function splitOrigin() {
 	if (!origin) {
-		alert("작업 대상이 없습니다.");
+		await alert("작업 대상이 없습니다.");
 		window.close();
 		return false;
 	}
@@ -118,7 +118,7 @@ function splitOrigin() {
 		}
 	}
 	if (frameCount == 0) {
-		alert("작업 대상이 없습니다.");
+		await alert("작업 대상이 없습니다.");
 		window.close();
 		return false;
 	}
