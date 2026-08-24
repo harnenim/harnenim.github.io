@@ -1,4 +1,22 @@
-[ { "version": "2026.08.22"
+[ { "version": "2026.08.25"
+  , "comment":
+    [ "\\shift, \\zoom 시간값에 0 들어갔을 때 동작 안 하던 문제 수정"
+    , "색상 입력기 및 좌표 입력기 동작 개선"
+    , "\\shift, \\zoom 자동완성에 추가"
+    , "\\pos, \\move 좌표 값에 수식 지원"
+    , "\\pos0으로 SMI 기반 \\pos 태그 자동 생성 무시할 수 있도록 함"
+    , "좌표 이동 단축키 추가"
+    ]
+  , "files":
+    [ "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    ]
+  }
+, { "version": "2026.08.22"
   , "comment":
     [ "\\shift, \\zoom 태그 시간값 지원"
     ]
