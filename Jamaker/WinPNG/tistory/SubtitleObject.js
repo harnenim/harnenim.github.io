@@ -752,12 +752,17 @@ Subtitle.getMetrics = function(fn) {
 		const ctx = this.ctx ?? (this.canvas ?? (this.canvas = document.createElement("canvas"))).getContext("2d");
 		ctx.font = `bold 144px ${fn}`;
 		ctx.textBaseline = "bottom";
-		this.metrics[fn] = metrics = ctx.measureText("");
+		// 알파벳 대문자, 소문자, 밑으로 처지는 글자(g, j, p)가 모두 포함된 더미 텍스트
+		this.metrics[fn] = metrics = ctx.measureText("Mjg|qyÉgf");
 	}
 	return metrics;
 }
 Subtitle.getFontRatio = function(fn) {
-	return this.getMetrics("맑은 고딕").fontBoundingBoxAscent / this.getMetrics(fn).fontBoundingBoxAscent;
+	const metric = this.getMetrics(fn);
+	if (metric.ratio) {
+		return metric.ratio;
+	}
+	return metric.ratio = this.getMetrics("맑은 고딕").fontBoundingBoxAscent / metric.fontBoundingBoxAscent;
 }
 Subtitle.Width =
 {	DEFAULT_FONT: { fontFamily: "맑은 고딕", fontSize: "72px", fontWeight: "bold" }
@@ -2117,8 +2122,31 @@ AssEvent.fromSync = function(sync, style=null) {
 				) {
 					// 강제로 pos 태그 잡혀있으면 추가 적용하지 않음
 					// an 태그로 정렬 바꾼 경우에도 적용하지 않음
+				} else if (text.indexOf("\\pos0") > 0) {
+					// \pos0 있을 때도 자동 생성 pos 무시
+					let index = text.indexOf("{\\pos0}");
+					if (index < 0) {
+						index = text.indexOf("\\pos0");
+						text = text.substring(0, index) + text.substring(index + 5);
+					} else {
+						// {\pos0} 말고 다른 내용 없는 경우 중괄호까지 삭제
+						text = text.substring(0, index) + text.substring(index + 7);
+					}
 				} else {
 					text = `{\\pos(${ Math.round(x * 100) / 100 },${ Math.round(y * 100) / 100 })}` + text;
+				}
+			} else {
+				// 자동생성 pos 없는데 군더더기 \pos0 지정된 경우
+				if (text.indexOf("\\pos0") > 0) {
+					// \pos0 있을 때도 자동 생성 pos 무시
+					let index = text.indexOf("{\\pos0}");
+					if (index < 0) {
+						index = text.indexOf("\\pos0");
+						text = text.substring(0, index) + text.substring(index + 5);
+					} else {
+						// {\pos0} 말고 다른 내용 없는 경우 중괄호까지 삭제
+						text = text.substring(0, index) + text.substring(index + 7);
+					}
 				}
 			}
 		}
@@ -2239,11 +2267,13 @@ AssEvent.fromSync = function(sync, style=null) {
 			const origin = ass.Text;
 			texts.forEach((text, i) => {
 				const pos = text.indexOf("\\pos(");
-				if ((pos > 0) && ((origin.indexOf("\\pos(") > 0) || (origin.indexOf("\\move(") > 0))) {
-					// pos/move 지정된 경우 자동 생성 pos 무시
+				if (pos > 0) {
 					const posEnd = text.indexOf(")", pos);
 					if (posEnd > 0) {
-						text = text.substring(0, pos) + text.substring(posEnd + 1);
+						if ((origin.indexOf("\\pos(") > 0) || (origin.indexOf("\\move(") > 0)) {
+							// pos/move 지정된 경우 자동 생성 pos 무시
+							text = text.substring(0, pos) + text.substring(posEnd + 1);
+						}
 					}
 				}
 				if (i == 0) {
@@ -3672,6 +3702,7 @@ Smi.normalizers.push(new Smi.Normalizer("shake"
 					const ass = attrs[j].ass;
 					if (!ass || ass.indexOf("{") < 0) continue;
 					if (ass.indexOf("\\pos(") > 0) break; // \pos 태그 쓴 경우 필요 없음
+					if (ass.indexOf("\\dpos(") > 0) break;
 					
 					let index = ass.indexOf("\\move(");
 					if (index > 0) {
@@ -3762,6 +3793,7 @@ Smi.normalizers.push(new Smi.Normalizer("shake"
 					let sync = (start * (count - j) + end * (j)) / count;
 					if (moveAttr) {
 						// ass 변환해야 할 경우, \move 태그 있으면 각 싱크별 \pos 태그로 분할 적용
+						// TODO: \t 태그에 대해서도 원칙적으론 해야 할 텐데...
 						if (withFs) {
 							// 프레임 단위 추가 분할
 							let syncIndex = Subtitle.findSyncIndex(sync);

@@ -11,11 +11,11 @@ C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 �
 몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
 
 -->
-<script src="bridge/Frame.js?260821" type="module"></script>
+<script src="bridge/Frame.js?260824" type="module"></script>
 <script>
 window.addEventListener("load", () => {
 	setTimeout(() => {
-		const fEditor = new Frame("Jamaker.html?260821" + (location.search ? location.search : ""), "editor", "", () => {
+		const fEditor = new Frame("Jamaker.html?260824" + (location.search ? location.search : ""), "editor", "", () => {
 			fEditor.frame.find(".button").remove();
 			fEditor.frame.find("h3").css({ width: "100%" });
 			

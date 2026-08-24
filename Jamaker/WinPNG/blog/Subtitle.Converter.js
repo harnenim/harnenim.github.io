@@ -1,4 +1,4 @@
-import "./SubtitleObject.js?260625";
+﻿import "./SubtitleObject.js?260625";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -1546,7 +1546,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 	} else {
 		if (withComment < 0) {
 			// export 속성 제거
-			main.header = main.header.replace(/<sami( [^>]*)*>/gi, "<SAMI>");
+			main.header = main.header.replace(/<sami( [^>]*)*>/gi, "<SAMI smi ass>");
 			main.body.forEach((smi) => {
 				// 싱크 타입 제거
 				smi.syncType = SyncType.normal;

@@ -1,4 +1,4 @@
-import "./SubtitleObject.js?260812";
+﻿import "./SubtitleObject.js?260824";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -1543,7 +1543,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 	} else {
 		if (withComment < 0) {
 			// export 속성 제거
-			main.header = main.header.replace(/<sami( [^>]*)*>/gi, "<SAMI>");
+			main.header = main.header.replace(/<sami( [^>]*)*>/gi, "<SAMI smi ass>");
 			main.body.forEach((smi) => {
 				// 싱크 타입 제거
 				smi.syncType = SyncType.normal;
@@ -2004,7 +2004,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				item.text = item.text.replaceAll("\\fadein" , `\\fad(${fadeLength},0)`)
 				                     .replaceAll("\\fadeout", `\\fad(0,${fadeLength})`);
 			}
-			{	// span 페이드 처리
+			{	// span fad 처리
 				const fadBegin = item.text.indexOf("\\fad(");
 				if (fadBegin > 0) {
 					const fadEnd = item.text.indexOf(")", fadBegin);
@@ -2018,8 +2018,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									const span = Number(f);
 									if ((span <= item.span) && (item.index + span < smis.length)) {
 										fadLengths[0] = smis[item.index + span].start - smis[item.index].start;
+										converted = true;
 									}
-									converted = true;
 								}
 							}
 							if (fadLengths[1].startsWith("[") && fadLengths[1].endsWith("]")) {
@@ -2028,8 +2028,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									const span = Number(f);
 									if ((span <= item.span) && (item.index + item.span < smis.length)) {
 										fadLengths[1] = smis[item.index + item.span].start - smis[item.index + item.span - span].start;
+										converted = true;
 									}
-									converted = true;
 								}
 							}
 							if (converted) {
@@ -2055,8 +2055,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 										const span = Number(f);
 										if ((span <= item.span) && (item.index + span < smis.length)) {
 											tValues[i] = smis[item.index + span].start - smis[item.index].start;
+											converted = true;
 										}
-										converted = true;
 									}
 								}
 							}
@@ -2069,14 +2069,69 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 					}
 				}
 			}
-			{	// span move 처리
+			{	// pos
+				let c = 0;
+				do {
+					const tBegin = item.text.indexOf("\\pos(", c);
+					if (tBegin > 0) {
+						const tEnd = item.text.indexOf(")", tBegin);
+						if (tEnd > 0) {
+							// 수식 처리
+							const tValues = item.text.substring(tBegin + 5, tEnd).split(",");
+							let converted = false;
+							for (let i = 0; i < tValues.length; i++) {
+								try {
+									let v = eval(tValues[i]);
+									if (isFinite(v)) {
+										tValues[i] = v;
+										converted = true;
+									}
+								} catch (e) {}
+							}
+							if (converted) {
+								item.text = item.text.substring(0, tBegin + 5) + tValues.join(",") + item.text.substring(tEnd);
+							}
+							continue;
+						}
+					}
+				} while (false);
+			}
+			{	// dpos
+				let c = 0;
+				do {
+					const tBegin = item.text.indexOf("\\dpos(", c);
+					if (tBegin > 0) {
+						const tEnd = item.text.indexOf(")", tBegin);
+						if (tEnd > 0) {
+							// 수식 처리
+							const tValues = item.text.substring(tBegin + 6, tEnd).split(",");
+							let converted = false;
+							for (let i = 0; i < tValues.length; i++) {
+								try {
+									let v = eval(tValues[i]);
+									if (isFinite(v)) {
+										tValues[i] = v;
+										converted = true;
+									}
+								} catch (e) {}
+							}
+							if (converted) {
+								item.text = item.text.substring(0, tBegin + 6) + tValues.join(",") + item.text.substring(tEnd);
+							}
+							continue;
+						}
+					}
+				} while (false);
+			}
+			{	// move
 				let c = 0;
 				do {
 					const tBegin = item.text.indexOf("\\move(", c);
 					if (tBegin > 0) {
 						const tEnd = item.text.indexOf(")", tBegin);
 						if (tEnd > 0) {
-							const tValues = item.text.substring(tBegin + 6, tEnd).split(",");
+							// span 처리
+							let tValues = item.text.substring(tBegin + 6, tEnd).split(",");
 							if (tValues.length >= 6) {
 								let converted = false;
 								for (let i = 4; i < 6; i++) {
@@ -2086,8 +2141,141 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 											const span = Number(f);
 											if ((span <= item.span) && (item.index + span < smis.length)) {
 												tValues[i] = smis[item.index + span].start - smis[item.index].start;
+												converted = true;
 											}
+										}
+									}
+								}
+								if (converted) {
+									item.text = item.text.substring(0, tBegin + 6) + tValues.join(",") + item.text.substring(tEnd);
+									tValues = item.text.substring(tBegin + 6, tEnd).split(",");
+								}
+							}
+							// 수식 처리
+							if (tValues.length >= 4) {
+								let converted = false;
+								for (let i = 0; i < 4; i++) {
+									try {
+										let v = eval(tValues[i]);
+										if (isFinite(v)) {
+											tValues[i] = v;
 											converted = true;
+										}
+									} catch (e) {}
+								}
+								if (converted) {
+									item.text = item.text.substring(0, tBegin + 6) + tValues.join(",") + item.text.substring(tEnd);
+								}
+							}
+							c = tEnd;
+							continue;
+						}
+					}
+				} while (false);
+			}
+			{	// dmove
+				let c = 0;
+				do {
+					const tBegin = item.text.indexOf("\\dmove(", c);
+					if (tBegin > 0) {
+						const tEnd = item.text.indexOf(")", tBegin);
+						if (tEnd > 0) {
+							// span 처리
+							let tValues = item.text.substring(tBegin + 7, tEnd).split(",");
+							if (tValues.length >= 6) {
+								let converted = false;
+								for (let i = 4; i < 6; i++) {
+									if (tValues[i].startsWith("[") && tValues[i].endsWith("]")) {
+										const f = tValues[i].substring(1, tValues[i].length - 1);
+										if (isFinite(f)) {
+											const span = Number(f);
+											if ((span <= item.span) && (item.index + span < smis.length)) {
+												tValues[i] = smis[item.index + span].start - smis[item.index].start;
+												converted = true;
+											}
+										}
+									}
+								}
+								if (converted) {
+									item.text = item.text.substring(0, tBegin + 7) + tValues.join(",") + item.text.substring(tEnd);
+									tValues = item.text.substring(tBegin + 7, tEnd).split(",");
+								}
+							}
+							// 수식 처리
+							if (tValues.length >= 4) {
+								let converted = false;
+								for (let i = 0; i < 4; i++) {
+									try {
+										let v = eval(tValues[i]);
+										if (isFinite(v)) {
+											tValues[i] = v;
+											converted = true;
+										}
+									} catch (e) {}
+								}
+								if (converted) {
+									item.text = item.text.substring(0, tBegin + 7) + tValues.join(",") + item.text.substring(tEnd);
+								}
+							}
+							c = tEnd;
+							continue;
+						}
+					}
+				} while (false);
+			}
+			{	// shift
+				let c = 0;
+				do {
+					const tBegin = item.text.indexOf("\\shift(", c);
+					if (tBegin > 0) {
+						const tEnd = item.text.indexOf(")", tBegin);
+						if (tEnd > 0) {
+							// span 처리
+							const tValues = item.text.substring(tBegin + 7, tEnd).split(",");
+							if (tValues.length >= 4) {
+								let converted = false;
+								for (let i = 2; i < 4; i++) {
+									if (tValues[i].startsWith("[") && tValues[i].endsWith("]")) {
+										const f = tValues[i].substring(1, tValues[i].length - 1);
+										if (isFinite(f)) {
+											const span = Number(f);
+											if ((span <= item.span) && (item.index + span < smis.length)) {
+												tValues[i] = smis[item.index + span].start - smis[item.index].start;
+												converted = true;
+											}
+										}
+									}
+								}
+								if (converted) {
+									item.text = item.text.substring(0, tBegin + 7) + tValues.join(",") + item.text.substring(tEnd);
+								}
+							}
+							c = tEnd;
+							continue;
+						}
+					}
+				} while (false);
+			}
+			{	// zoom
+				let c = 0;
+				do {
+					const tBegin = item.text.indexOf("\\zoom(", c);
+					if (tBegin > 0) {
+						const tEnd = item.text.indexOf(")", tBegin);
+						if (tEnd > 0) {
+							// span 처리
+							const tValues = item.text.substring(tBegin + 6, tEnd).split(",");
+							if (tValues.length >= 5) {
+								let converted = false;
+								for (let i = 3; i < 5; i++) {
+									if (tValues[i].startsWith("[") && tValues[i].endsWith("]")) {
+										const f = tValues[i].substring(1, tValues[i].length - 1);
+										if (isFinite(f)) {
+											const span = Number(f);
+											if ((span <= item.span) && (item.index + span < smis.length)) {
+												tValues[i] = smis[item.index + span].start - smis[item.index].start;
+												converted = true;
+											}
 										}
 									}
 								}
@@ -2095,7 +2283,6 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									item.text = item.text.substring(0, tBegin + 6) + tValues.join(",") + item.text.substring(tEnd);
 								}
 							}
-							c = tEnd;
 							continue;
 						}
 					}
@@ -2323,6 +2510,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				let org = null;
 				let pos = null;
 				let dpos = null;
+				let zoom = null;
+				let shift = null;
 				let shake = null;
 				for (let i = 0; i < tagTokens.length; i++) {
 					const tags = tagTokens[i].tags = tagTokens[i].text.split("\\");
@@ -2393,10 +2582,43 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									dpos.y2 = values[3] = Number(values[3]);
 								}
 							}
+						} else if (!zoom && tag.startsWith("zoom") && tag.endsWith(")")) {
+							const values = tag.substring(5, tag.length - 1).split(",");
+							if (isFinite(values[0])) {
+								// 기본 문법은 \zoom(ratio)
+								zoom = {
+										x: playResX / 2
+									,	y: playResY / 2
+									,	ratio: Number(values[0])
+								};
+								if (values.length >= 3 && isFinite(values[1]) && isFinite(values[2])) {
+									// 원점 지정 \zoom(x,y,ratio)
+									zoom.x = zoom.ratio;
+									zoom.y = Number(values[1]);
+									zoom.ratio = Number(values[2]);
+									if (isFinite(values[3]) && isFinite(values[4])) {
+										zoom.t1 = Number(values[3]);
+										zoom.t2 = Number(values[4]);
+									}
+								}
+								tagTokens[i].tags[j] = "";
+							}
+						} else if (!shift && tag.startsWith("shift") && tag.endsWith(")")) {
+							const values = tag.substring(6, tag.length - 1).split(",");
+							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
+								// \\shift(dx,dy)
+								let x = playResX / 2;
+								shift = { dx: Number(values[0]), dy: Number(values[1]) };
+								if (isFinite(values[2]) && isFinite(values[3])) {
+									shift.t1 = Number(values[2]);
+									shift.t2 = Number(values[3]);
+								}
+								tagTokens[i].tags[j] = "";
+							}
 						} else if (!shake && tag.startsWith("shake") && tag.endsWith(")")) {
 							const values = tag.substring(6, tag.length - 1).split(",");
 							if (values.length >= 2 && isFinite(values[0]) && isFinite(values[1])) {
-								// TODO: 흔들기 방식을 바꿔보려고 이쪽으로 가져옴
+								// TODO: 흔들기 방식을 바꿀 수 있도록 이쪽으로 가져옴
 								const size = Number(values[0]);
 								const step = Number(values[1]);
 								/* 현재 흔들기 방식: 8방향 고정 이동
@@ -2424,6 +2646,57 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				}
 				
 				let transformed = false;
+				if (shift) {
+					let move = null;
+					if (pos) {
+						if (pos.tag == "pos") {
+							move = pos;
+						}
+					} else if (dpos) {
+						if (dpos.tag == "dpos") {
+							move = dpos;
+						}
+					}
+					if (move) {
+						// 좌표가 있을 경우 일괄 이동 좌표 계산
+						move.tag = "move";
+						move.values[2] = move.x2 = move.x + shift.dx;
+						move.values[3] = move.y2 = move.y + shift.dy;
+						if (shift.t1 != undefined && shift.t2 != undefined) {
+							move.values[4] = shift.t1;
+							move.values[5] = shift.t2;
+						}
+						tagTokens[move.i].tags[move.j] = `${move.tag}(${move.values.join(",")})`;
+					}
+					transformed = true;
+					
+				} else if (zoom) {
+					// shift가 없을 때만 동작
+					let move = null;
+					if (pos) {
+						if (pos.tag == "pos") {
+							move = pos;
+						}
+					} else if (dpos) {
+						if (dpos.tag == "dpos") {
+							move = dpos;
+						}
+					}
+					if (move) {
+						// 좌표가 있을 경우 기준점 기준으로 일괄 확대 좌표 계산
+						move.tag = "move";
+						move.values[2] = move.x2 = (zoom.x + (move.x - zoom.x) * zoom.ratio / 100).toFixed(2);
+						move.values[3] = move.y2 = (zoom.y + (move.y - zoom.y) * zoom.ratio / 100).toFixed(2);
+						if (zoom.t1 != undefined && zoom.t2 != undefined) {
+							move.values[4] = zoom.t1;
+							move.values[5] = zoom.t2;
+						}
+						tagTokens[move.i].tags[move.j] = `${move.tag}(${move.values.join(",")})`;
+					}
+					// 가장 앞쪽에 글씨 확대 넣어줌
+					tokens[0].text = `{\\t(\\fscx${zoom.ratio}\\fscy${zoom.ratio})}` + tokens[0].text;
+					transformed = true;
+				}
 				if (dpos && !pos) {
 					if (org && (frx || fry || frz)) {
 						let x = dpos.x;
@@ -2504,10 +2777,12 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						if (i % 2 == 0) {
 							text += token.text;
 						} else {
+							// replaceAll("\\\\", "\\")는 없어지는 태그(zoom, shift, shake)의 군더더기 제거용인데
+							// 하나씩만 쓰여야 하므로, 연속으로 들어가서 군더더기가 남는 경우는 무시
 							text += "{" + token.tags.join("\\").replaceAll("\\\\", "\\") + "}";
 						}
 					});
-					item.Text = text;
+					item.Text = text.replaceAll("}{", "");
 				}
 			}
 		});

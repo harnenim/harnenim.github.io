@@ -1,4 +1,4 @@
-// 업데이트 메시지
+﻿// 업데이트 메시지
 {	window.checkVersion = (version) => {
 		if (!version) version = "";
 		
@@ -40,7 +40,7 @@
 }
 
 window.DEFAULT_SETTING =
-{	version: "2026.08.22"
+{	version: "2026.08.25"
 ,	menu:
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
@@ -278,6 +278,10 @@ window.DEFAULT_SETTING =
 		,	'D': '/* 겹치는 대사 분리 */\n'      + 'openAddon("Devide");'
 		,	'F': '/* 싱크 유지 텍스트 대체 */\n' + 'openAddon("Fusion");'
 		,	'P': '/* 사각형 입력 */\n' + 'runPosPicker(1);'
+		,	'I': '/* 위으로 이동 */\nmovePos(0, -1);'
+		,	'J': '/* 왼쪽으로 이동 */\nmovePos(-1, 0);'
+		,	'K': '/* 아래로 이동 */\nmovePos(0, 1);'
+		,	'L': '/* 오른쪽으로 이동 */\nmovePos(1, 0);'
 		,	'X': '/* ASS clip x 좌표 이동 */\n'
 			   + 'const line = editor.getLine().text;\n'
 			   + 'let begin = line.indexOf("\\\\clip(");\n'
@@ -549,7 +553,7 @@ window.DEFAULT_SETTING =
 		, syncEqual : "#008888"
 		}
 	}
-,	newFile:"<SAMI>\n"
+,	newFile:"<SAMI smi ass>\n"
 		+	"<HEAD>\n"
 		+	"<TITLE>제목</TITLE>\n"
 		+	"<STYLE TYPE=\"text/css\">\n"
