@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260824";
+﻿import "./SubtitleObject.js?260825";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -528,7 +528,7 @@ if (!Uint8Array.fromBase64) {
 							if (LOG) {
 								console.log(attrs, trimedLines, isEmpty);
 							}
-
+							
 							let checkThinSpace = false;
 							let fullPad;
 							let fullAttrs;

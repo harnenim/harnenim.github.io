@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저 (구버전)</title><!-- 웹샘플에서 작업이 필요할 때를 위해 남겨둠 -->
-	<script src="../lib/popup.js?260824"></script>
-	<script src="../lib/SmiEditor.js?260824" type="module"></script>
+	<script src="../lib/popup.js?260826"></script>
+	<script src="../lib/SmiEditor.js?260826" type="module"></script>
 	<script>
 windowName = "addon";
 
@@ -60,7 +60,7 @@ function splitOrigin() {
 	origin.lines = tab.lines;
 	origin.start = 0;
 	origin.end = 0;
-
+	
 	// 선택 범위만 작업
 	if (origin.selection[0] != origin.selection[1]) {
 		origin.start = origin.text.substring(0, origin.selection[0]).split("\n").length - 1;
@@ -245,7 +245,7 @@ function joinFrame() {
 		resultFrameSmi.value = "";
 		return;
 	}
-
+	
 	const originLines = checked[0];
 	const targetLines = checked[1];
 	
@@ -277,7 +277,7 @@ function checkDiff() {
 	
 	const height = Math.max(originLines.length, targetLines.length) * 14 + 4;
 	originFrameSmi.style.height = targetFrameSmi.style.height = height + "px";
-
+	
 	if (originLines.length != targetLines.length) {
 		if (targetLines[0].length > 0) {
 			document.getElementById("checker").innerHTML = ""; // 오차 경고는 없애줌

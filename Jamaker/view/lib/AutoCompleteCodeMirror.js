@@ -1,9 +1,9 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AutoComplete.css?260824", import.meta.url).href;
+	link.href = new URL("./AutoComplete.css?260826", import.meta.url).href;
 	document.head.append(link);
-
+	
 	// 자동완성 이외의 영역 클릭 시 자동완성 닫기
 	document.addEventListener("mousedown", (e) => {
 		if (e.target.closest(".act-select")) {
@@ -46,10 +46,10 @@ window.AutoCompleteCodeMirror = function(cm, sets, onSelect) {
 	this.resize();
 	this.SB = 16; // 스크롤바 폭 계산하는 걸 만드는 게?
 	
-	this.pos = 0;	// 입력 시작 위치
-	this.text = "";	// 입력값
-	this.list = [];	// 선택 목록
-	this.lis = [];	// 선택 <li>
+	this.pos  = 0;  // 입력 시작 위치
+	this.text = ""; // 입력값
+	this.list = []; // 선택 목록
+	this.lis  = []; // 선택 <li>
 	this.selected = -1; // 선택 항목
 	
 	cm.on("keydown", (cm, e) => {
