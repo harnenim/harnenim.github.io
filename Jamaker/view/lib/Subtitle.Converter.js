@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260826";
+﻿import "./SubtitleObject.js?260827";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'

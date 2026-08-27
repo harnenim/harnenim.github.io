@@ -1,8 +1,8 @@
-﻿import "./MenuStrip.js?260826";
-import "./Subtitle.Converter.js?260826";
-import "./AutoCompleteCodeMirror.js?260826";
-import "./SmiEditor.js?260826";
-import "./AssEditor.js?260826";
+﻿import "./MenuStrip.js?260827";
+import "./Subtitle.Converter.js?260827";
+import "./AutoCompleteCodeMirror.js?260827";
+import "./SmiEditor.js?260827";
+import "./AssEditor.js?260827";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +13,7 @@ import "./AssEditor.js?260826";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260826", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260827", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2229,7 +2229,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260826").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260827").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2307,7 +2307,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260826").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260827").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2490,7 +2490,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260826", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260827", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -4766,7 +4766,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260826", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260827", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5073,12 +5073,15 @@ window.runColorPicker = function(useWvPicker=false) {
 				break;
 			}
 			if (line.length < begin+7) {
+				begin = -1;
 				break;
 			}
-			rgb = line.substring(begin+1, begin+7);
-			if (!isFinite("0x" + rgb)) {
+			const color = line.substring(begin+1, begin+7);
+			if (!isFinite("0x" + color)) {
+				begin = -1;
 				break;
 			}
+			rgb = color;
 		} while (false);
 		
 		if (begin < found) {
@@ -5094,10 +5097,11 @@ window.runColorPicker = function(useWvPicker=false) {
 				if (line.length < next+7) {
 					continue;
 				}
-				rgb = line.substring(next+1, next+7);
-				if (!isFinite("0x" + rgb)) {
+				const color = line.substring(next+1, next+7);
+				if (!isFinite("0x" + color)) {
 					continue;
 				}
+				rgb = color;
 				skip = (begin = next) + 7;
 				break;
 			}
@@ -5120,6 +5124,7 @@ window.runColorPicker = function(useWvPicker=false) {
 			// 커서보다 앞에서 찾기
 			begin = line.substring(0, cursor.ch).lastIndexOf("&H");
 			if (begin < 0) {
+				begin = -1;
 				break;
 			}
 			begin++;

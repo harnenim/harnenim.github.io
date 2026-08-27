@@ -1,11 +1,11 @@
 ﻿// 여기에만 유일하게 jQuery가 남았는데...
 // 솔직히 프로그램 본체엔 안 들어갈 부분인데 굳이...
-import "./jquery-3.2.1.min.js?260826";
+import "./jquery-3.2.1.min.js?260827";
 
 {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Frame.css?260826", import.meta.url).href;
+	link.href = new URL("./Frame.css?260827", import.meta.url).href;
 	document.head.append(link);
 }
 
