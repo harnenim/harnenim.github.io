@@ -1,8 +1,9 @@
-﻿import "./MenuStrip.js?260827";
-import "./Subtitle.Converter.js?260827";
-import "./AutoCompleteCodeMirror.js?260827";
-import "./SmiEditor.js?260827";
-import "./AssEditor.js?260827";
+﻿import "./MenuStrip.js?260908";
+import "./Subtitle.Converter.js?260908";
+import "./AutoCompleteCodeMirror.js?260908";
+import "./SmiEditor.js?260908";
+import "./AssEditor.js?260908";
+import "./highlight/cm/javascript.js?260908";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -13,7 +14,7 @@ import "./AssEditor.js?260827";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260827", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260908", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -103,6 +104,7 @@ window.Tab = function(text, path) {
 			assHold.area.append(SmiEditor.assHoldPreset.cloneNode(true));
 			this.holdArea.append(assHold.area);
 			
+			const tabs = assHold.area.querySelector(".ass-tab-selector").children;
 			assHold.assEditor = new AssEditor(assHold.area.querySelector(".ass-editor"));
 			assHold.assEditor.onUpdate = function() {
 				if (this.isSaved) {
@@ -110,6 +112,7 @@ window.Tab = function(text, path) {
 				} else {
 					assHold.selector.classList.add   ("not-saved");
 				}
+				tabs[1].innerText = "Events" + ((this.syncs.length > 0) ? `(${this.syncs.length})` : "");
 				tab.onChangeSaved();
 			};
 			const resEditor = assHold.area.querySelector(".tab-ass-resolution");
@@ -174,6 +177,51 @@ window.Tab = function(text, path) {
 				
 				modal.showModal();
 			});
+			
+			tab.autoTh = tab.area.querySelectorAll(".ass-tab-selector .th")[2];
+			tab.autoThs = tab.area.querySelector(".automation-selector .ths");
+			tab.aBodies = tab.area.querySelector(".automation-bodies");
+			tab.autoThs.addEventListener("click", (e) => {
+				let th = e.target.closest(".btn-close-tab");
+				if (th) {
+					confirm("삭제하시겠습니까?", () => {
+						th = th.parentNode;
+						const aBody = eData(th).body;
+						if (th.nextSibling) {
+							th.nextSibling.click();
+						} else if (th.previousSibling) {
+							th.previousSibling.click();
+						}
+						th.remove();
+						aBody.remove();
+						tab.autoTh.innerText = `Automation(${this.autoThs.children.length})`;
+					});
+					e.stopPropagation();
+					return;
+				}
+				th = e.target.closest(".th");
+				const selected = tab.autoThs.querySelector(".selected");
+				if (selected) {
+					if (selected == th) {
+						return;
+					}
+					selected.classList.remove("selected");
+					tab.aBodies.querySelector(".selected").classList.remove("selected");
+				}
+				th.classList.add("selected");
+				const aBody = eData(th).body;
+				aBody.classList.add("selected");
+				eData(aBody).cm.scrollTo(0, 0);
+			});
+			tab.area.querySelector(".automation-selector .btn-new-automation").addEventListener("click", (e) => {
+				this.addAutomation();
+			});
+			tab.aBodies.addEventListener("input", (e) => {
+				const input = e.target.closest(".automation-target");
+				if (input) {
+					eData(input.parentNode.parentNode).th.querySelector("span").innerText = (input.value ? input.value : "-");
+				}
+			});
 		}
 		
 		let frameSyncs = [];
@@ -217,6 +265,10 @@ window.Tab = function(text, path) {
 			// ASS용 파일 아니어도 값은 채워둠
 			tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value = Subtitle.video.width;
 			tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = Subtitle.video.height;
+		}
+		
+		if (holds[0].automations) {
+			this.setAutomations(holds[0].automations);
 		}
 		
 		holds[0].frameSyncs = frameSyncs;
@@ -328,6 +380,147 @@ window.Tab = function(text, path) {
 window.getCurrentTab = function() {
 	return tabs.length ? tabs[tabIndex] : null;
 }
+
+Tab.prototype.setAutomations = function(list) {
+	if (list && list.length) {
+		const self = this;
+		list.forEach((item) => {
+			self.addAutomation(item);
+		});
+		this.autoThs.querySelector(".th").click();
+	}
+}
+Tab.prototype.addAutomation = function(item) {
+	const th = document.createElement("div");
+	th.classList.add("th");
+	th.innerHTML = '<span>-</span><button type="button" class="btn-close-tab">×</button>';
+	const aBody = document.createElement("div");
+	aBody.classList.add("automation-body");
+	aBody.innerHTML = '<label>적용 대상 스타일: <input type="text" class="automation-target" /></label><div class="automation-script"></div>';
+	eData(th, "body", aBody);
+	eData(aBody, "th", th);
+	
+	const cm = CodeMirror(aBody.querySelector(".automation-script"), {
+			dragDrop: false
+		,	scrollPastEnd: true
+		,	styleSelectedText: true
+		,	configureMouse: (cm, repaet, event) => {
+				return (event.altKey) ? { unit: "char", addNew: false } : { addNew: false };
+			}
+		,	styleActiveLine: true
+		,	mode: "javascript"
+		,	indentWithTabs: true
+		,	indentUnit: 4
+		,	tabSize: 4
+	});
+	cm.getWrapperElement().classList.add("hljs");
+	cm.on("renderLine", (cm, line, el) => {
+		const lineNo = cm.lineInfo(line).line;
+		el.dataset.line = lineNo;
+		const prs = el.children[0];
+		
+		// hljs 클래스로 변환
+		[...prs.querySelectorAll('span[class^="cm-"]')].forEach((span) => {
+			[...span.classList].forEach((cls) => {
+				if (cls.startsWith("cm-")) {
+					if (cls == "cm-invalidchar") {
+						// Zero-Width-Space 별도 표현
+						if (span.getAttribute("cm-text") == "​") {
+							span.classList.add("hljs-zw");
+							span.innerText = "​";
+						}
+					} else if (cls == "cm-comment") {
+						span.classList.add("hljs-js-comment");
+					} else {
+						span.classList.add("hljs-" + cls.substring(3));
+					}
+					span.classList.remove(cls);
+				}
+			});
+		});
+	});
+	cm.on("scroll", () => {
+		Tab.refreshScroll(aBody);
+	});
+	eData(aBody, "cm", cm);
+	
+	if (item) {
+		th.querySelector("span").innerText = item.target;
+		aBody.querySelector(".automation-target").value = item.target;
+		cm.setValue(item.script);
+	} else {
+		cm.setValue(
+				"/*\n"
+			+	"적용 대상 스타일 중 \k/\kf가 들어있는 이벤트에 대해 스크립트를 실행합니다.\n"
+			+	"\n"
+			+	"forLine(origin) 함수는 해당 이벤트 대해 1회 실행되며\n"
+			+	"origin에는 ASS 이벤트 원본값이 들어옵니다.\n"
+			+	"origin.Start/End가 아닌 origin.start/end로 ms 단위 싱크값을 다룰 수 있습니다.\n"
+			+	"\n"
+			+	"forChar(origin, karaoke, cStart, c, i) 함수는 k/kf로 구분한 각 조각에 대해 실행됩니다.\n"
+			+	"karaoke의 값은 다음과 같습니다.\n"
+			+	"{	x: 문자열의 좌측 좌표\n"
+			+	",	y: 문자열의 상단 좌표\n"
+			+	",	ks: [k/kf로 구분한 조각에 대한 배열]\n"
+			+	"};\n"
+			+	"ks 배열에 들어가는 객체의 값은 다음과 같습니다.\n"
+			+	"{	time: k/kf의 시간값(1/100초 단위)\n"
+			+	",	text: 해당 조각의 문자열\n"
+			+	",	left: 해당 조각의 karaoke.x 좌표에 대한 상대 좌표\n"
+			+	",	width: 해당 조각의 좌우 폭\n"
+			+	"}\n"
+			+	"cStart는 origin.start에 앞선 시간값을 누적한, 현재 조각의 시간값입니다.\n"
+			+	"i는 현재 조각의 번호이며, c는 karaoke.ks[i]와 같습니다.\n"
+			+	"\n"
+			+	"new AssEvent(start, end, style, text, layer=0) 형태로 이벤트를 생성할 수 있습니다.\n"
+			+	"\n"
+			+	"이곳에서 생성된 이벤트에는 Effect 값에 jmk가 붙으며, ASS 역반영 시 예외 처리됩니다.\n"
+			+	"*/\n"
+			+	"forLine = function (origin) {\n"
+			+	"	events.push(origin);\n"
+			+	"}\n"
+			+	"forChar = function (origin, e, cStart, c, i) {\n"
+			+	"	events.push(new AssEvent(cStart, origin.end, '스타일'\n"
+			+	"		,	`{\an2\pos(${e.x + c.left + c.width/2},${e.y + style.Fontsize})}`\n"
+			+	"		+	c.text\n"
+			+	"	));\n"
+			+	"}"
+		);
+	}
+	
+	this.autoThs.append(th);
+	this.aBodies.append(aBody);
+	if (!item) {
+		th.click();
+	}
+	this.autoTh.innerText = `Automation(${this.autoThs.children.length})`;
+}
+Tab.prototype.getAutomations = function() {
+	const automations = [];
+	[...this.aBodies.querySelectorAll(".automation-body")].forEach((item) => {
+		automations.push({
+				target: item.querySelector("input").value
+			,	script: eData(item).cm.getValue()
+		})
+	});
+	return automations;
+}
+Tab.refreshScroll = function(aBody) {
+	// 스크롤바 일정 시간 표시
+	const lastScroll = eData(aBody).lastScroll;
+	const wrapper = eData(aBody).cm.getWrapperElement();
+	if (!lastScroll) {
+		wrapper.classList.add("scrolling");
+	}
+	const now = new Date().getTime();
+	eData(aBody, "lastScroll", now);
+	setTimeout(() => {
+		if (eData(aBody).lastScroll != now) return;
+		wrapper.classList.remove("scrolling");
+		eData(aBody, "lastScroll", 0);
+	}, SmiEditor.scrollShow * 1000);
+}
+
 Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 	if (!info) {
 		info = {
@@ -464,10 +657,15 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 						preview.style.background = input.value;
 						return;
 					}
-					if (input.classList.contains("color")) {
-						const color = input.value;
+					if (input.type == "color") {
+						const value = input.value.toUpperCase();
+						input.nextSibling.value = value;
+						input.nextSibling.nextSibling.value = `&H${value.substring(5,7)}${value.substring(3,5)}${value.substring(1,3)}&`;
+					} else if (input.classList.contains("color")) {
+						const color = input.value.toUpperCase();
 						if (color.startsWith("#") && color.length == 7) {
 							if (isFinite("0x" + color.substring(1))) {
+								input.nextSibling.value = `&H${color.substring(5,7)}${color.substring(3,5)}${color.substring(1,3)}&`;
 								(input = input.previousSibling).value = color;
 							} else {
 								return;
@@ -475,12 +673,23 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 						} else {
 							return;
 						}
+					} else if (input.classList.contains("bgr")) {
+						const bgr = input.value.toUpperCase();
+						if (bgr.startsWith("&H") && bgr.endsWith("&") && bgr.length == 9) {
+							if (isFinite("0x" + bgr.substring(2, 8))) {
+								const color = `#${bgr.substring(6,8)}${bgr.substring(4,6)}${bgr.substring(2,4)}`;
+								input.previousSibling.previousSibling.value = input.previousSibling.value = color;
+								input = input.previousSibling.previousSibling;
+							} else {
+								return;
+							}
+						} else {
+							return;
+						}
 					}
-					let value = input.value;
-					if (input.type == "color") {
-						input.nextSibling.value = value = value.toUpperCase();
+					if (input.name) {
+						hold.style[input.name] = input.value;
 					}
-					hold.style[input.name] = value;
 					hold.refreshStyle();
 					
 					if (input.name == "PrimaryColour") {
@@ -606,7 +815,7 @@ SmiEditor.prototype.setStyle = function(style) {
 	this.style = style;
 	const area = this.styleArea.querySelector(".hold-style");
 	
-	{ const input = area.querySelector("input[name=PrimaryColour]"); input.value = input.nextSibling.value = style.PrimaryColour; }
+	{ const input = area.querySelector("input[name=PrimaryColour]"); const value = (input.value = input.nextSibling.value = style.PrimaryColour).toUpperCase(); input.nextSibling.nextSibling.value = `&H${value.substring(5,7)}${value.substring(3,5)}${value.substring(1,3)}&` }
 	area.querySelector("input[name=Italic]   ").checked = style.Italic;
 	area.querySelector("input[name=Underline]").checked = style.Underline;
 	area.querySelector("input[name=StrikeOut]").checked = style.StrikeOut;
@@ -616,9 +825,9 @@ SmiEditor.prototype.setStyle = function(style) {
 	area.querySelector("select[name=followStyle]").value = style.follow;
 	area.querySelector("input[name=Fontsize]").value = style.Fontsize;
 	area.querySelector("input[name=Bold]    ").checked = style.Bold;
-	{ const input = area.querySelector("input[name=SecondaryColour]"); input.value = input.nextSibling.value = style.SecondaryColour; }
-	{ const input = area.querySelector("input[name=OutlineColour]"  ); input.value = input.nextSibling.value = style.OutlineColour  ; }
-	{ const input = area.querySelector("input[name=BackColour]"     ); input.value = input.nextSibling.value = style.BackColour     ; }
+	{ const input = area.querySelector("input[name=SecondaryColour]"); const value = (input.value = input.nextSibling.value = style.SecondaryColour).toUpperCase(); input.nextSibling.nextSibling.value = `&H${value.substring(5,7)}${value.substring(3,5)}${value.substring(1,3)}&` }
+	{ const input = area.querySelector("input[name=OutlineColour]"  ); const value = (input.value = input.nextSibling.value = style.OutlineColour  ).toUpperCase(); input.nextSibling.nextSibling.value = `&H${value.substring(5,7)}${value.substring(3,5)}${value.substring(1,3)}&` }
+	{ const input = area.querySelector("input[name=BackColour]"     ); const value = (input.value = input.nextSibling.value = style.BackColour     ).toUpperCase(); input.nextSibling.nextSibling.value = `&H${value.substring(5,7)}${value.substring(3,5)}${value.substring(1,3)}&` }
 	area.querySelector("input[name=PrimaryOpacity]  ").value = style.PrimaryOpacity  ;
 	area.querySelector("input[name=PrimaryOpacity]  ").title = style.PrimaryOpacity  ;
 	area.querySelector("input[name=SecondaryOpacity]").value = style.SecondaryOpacity;
@@ -1248,7 +1457,7 @@ Tab.prototype.getSaveText = function(withNormalize=true, withCombine=true, withC
 	if ((withComment > 0) && this.withAss) {
 		additional += this.getAdditionalToAss(true); // ASS 추가 내용 footer에 넣어주기
 	}
-	return SmiFile.holdsToText(this.holds, withNormalize, withCombine, withComment, additional, withFs, withKfs, this.assHold);
+	return SmiFile.holdsToText(this.holds, withNormalize, withCombine, withComment, additional, withFs, withKfs, this.assHold, this.getAutomations());
 }
 Tab.prototype.onChangeSaved = function(hold) {
 	if (this.isSaved()) {
@@ -1311,7 +1520,11 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 	this.holds.forEach((hold) => {
 		hold.smiFile = new SmiFile(hold.getValue());
 	});
-	return SmiFile.holdsToAss(this.holds, appendParts, append.getStyles().body, append.getEvents().body, playResX, playResY, orderByEndSync);
+	const assFile = SmiFile.holdsToAss(this.holds, appendParts, append.getStyles().body, append.getEvents().body, playResX, playResY, orderByEndSync);
+	this.getAutomations().forEach((automation) => {
+		assFile.automation(automation.target, automation.script, automation.withOrigin);
+	});
+	return assFile;
 }
 // 동영상 해상도 변경에 따른 ASS 좌표 조정
 // 해상도 배율은 무시, 레터박스만 고려
@@ -1985,6 +2198,25 @@ window.init = function(jsonSetting, isBackup=true) {
 			}
 		}
 	});
+	{	// ASS 추가 스크립트 탭 선택기
+		document.body.addEventListener("click", (e) => {
+			let th = e.target.closest(".ass-tab-selector .th");
+			if (!th) return;
+			const selected = th.parentNode.querySelector(".th.selected");
+			if (selected == th) return;
+			selected.classList.remove("selected");
+			th.classList.add("selected");
+			th.parentNode.parentNode.querySelector(".ass-tab-body.selected").classList.remove("selected");
+			th.parentNode.parentNode.querySelector(`.ass-tab-body.tab-ass-${th.getAttribute("data-tab")}`).classList.add("selected");
+			
+			if (th.getAttribute("data-tab") == "automation") {
+				const aBody = tabs[tabIndex].aBodies.querySelector(".automation-body.selected");
+				if (aBody) {
+					eData(aBody).cm.scrollTo(0, 0);
+				}
+			}
+		});
+	}
 	{	// 홀드 선택기 리사이즈 기능
 		let from = null;
 		document.body.addEventListener("mousedown", (e) => {
@@ -2229,7 +2461,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260827").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260908").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2307,7 +2539,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260827").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260908").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2490,7 +2722,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260827", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260908", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -3414,9 +3646,17 @@ window.loadAssFile = function(text) {
 		// ASS에만 있는 부분은 기본적으로 화면 싱크로 간주
 		// 같은 홀드로 뺀 음성 대사라면 시간이 겹칠 리 없으니 SMI에서 문제되진 않을 것
 		
-		const originEvents = originFile.getEvents().body;
-		const targetEvents = targetFile.getEvents().body;
+		const originEvents = [];
+		const targetEvents = [];
 		const appendEvents = appendFile.getEvents().body;
+		originFile.getEvents().body.forEach((event) => {
+			if (event.Effect == "jmk") return; // Automation 생성 스크립트 무시
+			originEvents.push(event);
+		});
+		targetFile.getEvents().body.forEach((event) => {
+			if (event.Effect == "jmk") return;
+			targetEvents.push(event);
+		});
 		
 		targetEvents.forEach((t) => {
 			let assText = t.Text.replaceAll("}{", "");
@@ -3721,6 +3961,12 @@ window.loadAssFile = function(text) {
 								currentTab.holds.forEach((hold) => {
 									if (hold.name == styleName) {
 										hold.setStyle(holdStyle);
+										const selectFollow = hold.styleArea.querySelector("select[name=followStyle]");
+										if (selectFollow.value) {
+											// 자체 스타일로 자동 전환
+											selectFollow.value = "";
+											selectFollow.dispatchEvent(new Event("change", { bubbles: true }));
+										}
 									}
 								});
 								
@@ -4766,7 +5012,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260827", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260908", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5668,4 +5914,195 @@ window.runPosPicker = function(mode = -1) {
 		,	setting.window.x    , setting.window.y
 		,	setting.window.width, setting.window.height
 	);
+}
+
+/**
+ * SMI 노래방 자막 기반으로 ASS {\k} 기반 스크립트 생성
+ * 색상태그 이외에 다른 걸 중간에 섞어 쓰지 않는다고 가정
+ * ASS 변환 스크립트 이외의 주석은 없다고 가정
+ */
+window.setAssKaraokeFromSmi = function(kf=false) {
+	const editor = SmiEditor.selected;
+	if (!editor) return;
+	
+	const smiFile = new SmiFile(editor.cm.getValue());
+	
+	const groups = [];
+	let group = { lines: [] };
+	smiFile.body.forEach((smi) => {
+		const lines = smi.text.split(/<br>/gi);
+		for (let i = 0; i < lines.length; i++) {
+			let text = "";
+			let step = -1;
+			const attrs = Smi.toAttrs(lines[i]);
+			let lastFc = ""; // 비활성 색상 확인
+			for (let j = attrs.length - 1; j >= 0; j--) {
+				if (attrs[j].text) {
+					lastFc = attrs[j].fc;
+					break;
+				}
+			}
+			attrs.forEach((attr) => {
+				if (attr.attrs) {
+					// RUBY 태그는 이중으로 들어감
+					attr.attrs.forEach((attr) => {
+						if (step < 0 && attr.text && lastFc == attr.fc) {
+							step = text.length;
+						}
+						text += attr.text;
+					});
+				} else if (attr.text) {
+					if (step < 0 && attr.text && lastFc == attr.fc) {
+						step = text.length;
+					}
+					text += attr.text;
+				}
+			});
+
+			lines[i] = { attrs: attrs, text: text, step: (step < 0 ? 0 : step) };
+		}
+		let keep = (group.lines.length == lines.length);
+		if (keep) {
+			// 줄 수가 같을 때
+			for (let i = 0; i < lines.length; i++) {
+				if (group.lines[i].text != lines[i].text) {
+					// 태그를 제외한 텍스트가 달라졌으면 새 그룹
+					keep = false;
+					break;
+				}
+			}
+		}
+		if (keep) {
+			smi.steps = [];
+			lines.forEach((line, i) => {
+				// 최종적으론 해당 그룹 마지막 싱크의 색상값을 구함
+				line.attrs.forEach((attr) => {
+					if (attr.attrs) {
+						attr.attrs.forEach((attr) => {
+							group.lines[i].fcTo = attr.fc;
+						});
+						return;
+					}
+					if (attr.fc) {
+						group.lines[i].fcTo = attr.fc;
+						return;
+					}
+				});
+				smi.steps.push(line.step);
+			});
+			group.smis.push(smi);
+			
+		} else {
+			smi.steps = [];
+			lines.forEach((line) => {
+				smi.steps.push(line.step);
+				const simpleAttrs = [];
+				let lastAttr = null;
+				let fc = null; // 마지막 색상 기억
+				line.attrs.forEach((attr) => {
+					if (attr.attrs) {
+						// RUBY 태그는 이중으로 들어감
+						fc = attr.attrs[attr.attrs.length - 1].fc;
+						for (let i = 0; i < attr.attrs.length; i++) {
+							attr.attrs[0].text += attr.attrs[i].text;
+						}
+						for (let i = 0; i < attr.furigana.length; i++) {
+							attr.furigana[0].text += attr.furigana[i].text;
+						}
+						attr.attrs.length = 1;
+						attr.furigana.length = 1;
+					} else if (attr.fc) {
+						fc = attr.fc;
+					}
+					if (lastAttr) {
+						if (attr.attrs) {
+							// RUBY 태그는 별도로 처리..가 될지 모르겠네..........
+							simpleAttrs.push(last = attr);
+						} else {
+							// 이외에는 색상태그 무시하고 한 덩어리로 처리
+							last.text += attr.text;
+						}
+					} else {
+						simpleAttrs.push(attr);
+					}
+				});
+				line.attrs = simpleAttrs;
+				line.fcFrom = fc;
+			});
+			groups.push(group = {
+					lines: lines
+				,	smis: [smi]
+			});
+		}
+	});
+	
+	const k = kf ? 'kf' : 'k';
+	groups.forEach((group, g) => {
+		if (group.smis.length < 2) return;
+		
+		group.lines.forEach((line, i) => {
+			line.step = 0;
+			line.kText = "";
+			
+			let lastStep = 0;
+			group.smis.forEach((smi) => {
+				if (smi.steps[i] > 0) {
+					lastStep = smi.steps[i];
+				}
+			});
+			if (lastStep > 0 && group.smis[group.smis.length - 1].steps[i] == 0) {
+				group.smis[group.smis.length - 1].steps[i] = line.text.length;
+			}
+		});
+		let lastStart = group.smis[0].start;
+		let lastSteps = [];
+		group.lines.forEach((line) => { lastSteps.push(0); });
+		let steps = group.smis[0].steps;
+		group.smis.forEach((smi) => {
+			group.lines.forEach((line, i) => {
+				if (steps[i] < smi.steps[i]) {
+					line.kText += `{\\${k}${Math.round((smi.start - lastStart) / 10) }}` + line.text.substring(lastSteps[i], steps[i]);
+					lastSteps[i] = steps[i];
+					steps[i] = smi.steps[i];
+					lastStart = smi.start;
+				}
+			});
+		});
+		let comment = "<!-- ASS\n";
+		group.lines.forEach((line, i) => {
+			if (lastSteps[i] == 0) {
+				delete line.fcFrom;
+				delete line.fcTo;
+				delete line.kText;
+				comment += `0,,${group.smis.length},line${i},` + line.text + "\n";
+				return;
+			}
+			const remains = line.text.substring(lastSteps[i]);
+			if (remains) {
+				let length = group.smis[group.smis.length - 1].start - lastStart;
+				if (g + 1 < groups.length) {
+					length = groups[g + 1].smis[0].start - lastStart;
+				}
+				line.kText += `{\\${k}${ Math.round((length) / 10) }}` + remains;
+			}
+			if (line.fcFrom && line.fcTo) {
+				const fcTo   = `${line.fcTo  .substring(4,6)}${line.fcTo  .substring(2,4)}${line.fcTo  .substring(0,2)}`;
+				const fcFrom = `${line.fcFrom.substring(4,6)}${line.fcFrom.substring(2,4)}${line.fcFrom.substring(0,2)}`;
+				comment += `0,,${group.smis.length},line${i},` + (`{\\c&H${fcTo}&\\4c&H${fcFrom}&}` + line.kText).replaceAll("}{", "") + "\n";
+			} else {
+				comment += `0,,${group.smis.length},line${i},` + line.kText + "\n";
+			}
+		});
+		comment += "-->\n";
+		group.smis[0].text = comment + group.smis[0].text;
+	});
+	
+	const smis = [];
+	groups.forEach((group) => {
+		smis.push(...group.smis);
+	});
+	
+	smiFile.body = smis;
+	editor.setValue(smiFile.toText());
+	editor.render();
 }

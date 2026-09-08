@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260827";
+﻿import "./SubtitleObject.js?260908";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -917,6 +917,25 @@ SmiFile.textToHolds = (text) => {
 				footer = footer[0];
 			}
 		}
+		{	// Automation 정보
+			const footers = footer.split("\n<!-- Automation|");
+			if (footers.length > 1) {
+				const automations = holds[0].automations = [];
+				for (let i = 1; i < footers.length; i++) {
+					const commentEnd = footers[i].indexOf("\n-->");
+					if (commentEnd > 0) {
+						const lines = footers[i].substring(0, commentEnd).trim().split("\n");
+						automations.push({
+								target: lines[0]
+							,	script: lines.slice(1).join("\n")
+						});
+						if (i == footers.length - 1) {
+							footer = footers[0] + footers[i].substring(commentEnd + 4); // 뒤에 추가로 주석 남아있을 수 있음
+						}
+					}
+				}
+			}
+		}
 		{	// 프레임 시간
 			footer = footer.split("\n<!-- FS\n"); // <!-- FS 여러 번 있는 경우는 오류로, 상정하지 않음
 			if (footer.length > 1) {
@@ -1586,7 +1605,7 @@ SmiFile.holdsToTexts = (holds, withNormalize=true, withCombine=true, withComment
 	parts[0] = parts[0].toText(withComment);
 	return parts;
 }
-SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=1, additional="", withFs=false, withKfs=false, assHold=null) => {
+SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=1, additional="", withFs=false, withKfs=false, assHold=null, automations=null) => {
 	if (Subtitle.video.fs.length && withFs) {
 		// 프레임 싱크 함께 저장
 		let fs = [];
@@ -1701,6 +1720,12 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 		}
 		fs.push(Subtitle.video.fs[Subtitle.video.fs.length - 1]); // 마지막 싱크는 무조건 추가해서 계산 범위 넘치지 않도록 함
 		(fs = [...new Set(fs)]).sort((a, b) => { return a - b; }); // 중복 제외 후 정렬
+		
+		if (automations && automations.length) {
+			automations.forEach((automation) => {
+				additional += `\n<!-- Automation|${automation.target}\n${automation.script}\n-->`;
+			});
+		}
 		
 		// 프레임값 대신 프레임 간격을 16비트 정수로 저장
 		const ftfs = [];
@@ -2074,7 +2099,24 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				do {
 					const tBegin = item.text.indexOf("\\pos(", c);
 					if (tBegin > 0) {
-						const tEnd = item.text.indexOf(")", tBegin);
+						let bracket = 1;
+						let tEnd = -1;
+						for (let i = tBegin + 5; i < item.text.length; i++) {
+							if (item.text[i] == ",") {
+								if (bracket > 1) {
+									// 수식 괄호 밖에서만 쉼표 쓸 수 있음
+									break;
+								}
+							} else if (item.text[i] == "(") {
+								bracket++;
+							} else if (item.text[i] == ")") {
+								bracket--;
+								if (bracket == 0) {
+									tEnd = i;
+									break;
+								}
+							}
+						}
 						if (tEnd > 0) {
 							// 수식 처리
 							const tValues = item.text.substring(tBegin + 5, tEnd).split(",");
@@ -2101,7 +2143,24 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				do {
 					const tBegin = item.text.indexOf("\\dpos(", c);
 					if (tBegin > 0) {
-						const tEnd = item.text.indexOf(")", tBegin);
+						let bracket = 1;
+						let tEnd = -1;
+						for (let i = tBegin + 5; i < item.text.length; i++) {
+							if (item.text[i] == ",") {
+								if (bracket > 1) {
+									// 수식 괄호 밖에서만 쉼표 쓸 수 있음
+									break;
+								}
+							} else if (item.text[i] == "(") {
+								bracket++;
+							} else if (item.text[i] == ")") {
+								bracket--;
+								if (bracket == 0) {
+									tEnd = i;
+									break;
+								}
+							}
+						}
 						if (tEnd > 0) {
 							// 수식 처리
 							const tValues = item.text.substring(tBegin + 6, tEnd).split(",");
@@ -2128,7 +2187,24 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				do {
 					const tBegin = item.text.indexOf("\\move(", c);
 					if (tBegin > 0) {
-						const tEnd = item.text.indexOf(")", tBegin);
+						let bracket = 1;
+						let tEnd = -1;
+						for (let i = tBegin + 5; i < item.text.length; i++) {
+							if (item.text[i] == ",") {
+								if (bracket > 1) {
+									// 수식 괄호 밖에서만 쉼표 쓸 수 있음
+									break;
+								}
+							} else if (item.text[i] == "(") {
+								bracket++;
+							} else if (item.text[i] == ")") {
+								bracket--;
+								if (bracket == 0) {
+									tEnd = i;
+									break;
+								}
+							}
+						}
 						if (tEnd > 0) {
 							// span 처리
 							let tValues = item.text.substring(tBegin + 6, tEnd).split(",");
@@ -2178,7 +2254,24 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				do {
 					const tBegin = item.text.indexOf("\\dmove(", c);
 					if (tBegin > 0) {
-						const tEnd = item.text.indexOf(")", tBegin);
+						let bracket = 1;
+						let tEnd = -1;
+						for (let i = tBegin + 5; i < item.text.length; i++) {
+							if (item.text[i] == ",") {
+								if (bracket > 1) {
+									// 수식 괄호 밖에서만 쉼표 쓸 수 있음
+									break;
+								}
+							} else if (item.text[i] == "(") {
+								bracket++;
+							} else if (item.text[i] == ")") {
+								bracket--;
+								if (bracket == 0) {
+									tEnd = i;
+									break;
+								}
+							}
+						}
 						if (tEnd > 0) {
 							// span 처리
 							let tValues = item.text.substring(tBegin + 7, tEnd).split(",");
@@ -2914,4 +3007,268 @@ function reverseRotate(ox, oy, frx, fry, frz, px, py) {
 	
 	// org 좌표에 더한 결과 반환
 	return { x: ox+x, y: oy+y };
+}
+
+AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
+	if (!style) {
+		style = Subtitle.DefaultStyle;
+	}
+	
+	let mode = 0; // 0: text / 1: tag / 2: \k
+	let html = "<span data-k='0'>";
+	
+	let an = 0;
+	let pos = null;
+	let fad = null;
+	let t = null;
+	
+	for (let i = 0; i < text.length; i++) {
+		const c = text[i];
+		switch (mode) {
+			case 0: {
+				if (c == '{') {
+					// 태그 시작
+					mode = 1;
+				} else {
+					// 문자열
+					html += c;
+				}
+				break;
+			}
+			case 1: {
+				if (c == '}') {
+					// 태그 종료, 문자열
+					mode = 0;
+				} else if (c == '\\') {
+					// \k 혹은 \kf 태그 여부 확인
+					const remains = text.substring(i);
+					if (remains.startsWith("\\k")) {
+						i++;
+						if (remains.startsWith("\\kf")) {
+							i++;
+						}
+						html += "</span><span data-k='";
+						mode = 2;
+					} else if (!an && remains.startsWith("\\an") && remains.length > 3 && isFinite(remains[3])) {
+						an = Number(remains[3]);
+					} else if (!pos && remains.startsWith("\\pos(")) {
+						const end = remains.indexOf(")");
+						if (end > 0) {
+							const values = remains.substring(5, end).split(",");
+							if (values.length == 2 && isFinite(values[0]) && isFinite(values[1])) {
+								pos = [Number(values[0]), Number(values[1])];
+							}
+						}
+					} else if (!fad && remains.startsWith("\\fad(")) {
+						const end = remains.indexOf(")");
+						if (end > 0) {
+							const values = remains.substring(5, end).split(",");
+							if (values.length == 2 && isFinite(values[0]) && isFinite(values[1])) {
+								fad = [Number(values[0]), Number(values[1])];
+							}
+						}
+					} else if (!fad && remains.startsWith("\\t(")) {
+						const end = remains.indexOf(")");
+						if (end > 0) {
+							const values = remains.substring(3, end).split(",");
+							if (values.length > 2 && isFinite(values[0]) && isFinite(values[1])) {
+								t = [Number(values[0]), Number(values[1]), values.slice(2).join(",")];
+							}
+						}
+					}
+				} else {
+					// 이외의 문자열 무시
+				}
+				break;
+			}
+			case 2: {
+				if (isFinite(c)) {
+					html += c;
+				} else {
+					// \k 태그 종료
+					html += "'>";
+					if (c == '}') {
+						// 태그 종료, 문자열
+						mode = 0;
+					} else {
+						// 태그 내부
+						mode = 1;
+					}
+				}
+				break;
+			}
+		}
+	}
+	html += "</span>";
+	
+	// 공백문자는 <span> 밖으로 꺼내서 글자 좌표 계산에서 제외함
+	// 공백문자가 2개 이상 연속된 노래방 자막은 없다고 가정
+	html = html.replaceAll(" </span>", "</span><span> </span>");
+	html = html.replaceAll("　</span>", "</span><span>　</span>");
+	
+	if (!Subtitle.div) {
+		Subtitle.div = document.createElement("div");
+		Subtitle.div.style.position = "fixed";
+		Subtitle.div.style.bottom = "100%";
+		Subtitle.div.style.whiteSpace = "pre";
+		document.body.append(Subtitle.div);
+	}
+	const div = Subtitle.div;
+	div.style.fontFamily = style.Fontname;
+	div.style.fontWeight = style.Bold ? "bold" : "";
+	div.style.fontSize = `${ style.Fontsize * Subtitle.getFontRatio(style.Fontname) / (25.5 * 1.001) * 19.2 }px`;
+	div.innerHTML = html;
+	
+	if (style.Fontname == "Meiryo") {
+		// 예외처리 필요
+		[...div.children].forEach((span) => {
+			let html = "";
+			const text = span.innerText;
+			for (let i = 0; i < text.length; i++) {
+				const c = text[i].charCodeAt();
+				if (c < 255) {
+					html += `<span style="font-size: 105%">${text[i]}</span>`;
+				} else if ((11592 <= c && c <= 12687) || (44032 <= c && c <= 55203)) {
+					html += `<span style="font-size: 95%">${text[i]}</span>`;
+				} else {
+					html += text[i];
+				}
+			}
+			span.innerHTML = html;
+		});
+	}
+	
+	if (!an) {
+		// 스타일 기본 정렬
+		an = style.Alignment;
+	}
+	if (!pos) {
+		// 스타일 기본 좌표
+		pos = [];
+		switch (an % 3) {
+			case 1: // 왼쪽
+				pos.push(style.MarginL);
+				break;
+			case 2: // 가운데
+				pos.push(playResX / 2);
+				break;
+			case 0: // 오른쪽
+				pos.push(playResX - style.MarginR);
+				break;
+		}
+		switch (Math.floor((an - 1) / 3)) {
+			case 0: // 아래
+				pos.push(playResY - style.MarginV);
+				break;
+			case 1: // 가운데
+				pos.push(playResY / 2);
+				break;
+			case 2: // 위
+				pos.push(style.MarginV);
+				break;
+		}
+	}
+	{	// \an7 기준으로 재계산
+		switch (an % 3) {
+			case 2: // 가운데
+				pos[0] -= div.offsetWidth / 2;
+				break;
+			case 0: // 오른쪽
+				pos[0] -= div.offsetWidth;
+				break;
+		}
+		switch (Math.floor((an - 1) / 3)) {
+			case 0: // 아래
+				pos[1] -= style.Fontsize;
+				break;
+			case 1: // 가운데
+				pos[1] -= style.Fontsize / 2;
+				break;
+		}
+	}
+	
+	const result = { x: pos[0], y: pos[1], fad: fad, t: t, ks: [] };
+	[...div.children].forEach((span) => {
+		if (!span.innerText) return;
+		result.ks.push({
+				time: Number(span.getAttribute("data-k"))
+			,	text: span.innerText
+			,	left: span.offsetLeft
+			,	width: span.offsetWidth
+		});
+	});
+	return result;
+}
+AssFile.prototype.automation = function(styleName, script) {
+	if (!styleName || !script) {
+		return;
+	}
+	
+	let playResX = 1920;
+	let playResY = 1080;
+	this.getInfo().body.forEach((info) => {
+		switch (info.key) {
+			case "PlayResX": playResX = Number(info.value); break;
+			case "PlayResY": playResY = Number(info.value); break;
+		}
+	});
+	const style = this.getStyle(styleName) ?? Subtitle.DefaultStyle;
+	const events = [];
+	
+	try {
+		let forLine = () => {};
+		let forChar = () => {};
+		eval(script);
+		
+		this.getEvents().body.forEach((origin) => {
+			if (origin.Style != styleName || origin.Text.indexOf("\\k") < 0) {
+				// 작업 대상 아님
+				events.push(origin);
+				return;
+			}
+			
+			forLine(origin);
+			
+			const karaoke = AssEvent.parseKaraoke(origin.Text, style, playResX, playResY);
+			let cStart = origin.start;
+			const count = events.length;
+			karaoke.ks.forEach((c, i) => {
+				forChar(origin, karaoke, cStart, c, i);
+				cStart += c.time * 10;
+			});
+			for (let i = count; i < events.length; i++) {
+				// 자동 생성 스크립트라는 기록 남기기
+				events[i].Effect = "jmk";
+			}
+			if (karaoke.fad) {
+				for (let i = count; i < events.length; i++) {
+					const event = events[i];
+					if (event.start == origin.start) {
+						if (event.end == origin.end) {
+							event.Text = (`{\\fad(${karaoke.fad[0]},${karaoke.fad[1]})}` + event.Text).replaceAll("}{", "");
+						} else if (karaoke.fad[0]) {
+							event.Text = (`{\\fad(${karaoke.fad[0]},0)}` + event.Text).replaceAll("}{", "");
+						}
+					} else if (karaoke.fad[1] && event.end == origin.end) {
+						event.Text = (`{\\fad(0,${karaoke.fad[1]})}` + event.Text).replaceAll("}{", "");
+					}
+				}
+			}
+			if (karaoke.t) {
+				for (let i = count; i < events.length; i++) {
+					const event = events[i];
+					if ((karaoke.t[0] < event.end - origin.start)
+					 && (event.start - origin.end < karaoke.t[1])
+					) {
+						const past = event.start - origin.start;
+						event.Text = (`{\\t(${karaoke.t[0] - past},${karaoke.t[1] - past},${karaoke.t[2]})}` + event.Text).replaceAll("}{", "");
+					}
+				}
+			}
+		});
+		this.getEvents().body = events;
+	} catch (e) {
+		alert(`ASS 자동화 스크립트(${styleName})에 문제가 있습니다.\n\n${e}`);
+		console.log(e);
+	}
 }
