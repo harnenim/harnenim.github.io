@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260908";
+﻿import "./SubtitleObject.js?260909";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -3109,7 +3109,7 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 	if (!Subtitle.div) {
 		Subtitle.div = document.createElement("div");
 		Subtitle.div.style.position = "fixed";
-		Subtitle.div.style.bottom = "100%";
+		Subtitle.div.style.bottom = "200%";
 		Subtitle.div.style.whiteSpace = "pre";
 		document.body.append(Subtitle.div);
 	}
@@ -3236,9 +3236,18 @@ AssFile.prototype.automation = function(styleName, script) {
 				forChar(origin, karaoke, cStart, c, i);
 				cStart += c.time * 10;
 			});
+			const add = Subtitle.optimizeSync(origin.start) - origin.start;
 			for (let i = count; i < events.length; i++) {
+				const event = events[i];
 				// 자동 생성 스크립트라는 기록 남기기
-				events[i].Effect = "jmk";
+				event.Effect = "jmk";
+				// 자동 생성 싱크는 프레임 싱크 정보가 없을 수 있으므로, 해당 로직을 거치지 않은 값으로 재계산
+				if (event.start != origin.start && event.start != origin.end) {
+					event.Start = AssEvent.timeToAssTime(event.start + add); 
+				}
+				if (event.end != origin.start && event.end != origin.end) {
+					event.End = AssEvent.timeToAssTime(event.end + add); 
+				}
 			}
 			if (karaoke.fad) {
 				for (let i = count; i < events.length; i++) {

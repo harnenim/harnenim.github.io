@@ -723,6 +723,17 @@ Subtitle.findSyncIndex = (sync, fs=null, from=0, to=-1) => {
 		return Subtitle.findSyncIndex(sync, fs, from, mid);
 	}
 }
+window.rand = Subtitle.rand = function(index=0, min=100, max=null) {
+	if (max == null) {
+		max = min;
+		min = 0;
+	}
+	let t = index + 0x6D2B79F5;
+	t = Math.imul(t ^ (t >>> 15), t | 1);
+	t ^= t + Math.imul(t ^ (t >>> 7 ), t | 6);
+	const v = ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	return min + Math.floor(v * (max + 1 - min));
+}
 
 window.SyncAttr = Subtitle.SyncAttr = function(start, end, startType, endType, text, origin=null) {
 	this.start = start ? start : 0;
@@ -1171,13 +1182,14 @@ window.AssEvent = Subtitle.AssEvent = function(start, end, style, text, layer=0)
 AssEvent.useAlignDialogue = true;
 AssEvent.rubyPos = 0;
 AssEvent.toAssTime = (time=0, fromFrameSync=false) => {
-	time = Subtitle.optimizeSync(time, fromFrameSync);
+	return AssEvent.timeToAssTime(Subtitle.optimizeSync(time, fromFrameSync));
+}
+AssEvent.timeToAssTime = (time) => {
 	const h = Math.floor( time / 3600000);
 	const m = Math.floor( time /   60000) % 60;
 	const s = Math.floor( time /    1000) % 60;
 	const ds= Math.floor((time % 1000) / 10);
-	const result = `${h}:${intPadding(m)}:${intPadding(s)}.${intPadding(ds)}`;
-	return result;
+	return `${h}:${intPadding(m)}:${intPadding(s)}.${intPadding(ds)}`;
 }
 AssEvent.fromAssTime = (assTime, toFrameSync=false) => {
 	const vs = assTime.split(':');

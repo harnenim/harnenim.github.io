@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?260908";
+﻿import "./SubtitleObject.js?260909";
 
-import "./highlight/cm/codemirror.js?260908";
-import "./highlight/cm/scrollpastend.js?260908";
-import "./highlight/cm/mark-selection.js?260908";
-import "./highlight/cm/active-line.js?260908";
-import "./highlight/cm/sami.js?260908";
+import "./highlight/cm/codemirror.js?260909";
+import "./highlight/cm/scrollpastend.js?260909";
+import "./highlight/cm/mark-selection.js?260909";
+import "./highlight/cm/active-line.js?260909";
+import "./highlight/cm/sami.js?260909";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260908", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260909", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260908", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260909", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1091,11 +1091,12 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 					}
 				} else {
 					if (e.altKey) {
+						/* Jamaker.js 전역 단축키로 설정
 						// 뒤로
 						e.preventDefault();
 						SmiEditor.PlayerAPI.move(-SmiEditor.sync.move);
 						SmiEditor.PlayerAPI.play();
-						
+						*/
 					} else {
 						
 					}
@@ -1183,11 +1184,12 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 					}
 				} else {
 					if (e.altKey) {
+						/* Jamaker.js 전역 단축키로 설정
 						// 앞으로
 						e.preventDefault();
 						SmiEditor.PlayerAPI.move(SmiEditor.sync.move);
 						SmiEditor.PlayerAPI.play();
-						
+						*/
 					} else {
 						
 					}
@@ -2644,7 +2646,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260908", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260909", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2840,7 +2842,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260908", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260909", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}

@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?260908";
-import "./Subtitle.Converter.js?260908";
-import "./AutoCompleteCodeMirror.js?260908";
-import "./SmiEditor.js?260908";
-import "./AssEditor.js?260908";
-import "./highlight/cm/javascript.js?260908";
+﻿import "./MenuStrip.js?260909";
+import "./Subtitle.Converter.js?260909";
+import "./AutoCompleteCodeMirror.js?260909";
+import "./SmiEditor.js?260909";
+import "./AssEditor.js?260909";
+import "./highlight/cm/javascript.js?260909";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?260908";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260908", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260909", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -476,17 +476,25 @@ Tab.prototype.addAutomation = function(item) {
 			+	"\n"
 			+	"이곳에서 생성된 이벤트에는 Effect 값에 jmk가 붙으며, ASS 역반영 시 예외 처리됩니다.\n"
 			+	"*/\n"
-			+	"forLine = function (origin) {\n"
+			+	"forLine = function(origin) {\n"
 			+	"	events.push(origin);\n"
 			+	"}\n"
-			+	"forChar = function (origin, e, cStart, c, i) {\n"
+			+	"forChar = function(origin, e, cStart, c, i) {\n"
 			+	"	events.push(new AssEvent(cStart, origin.end, '스타일'\n"
 			+	"		,	`{\an2\pos(${e.x + c.left + c.width/2},${e.y + style.Fontsize})}`\n"
 			+	"		+	c.text\n"
 			+	"	));\n"
-			+	"}"
+			+	"}\n"
+			+	"/*\n"
+			+	"항상 같은 결과의 난수가 필요한 경우엔 자체 rand 함수를 쓸 수 있습니다.\n"
+			+	"rand(index) / rand(index, max) / rand(index, min, max) 형태로 쓸 수 있으며\n"
+			+	"min 이상 max 미만의 정수를 출력합니다.\n"
+			+	"기본값은 min=0, max=100입니다.\n"
+			+	"*/"
 		);
 	}
+	cm.setCursor(0);
+	cm.clearHistory();
 	
 	this.autoThs.append(th);
 	this.aBodies.append(aBody);
@@ -2350,6 +2358,24 @@ window.init = function(jsonSetting, isBackup=true) {
 					}
 				}
 			}
+			return;
+		}
+		if (e.altKey && !e.ctrlKey && !e.shiftKey) {
+			// Alt+↔ 재생 제어
+			switch (e.key) {
+			case "ArrowLeft":
+				// 뒤로
+				e.preventDefault();
+				SmiEditor.PlayerAPI.move(-SmiEditor.sync.move);
+				SmiEditor.PlayerAPI.play();
+				break;
+			case "ArrowRight":
+				// 앞으로
+				e.preventDefault();
+				SmiEditor.PlayerAPI.move(SmiEditor.sync.move);
+				SmiEditor.PlayerAPI.play();
+				break;
+			}
 		}
 	});
 	window.addEventListener("keyup", (e) => {
@@ -2461,7 +2487,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260908").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260909").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2539,7 +2565,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260908").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260909").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2722,7 +2748,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260908", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260909", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5012,7 +5038,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260908", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260909", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
