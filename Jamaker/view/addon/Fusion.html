@@ -4,7 +4,7 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>싱크 유지 텍스트 대체</title>
-	<script src="../lib/popup.js?260909"></script>
+	<script src="../lib/popup.js?260911"></script>
 	<script>
 windowName = "addon";
 
@@ -19,7 +19,7 @@ ready(() => {
 
 requestClose = confirmCancel;
 
-function init() {
+async function init() {
 	if (!origin) {
 		await alert("작업 대상이 없습니다.");
 		window.close();

@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?260909";
-import "./Subtitle.Converter.js?260909";
-import "./AutoCompleteCodeMirror.js?260909";
-import "./SmiEditor.js?260909";
-import "./AssEditor.js?260909";
-import "./highlight/cm/javascript.js?260909";
+﻿import "./MenuStrip.js?260911";
+import "./Subtitle.Converter.js?260911";
+import "./AutoCompleteCodeMirror.js?260911";
+import "./SmiEditor.js?260911";
+import "./AssEditor.js?260911";
+import "./highlight/cm/javascript.js?260911";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?260909";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260909", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260911", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -295,7 +295,8 @@ window.Tab = function(text, path) {
 					tab.holdIndex--;
 				}
 				
-				{	// 홀드명 겹치는 게 남는지 확인
+				if (!hold.styleArea.querySelector("select[name=followStyle]").value) {
+					// 자체 스타일이면 홀드명 겹치는 게 남는지 확인
 					let exist = false;
 					for (let i = 0; i < tab.holds.length; i++) {
 						if (tab.holds[i] == hold) continue;
@@ -488,7 +489,7 @@ Tab.prototype.addAutomation = function(item) {
 			+	"/*\n"
 			+	"항상 같은 결과의 난수가 필요한 경우엔 자체 rand 함수를 쓸 수 있습니다.\n"
 			+	"rand(index) / rand(index, max) / rand(index, min, max) 형태로 쓸 수 있으며\n"
-			+	"min 이상 max 이하의 정수를 출력합니다.\n"
+			+	"min 이상 max 이하의 정수를 반환합니다.\n"
 			+	"기본값은 min=0, max=100입니다.\n"
 			+	"*/"
 		);
@@ -652,6 +653,9 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 			styleEditor.addEventListener("input", (e) => {
 				let input = e.target.closest("select[name=followStyle]");
 				if (input) return;
+				input = e.target.closest("input[name=output]");
+				if (input) return;
+				
 				if (selectFollow.value) {
 					// 자체 스타일로 자동 전환
 					selectFollow.value = "";
@@ -749,6 +753,10 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 					hold.afterChangeSaved(hold.isSaved());
 					return;
 				}
+				
+				input = e.target.closest("input[name=output]");
+				if (input) return;
+				
 				if (selectFollow.value) {
 					// 자체 스타일로 자동 전환
 					selectFollow.value = "";
@@ -2487,7 +2495,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260909").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260911").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2565,7 +2573,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260909").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260911").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2748,7 +2756,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260909", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260911", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5038,7 +5046,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260909", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260911", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5424,10 +5432,11 @@ window.runColorPicker = function(useWvPicker=false) {
 			while ((next = line.indexOf("&H", skip)) >= 0) {
 				next++;
 				if (line.length < next+7) {
-					continue;
+					break;
 				}
 				const color = line.substring(next+1, next+7);
 				if (!isFinite("0x" + color)) {
+					skip = next;
 					continue;
 				}
 				bgr = color;
@@ -5984,7 +5993,7 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 					text += attr.text;
 				}
 			});
-
+			
 			lines[i] = { attrs: attrs, text: text, step: (step < 0 ? 0 : step) };
 		}
 		let keep = (group.lines.length == lines.length);
