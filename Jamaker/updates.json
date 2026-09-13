@@ -1,4 +1,14 @@
-[ { "version": "2026.09.12"
+[ { "version": "2026.09.13"
+  , "comment":
+    [ "홀드 출력 선택 미동작 버그 등 수정"
+    ]
+  , "files":
+    [ "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    ]
+  }
+, { "version": "2026.09.12"
   , "comment":
     [ "ASS Automation 기능 지원"
     , "특정 조건에서 색상 태그 입력기 실행 시 무한루프 문제 수정"

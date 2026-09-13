@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?260911";
-import "./Subtitle.Converter.js?260911";
-import "./AutoCompleteCodeMirror.js?260911";
-import "./SmiEditor.js?260911";
-import "./AssEditor.js?260911";
-import "./highlight/cm/javascript.js?260911";
+﻿import "./MenuStrip.js?260913";
+import "./Subtitle.Converter.js?260913";
+import "./AutoCompleteCodeMirror.js?260913";
+import "./SmiEditor.js?260913";
+import "./AssEditor.js?260913";
+import "./highlight/cm/javascript.js?260913";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?260911";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260911", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260913", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -284,7 +284,7 @@ window.Tab = function(text, path) {
 		let el;
 		if (el = e.target.closest(".btn-hold-remove")) {
 			const hold = eData(el.parentNode.parentNode).hold;
-			confirm("삭제하시겠습니까?", () => {
+			confirm("홀드를 삭제하시겠습니까?", () => {
 				const index = tab.holds.indexOf(hold);
 				
 				if (tab.holdIndex == index) {
@@ -755,7 +755,10 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 				}
 				
 				input = e.target.closest("input[name=output]");
-				if (input) return;
+				if (input) {
+					hold.style.output = input.value;
+					return;
+				}
 				
 				if (selectFollow.value) {
 					// 자체 스타일로 자동 전환
@@ -2495,7 +2498,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260911").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260913").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2573,7 +2576,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260911").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260913").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2756,7 +2759,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260911", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260913", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5046,7 +5049,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260911", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260913", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

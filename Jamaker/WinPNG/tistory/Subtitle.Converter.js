@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260909";
+import "./SubtitleObject.js?260909";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -181,7 +181,8 @@ if (!Uint8Array.fromBase64) {
 					smi.text = smi.text.substring(commentEnd + 4);
 				}
 			}
-			if (smi.text.replaceAll("&nbsp;", "").trim()) {
+			Subtitle._tmp.innerHTML = smi.text;
+			if (Subtitle._tmp.innerText.trim()) {
 				const lines = [];
 				smi.text.split(/<br>/gi).forEach((line) => {
 					lines.push((line.search(/<ruby>/gi) >= 0) ? true : false);
@@ -1562,7 +1563,7 @@ SmiFile.holdsToParts = (origHolds, withNormalize=true, withCombine=true, withCom
 	} else {
 		if (withComment < 0) {
 			// export 속성 제거
-			main.header = main.header.replace(/<sami( [^>]*)*>/gi, "<SAMI smi ass>");
+			main.header = main.header.replace(/<sami( [^>]*)*>/gi, "<SAMI>");
 			main.body.forEach((smi) => {
 				// 싱크 타입 제거
 				smi.syncType = SyncType.normal;

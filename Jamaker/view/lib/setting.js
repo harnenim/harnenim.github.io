@@ -1,4 +1,4 @@
-﻿// 업데이트 메시지
+// 업데이트 메시지
 {	window.checkVersion = (version) => {
 		if (!version) version = "";
 		
@@ -40,7 +40,7 @@
 }
 
 window.DEFAULT_SETTING =
-{	version: "2026.09.12"
+{	version: "2026.09.13"
 ,	menu:
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
@@ -554,7 +554,7 @@ window.DEFAULT_SETTING =
 		, syncEqual : "#008888"
 		}
 	}
-,	newFile:"<SAMI smi ass>\n"
+,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"
 		+	"<TITLE>제목</TITLE>\n"
 		+	"<STYLE TYPE=\"text/css\">\n"
