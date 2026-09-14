@@ -1,4 +1,16 @@
-[ { "version": "2026.09.13"
+[ { "version": "2026.09.14"
+  , "comment":
+    [ "결합 로직 공백 검사 재수정"
+    , "마지막 싱크 [SMI] 지원"
+    , "이전 싱크 재활용 기능"
+    ]
+  , "files":
+    [ "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    ]
+  }
+, { "version": "2026.09.13"
   , "comment":
     [ "홀드 출력 선택 미동작 버그 등 수정"
     ]

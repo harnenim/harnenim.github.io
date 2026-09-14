@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?260913";
+﻿import "./SubtitleObject.js?260914";
 
-import "./highlight/cm/codemirror.js?260913";
-import "./highlight/cm/scrollpastend.js?260913";
-import "./highlight/cm/mark-selection.js?260913";
-import "./highlight/cm/active-line.js?260913";
-import "./highlight/cm/sami.js?260913";
+import "./highlight/cm/codemirror.js?260914";
+import "./highlight/cm/scrollpastend.js?260914";
+import "./highlight/cm/mark-selection.js?260914";
+import "./highlight/cm/active-line.js?260914";
+import "./highlight/cm/sami.js?260914";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?260913", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?260914", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?260913", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?260914", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2646,7 +2646,7 @@ SmiEditor.Finder = {
 		last: { find: "", replace: "", withCase: false, reverse: false }
 	,	open: function(isReplace) {
 			this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-			let newWindow = window.open("finder.html?260913", "finder", "scrollbars=no,location=no,width=400,height=220");
+			let newWindow = window.open("finder.html?260914", "finder", "scrollbars=no,location=no,width=400,height=220");
 			if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			binder.focus("finder");
 		}
@@ -2842,7 +2842,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 		window: null
 	,	open: function() {
-			let newWindow = window.open("viewer.html?260913", "viewer", "scrollbars=no,location=no,width=1,height=1");
+			let newWindow = window.open("viewer.html?260914", "viewer", "scrollbars=no,location=no,width=1,height=1");
 			if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 				this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 			}
