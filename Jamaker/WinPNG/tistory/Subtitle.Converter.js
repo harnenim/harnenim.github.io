@@ -1,4 +1,4 @@
-import "./SubtitleObject.js?260909";
+import "./SubtitleObject.js?260918";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -181,13 +181,23 @@ if (!Uint8Array.fromBase64) {
 					smi.text = smi.text.substring(commentEnd + 4);
 				}
 			}
-			Subtitle._tmp.innerHTML = smi.text;
-			if (Subtitle._tmp.innerText.trim()) {
+			// 내용물이 없더라도 줄바꿈을 위해 넣었을 수 있음
+			let isEmpty = true;
+			if ((smi.text.search(/<br>/gi) >= 0)
+			 || (smi.text.search(/<b>　<\/b>/gi) >= 0)) {
+				isEmpty = false;
+			}
+			if (isEmpty) {
+				Subtitle._tmp.innerHTML = smi.text;
+				if (Subtitle._tmp.innerText.trim()) {
+					isEmpty = false;
+				}
+			}
+			if (!isEmpty) {
 				const lines = [];
 				smi.text.split(/<br>/gi).forEach((line) => {
 					lines.push((line.search(/<ruby>/gi) >= 0) ? true : false);
 				});
-				
 				const attrs = smi.toAttrs(false);
 				const defaultWidth = getAttrWidth(attrs);
 				const sizedWidth   = getAttrWidth(attrs, true);
@@ -1660,6 +1670,7 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 					if (!isFinite(ass[0])) return;
 					
 					if (ass[1] == "") { // span 형식
+						// [Layer, -, span, Style, Text]
 						if (ass[3].endsWith(")")) {
 							let ass2 = ass[2].split("(");
 							let ass3 = ass[3].split(")");
@@ -1682,7 +1693,7 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 								}
 							}
 						}
-					} else if (isFinite(ass[1])) { // add 형식
+					} else if (isFinite(ass[1]) && isFinite(ass[2])) { // add 형식
 						// [Layer, addStart, addEnd, Style, Text]
 						// [Layer, addStart, -, Style, Text]
 						const addStart = Number(ass[1]);
@@ -1692,11 +1703,13 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 							fs.push(Subtitle.video.fs[index]);
 							fs.push(Subtitle.video.fs[index + 1]);
 						}
-						const addEnd = isFinite(ass[2]) ? Number(ass[2]) : addStart;
+						const addEnd = ass[2].length ? Number(ass[2]) : addStart; // addEnd 비었으면 addStart 값 같이 사용
 						{
+							// addEnd가 +로 시작했으면 시작 싱크 기준
 							let end = smi.start;
 							if (!ass[2].startsWith("+")) {
 								if (smis.length <= j + 1) return;
+								// assEnd가 그냥 숫자면 종료 싱크 기준
 								end = smis[j + 1].start;
 							}
 							const index = Subtitle.findSyncIndex(end + addEnd);
@@ -1841,6 +1854,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 		
 		const assComments = []; // ASS 주석에서 복원한 목록
 		const toAssEnds = {};
+		let lastAssTexts = [];
 		smis.forEach((smi, i) => {
 			{	// 앞에서 나온 ASS 형태에 종료싱크 채워주기
 				const toAssEnd = toAssEnds[i];
@@ -1864,7 +1878,16 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 							assCmTexts[last] += "\n" + line; // 줄바꿈 문법을 ASS 변환 시엔 없애더라도, 역반영 시 유지하려면 기억은 하고 있어야 함
 						} else {
 							last = assCmTexts.length;
-							assCmTexts.push(line);
+							if (line == "[LAST]") {
+								assCmTexts.push(...lastAssTexts);
+							} else if (line.startsWith("[LAST") && line.endsWith("]")) {
+								let index = line.substring(5, line.length - 1);
+								if (isFinite(index)) {
+									assCmTexts.push(lastAssTexts[Math.floor(Number(index))]);
+								}
+							} else {
+								assCmTexts.push(line);
+							}
 						}
 					});
 					smi.originAssComment = smi.text.substring(0, commentEnd + 3);
@@ -1883,6 +1906,9 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						assTexts.push(assLine);
 					}
 				}
+			}
+			if (assTexts.length) {
+				lastAssTexts = assTexts;
 			}
 			
 			// ASS 주석에 [TEXT] 있을 경우 넣을 내용물 ([SMI]는 후처리 필요해서 빼둠)
@@ -1969,18 +1995,23 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 							type = "add";
 							const addStart = Number(ass[1]);
 							item.start += addStart;
-							if (isFinite(ass[2])) {
+							if (ass[2] == "") {
+								// [Layer, addStart, -, Style, Text]
+								item.addEnd = addStart;
+							} else if (isFinite(ass[2])) {
 								// [Layer, addStart, addEnd, Style, Text]
 								item.addEnd = Number(ass[2]);
 								if (ass[2].startsWith("+")) { // +로 시작할 경우 시작 싱크를 기준으로
 									item.end = item.start + item.addEnd;
 								}
 							} else {
-								// [Layer, addStart, -, Style, Text]
-								item.addEnd = addStart;
+								// [Layer, Style, Text]
+								type = "";
 							}
-							if (ass[3]) item.style = ass[3];
-							item.text = ass.slice(4).join(",");
+							if (type) {
+								if (ass[3]) item.style = ass[3];
+								item.text = ass.slice(4).join(",");
+							}
 						}
 					}
 					if (!type) {
@@ -3237,10 +3268,12 @@ AssFile.prototype.automation = function(styleName, script) {
 				forChar(origin, karaoke, cStart, c, i);
 				cStart += c.time * 10;
 			});
+			let layer = origin.Layer;
 			const add = Subtitle.optimizeSync(origin.start) - origin.start;
 			for (let i = count; i < events.length; i++) {
 				const event = events[i];
 				// 자동 생성 스크립트라는 기록 남기기
+				event.Layer = layer++;
 				event.Effect = "jmk";
 				// 자동 생성 싱크는 프레임 싱크 정보가 없을 수 있으므로, 해당 로직을 거치지 않은 값으로 재계산
 				if (event.start != origin.start && event.start != origin.end) {

@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?260914";
-import "./Subtitle.Converter.js?260914";
-import "./AutoCompleteCodeMirror.js?260914";
-import "./SmiEditor.js?260914";
-import "./AssEditor.js?260914";
-import "./highlight/cm/javascript.js?260914";
+﻿import "./MenuStrip.js?260918";
+import "./Subtitle.Converter.js?260918";
+import "./AutoCompleteCodeMirror.js?260918";
+import "./SmiEditor.js?260918";
+import "./AssEditor.js?260918";
+import "./highlight/cm/javascript.js?260918";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?260914";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260914", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260918", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -420,6 +420,15 @@ Tab.prototype.addAutomation = function(item) {
 		el.dataset.line = lineNo;
 		const prs = el.children[0];
 		
+		{	// 줄바꿈 블록지정 여부 확인
+			const cursor = [cm.getCursor("start"), cm.getCursor("end")];
+			if (cursor[0].line <= lineNo && lineNo < cursor[1].line) {
+				prs.classList.add("CodeMirror-selectedline");
+			} else {
+				prs.classList.remove("CodeMirror-selectedline");
+			}
+		}
+		
 		// hljs 클래스로 변환
 		[...prs.querySelectorAll('span[class^="cm-"]')].forEach((span) => {
 			[...span.classList].forEach((cls) => {
@@ -439,6 +448,11 @@ Tab.prototype.addAutomation = function(item) {
 				}
 			});
 		});
+		
+		// 줄바꿈 표시
+		if (SmiEditor.showEnter) {
+			el.append(SmiEditor.cmEnter.cloneNode(true));
+		}
 	});
 	cm.on("scroll", () => {
 		Tab.refreshScroll(aBody);
@@ -482,7 +496,7 @@ Tab.prototype.addAutomation = function(item) {
 			+	"}\n"
 			+	"forChar = function(origin, e, cStart, c, i) {\n"
 			+	"	events.push(new AssEvent(cStart, origin.end, '스타일'\n"
-			+	"		,	`{\an2\pos(${e.x + c.left + c.width/2},${e.y + style.Fontsize})}`\n"
+			+	"		,	`{\\\\an2\\\\pos(${e.x + c.left + c.width/2},${e.y + style.Fontsize})}`\n"
 			+	"		+	c.text\n"
 			+	"	));\n"
 			+	"}\n"
@@ -722,6 +736,10 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 					let value = input.value;
 					if (isFinite(value)) {
 						value = Number(value);
+						if (input.name.startsWith("Margin")) {
+							// Margin 값에는 소수점 비허용
+							value = Math.round(value);
+						}
 					} else {
 						value = 0;
 					}
@@ -1074,6 +1092,7 @@ SmiEditor.prototype.inputText = function(text, standCursor) {
 		alert("SMI 에디터 모드가 아닙니다.");
 		return;
 	}
+	if (typeof text != "string") return;
 	if (this.area.classList.contains("style")) {
 		if (text.length == 7 && text.startsWith("#")) {
 			this.style.PrimaryColour = text;
@@ -2498,7 +2517,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260914").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260918").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2554,6 +2573,11 @@ window.setSetting = function(setting, initial=false) {
 						tab.holds.forEach((hold) => {
 							editors.push(hold);
 						});
+						// Automation 에디터도 억지로 SmiEditor 배열에 끼워넣어서 갱신
+						[...tabs[0].assHold.area.querySelectorAll(".automation-body")].forEach((aBody) => {
+							const cm = eData(aBody).cm;
+							editors.push({ refreshHighlight: function () { cm.refresh(); } });
+						});
 					});
 					setStyleWithHighlight();
 					
@@ -2576,7 +2600,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260914").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260918").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2759,7 +2783,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260914", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260918", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5049,7 +5073,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260914", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260918", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5485,40 +5509,24 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			do {
 				// 커서보다 앞에서 찾기
-				tagPos = line.substring(0, cursor.ch).lastIndexOf("\\clip(");
-				if (tagPos < 0) {
-					tagPos = line.substring(0, cursor.ch).lastIndexOf("\\iclip(");
-					if (tagPos < 0) {
-						break;
-					} else {
-						begin = tagPos + 7;
-					}
+				if ((tagPos = line.substring(0, Math.min(cursor.ch+6, line.length-1)).lastIndexOf("\\clip(")) < 0) {
+					if ((tagPos = line.substring(0, Math.min(cursor.ch+7, line.length-1)).lastIndexOf("\\iclip(")) < 0) break;
+					begin = tagPos + 7;
 				} else {
 					begin = tagPos + 6;
 				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((end = line.indexOf(")", begin)) < 0) break;
 			} while (false);
 			
 			if (begin < 0 || end < 0) {
 				// 커서보다 뒤에 있는 것도 찾기
-				tagPos = line.indexOf("\\clip(");
-				if (tagPos < 0) {
-					begin = line.indexOf("\\iclip(");
-					if (begin < 0) {
-						break;
-					} else {
-						begin = tagPos + 7;
-					}
+				if ((tagPos = line.indexOf("\\clip(")) < 0) {
+					if ((tagPos = line.indexOf("\\iclip(")) < 0) break;
+					begin = tagPos + 7;
 				} else {
 					begin = tagPos + 6;
 				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((end = line.indexOf(")", begin)) < 0) break;
 			}
 			
 			tag = line.substring(tagPos, begin - 1);
@@ -5552,19 +5560,9 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			do {
 				// 커서보다 앞에서 찾기
-				tagPos = line.substring(0, cursor.ch).lastIndexOf("\\p1");
-				if (tagPos < 0) {
-					break;
-				} else {
-					tagPos = line.indexOf("}", tagPos);
-					if (tagPos < 0) {
-						break;
-					} else {
-						begin = tagPos + 1;
-					}
-				}
-				end = line.indexOf("{", begin);
-				if (end < 0) {
+				if ((tagPos = line.substring(0, Math.min(cursor.ch+3, line.length-1)).lastIndexOf("\\p1")) < 0) break;
+				if ((tagPos = line.indexOf("}", tagPos)) < 0) break;
+				if ((end = line.indexOf("{", (begin = tagPos + 1))) < 0) {
 					end = line.length;
 				}
 			} while (false);
@@ -5576,19 +5574,9 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			if (begin < 0 || end < 0) {
 				// 커서보다 뒤에 있는 것도 찾기
-				let tagPos = line.indexOf("\\p1");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = line.indexOf("}", tagPos);
-					if (begin < 0) {
-						break;
-					} else {
-						begin = tagPos + 1;
-					}
-				}
-				let end = line.indexOf("{", begin);
-				if (end < 0) {
+				if ((tagPos = line.indexOf("\\p1")) < 0) break;
+				if ((tagPos = line.indexOf("}", tagPos)) < 0) break;
+				if ((end = line.indexOf("{", (begin = tagPos + 1))) < 0) {
 					end = line.length;
 				}
 			}
@@ -5599,24 +5587,18 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			// \p1 태그로 그린 도형은 \pos, \move 확인 필요
 			// \an7이 아닌 경우는 고려하지 않음. 도형 크기에 따라 위치가 유동적임
+			// 홀드와 별개 스타일이 지정된 경우도 무시
 			ox = this.style.MarginL;
 			oy = this.style.MarginV;
 			do { // \pos 태그 찾기
 				let begin = line.indexOf("\\pos(");
 				if (begin < 0) {
-					begin = line.indexOf("\\move(");
-					if (begin < 0) {
-						break;
-					} else {
-						begin += 6;
-					}
+					if ((begin = line.indexOf("\\move(")) < 0) break;
+					begin += 6;
 				} else {
 					begin += 5;
 				}
-				let end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((end = line.indexOf(")", begin)) < 0) break;
 				const pos = line.substring(begin, end).trim().replaceAll("  ", " ").split(",");
 				if (pos.length >= 2) {
 					if (isFinite(pos[0]) && isFinite(pos[1])) {
@@ -5640,16 +5622,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			do {
 				// 커서보다 앞에서 찾기
-				tagPos = line.substring(0, cursor.ch).lastIndexOf("\\pos(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 5;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.substring(0, Math.min(cursor.ch+5, line.length-1)).lastIndexOf("\\pos(")) < 0) break;;
+				if ((end = line.indexOf(")", (begin = tagPos + 5))) < 0) break;
 			} while (false);
 			
 			if (0 < foundTag && begin < foundTag && foundTag < cursor.ch) {
@@ -5659,16 +5633,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			if (begin < 0 || end < 0) {
 				// 커서보다 뒤에 있는 것도 찾기
-				tagPos = line.indexOf("\\pos(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 5;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.indexOf("\\pos(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 5))) < 0) break;
 			}
 			
 			rMode = 0;
@@ -5686,16 +5652,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			do {
 				// 커서보다 앞에서 찾기
-				tagPos = line.substring(0, cursor.ch).lastIndexOf("\\dpos(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 6;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.substring(0, Math.min(cursor.ch+6, line.length-1)).lastIndexOf("\\dpos(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 6))) < 0) break;
 			} while (false);
 			
 			if (0 < foundTag && begin < foundTag && foundTag < cursor.ch) {
@@ -5705,16 +5663,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			if (begin < 0 || end < 0) {
 				// 커서보다 뒤에 있는 것도 찾기
-				tagPos = line.indexOf("\\dpos(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 6;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.indexOf("\\dpos(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 6))) < 0) break;
 			}
 			
 			rMode = 0;
@@ -5732,16 +5682,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			do {
 				// 커서보다 앞에서 찾기
-				tagPos = line.substring(0, cursor.ch).lastIndexOf("\\move(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 6;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.substring(0, Math.min(cursor.ch+6, line.length-1)).lastIndexOf("\\move(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 6))) < 0) break;
 			} while (false);
 			
 			if (0 < foundTag && begin < foundTag && foundTag < cursor.ch) {
@@ -5751,16 +5693,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			if (begin < 0 || end < 0) {
 				// 커서보다 뒤에 있는 것도 찾기
-				tagPos = line.indexOf("\\move(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 6;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.indexOf("\\move(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 6))) < 0) break;
 			}
 			const values = line.substring(begin, end).split(",");
 			if (values.length > 2) {
@@ -5782,16 +5716,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			do {
 				// 커서보다 앞에서 찾기
-				tagPos = line.substring(0, cursor.ch).lastIndexOf("\\dmove(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 7;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.substring(0, Math.min(cursor.ch+7, line.length-1)).lastIndexOf("\\dmove(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 7))) < 0) break;
 			} while (false);
 			
 			if (0 < foundTag && begin < foundTag && foundTag < cursor.ch) {
@@ -5801,14 +5727,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			if (begin < 0 || end < 0) {
 				// 커서보다 뒤에 있는 것도 찾기
-				tagPos = line.indexOf("\\dmove(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 7;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
+				if ((tagPos = line.indexOf("\\dmove(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 7))) < 0) {
 					break;
 				}
 			}
@@ -5833,16 +5753,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			do {
 				// 커서보다 앞에서 찾기
-				tagPos = line.substring(0, cursor.ch).lastIndexOf("\\org(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 5;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.substring(0, Math.min(cursor.ch+5, line.length-1)).lastIndexOf("\\org(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 5))) < 0) break;
 			} while (false);
 			
 			if (0 < foundTag && begin < foundTag && foundTag < cursor.ch) {
@@ -5852,16 +5764,8 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			if (begin < 0 || end < 0) {
 				// 커서보다 뒤에 있는 것도 찾기
-				tagPos = line.indexOf("\\org(");
-				if (tagPos < 0) {
-					break;
-				} else {
-					begin = tagPos + 5;
-				}
-				end = line.indexOf(")", begin);
-				if (end < 0) {
-					break;
-				}
+				if ((tagPos = line.indexOf("\\org(")) < 0) break;
+				if ((end = line.indexOf(")", (begin = tagPos + 5))) < 0) break;
 			}
 			
 			rMode = 0;
