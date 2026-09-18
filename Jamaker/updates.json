@@ -1,4 +1,33 @@
-[ { "version": "2026.09.14"
+[ { "version": "2026.09.19"
+  , "comment":
+    [ "javascript용 에디터 UI 보완"
+    , "ASS 변환 도움말 보완"
+    , "색상·좌표 입력기 버그 등 수정"
+    , "라이브러리 업데이트"
+    ]
+  , "files":
+    [ "view/help/img/ass2.png"
+    , "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/setting.html"
+    , "Jamaker.deps.json"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "Microsoft.CodeAnalysis.CSharp.dll"
+    , "Microsoft.CodeAnalysis.dll"
+    , "Microsoft.Web.WebView2.Core.dll"
+    , "Microsoft.Web.WebView2.WinForms.dll"
+    , "Microsoft.Web.WebView2.Wpf.dll"
+    , "Microsoft.Web.WebView2.Wpf.xml"
+    , "WebViewForm.deps.json"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+, { "version": "2026.09.14"
   , "comment":
     [ "결합 로직 공백 검사 재수정"
     , "마지막 싱크 [SMI] 지원"
