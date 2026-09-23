@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?260923";
-import "./Subtitle.Converter.js?260923";
-import "./AutoCompleteCodeMirror.js?260923";
-import "./SmiEditor.js?260923";
-import "./AssEditor.js?260923";
-import "./highlight/cm/javascript.js?260923";
+﻿import "./MenuStrip.js?260924";
+import "./Subtitle.Converter.js?260924";
+import "./AutoCompleteCodeMirror.js?260924";
+import "./SmiEditor.js?260924";
+import "./AssEditor.js?260924";
+import "./highlight/cm/javascript.js?260924";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?260923";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260923", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260924", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2526,7 +2526,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260923").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260924").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2609,7 +2609,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260923").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260924").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2792,7 +2792,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260923", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260924", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5082,7 +5082,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260923", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260924", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
