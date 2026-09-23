@@ -1,4 +1,18 @@
-[ { "version": "2026.09.19"
+[ { "version": "2026.09.24"
+  , "comment":
+    [ "ASS 자막 그라데이션 기능 지원"
+    , "색상/좌표 입력기 간헐적 버그 수정 등"
+    ]
+  , "files":
+    [ "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    ]
+  }
+, { "version": "2026.09.19"
   , "comment":
     [ "javascript용 에디터 UI 보완"
     , "ASS 변환 도움말 보완"
