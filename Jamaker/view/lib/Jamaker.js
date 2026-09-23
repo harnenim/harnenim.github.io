@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?260919";
-import "./Subtitle.Converter.js?260919";
-import "./AutoCompleteCodeMirror.js?260919";
-import "./SmiEditor.js?260919";
-import "./AssEditor.js?260919";
-import "./highlight/cm/javascript.js?260919";
+﻿import "./MenuStrip.js?260923";
+import "./Subtitle.Converter.js?260923";
+import "./AutoCompleteCodeMirror.js?260923";
+import "./SmiEditor.js?260923";
+import "./AssEditor.js?260923";
+import "./highlight/cm/javascript.js?260923";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?260919";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260919", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?260923", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -211,7 +211,11 @@ window.Tab = function(text, path) {
 				th.classList.add("selected");
 				const aBody = eData(th).body;
 				aBody.classList.add("selected");
-				eData(aBody).cm.scrollTo(0, 0);
+				const cm = eData(aBody).cm;
+				cm.scrollTo(0, 0);
+				setTimeout(() => {
+					cm.refresh();
+				}, 50);
 			});
 			tab.area.querySelector(".automation-selector .btn-new-automation").addEventListener("click", (e) => {
 				this.addAutomation();
@@ -1559,6 +1563,7 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 		hold.smiFile = new SmiFile(hold.getValue());
 	});
 	const assFile = SmiFile.holdsToAss(this.holds, appendParts, append.getStyles().body, append.getEvents().body, playResX, playResY, orderByEndSync);
+	assFile.gradation();
 	this.getAutomations().forEach((automation) => {
 		assFile.automation(automation.target, automation.script, automation.withOrigin);
 	});
@@ -2250,7 +2255,11 @@ window.init = function(jsonSetting, isBackup=true) {
 			if (th.getAttribute("data-tab") == "automation") {
 				const aBody = tabs[tabIndex].aBodies.querySelector(".automation-body.selected");
 				if (aBody) {
-					eData(aBody).cm.scrollTo(0, 0);
+					const cm = eData(aBody).cm;
+					cm.scrollTo(0, 0);
+					setTimeout(() => {
+						cm.refresh();
+					}, 50);
 				}
 			}
 		});
@@ -2517,7 +2526,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260919").then(async (response) => {
+		fetch("lib/Jamaker.color.css?260923").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2600,7 +2609,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260919").then(async (response) => {
+		fetch("lib/Jamaker.size.css?260923").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2783,7 +2792,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260919", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?260923", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5073,7 +5082,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260919", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?260923", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5372,17 +5381,19 @@ window.runColorPicker = function(useWvPicker=false) {
 		let begin = -1;
 		let end = -1;
 		let rgb = null;
+		let pos = 0;
 		
 		do {
 			// 커서보다 앞에서 찾기
-			let now = line.substring(0, cursor.ch).indexOf("#", begin+1);
+			let now = line.substring(0, cursor.ch).indexOf("#", pos);
 			if (now < 0) break;
+			pos = now + 1;
 			if (line.length < now+7) {
-				break;
+				continue;
 			}
 			const color = line.substring(now+1, now +7);
 			if (!isFinite("0x" + color)) {
-				break;
+				continue;
 			}
 			begin = now;
 			rgb = color;
@@ -5423,22 +5434,23 @@ window.runColorPicker = function(useWvPicker=false) {
 		let begin = -1;
 		let end = -1;
 		let bgr = null;
+		let pos = 0;
 		
 		do {
 			// 커서보다 앞에서 찾기
-			let now = line.substring(0, cursor.ch).indexOf("&H", begin+1);
+			let now = line.substring(0, cursor.ch).indexOf("&H", pos);
 			if (now < 0) break;
-			now++;
-			if (line.length < now + 8 || line[now+7] != "&") {
-				break;
+			pos = ++now;
+			if (line.length < now+8 || line[now+7] != "&") {
+				continue;
 			}
-			const color = line.substring(now + 1, now+7);
+			const color = line.substring(now+1, now+7);
 			if (!isFinite("0x" + color)) {
-				break;
+				continue;
 			}
 			begin = now;
 			bgr = color;
-		} while (begin >= 0);
+		} while (true);
 		
 		if (begin < found) {
 			// 위에서 찾은 다른 태그가 더 커서에 가까움
@@ -5491,7 +5503,6 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 	let tag = null;
 	let value = null;
 	let foundTag = -1;
-	let found = -1;
 	let rMode = 0;
 	
 	if (mode != 0) {
@@ -5543,7 +5554,6 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
-			found = begin;
 		} while (false);
 		
 		do { // \p1 태그 찾기
@@ -5574,9 +5584,11 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 				}
 			}
 			
-			tag = "\p1";
+			tag = "p1";
 			value = line.substring(begin, end).trim().replaceAll("  ", " ");
 			rMode = 2; // 자동 \p1이면 다각형 선택기
+			
+			/* 실제로 써보니, \an7\pos(0,0) 이외의 좌표에 맞추는 건 혼란만 부추김
 			
 			// \p1 태그로 그린 도형은 \pos, \move 확인 필요
 			// \an7이 아닌 경우는 고려하지 않음. 도형 크기에 따라 위치가 유동적임
@@ -5600,10 +5612,10 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 					}
 				}
 			} while (false);
+			*/
 			
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
-			found = begin;
 		} while (false);
 	}
 	
@@ -5633,7 +5645,6 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			rMode = 0;
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
-			found = begin;
 			tag = "pos";
 			value = line.substring(begin, end);
 		} while (false);
@@ -5663,7 +5674,6 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			rMode = 0;
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
-			found = begin;
 			tag = "dpos";
 			value = line.substring(begin, end);
 		} while (false);
@@ -5697,7 +5707,6 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			rMode = 0;
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
-			found = begin;
 			tag = "move";
 			value = line.substring(begin, end);
 		} while (false);
@@ -5734,7 +5743,6 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			rMode = 0;
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
-			found = begin;
 			tag = "dmove";
 			value = line.substring(begin, end);
 		} while (false);
@@ -5764,10 +5772,14 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			rMode = 0;
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
-			found = begin;
 			tag = "org";
 			value = line.substring(begin, end);
 		} while (false);
+	}
+	
+	// 현재 해당 값 변경은 막아두긴 했지만, 활성화했을 때 이게 없으면 좌표가 어긋날 수 있음
+	if (tag != "p1") {
+		ox = oy = 0;
 	}
 	
 	return {
