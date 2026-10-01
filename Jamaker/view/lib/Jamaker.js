@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?260924";
-import "./Subtitle.Converter.js?260924";
-import "./AutoCompleteCodeMirror.js?260924";
-import "./SmiEditor.js?260924";
-import "./AssEditor.js?260924";
-import "./highlight/cm/javascript.js?260924";
+﻿import "./MenuStrip.js?261001";
+import "./Subtitle.Converter.js?261001";
+import "./AutoCompleteCodeMirror.js?261001";
+import "./SmiEditor.js?261001";
+import "./AssEditor.js?261001";
+import "./highlight/cm/javascript.js?261001";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?260924";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?260924", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?261001", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -472,12 +472,13 @@ Tab.prototype.addAutomation = function(item) {
 				"/*\n"
 			+	"적용 대상 스타일 중 \k/\kf가 들어있는 이벤트에 대해 스크립트를 실행합니다.\n"
 			+	"\n"
-			+	"forLine(origin) 함수는 해당 이벤트 대해 1회 실행되며\n"
+			+	"forLine(origin, info) 함수는 해당 이벤트 대해 1회 실행되며\n"
 			+	"origin에는 ASS 이벤트 원본값이 들어옵니다.\n"
 			+	"origin.Start/End가 아닌 origin.start/end로 ms 단위 싱크값을 다룰 수 있습니다.\n"
 			+	"\n"
-			+	"forChar(origin, karaoke, cStart, c, i) 함수는 k/kf로 구분한 각 조각에 대해 실행됩니다.\n"
-			+	"karaoke의 값은 다음과 같습니다.\n"
+			+	"forChar(origin, info, kStart, k, i) 함수는 k/kf로 구분한 각 조각에 대해 실행됩니다.\n"
+			+	"\n"
+			+	"info의 값은 다음과 같습니다.\n"
 			+	"{	x: 문자열의 좌측 좌표\n"
 			+	",	y: 문자열의 상단 좌표\n"
 			+	",	ks: [k/kf로 구분한 조각에 대한 배열]\n"
@@ -485,23 +486,24 @@ Tab.prototype.addAutomation = function(item) {
 			+	"ks 배열에 들어가는 객체의 값은 다음과 같습니다.\n"
 			+	"{	time: k/kf의 시간값(1/100초 단위)\n"
 			+	",	text: 해당 조각의 문자열\n"
-			+	",	left: 해당 조각의 karaoke.x 좌표에 대한 상대 좌표\n"
+			+	",	top: 해당 조각의 info.y 기준 상대 좌표\n"
+			+	",	left: 해당 조각의 info.x 기준 상대 좌표\n"
 			+	",	width: 해당 조각의 좌우 폭\n"
 			+	"}\n"
-			+	"cStart는 origin.start에 앞선 시간값을 누적한, 현재 조각의 시간값입니다.\n"
-			+	"i는 현재 조각의 번호이며, c는 karaoke.ks[i]와 같습니다.\n"
+			+	"kStart는 origin.start에 앞선 시간값을 누적한, 현재 조각의 시간값입니다.\n"
+			+	"i는 현재 조각의 번호이며, k는 info.ks[i]와 같습니다.\n"
 			+	"\n"
-			+	"new AssEvent(start, end, style, text, layer=0) 형태로 이벤트를 생성할 수 있습니다.\n"
+			+	"new AssEvent(start, end, style, text) 형태로 이벤트를 생성할 수 있습니다.\n"
 			+	"\n"
 			+	"이곳에서 생성된 이벤트에는 Effect 값에 jmk가 붙으며, ASS 역반영 시 예외 처리됩니다.\n"
 			+	"*/\n"
 			+	"forLine = function(origin) {\n"
 			+	"	events.push(origin);\n"
 			+	"}\n"
-			+	"forChar = function(origin, e, cStart, c, i) {\n"
-			+	"	events.push(new AssEvent(cStart, origin.end, '스타일'\n"
-			+	"		,	`{\\\\an2\\\\pos(${e.x + c.left + c.width/2},${e.y + style.Fontsize})}`\n"
-			+	"		+	c.text\n"
+			+	"forChar = function(origin, info, kStart, k, i) {\n"
+			+	"	events.push(new AssEvent(kStart, origin.end, '스타일'\n"
+			+	"		,	`{\\\\an2\\\\pos(${info.x + k.left + k.width/2},${info.y + style.Fontsize})}`\n"
+			+	"		+	k.text\n"
 			+	"	));\n"
 			+	"}\n"
 			+	"/*\n"
@@ -2526,7 +2528,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?260924").then(async (response) => {
+		fetch("lib/Jamaker.color.css?261001").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2609,7 +2611,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?260924").then(async (response) => {
+		fetch("lib/Jamaker.size.css?261001").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2792,7 +2794,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?260924", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?261001", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5082,7 +5084,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?260924", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?261001", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5921,6 +5923,7 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 		}
 		if (keep) {
 			smi.steps = [];
+			smi.lines = [];
 			lines.forEach((line, i) => {
 				// 최종적으론 해당 그룹 마지막 싱크의 색상값을 구함
 				line.attrs.forEach((attr) => {
@@ -5936,11 +5939,13 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 					}
 				});
 				smi.steps.push(line.step);
+				smi.lines.push(line.attrs); // TODO: 일단 RUBY 태그 무시
 			});
 			group.smis.push(smi);
 			
 		} else {
 			smi.steps = [];
+			smi.lines = [];
 			lines.forEach((line) => {
 				smi.steps.push(line.step);
 				const simpleAttrs = [];
@@ -5963,7 +5968,7 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 					}
 					if (lastAttr) {
 						if (attr.attrs) {
-							// RUBY 태그는 별도로 처리..가 될지 모르겠네..........
+							// TODO: RUBY 태그는 별도로 처리..가 될지 모르겠네..........
 							simpleAttrs.push(last = attr);
 						} else {
 							// 이외에는 색상태그 무시하고 한 덩어리로 처리
@@ -5973,7 +5978,7 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 						simpleAttrs.push(attr);
 					}
 				});
-				line.attrs = simpleAttrs;
+				smi.lines.push(line.attrs = simpleAttrs);
 				line.fcFrom = fc;
 			});
 			groups.push(group = {
@@ -5988,19 +5993,19 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 		if (group.smis.length < 2) return;
 		
 		group.lines.forEach((line, i) => {
-			line.step = 0;
-			line.kText = "";
-			
-			let lastStep = 0;
 			group.smis.forEach((smi) => {
-				if (smi.steps[i] > 0) {
-					lastStep = smi.steps[i];
+				let step = line.text.length;
+				const attrs = smi.lines[i];
+				for (let j = attrs.length - 1; j >= 0; j--) {
+					if (!attrs[j].text) continue;
+					if (attrs[j].fc != line.fcFrom) break;
+					step -= attrs[j].text.length;
 				}
+				smi.steps[i] = step;
 			});
-			if (lastStep > 0 && group.smis[group.smis.length - 1].steps[i] == 0) {
-				group.smis[group.smis.length - 1].steps[i] = line.text.length;
-			}
+			line.kText = "";
 		});
+		
 		let lastStart = group.smis[0].start;
 		let lastSteps = [];
 		group.lines.forEach((line) => { lastSteps.push(0); });
@@ -6035,7 +6040,7 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 			if (line.fcFrom && line.fcTo) {
 				const fcTo   = `${line.fcTo  .substring(4,6)}${line.fcTo  .substring(2,4)}${line.fcTo  .substring(0,2)}`;
 				const fcFrom = `${line.fcFrom.substring(4,6)}${line.fcFrom.substring(2,4)}${line.fcFrom.substring(0,2)}`;
-				comment += `0,,${group.smis.length},line${i},` + (`{\\c&H${fcTo}&\\4c&H${fcFrom}&}` + line.kText).replaceAll("}{", "") + "\n";
+				comment += `0,,${group.smis.length},line${i},` + (`{\\c&H${fcTo}&\\2c&H${fcFrom}&}` + line.kText).replaceAll("}{", "") + "\n";
 			} else {
 				comment += `0,,${group.smis.length},line${i},` + line.kText + "\n";
 			}

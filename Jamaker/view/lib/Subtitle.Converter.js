@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?260924";
+﻿import "./SubtitleObject.js?261001";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -3076,7 +3076,7 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 	}
 	
 	let mode = 0; // 0: text / 1: tag / 2: \k
-	let html = "<span data-k='0'>";
+	let html = "<div style='width: fit-content;'><span data-k='0'>";
 	
 	let an = 0;
 	let pos = null;
@@ -3090,6 +3090,10 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 				if (c == '{') {
 					// 태그 시작
 					mode = 1;
+				} else if (c == '\\' && text.length >= i && text[i+1] == 'N') {
+					// 줄바꿈
+					html += "</span></div><div style='width: fit-content;'><span>";
+					i++;
 				} else {
 					// 문자열
 					html += c;
@@ -3160,7 +3164,7 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 			}
 		}
 	}
-	html += "</span>";
+	html += "</span></div>";
 	
 	// 공백문자는 <span> 밖으로 꺼내서 글자 좌표 계산에서 제외함
 	// 공백문자가 2개 이상 연속된 노래방 자막은 없다고 가정
@@ -3182,20 +3186,22 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 	
 	if (style.Fontname == "Meiryo") {
 		// 예외처리 필요
-		[...div.children].forEach((span) => {
-			let html = "";
-			const text = span.innerText;
-			for (let i = 0; i < text.length; i++) {
-				const c = text[i].charCodeAt();
-				if (c < 255) {
-					html += `<span style="font-size: 105%">${text[i]}</span>`;
-				} else if ((11592 <= c && c <= 12687) || (44032 <= c && c <= 55203)) {
-					html += `<span style="font-size: 95%">${text[i]}</span>`;
-				} else {
-					html += text[i];
+		[...div.children].forEach((line) => {
+			[...line.children].forEach((span) => {
+				let html = "";
+				const text = span.innerText;
+				for (let i = 0; i < text.length; i++) {
+					const c = text[i].charCodeAt();
+					if (c < 255) {
+						html += `<span style="font-size: 105%">${text[i]}</span>`;
+					} else if ((11592 <= c && c <= 12687) || (44032 <= c && c <= 55203)) {
+						html += `<span style="font-size: 95%">${text[i]}</span>`;
+					} else {
+						html += text[i];
+					}
 				}
-			}
-			span.innerHTML = html;
+				span.innerHTML = html;
+			});
 		});
 	}
 	
@@ -3207,6 +3213,36 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 		// 스타일 기본 좌표
 		pos = AssFile.getDefaultPos(style, playResX, playResY, an);
 	}
+	
+	const ks = [];
+	let height = 0;
+	[...div.children].forEach((line) => {
+		let left = 0;
+		switch (an % 3) {
+			case 2: // 가운데
+				left = (div.offsetWidth - line.offsetWidth) / 2;
+				break;
+			case 0: // 오른쪽
+				left = (div.offsetWidth - line.offsetWidth);
+				break;
+		}
+		let last = {time: 0};
+		[...line.children].forEach((span) => {
+			if (!span.innerText) {
+				last.time += Number(span.getAttribute("data-k"))
+				return;
+			}
+			ks.push(last = {
+					time: Number(span.getAttribute("data-k"))
+				,	text: span.innerText
+				,	top: height
+				,	left: left + span.offsetLeft
+				,	width: span.offsetWidth
+			});
+		});
+		height += (line.innerText ? 1 : 0.5) * style.Fontsize;
+	});
+	
 	{	// \an7 기준으로 재계산
 		switch (an % 3) {
 			case 2: // 가운데
@@ -3218,25 +3254,15 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 		}
 		switch (Math.floor((an - 1) / 3)) {
 			case 0: // 아래
-				pos[1] -= style.Fontsize;
+				pos[1] -= height;
 				break;
 			case 1: // 가운데
-				pos[1] -= style.Fontsize / 2;
+				pos[1] -= height / 2;
 				break;
 		}
 	}
 	
-	const result = { x: pos[0], y: pos[1], fad: fad, t: t, ks: [] };
-	[...div.children].forEach((span) => {
-		if (!span.innerText) return;
-		result.ks.push({
-				time: Number(span.getAttribute("data-k"))
-			,	text: span.innerText
-			,	left: span.offsetLeft
-			,	width: span.offsetWidth
-		});
-	});
-	return result;
+	return { x: pos[0], y: pos[1], fad: fad, t: t, ks: ks };
 }
 AssFile.prototype.gradation = function() {
 	let w = 1920;
@@ -3700,8 +3726,8 @@ AssFile.prototype.automation = function(styleName, script) {
 	const events = [];
 	
 	try {
-		let forLine = () => {};
-		let forChar = () => {};
+		let forLine = null;
+		let forChar = null;
 		eval(script);
 		
 		this.getEvents().body.forEach((origin) => {
@@ -3712,23 +3738,44 @@ AssFile.prototype.automation = function(styleName, script) {
 				events.push(origin);
 				return;
 			}
-			
-			forLine(origin);
-			
-			const karaoke = AssEvent.parseKaraoke(origin.Text, style, playResX, playResY);
-			let cStart = origin.start;
 			const count = events.length;
-			karaoke.ks.forEach((c, i) => {
-				forChar(origin, karaoke, cStart, c, i);
-				cStart += c.time * 10;
-			});
+			
+			const info = AssEvent.parseKaraoke(origin.Text, style, playResX, playResY);
+			if (typeof forLine == "function") {
+				forLine(origin, info);
+			}
+			
+			if (typeof forChar == "function") {
+				let kStart = origin.start;
+				info.ks.forEach((k, i) => {
+					// 공백문자만 있으면 효과는 제외해야 하지만, 시간값은 차지할 수 있어서 ks 배열에는 들어감
+					if (k.text.trim()) {
+						forChar(origin, info, kStart, k, i);
+					}
+					kStart += k.time * 10;
+				});
+			}
+			
 			let layer = origin.Layer;
 			const add = Subtitle.optimizeSync(origin.start) - origin.start;
 			for (let i = count; i < events.length; i++) {
 				const event = events[i];
+
+				if (event == origin) {
+					// 원본일 경우 유지
+				} else if ((event.Text.indexOf("\\pos(") > 0)
+				        || (event.Text.indexOf("\\move(") > 0)
+				) {
+					// 좌표값 있으면 원본과 동일 레이어 사용
+					event.Layer = origin.Layer;
+				} else {
+					// 좌표값 없으면 레이어 번호 새로 부여
+					event.Layer = ++layer;
+				}
+				
 				// 자동 생성 스크립트라는 기록 남기기
-				event.Layer = layer++;
 				event.Effect = "jmk";
+				
 				// 자동 생성 싱크는 프레임 싱크 정보가 없을 수 있으므로, 해당 로직을 거치지 않은 값으로 재계산
 				if (event.start != origin.start && event.start != origin.end) {
 					event.Start = AssEvent.timeToAssTime(event.start + add); 
@@ -3737,28 +3784,28 @@ AssFile.prototype.automation = function(styleName, script) {
 					event.End = AssEvent.timeToAssTime(event.end + add); 
 				}
 			}
-			if (karaoke.fad) {
+			if (info.fad) {
 				for (let i = count; i < events.length; i++) {
 					const event = events[i];
 					if (event.start == origin.start) {
 						if (event.end == origin.end) {
-							event.Text = (`{\\fad(${karaoke.fad[0]},${karaoke.fad[1]})}` + event.Text).replaceAll("}{", "");
-						} else if (karaoke.fad[0]) {
-							event.Text = (`{\\fad(${karaoke.fad[0]},0)}` + event.Text).replaceAll("}{", "");
+							event.Text = (`{\\fad(${info.fad[0]},${info.fad[1]})}` + event.Text).replaceAll("}{", "");
+						} else if (info.fad[0]) {
+							event.Text = (`{\\fad(${info.fad[0]},0)}` + event.Text).replaceAll("}{", "");
 						}
-					} else if (karaoke.fad[1] && event.end == origin.end) {
-						event.Text = (`{\\fad(0,${karaoke.fad[1]})}` + event.Text).replaceAll("}{", "");
+					} else if (info.fad[1] && event.end == origin.end) {
+						event.Text = (`{\\fad(0,${info.fad[1]})}` + event.Text).replaceAll("}{", "");
 					}
 				}
 			}
-			if (karaoke.t) {
+			if (info.t) {
 				for (let i = count; i < events.length; i++) {
 					const event = events[i];
-					if ((karaoke.t[0] < event.end - origin.start)
-					 && (event.start - origin.end < karaoke.t[1])
+					if ((info.t[0] < event.end - origin.start)
+					 && (event.start - origin.end < info.t[1])
 					) {
 						const past = event.start - origin.start;
-						event.Text = (`{\\t(${karaoke.t[0] - past},${karaoke.t[1] - past},${karaoke.t[2]})}` + event.Text).replaceAll("}{", "");
+						event.Text = (`{\\t(${info.t[0] - past},${info.t[1] - past},${info.t[2]})}` + event.Text).replaceAll("}{", "");
 					}
 				}
 			}
