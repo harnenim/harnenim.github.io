@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?261001";
+﻿import "./SubtitleObject.js?261002";
 
-import "./highlight/cm/codemirror.js?261001";
-import "./highlight/cm/scrollpastend.js?261001";
-import "./highlight/cm/mark-selection.js?261001";
-import "./highlight/cm/active-line.js?261001";
-import "./highlight/cm/sami.js?261001";
+import "./highlight/cm/codemirror.js?261002";
+import "./highlight/cm/scrollpastend.js?261002";
+import "./highlight/cm/mark-selection.js?261002";
+import "./highlight/cm/active-line.js?261002";
+import "./highlight/cm/sami.js?261002";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?261001", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?261002", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?261001", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?261002", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1826,16 +1826,22 @@ SmiEditor.prototype.moveToSync = function(add=0) {
 	SmiEditor.PlayerAPI.play();
 	SmiEditor.PlayerAPI.moveTo(sync);
 }
-SmiEditor.prototype.findSync = function(target) {
-	if (!target) {
+SmiEditor.prototype.findSync = function(target=null, findNear=false) {
+	if (typeof target != "number") {
+		if (typeof target == "boolean") {
+			findNear = target;
+		}
 		target = time;
+	}
+	if (findNear) {
+		target = Subtitle.findSync(target);
 	}
 	let lineNo = 0;
 	let hasSync = false;
 	for (let i = 0; i < this.lines.length; i++) {
 		if (this.lines[i].TYPE) {
 			hasSync = true;
-			if (this.lines[i].SYNC < target) {
+			if (this.lines[i].SYNC <= target) {
 				lineNo = i + 1;
 			} else {
 				if (!lineNo) {
@@ -2645,7 +2651,7 @@ SmiEditor.Finder = {
 	last: { find: "", replace: "", withCase: false, reverse: false }
 ,	open: function(isReplace) {
 		this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-		let newWindow = window.open("finder.html?261001", "finder", "scrollbars=no,location=no,width=400,height=220");
+		let newWindow = window.open("finder.html?261002", "finder", "scrollbars=no,location=no,width=400,height=220");
 		if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 		binder.focus("finder");
 	}
@@ -2841,7 +2847,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 	window: null
 ,	open: function() {
-		let newWindow = window.open("viewer.html?261001", "viewer", "scrollbars=no,location=no,width=1,height=1");
+		let newWindow = window.open("viewer.html?261002", "viewer", "scrollbars=no,location=no,width=1,height=1");
 		if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 		}

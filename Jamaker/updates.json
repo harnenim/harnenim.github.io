@@ -1,4 +1,26 @@
-[ { "version": "2026.09.24"
+[ { "version": "2026.10.03"
+  , "comment":
+    [ "뷰어 타이밍 기준 변경"
+    , "줄바꿈 있을 때 오토메이션 좌표 지원"
+    , "오토메이션 공백문자 건너뛰기"
+    , "ASS \\k 태그 자동 생성 기능 버그 수정"
+    , "AutoSyncShift, SamiReplacer 작업 시 오토메이션 유지 등"
+    ]
+  , "files":
+    [ "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "view/AutoSyncShift.html"
+    , "view/SamiReplacer.html"
+    , "view/viewer.html"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    ]
+  }
+, { "version": "2026.09.24"
   , "comment":
     [ "ASS 자막 그라데이션 기능 지원"
     , "색상/좌표 입력기 간헐적 버그 수정 등"
