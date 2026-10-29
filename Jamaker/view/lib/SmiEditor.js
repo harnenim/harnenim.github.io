@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?261002";
+﻿import "./SubtitleObject.js?261029";
 
-import "./highlight/cm/codemirror.js?261002";
-import "./highlight/cm/scrollpastend.js?261002";
-import "./highlight/cm/mark-selection.js?261002";
-import "./highlight/cm/active-line.js?261002";
-import "./highlight/cm/sami.js?261002";
+import "./highlight/cm/codemirror.js?261029";
+import "./highlight/cm/scrollpastend.js?261029";
+import "./highlight/cm/mark-selection.js?261029";
+import "./highlight/cm/active-line.js?261029";
+import "./highlight/cm/sami.js?261029";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?261002", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?261029", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?261002", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?261029", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -1147,10 +1147,14 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 								break;
 							}
 							default: {
-								const wsIndex = text.indexOf(' ');
+								let wsIndex = text.indexOf(' ');
+								const ws2Index = text.indexOf('　');
+								if ((wsIndex < 0) || (ws2Index >= 0 && ws2Index < wsIndex)) {
+									wsIndex = ws2Index;
+								}
 								const tagIndex = text.indexOf('<');
 								const bsIndex = text.indexOf('\\');
-								if (wsIndex <= 0) {
+								if (wsIndex < 0) {
 									if (tagIndex < 0 && bsIndex < 0) {
 										// 줄 끝으로 이동
 										cm.setCursor({ line: cursor.line });
@@ -1166,7 +1170,11 @@ SmiEditor.cmKeydownHandler = (cm, e) => {
 								} else {
 									if ((tagIndex < 0 || wsIndex < tagIndex) && (bsIndex < 0 || wsIndex < bsIndex)) {
 										// 공백문자 단위 이동
-										cm.setCursor({ line: cursor.line, ch: cursor.ch + wsIndex + 1 });
+										let wsEnd = wsIndex + 1;
+										for (; wsEnd < text.length; wsEnd++) {
+											if ((text[wsEnd] != " ") && (text[wsEnd] != "　")) break;
+										}
+										cm.setCursor({ line: cursor.line, ch: cursor.ch + wsEnd });
 									} else {
 										if (bsIndex < 0 || (tagIndex > 0 && tagIndex < bsIndex)) {
 											// 태그 시작점으로 이동
@@ -2651,7 +2659,7 @@ SmiEditor.Finder = {
 	last: { find: "", replace: "", withCase: false, reverse: false }
 ,	open: function(isReplace) {
 		this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-		let newWindow = window.open("finder.html?261002", "finder", "scrollbars=no,location=no,width=400,height=220");
+		let newWindow = window.open("finder.html?261029", "finder", "scrollbars=no,location=no,width=400,height=220");
 		if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 		binder.focus("finder");
 	}
@@ -2847,7 +2855,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 	window: null
 ,	open: function() {
-		let newWindow = window.open("viewer.html?261002", "viewer", "scrollbars=no,location=no,width=1,height=1");
+		let newWindow = window.open("viewer.html?261029", "viewer", "scrollbars=no,location=no,width=1,height=1");
 		if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 		}

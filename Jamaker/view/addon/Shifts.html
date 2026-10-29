@@ -1,0 +1,726 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>좌표 이동 추적</title>
+	<script src="../lib/popup.js?261029"></script>
+	<script>
+windowName = "addon";
+
+window.tTop = 45;
+window.tLeft = 45;
+window.tWidth = 10;
+window.tHeight = 10;
+window.selected = -1;
+window.rendering = 0;
+window.traceFrom = 0;
+window.traceOffset = [0,0];
+
+ready(() => {
+	window.editor = (opener && opener.SmiEditor) ? opener.SmiEditor.selected : null;
+	if (!editor) {
+		alert("작업 대상이 없습니다.");
+		window.close();
+	}
+	
+	const tab = opener.tabs[opener.tabIndex];
+	if (!tab.withAss) {
+		alert("ASS 자막 변환이 활성화되지 않았습니다.");
+		window.close();
+	}
+	
+	window.Subtitle = opener.Subtitle;
+	
+	window.path = Subtitle.video.path;
+	window.resX = tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+	window.resY = tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+	
+	window.preview = document.getElementById("preview");
+	window.target  = document.getElementById("target" );
+	window.frames  = document.getElementById("frames" );
+	window.scrolls = document.getElementById("frames_scroll");
+	window.poss  = document.getElementById("poss" );
+	window.formRendering = document.getElementById("formRendering");
+	window.inputStart = document.querySelector("input[name=start]");
+	window.inputEnd   = document.querySelector("input[name=end]"  );
+	window.labelFrame = document.getElementById("labelFrame");
+	
+	target.style.top    = `${ tTop    }%`;
+	target.style.left   = `${ tLeft   }%`;
+	target.style.width  = `${ tWidth  }%`;
+	target.style.height = `${ tHeight }%`;
+	
+	function afterUpdateSync() {
+		if (!isFinite(inputStart.value)
+		 || !isFinite(inputEnd  .value)
+		) {
+			return;
+		}
+		
+		window.start = Subtitle.findSync(Number(inputStart.value));
+		window.end   = Subtitle.findSync(Number(inputEnd  .value));
+		const si = Subtitle.findSyncIndex(window.start);
+		const ei = Subtitle.findSyncIndex(window.end  );
+		labelFrame.innerText = window.count = (ei - si);
+	}
+	{
+		window.lineNo = editor.cm.getCursor().line;
+		
+		let start = 0;
+		for (let i = lineNo; i >= 0; i--) {
+			if (editor.lines[i].SYNC) {
+				start = editor.lines[i].SYNC;
+				break;
+			}
+		}
+		if (start < 0) {
+			start = 0;
+		}
+		
+		let end = 0;
+		for (let i = lineNo + 1; i < editor.lines.length; i++) {
+			if (editor.lines[i].SYNC) {
+				end = editor.lines[i].SYNC;
+				break;
+			}
+		}
+		if (end < 0) {
+			end = 0;
+		}
+		
+		inputStart.value = start;
+		inputEnd  .value = end;
+		
+		afterUpdateSync();
+	}
+	inputStart.addEventListener("input", afterUpdateSync);
+	inputEnd  .addEventListener("input", afterUpdateSync);
+	
+	formRendering.addEventListener("submit", (e) => {
+		e.preventDefault();
+		if (rendering) {
+			if (rendering == 1) {
+				alert("프레임 렌더링 중입니다.");
+			} else if (rendering == 2) {
+				alert("이동 추적 진행 중입니다.");
+			}
+			return;
+		}
+		
+		rendering = 1;
+		
+		// C# 호출해서 렌더링
+		opener.binder.renderForTrace(path, start, Math.max(0, end - start - 1), resX, resY);
+	});
+	setTimeout(() => {
+		formRendering.requestSubmit();
+	}, 1);
+	
+	window.type = "target";
+	
+	document.getElementById("areaSelectType").addEventListener("change", (e) => {
+		const input = e.target.closest("input");
+		if (input) {
+			window.type = input.value;
+		}
+	});
+	
+	let drawing = null;
+	let ex, ey, tx, ty, tw, th, fx, fy;
+	preview.addEventListener("mousedown", (e) => {
+		ex = e.clientX;
+		ey = e.clientY;
+		tx = target.offsetLeft;
+		ty = target.offsetTop;
+		tw = target.offsetWidth;
+		th = target.offsetHeight;
+		fx = poss.children[selected].querySelector("input[name=x]").value;
+		fy = poss.children[selected].querySelector("input[name=y]").value;
+		
+		const isTarget = e.target.closest("#target");
+		if (isTarget) {
+			const border = e.target.closest(".border");
+			if (border) {
+				if (border.classList.contains("n")) {
+					drawing = "n";
+				} else if (border.classList.contains("ne")) {
+					drawing = "ne";
+				} else if (border.classList.contains("e")) {
+					drawing = "e";
+				} else if (border.classList.contains("se")) {
+					drawing = "se";
+				} else if (border.classList.contains("s")) {
+					drawing = "s";
+				} else if (border.classList.contains("sw")) {
+					drawing = "sw";
+				} else if (border.classList.contains("w")) {
+					drawing = "w";
+				} else if (border.classList.contains("nw")) {
+					drawing = "nw";
+				}
+			} else {
+				drawing = "move";
+			}
+		} else {
+			target.style.top  = `${ ty = ey - preview.offsetTop  }px`;
+			target.style.left = `${ tx = ex - preview.offsetLeft }px`;
+			target.style.width  = "1px";
+			target.style.height = "1px";
+			drawing = "draw";
+		}
+	});
+	window.addEventListener("mousemove", (e) => {
+		if (!drawing) return;
+		
+		let x = e.clientX;
+		let y = e.clientY;
+		
+		if (drawing == "draw") {
+			x -= preview.offsetLeft;
+			y -= preview.offsetTop;
+			let top  = (y < ty ? y : ty);
+			let left = (x < tx ? x : tx);
+			let width  = Math.abs(x - tx);
+			let height = Math.abs(y - ty);
+			
+			// 새 영역 그릴 때 범위 제한
+			if (top < 0) {
+				height += top;
+				top = 0;
+			}
+			if (left < 0) {
+				width += left;
+				left = 0;
+			}
+			if (left + width > preview.offsetWidth) {
+				width = preview.offsetWidth - left;
+			}
+			if (top + height > preview.offsetHeight) {
+				height = preview.offsetHeight - top;
+			}
+			
+			target.style.top  = `${ top  }px`;
+			target.style.left = `${ left }px`;
+			target.style.width  = `${ width  }px`;
+			target.style.height = `${ height }px`;
+			
+		} else if (drawing == "move") {
+			let top  = ty + y - ey;
+			let left = tx + x - ex;
+			
+			target.style.top  = `${ top  }px`;
+			target.style.left = `${ left }px`;
+			
+		} else {
+			let top = ty;
+			let left = tx;
+			let width = tw;
+			let height = th;
+			
+			if (drawing == "nw"
+			 || drawing == "n"
+			 || drawing == "ne") {
+				top = ty + y - ey;
+				height = ty + th - top;
+				if (height < 0) {
+					top += height;
+					height = -height;
+				}
+			}
+			if (drawing == "ne"
+			 || drawing == "e"
+			 || drawing == "se") {
+				width = tw + x - ex;
+				if (width < 0) {
+					left += width;
+					width = -width;
+				}
+			}
+			if (drawing == "se"
+			 || drawing == "s"
+			 || drawing == "sw") {
+				height = th + y - ey;
+				if (height < 0) {
+					top += height;
+					height = -height;
+				}
+			}
+			if (drawing == "sw"
+			 || drawing == "w"
+			 || drawing == "nw") {
+				left = tx + x - ex;
+				width = tx + tw - left;
+				if (width < 0) {
+					left = tx + tw;
+					width = -width;
+				}
+			}
+			
+			target.style.top  = `${ top  }px`;
+			target.style.left = `${ left }px`;
+			target.style.width  = `${ width  }px`;
+			target.style.height = `${ height }px`;
+		}
+	});
+	window.addEventListener("mouseup", (e) => {
+		if (!drawing) return;
+		
+		let top    = target.offsetTop   ;
+		let left   = target.offsetLeft  ;
+		let width  = target.offsetWidth ;
+		let height = target.offsetHeight;
+		
+		if (top < 0
+		 || left < 0
+		 || left + width > preview.offsetWidth
+		 || top + height > preview.offsetHeight) {
+			alert("선택 가능한 범위를 벗어났습니다.");
+			drawing = null;
+			target.style.top    = `${ tTop    }%`;
+			target.style.left   = `${ tLeft   }%`;
+			target.style.width  = `${ tWidth  }%`;
+			target.style.height = `${ tHeight }%`;
+			return;
+		}
+		
+		tTop  = (((top  / preview.clientHeight) - (fy / resY)) * 100);
+		tLeft = (((left / preview.clientWidth ) - (fx / resX)) * 100);
+		
+		if (drawing != "move") {
+			target.style.width  = `${ tWidth  = (width  / preview.clientWidth  * 100) }%`;
+			target.style.height = `${ tHeight = (height / preview.clientHeight * 100) }%`;
+		}
+		
+		drawing = null;
+	});
+	window.addEventListener("keydown", (e) => {
+		if (!drawing) return;
+		
+		if (e.key == "Escape") {
+			e.stopPropagation();
+			
+			target.style.top    = `${ tTop    }%`;
+			target.style.left   = `${ tLeft   }%`;
+			target.style.width  = `${ tWidth  }%`;
+			target.style.height = `${ tHeight }%`;
+			
+			drawing = null;
+		}
+	}, { capture: true });
+	
+	document.getElementById("btnTrace").addEventListener("click", (e) => {
+		if (rendering) {
+			if (rendering == 1) {
+				alert("프레임 렌더링 중입니다.");
+			} else if (rendering == 2) {
+				opener.binder.stopTrace();
+			}
+			return;
+		}
+		
+		rendering = 2;
+		btnTrace.innerText = "추적 중단";
+		traceFrom = selected;
+		traceOffset = [
+			Number(poss.children[selected].querySelector("input[name=x]").value)
+		,	Number(poss.children[selected].querySelector("input[name=y]").value)
+		];
+		const traceStart = Subtitle.video.fs[Subtitle.findSyncIndex(start) + traceFrom];
+		
+		// C# 호출해서 추적
+		if (type == "target") {
+			opener.binder.trace(path, traceStart, Math.max(0, end - traceStart - 1), resX, resY
+				,	Math.round(resX * tLeft  /100) + traceOffset[0]
+				,	Math.round(resY * tTop   /100) + traceOffset[1]
+				,	Math.round(resX * tWidth /100)
+				,	Math.round(resY * tHeight/100)
+			);
+		} else {
+			opener.binder.trace(path, traceStart, Math.max(0, end - traceStart - 1), resX, resY, 0,0,0,0);
+		}
+	});
+	
+	frames.addEventListener("click", (e) => {
+		let img = e.target.closest("img");
+		if (img && !img.classList.contains("selected")) {
+			[...frames.querySelectorAll("img.selected")].forEach((selected) => {
+				selected.classList.remove("selected");
+			});
+			[...poss.querySelectorAll("li.selected")].forEach((selected) => {
+				selected.classList.remove("selected");
+			});
+			const index = window.selected = Number(img.getAttribute("data-index"));
+			img.classList.add("selected");
+			poss.children[index].classList.add("selected");
+			preview.style.backgroundImage = `url("${img.src}")`;
+			
+			// 선택된 이미지 보이도록 스크롤
+			let left = img.offsetLeft - scrolls.scrollLeft;
+			if (left < 10) {
+				scrolls.scrollTo({
+						top: 0
+					,	left: img.offsetLeft - 10
+					,	behavior: "smooth"
+				});
+			} else {
+				right = left + img.offsetWidth;
+				if (scrolls.offsetWidth - right < 10) {
+					scrolls.scrollTo({
+							top: 0
+						,	left: img.offsetLeft + img.offsetWidth - scrolls.offsetWidth + 10
+						,	behavior: "smooth"
+					});
+				}
+			}
+			
+			// 대상 영역 프레임에 맞춰 이동
+			target.style.top  = `${ tTop  + (xys[index][1] / resY * 100) }%`;
+			target.style.left = `${ tLeft + (xys[index][0] / resX * 100) }%`;
+		}
+	});
+	
+	window.addEventListener("keydown", (e) => {
+		if (drawing) return;
+		if (e.target.closest("input")) return;
+		
+		switch (e.key) {
+			case "ArrowLeft":
+				// 뒤로
+				e.preventDefault();
+				if (selected > 0) {
+					[...frames.querySelectorAll("img.selected")].forEach((selected) => {
+						selected.classList.remove("selected");
+					});
+					[...poss.querySelectorAll("li.selected")].forEach((selected) => {
+						selected.classList.remove("selected");
+					});
+					frames.children[--selected].click();
+				}
+				break;
+			case "ArrowRight":
+				// 앞으로
+				e.preventDefault();
+				if (selected + 1 < xys.length) {
+					[...frames.querySelectorAll("img.selected")].forEach((selected) => {
+						selected.classList.remove("selected");
+					});
+					[...poss.querySelectorAll("li.selected")].forEach((selected) => {
+						selected.classList.remove("selected");
+					});
+					frames.children[++selected].click();
+				}
+				break;
+		}
+	});
+	
+	poss.addEventListener("click", (e) => {
+		const span = e.target.closest("span");
+		if (span) {
+			frames.children[span.parentNode.getAttribute("data-index")].click();
+		}
+	});
+	poss.addEventListener("input", (e) => {
+		const input = e.target.closest("input");
+		if (input) {
+			if (isFinite(input.value)) {
+				const value = Number(input.value);
+				const index = input.parentElement.getAttribute("data-index");
+				xys[index][input.name == "x" ? 0 : 1] = value;
+				
+				if (index == selected) {
+					target.style.top  = `${tTop  + (xys[index][1] / resY * 100)}%`;
+					target.style.left = `${tLeft + (xys[index][0] / resX * 100)}%`;
+				}
+			}
+		}
+	});
+	
+	document.getElementById("btnApply").addEventListener("click", (e) => {
+		const values = [];
+		let last = null;
+		let count = 0;
+		xys.slice(1).forEach((xy) => {
+			if (last && xy[0] == last[0] && xy[1] == last[1]) {
+				count++;
+			} else {
+				if (count > 1) {
+					values[values.length - 1] = `${last[0]} ${last[1]}:${count}`
+				}
+				values.push(`${xy[0]} ${xy[1]}`);
+				last = xy;
+				count = 1;
+			}
+		});
+		if (count > 1) {
+			values[values.length - 1] = `${last[0]} ${last[1]}:${count}`
+		}
+		const shifts = `{\\shifts(${values.join(",")})}`;
+		const cursor = { line: lineNo, ch: Infinity };
+		editor.cm.replaceRange(shifts, cursor, cursor);
+		window.close();
+	});
+	
+	window.addEventListener("beforeunload", (e) => {
+		if (rendering == 2) {
+			opener.binder.stopTrace();
+		}
+	});
+});
+opener.traceRendering = function(fi) {
+	Progress.set("#areaBtnRender", fi / count);
+}
+opener.afterRenderForTrace = function() {
+	let fHtml = "";
+	let pHtml = "";
+	if (window.xys) {
+		xys.length = 0;
+	} else {
+		xys = [];
+	}
+	for (let i = 0; i < count; i++) {
+		fHtml += `<img data-index="${i}" src="../../temp/trace/${i+1}.jpg" />`;
+		pHtml += `<li data-index="${i}"><span>${i}</span>`
+			+	`<input type="text" name="x" value="0" ${ i==0 ? "readonly " : "" }/>`
+			+	`<input type="text" name="y" value="0" ${ i==0 ? "readonly " : "" }/></li>`;
+		xys.push([0,0]);
+	}
+	preview.style.backgroundImage = `url("../../temp/trace/1.jpg")`;
+	frames.innerHTML = fHtml;
+	poss.innerHTML = pHtml;
+	rendering = 0;
+	Progress.set("#areaBtnRender", 0);
+	
+	// 첫 프레임 선택
+	frames.children[0].click();
+}
+opener.tracing = function(fi, x, y) {
+	Progress.set("#areaBtnTrace", fi / (count - traceFrom));
+	fi += traceFrom;
+	try {
+		const li = poss.children[fi];
+		xys[fi][0] = x = Number(li.querySelector("input[name=x]").value = (x + traceOffset[0]));
+		xys[fi][1] = y = Number(li.querySelector("input[name=y]").value = (y + traceOffset[1]));
+		if (fi == selected) {
+			target.style.top  = `${ tTop  + (y / resY * 100) }%`;
+			target.style.left = `${ tLeft + (x / resX * 100) }%`;
+		}
+	} catch (e) {
+		console.log(e);
+	}
+}
+opener.afterTrace = function() {
+	rendering = 0;
+	btnTrace.innerText = "이동 추적";
+	Progress.set("#areaBtnTrace", 0);
+}
+	</script>
+	<style>
+#viewer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 200px;
+	height: 100%;
+}
+#control {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 200px;
+	height: 100%;
+	border-left: 1px solid #aaa;
+}
+
+#preview {
+	position: absolute;
+	left: 0;
+	width: calc(100vw - 200px);
+	height: calc((100vw - 200px) / 16 * 9);
+	top: calc((100vh - 100px - ((100vw - 200px) / 16 * 9)) / 2);
+	border: 1px solid #aaa;
+	background-size: cover;
+	cursor: crosshair;
+}
+#target {
+	position: absolute;
+}
+#preview:not(.drawing) #target {
+	cursor: pointer;
+}
+#target .border {
+	position: absolute;
+	border: 0 dashed #f66;
+}
+#target .border.n  { top   : 0  ; left : 5px; right: 5px; height: 5px; cursor:  n-resize; }
+#target .border.ne { top   : 0  ; width: 5px; right: 0  ; height: 5px; cursor: ne-resize; }
+#target .border.e  { top   : 5px; width: 5px; right: 0  ; bottom: 5px; cursor:  e-resize; }
+#target .border.se { height: 5px; width: 5px; right: 0  ; bottom: 0  ; cursor: se-resize; }
+#target .border.s  { height: 5px; left : 5px; right: 5px; bottom: 0  ; cursor:  s-resize; }
+#target .border.sw { height: 5px; left : 0  ; width: 5px; bottom: 0  ; cursor: sw-resize; }
+#target .border.w  { top   : 5px; left : 0  ; width: 5px; bottom: 5px; cursor:  w-resize; }
+#target .border.nw { top   : 0  ; left : 0  ; width: 5px; height: 5px; cursor: nw-resize; }
+#target .border.nw,
+#target .border.n ,
+#target .border.ne { border-top-width   : 2px; }
+#target .border.ne,
+#target .border.e ,
+#target .border.se { border-right-width : 2px; }
+#target .border.se,
+#target .border.s ,
+#target .border.sw { border-bottom-width: 2px; }
+#target .border.sw,
+#target .border.w ,
+#target .border.nw { border-left-width  : 2px; }
+
+#frames_scroll {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 100px;
+	border-top: 1px solid #aaa;
+	overflow-x: scroll;
+	overflow-y: hidden;
+	background: #fdd;
+}
+#frames {
+	white-space: nowrap;
+}
+#frames img {
+	width: 100px;
+	height: 83px;
+	border: 1px solid #aaa;
+	cursor: pointer;
+}
+#frames img:hover,
+#frames img.selected {
+	opacity: 0.5;
+	border-color: #f00;
+}
+
+#control label {
+	display: block;
+}
+#formRendering {
+	height: 90px;
+}
+#formRendering label span:not(#labelFrame) {
+	display: inline-block;
+	width: 40px;
+}
+#formRendering label input {
+	width: calc(100% - 40px);
+}
+#areaBtnRender {
+	width: 100%;
+	height: 25px;
+}
+#areaBtnRender button {
+	width: 100%;
+	height: 100%;
+}
+
+#areaSelectType {
+	position: fixed;
+	top: 95px;
+	right: 0;
+	width: 200px;
+	height: 20px;
+}
+#areaSelectType label {
+	display: block;
+	float: left;
+	width: 50%;
+	height: 20px;
+	text-align: center;
+}
+
+#areaBtnTrace {
+	position: fixed;
+	top: 120px;
+	right: 0;
+	width: 200px;
+	height: 25px;
+	background: #e1e1e1;
+}
+#btnTrace {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+}
+
+#poss {
+	position: fixed;
+	top: 145px;
+	right: 0;
+	bottom: 25px;
+	width: 200px;
+	border: 0 solid #aaa;
+	border-width: 1px 0;
+	overflow-x: hidden;
+	overflow-y: scroll;
+}
+#poss li.selected {
+	background: #fdd;
+}
+#poss li span {
+	display: inline-block;
+	width: 30%;
+	padding-right: 8px;
+	text-align: right;
+	cursor: pointer;
+}
+#poss li input { width: 35%; }
+
+#btnApply {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	width: 200px;
+	height: 25px;
+}
+	</style>
+</head>
+<body>
+	<div id="viewer">
+		<div id="preview">
+			<div id="target">
+				<div class='border n '></div>
+				<div class='border ne'></div>
+				<div class='border  e'></div>
+				<div class='border se'></div>
+				<div class='border s '></div>
+				<div class='border sw'></div>
+				<div class='border  w'></div>
+				<div class='border nw'></div>
+			</div>
+		</div>
+		<div id="frames_scroll">
+			<div id="frames"></div>
+		</div>
+	</div>
+	<div id="control">
+		<form id="formRendering">
+			<label><span>시작</span><input type="text" name="start" /></label>
+			<label><span>종료</span><input type="text" name="end" /></label>
+			<p><span id="labelFrame"></span> 프레임</p>
+			<div id="areaBtnRender">
+				<button type="submit" id="btnRender">렌더링</button>
+			</div>
+		</form>
+		<div id="areaSelectType">
+			<label><input type="radio" name="type" value="target" checked /> 대상 영역</label>
+			<label><input type="radio" name="type" value="frame" /> 화면 전체</label>
+		</div>
+		<div id="areaBtnTrace" title="현재 선택한 프레임 이후로 추적합니다.">
+			<button type="button" id="btnTrace">이동 추적</button>
+		</div>
+		<ol id="poss"></ol>
+		<button type="button" id="btnApply">적용</button>
+	</div>
+</body>
+</html>

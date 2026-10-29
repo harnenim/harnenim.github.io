@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저</title>
-	<script src="../lib/SubtitleObject.js?261002"></script>
-	<script src="../lib/popup.js?261002"></script>
+	<script src="../lib/SubtitleObject.js?261029"></script>
+	<script src="../lib/popup.js?261029"></script>
 	<script>
 windowName = "addon";
 
@@ -16,6 +16,7 @@ const origins = [];
 const RANGE = 10; // 현재 싱크 전후로 렌더링할 범위
 let mode = 1;
 const M = [null, "", "_", "~"]; // 모드에 따른 파일명 끝 표시
+let test = false;
 
 window.thumbDir = "../../temp/thumbnails"; // 웹샘플에서 경로 수정 가능하도록 분리
 
@@ -41,6 +42,7 @@ ready(async () => {
 	
 	if (!window.chrome?.webview && opener?.binder?._) {
 		alert("웹샘플에서는 수동 렌더링 작업이 필요합니다.\nSyncManager 대신, Aegisub에 의존하는 구버전 SyncManager0을 활용할 수도 있습니다.");
+		test = true;
 	}
 	
 	const TX = (opener.setting.sync.uiWidth  ? opener.setting.sync.uiWidth  : 96);
@@ -156,8 +158,8 @@ ready(async () => {
 			let lastFade = 0;
 			origin.smiFile.body.forEach((smi) => {
 				let fade = 0;
-				if (smi.text.indexOf("\\fade(")) {
-					if (smi.text.indexOf("\\fade(0")) {
+				if (smi.text.indexOf("\\fad(")) {
+					if (smi.text.indexOf("\\fad(0")) {
 						// ASS 페이드인
 						fade = 1;
 					} else {
@@ -237,7 +239,7 @@ ready(async () => {
 				
 				{	// start
 					const tr = document.createElement("tr");
-					eData(tr, { ass: ass, type: "start", origin: start });
+					eData(tr, { oi: -1, ass: ass, type: "start", origin: start });
 					
 					const sync = document.createElement("td");
 					sync.classList.add("sync");
@@ -280,7 +282,7 @@ ready(async () => {
 				
 				{	// end
 					const tr = document.createElement("tr");
-					eData(tr, { ass: ass, type: "end", origin: end });
+					eData(tr, { oi: -1, ass: ass, type: "end", origin: end });
 					
 					const sync = document.createElement("td");
 					sync.classList.add("sync");
@@ -491,12 +493,14 @@ ready(async () => {
 	
 	// 렌더링 완료 후 이미지 세팅
 	// 미리 값을 넣어주면 삭제되지 않은 다른 영상 섬네일 가져올 수 있음
-	opener.afterRenderThumbnails = function(begin, end, flag) {
+	opener.afterRenderThumbnails = function(begin, end, flag, isReuse=false) {
 		if (renderBegins == begin) {
 			// 마지막 렌더링인 경우
 			renderBegins = -1;
 			renderInfo.style.display = "none";
 		}
+		
+		let requiredDiffs = [];
 		
 		for (let i = begin; i < end; i++) {
 			const imgs = [...tbody.querySelectorAll(`img.img${i}${flag}`)];
@@ -505,13 +509,30 @@ ready(async () => {
 				img.classList.remove("comparing");
 				eData(img, { img: i + flag });
 			});
+			if (!diffs[i]) {
+				requiredDiffs.push(i);
+			}
 		}
 		document.body.dispatchEvent(new Event("scroll", { bubbles: true }));
+		
+		if (isReuse) {
+			// 기존 렌더링 재활용이면 없는 비교값 요청해야 함
+			opener.binder.getDiffs(requiredDiffs.join(","));
+		}
 	}
-	// 차이 비교값... 현재 쓰이지 않음...
-	const diffs = {};
-	opener.setDiff = function(key, diff) {
-		diffs[key] = diff;
+	// C#에서 프레임 간 비교값 수치화해서 전달
+	window.diffs = {}; // 1920x1080x3x255 = 1586304000 < Int.MaxValue이므로 정수로 받아오기...?
+	window.fades = {}; // 밝기 변화 상대 수치가 필요하므로, 픽셀수로 나눈 부동소수점 값
+	opener.setDiffs = function(strDiffs) {
+		strDiffs.split("\n").forEach((strDiff) => {
+			const diff = strDiff.split(",");
+			const key = Number(diff[0]);
+			diffs[key] = Number(diff[1]);
+			fades[key] = Number(diff[2]);
+		});
+		if (test) {
+			document.body.dispatchEvent(new Event("scroll", { bubbles: true }));
+		}
 	}
 	
 	window.selected = -1;
@@ -576,6 +597,191 @@ ready(async () => {
 		data.frames.style.left = (`calc(50% - ${ offset * (TX + 2) }px)`);
 		
 		setSync(tr.querySelector("td.sync"), fs[index]);
+	}
+	
+	// 자동 맞춤 계산
+	const rates = [1, 0.99, 0.96, 0.92, 0.84, 0.68, 0.5, 0.4];
+	function setAuto() {
+		let skip = document.getElementById("cbSelected").checked;
+		
+		const trs = tbody.querySelectorAll("tr");
+		let wasFade = false;
+		let index = 0;
+		if (skip) {
+			for (; index < trs.length; index++) {
+				if (trs[index].classList.contains("selected")) {
+					break;
+				}
+			}
+		}
+		if (index >= trs.length) return;
+		
+		const hold = skip ? eData(trs[index]).oi : -1;
+		for (; index < trs.length; index++) {
+			const tr = trs[index];
+			if (!tr.classList.contains("fs")) continue;
+			
+			const info = eData(tr);
+			if (skip && info.oi != hold) {
+				// 홀드가 달라졌으면 끊음
+				break;
+			}
+			const frameIndex = info.frameIndex + info.offset;
+			if (typeof diffs[frameIndex] != "number") {
+				// 렌더링 안 된 상태면 진행하지 않음
+				return;
+			}
+			
+			let begin = frameIndex - 8;
+			let end   = frameIndex + 8;
+			if (begin < 0) begin = 0;
+			if (end > Subtitle.video.fs.length) end = Subtitle.video.fs.length;
+			while (typeof diffs[begin] != "number") begin++;
+			while (typeof diffs[end  ] != "number") end--;
+			
+			const tdSync = tr.querySelector("td.sync");
+			const tdText = tdSync.nextSibling.innerText;
+			
+			let isFade = 0;
+			if (tdText.indexOf("fade=") > 0 || tdText.indexOf("페이드") > 0) {
+				isFade = 3; // 현재싱크 & 다음싱크
+			} else {
+				const fIndex = tdText.indexOf("\\fad");
+				if (fIndex > 0) {
+					const fStart = tdText.indexOf("(", fIndex);
+					const fEnd   = tdText.indexOf(")", fIndex);
+					if (fStart > 0 && fEnd > 0) {
+						const values = tdText.substring(fStart+1, fEnd).split(",");
+						if (values.length >= 2) {
+							if (values[0] != 0) {
+								isFade = 1; // 현재싱크
+							}
+							if (isFinite(values[0]) && isFinite(values[1])) {
+								isFade += 2; // 다음싱크
+							}
+						}
+					}
+				}
+			}
+			let newFrameIndex = -1;
+			
+			if (isFade % 2) {
+				// 페이드 시작
+				let last = 0;
+				let i = end - 1;
+				// 밝기 변화 성분을 가진 프레임 찾기
+				for (; i >= begin; i--) {
+					const fade = fades[i];
+					if (Math.abs(fade) > 2) { // 2/255 이상의 밝기 변화
+						const prev = fades[i-1];
+						if (Math.abs(prev) > 2 && fade * prev > 0) {
+							// 같은 방향성이 연속된 경우
+							last = fade;
+							break;
+						}
+					}
+				}
+				// 역방향 탐색 시 밝기 변화가 사라지는 지점 찾기
+				if (last) {
+					let sum = last;
+					let count = 1;
+					for (; i >= begin; i--) {
+						const fade = fades[i];
+						if (fade / (sum / count) < 0.2) { // 밝기 변화량이 평균의 1/5 미만 or 방향 반전
+							newFrameIndex = i + 1;
+							break;
+						}
+						sum += fade;
+						count++;
+					}
+				}
+				wasFade = isFade & 2;
+				
+			} else if (wasFade) {
+				// 페이드 종료
+				let last = 0;
+				let i = begin;
+				// 밝기 변화 성분을 가진 프레임 찾기
+				for (; i < end; i++) {
+					const fade = fades[i];
+					if (Math.abs(fade) > 2) { // 2/255 이상의 밝기 변화
+						const next = fades[i+1];
+						if (Math.abs(next) > 2 && fade * next > 0) {
+							// 같은 방향성이 연속된 경우
+							last = fade;
+							break;
+						}
+					}
+				}
+				// 정방향 탐색 시 밝기 변화가 사라지는 지점 찾음
+				if (last) {
+					let sum = last;
+					let count = 1;
+					for (; i < end; i++) {
+						const fade = fades[i];
+						if (fade / (sum / count) < 0.2) { // 밝기 변화량이 평균의 1/5 미만 or 방향 반전
+							newFrameIndex = i - 1;
+							break;
+						}
+						sum += fade;
+						count++;
+					}
+				}
+				wasFade = false;
+				
+			} else {
+				// 전후 프레임의 변화량 대비 현재 프레임의 변화량
+				// 원래는 변화 배율로 해보려고 했는데, 애니메이션의 실질 프레임이 ½~⅓이어서 튀는 값이 자주 발생함
+				let maxDiff = 0;
+				for (let i = begin; i < end; i++) {
+					if (maxDiff < diffs[i]) {
+						maxDiff = diffs[i];
+					}
+				}
+				
+				const maxPoint = { index: -1, point: 0 };
+				for (let i = begin; i < end; i++) {
+					let d = 0;
+					if (i == 0 || i == opener.Subtitle.video.fs.length-1) {
+						// 끄트머리 처리
+						d = maxDiff;
+						
+					} else {
+						// 전후 프레임 변화량 평균을 구함
+						let sum = 0;
+						let count = 0;
+						for (let j = i-2; j <= i+2; j++) {
+							if (j == i) continue;
+							if (j < 0) continue;
+							if (j >= opener.Subtitle.video.fs.length) break;
+							sum += diffs[j];
+							count++;
+						}
+						const avg = sum / count;
+						
+						// 변화량 + 평균 대비 변화량
+						d = 2 * diffs[i] - avg;
+					}
+					
+					// 원래 싱크와의 거리에 따라 점수 보정
+					const point = d * rates[Math.abs(i - frameIndex)];
+					if (maxPoint.point < point) {
+						maxPoint.index = i;
+						maxPoint.point = point;
+					}
+				}
+				newFrameIndex = maxPoint.index;
+			}
+			
+			// moveSync 함수와 같은 내용
+			if (newFrameIndex < 0) continue;
+			
+			const offset = newFrameIndex - info.frameIndex;
+			eData(tr, { offset: offset });
+			info.frames.style.left = (`calc(50% - ${ offset * (TX + 2) }px)`);
+			
+			setSync(tdSync, fs[newFrameIndex]);
+		}
 	}
 	
 	function apply() {
@@ -748,11 +954,41 @@ ready(async () => {
 		}
 	});
 	function refreshImages(imgs) {
+		if (test) {
+			[...imgs].forEach(function (img) {
+				if (mode > 1 && !img.previousSibling) {
+					// 첫 번째 이미지는 기본 모드에서만 존재
+					return;
+				}
+				const index = eData(img).index;
+				
+				img.style.background = "#aaa";
+				try {
+					if (mode == 2) {
+						const v = diffs[index] * 255;
+						img.style.background = `rgb(${v},${v},${v})`;
+					} else if (mode == 3) {
+						const v = fades[index] * 255;
+						if (v > 0) {
+							img.style.background = `rgb(${v},0,0)`;
+						} else {
+							img.style.background = `rgb(0,0,${-v})`;
+						}
+					}
+				} catch (e) {
+					console.log(e);
+				}
+			});
+			return;
+		}
 		[...imgs].forEach(function (img) {
-			const imgKey = eData(img).img;
-			if (imgKey) {
-				img.src = (`${thumbDir}/${fileSeq}_${imgKey}${M[mode]}.jpg`);
+			if (mode > 1 && !img.previousSibling) {
+				// 첫 번째 이미지는 기본 모드에서만 존재
+				return;
 			}
+			const imgKey = eData(img).img;
+			if (!imgKey) return;
+			img.src = (`${thumbDir}/${fileSeq}_${imgKey}${M[mode]}.jpg`);
 		});
 	}
 	function showFrames(tr) {
@@ -835,6 +1071,10 @@ ready(async () => {
 				}
 			}
 		}
+	});
+	
+	document.getElementById("btnAuto").addEventListener("click", () => {
+		setAuto();
 	});
 	
 	document.getElementById("btnApply").addEventListener("click", () => {
@@ -952,6 +1192,26 @@ body {
 #btnShift {
 	width: 50px;
 }
+#btnAuto {
+	position: fixed;
+	top: 0;
+	left: calc(35% - 45px);
+	width: 80px;
+}
+#lblCheck {
+	display: block;
+	position: fixed;
+	top: 0;
+	left: calc(35% + 40px);
+	text-shadow: -2px  0   #fff
+	           , -1px  1px #fff
+	           ,  0    2px #fff
+	           ,  1px  1px #fff
+	           ,  2px  0   #fff
+	           ,  1px -1px #fff
+	           ,  0   -2px #fff
+	           , -1px -1px #fff;
+}
 #btnApply {
 	width: 100px;
 	height: 30px;
@@ -1065,6 +1325,8 @@ body:not(.mode1) .frame:first-child { margin-left: calc(96px + 2px); }
 			<li title="Alt+3"><label><input type="radio" name="mode" value="3" accesskey="3" /> 밝기 변화</label></li>
 		</ol>
 	</form>
+	<button type="button" id="btnAuto"  title="Alt+Q&#10;해당 기능은 무결성이 보장되지 않습니다." accesskey="q">자동 맞춤</button>
+	<label id="lblCheck" title="선택된 줄의 홀드에 대해서만 동작합니다."><input type="checkbox" id="cbSelected" checked /> 선택된 줄 아래만</label>
 	<button type="button" id="btnApply" title="Alt+A" accesskey="a">적용</button>
 	<button type="button" id="btnSet"   title="Alt+S" accesskey="s">적용 후 닫기</button>
 	<div id="renderInfo"></div>

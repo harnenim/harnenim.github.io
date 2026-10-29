@@ -1,5 +1,5 @@
-﻿import "./Subtitle.Converter.js?260929v2";
-import "./jszip.min.js?261002";
+﻿import "./Subtitle.Converter.js?261030";
+import "./jszip.min.js?261029";
 import "./WinPNG.js?260708";
 
 function initialSetting() {
