@@ -1,4 +1,27 @@
-[ { "version": "2026.10.03"
+[ { "version": "2026.10.31"
+  , "comment":
+    [ "화면 싱크 매니저 자동 맞춤 기능 추가"
+    , "ASS 자막용 좌표 추적 기능 추가"
+    , "기타 버그 수정 등"
+    ]
+  , "files":
+    [ "view/addon/Shifts.html"
+    , "view/addon/SyncManager.html"
+    , "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/popup.css"
+    , "view/lib/popup.js"
+    , "view/lib/setting.js"
+    , "view/lib/SmiEditor.js"
+    , "view/lib/Subtitle.Converter.js"
+    , "view/lib/SubtitleObject.js"
+    , "Jamaker.dll"
+    , "Jamaker.exe"
+    , "WebViewForm.dll"
+    , "WebViewForm.pdb"
+    ]
+  }
+, { "version": "2026.10.03"
   , "comment":
     [ "뷰어 타이밍 기준 변경"
     , "줄바꿈 있을 때 오토메이션 좌표 지원"
