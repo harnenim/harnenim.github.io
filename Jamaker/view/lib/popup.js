@@ -259,7 +259,7 @@ Progress.set = (selector, ratio, unit="calc([ratio] * 100%)") => {
 }
 
 function setColor(color) {
-	fetch("lib/popup.color.css?261029").then(async (response) => {
+	fetch("lib/popup.color.css?261030").then(async (response) => {
 		let preset = await response.text();
 		for (let name in color) {
 			preset = preset.replaceAll(`[${name}]`, color[name]);
