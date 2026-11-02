@@ -1,4 +1,4 @@
-﻿import "./SubtitleObject.js?261030";
+﻿import "./SubtitleObject.js?261102";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -1619,10 +1619,12 @@ SmiFile.holdsToTexts = (holds, withNormalize=true, withCombine=true, withComment
 SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=1, additional="", withFs=false, withKfs=false, assHold=null, automations=null) => {
 	if (Subtitle.video.fs.length && withFs) {
 		// 프레임 싱크 함께 저장
+		// TODO: smi/ass 저장 로직에서 필요한 싱크를 받아오고 싶은데, 그러면 저장 순서가 꼬임
+		//       지금은 조금 넘치더라도 필요한 분량 이상으로 포함해 저장하도록 구현 
 		let fs = [];
 		holds.forEach((hold) => {
 			let last = { index: 0, text: "" };
-			let spanShiftRemains = 0;
+			let lastAssTexts = [];
 			const smis = new SmiFile(hold.text).body;
 			smis.forEach((smi, j) => {
 				const index = Subtitle.findSyncIndex(smi.start);
@@ -1630,29 +1632,12 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 				 || (last.text.indexOf("flow"  ) > 0)
 				 || (last.text.indexOf("typing") > 0)
 				 || (last.text.indexOf("shake" ) > 0)
-				 || (last.text.indexOf("shifts") > 0) // ASS
-				 || spanShiftRemains
-				) { // 싱크 분할 동작이 들어간 경우, 해당 범위의 모든 싱크 저장
-					// 정확한 문법 체크를 안 해서 과도하게 들어갈 싱크는 얼마 되지 않을 것
+				 || (last.text.indexOf("\\shifts") > 0) // ASS \shifts
+				) { // 싱크 분할 필요한 동작이 들어간 경우, 해당 범위의 모든 싱크 저장
+					// 정확한 문법 체크를 안 해서 과도하게 들어갈 싱크는 얼마 되지 않을 것... 영어 자막이면 몰라도
 					for (let i = last.index + 1; i <= index; i++) {
 						fs.push(Subtitle.video.fs[i]);
 					}
-					if (spanShiftRemains) {
-						spanShiftRemains--;
-					}
-					// \shifts는 싱크 확장이 있을 수 있음
-					// 정확히 \shifts가 있는 줄만의 정확한 span 값을 계산하는 파싱을 넣기는 무리가 있음
-					// 예시로, [TEXTxx] 형식으로 넣을 수도 있음
-					const lines = last.text.replaceAll("\n ", "").split("\n");
-					lines.forEach((line) => {
-						const parts = line.split(",");
-						if (parts.length > 4 && isFinite(parts[2])) {
-							const remains = Number(parts[2]) - 1;
-							if (spanShiftRemains < remains) {
-								spanShiftRemains = remains;
-							}
-						}
-					});
 				} else {
 					if (index > 0) fs.push(Subtitle.video.fs[index - 1]);
 					fs.push(Subtitle.video.fs[index]);
@@ -1667,7 +1652,7 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 				if (smi.text.startsWith("<!-- ASS")) {
 					const commentEnd = smi.text.indexOf("-->");
 					if (commentEnd > 0) {
-						const assCmTexts = smi.text.substring(8, commentEnd).split("\n");
+						const assCmTexts = smi.text.substring(8, commentEnd).replaceAll("\t", "\n").replaceAll("\n ", "").split("\n");
 						smi.text = smi.text.substring(commentEnd + 3).trim();
 						for (let j = 0; j < assCmTexts.length; j++) {
 							const assLine = assCmTexts[j].trim();
@@ -1677,11 +1662,16 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 							if (assLine == "END" || assLine == "X") {
 								break;
 							}
+							if (assLine == "[LAST]") {
+								assTexts.push(...lastAssTexts);
+								continue;
+							}
 							assTexts.push(assLine);
 						}
 					}
 				}
 				if (assTexts.length == 0) return;
+				lastAssTexts = assTexts;
 				
 				// ASS 싱크 확장 확인
 				assTexts.forEach((assText) => {
@@ -1690,6 +1680,8 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 					if (!isFinite(ass[0])) return;
 					
 					if (ass[1] == "") { // span 형식
+						const withShifts = (smi.text.indexOf("\\shifts") > 0);
+						
 						// [Layer, -, span, Style, Text]
 						if (ass[3].endsWith(")")) {
 							let ass2 = ass[2].split("(");
@@ -1701,21 +1693,49 @@ SmiFile.holdsToText = (holds, withNormalize=true, withCombine=true, withComment=
 							) {
 								// [Layer, -, span(add, add), Style, Text]
 								const span = Number(ass2[0]);
-								{
-									const index = Subtitle.findSyncIndex(smi.start + Number(ass2[1]));
-									if (index > 0) fs.push(Subtitle.video.fs[index - 1]);
-									fs.push(Subtitle.video.fs[index]);
-								}
+								const add1 = Number(ass2[1]);
+								const add2 = Number(ass3[0]);
+								
+								let from = Subtitle.findSyncIndex(smi.start + add1);
+								if (from > 0) fs.push(Subtitle.video.fs[from - 1]);
+								fs.push(Subtitle.video.fs[from]);
+								
 								if (smis.length > (j + span)) {
-									const index = Subtitle.findSyncIndex(smis[j + span].start + Number(ass3[0]));
-									if (index > 0) fs.push(Subtitle.video.fs[index - 1]);
-									fs.push(Subtitle.video.fs[index]);
+									const to = Subtitle.findSyncIndex(smis[j + span].start + add2);
+									if (withShifts) {
+										// \shifts 태그는 span 범위의 중간 싱크가 모두 있어야 함
+										// \shifts를 [TEXTxx] 문법으로 쓰는 경우를 고려, 현재 줄이 아닌 해당 싱크의 \shifts 여부 확인
+										// 현재 싱크 범위는 다음 루프에서도 넣어주므로, span된 뒤쪽만 여기서 추가함
+										// ... 사실 \shifts 태그를 add 값이랑 같이 쓰는 경우는 없을 듯
+										from = Subtitle.findSyncIndex(smis[j + 1].start);
+										for (let index = from; index <= to; index++) {
+											fs.push(Subtitle.video.fs[index]);
+										}
+									} else {
+										fs.push(Subtitle.video.fs[to - 1]);
+										fs.push(Subtitle.video.fs[to]);
+									}
+								}
+							}
+						} else {
+							const span = isFinite(ass[2]) ? Number(ass[2]) : 1;
+							if (span > 1 && withShifts) {
+								// \shifts 태그는 span 범위의 중간 싱크가 모두 있어야 함
+								// \shifts를 [TEXTxx] 문법으로 쓰는 경우를 고려, 현재 줄이 아닌 해당 싱크의 \shifts 여부 확인
+								// 현재 싱크 범위는 다음 루프에서도 넣어주므로, span된 뒤쪽만 여기서 추가함
+								if (smis.length > (j + span)) {
+									let from = Subtitle.findSyncIndex(smis[j + 1].start);
+									let to = Subtitle.findSyncIndex(smis[j + span].start);
+									for (let index = from; index < to; index++) {
+										fs.push(Subtitle.video.fs[index]);
+									}
 								}
 							}
 						}
 					} else if (isFinite(ass[1]) && isFinite(ass[2])) { // add 형식
 						// [Layer, addStart, addEnd, Style, Text]
 						// [Layer, addStart, -, Style, Text]
+						// \shifts 태그를 add 값이랑 같이 쓰는 경우는 없다고 가정
 						const addStart = Number(ass[1]);
 						{
 							const index = Subtitle.findSyncIndex(smi.start + addStart);
@@ -3681,6 +3701,24 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 												fadeoutTime = `${fadeoutStart - event.start},${event.end - event.start},`;
 											}
 										}
+										
+										// 페이드 시간이 온전히 정지한 시간 안에 들어가는 경우 페이드 태그로 처리
+										if (fadeinRatioFrom == 0 && fadeinRatioTo == 1) {
+											if (fadeoutRatioFrom == 1 && fadeoutRatioTo == 0) {
+												// 페이드인/아웃 둘 다 포함되면 \shifts를 쓰는 의미 자체가 없긴 함
+												event.tokens[fad.i*2+1].tags[fad.j] = `fad(${fad.in},${fad.out})`;
+												fadeoutRatioTo = 1;
+											} else {
+												event.tokens[fad.i*2+1].tags[fad.j] = `fad(${fad.in},0)`;
+											}
+											fadeinRatioFrom = 1;
+										} else if (fadeoutRatioFrom == 1 && fadeoutRatioTo == 0) {
+											event.tokens[fad.i*2+1].tags[fad.j] = `fad(0,${fad.out})`;
+											fadeoutRatioTo = 1;
+										} else {
+											event.tokens[fad.i*2+1].tags[fad.j] = "";
+										}
+										
 										if (fadeinRatioFrom + fadeinRatioTo + fadeoutRatioFrom + fadeoutRatioTo < 4) {
 											// 중간 과정 투명도 변화로 재생성
 											{	// 맨 앞에 적용
@@ -3751,7 +3789,6 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 												});
 											}
 										}
-										event.tokens[fad.i*2+1].tags[fad.j] = "";
 									}
 								} else {
 									// 단일 프레임
