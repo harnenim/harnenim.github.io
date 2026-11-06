@@ -1,4 +1,5 @@
-﻿import "./SubtitleObject.js?261102";
+﻿import "./SubtitleObject.js?261106";
+import "./polygon-clipping.umd.min.js?261106";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -2750,24 +2751,27 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				let shift = null;
 				let shake = null;
 				let shifts = null;
+				let clip = null;
+				let sgrd = null;
 				
 				for (let i = 0; i < tagTokens.length; i++) {
 					const tokenText = tagTokens[i].text;
 					const tags = tagTokens[i].tags = [];
 					{
 						let tag = "";
-						let isBracket = false;
+						let bracket = 0;
 						for (let j = 0; j < tokenText.length; j++) {
 							const c = tokenText[j];
-							if (!isBracket) {
+							if (bracket == 0) {
 								switch (c) {
 									case "\\": tags.push(tag); tag = ""; break;
-									case "(": tag += c; isBracket = true; break;
+									case "(": tag += c; bracket++; break;
 									default: tag += c;
 								}
 							} else {
 								switch (c) {
-									case ")": tag += c; isBracket = false; break;
+									case "(": tag += c; bracket++; break;
+									case ")": tag += c; bracket--; break;
 									default: tag += c;
 								}
 							}
@@ -2924,7 +2928,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 								if (isFinite(values[2]) && isFinite(values[3])) {
 									shift.t1 = Number(values[2]);
 									shift.t2 = Number(values[3]);
-								}
+								};
 								tagTokens[i].tags[j] = "";
 							}
 						} else if (!shake && tag.startsWith("shake(") && tag.endsWith(")")) {
@@ -2964,7 +2968,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									const shift = {
 											x: isFinite(values[i  ]) ? Number(values[i  ]) : 0
 										,	y: isFinite(values[i+1]) ? Number(values[i+1]) : 0
-									}
+									};
 									let length = 1;
 									if (values[i+1].indexOf(":") > 0) {
 										const v = values[i+1].split(":");
@@ -2978,6 +2982,86 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 									}
 								}
 								tagTokens[i].tags[j] = "";
+							}
+						} else if (!sgrd && tag.startsWith("sgrd(") && tag.endsWith(")")) {
+							// 재구성 실패 시에도 \sgrd -> \grd 변환
+							tagTokens[i].tags[j] = tag.substring(1);
+							
+							let values = tag.substring(5, tag.length - 1).split(",");
+							if (values.length >= 4) {
+								values[0] = values[0].split("\\pos(");
+								if (values[0].length == 2 && isFinite(values[0][1])) {
+									values[1] = values[1].split(")");
+									if (values[1].length == 2 && isFinite(values[1][0])) {
+										values[2] = values[2].split("\\pos(");
+										if (values[2].length == 2 && isFinite(values[2][1])) {
+											values[3] = values[3].split(")");
+											if (values[3].length == 2 && isFinite(values[3][0])) {
+												sgrd = { i: i, j: j
+													,	from: {
+																prev: values[0][0]
+															,	x: Number(values[0][1])
+															,	y: Number(values[1][0])
+															,	next: values[1][1]
+														}
+													,	to  : {
+																prev: values[2][0]
+															,	x: Number(values[2][1])
+															,	y: Number(values[3][0])
+															,	next: values[3][1]
+														}
+													,	values: ["", ""]
+												};
+												sgrd.values.push(...values.slice(4));
+											}
+										}
+									}
+								}
+							}
+						} else if (!clip) {
+							// \sclip/\siclip인 경우 shifts를 함께 반영
+							// 중복 체크를 위해 \clip/\iclip도 확인
+							if (tag.startsWith("clip(") && tag.endsWith(")")) {
+								clip = { i: i, j: j, tag: "clip" };
+							} else if (tag.startsWith("iclip(") && tag.endsWith(")")) {
+								clip = { i: i, j: j, tag: "iclip" };
+							} else if (tag.startsWith("sclip(") && tag.endsWith(")")) {
+								clip = { i: i, j: j, tag: "sclip", value: tag.substring(6, tag.length - 1) };
+							} else if (tag.startsWith("siclip(") && tag.endsWith(")")) {
+								clip = { i: i, j: j, tag: "siclip", value: tag.substring(7, tag.length - 1) };
+							}
+						}
+					}
+				}
+				if (clip) {
+					if (clip.tag == "clip"
+					 || clip.tag == "iclip") {
+						// \clip/\iclip에 대해선 추가 작업 필요 없음
+						clip = null;
+					} else {
+						// 태그 앞 s 제거
+						tagTokens[clip.i].tags[clip.j] = `${clip.tag = clip.tag.substring(1)}(${clip.value})`;
+						if (shifts) {
+							const values = clip.value.split(",");
+							if (values.length == 4
+							 && isFinite(values[0])
+							 && isFinite(values[1])
+							 && isFinite(values[2])
+							 && isFinite(values[3])
+							) {
+								clip.values = [
+									Number(values[0])
+								,	Number(values[1])
+								,	Number(values[2])
+								,	Number(values[3])
+								];
+							} else {
+								clip.values = clip.value.split(" ");
+								for (let k = 0; k < clip.values.length; k++) {
+									if (isFinite(clip.values[k])) {
+										clip.values[k] = Number(clip.values[k]);
+									}
+								}
 							}
 						}
 					}
@@ -3127,6 +3211,37 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 							} else {
 								// 신규 좌표
 								tagTokens[p.i].tags[p.j] = `pos(${p.x + shift.x},${p.y + shift.y})`;
+								
+								if (clip) {
+									const values = [];
+									let isX = true;
+									clip.values.forEach((v) => {
+										if (isFinite(v)) {
+											if (isX) {
+												values.push(v + shift.x);
+											} else {
+												values.push(v + shift.y);
+											}
+											isX = !isX;
+										} else {
+											values.push(v);
+										}
+									});
+									if (values.length == 4) {
+										// 사각형
+										tagTokens[clip.i].tags[clip.j] = `${clip.tag}(${values.join(",")})`;
+									} else {
+										// 다각형
+										tagTokens[clip.i].tags[clip.j] = `${clip.tag}(${values.join(" ")})`;
+									}
+								}
+								
+								if (sgrd) {
+									// 그라데이션 좌표 이동
+									sgrd.values[0] = `${sgrd.from.prev}\\pos(${sgrd.from.x + shift.x},${sgrd.from.y + shift.y})\\${sgrd.from.next}`;
+									sgrd.values[1] = `${sgrd.to  .prev}\\pos(${sgrd.to  .x + shift.x},${sgrd.to  .y + shift.y})\\${sgrd.to  .next}`;
+									tagTokens[sgrd.i].tags[sgrd.j] = `grd(${sgrd.values.join(",")})`;
+								}
 								
 								let text = "";
 								if (!hasTransition) {
@@ -3571,8 +3686,9 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 								
 								let text = "";
 								
-								if (event.frames > 1) {
+								if (event.frames > 3) {
 									// 여러 프레임 동일 좌표
+									// 3프레임까진 2~3코마 작화로 간주하여 단일 프레임처럼 처리
 									
 									// \t 태그 시분할
 									ts.forEach((t) => {
@@ -4299,6 +4415,15 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 	
 	return { x: pos[0], y: pos[1], fad: fad, t: t, ks: ks };
 }
+function toClip(poss) {
+	console.log(poss);
+	const values = ["m", poss[0][0].toFixed(1), poss[0][1].toFixed(1), "l"];
+	for (let i = 1; i < poss.length; i++) {
+		values.push(poss[i][0].toFixed(1));
+		values.push(poss[i][1].toFixed(1));
+	}
+	return `\\clip(${values.join(" ")})`;
+}
 AssFile.prototype.gradation = function() {
 	let w = 1920;
 	let h = 1080;
@@ -4314,26 +4439,84 @@ AssFile.prototype.gradation = function() {
 	const events = [];
 	
 	this.getEvents().body.forEach((origin) => {
-		let grdBegin = origin.Text.indexOf("\\grd(");
+		let text = origin.Text;
+		
+		let grdBegin = text.indexOf("\\grd(");
 		if (grdBegin < 0) {
 			events.push(origin);
 			return;
 		}
+		
+		// 이미 \clip이 존재하는 경우를 먼저 확인
+		// \iclip은 고려하지 않음
+		let clip = null;
+		let clipBegin = text.indexOf("\\clip(");
+		let clipEnd = clipBegin;
+		if (clipBegin >= 0) {
+			clipEnd = text.indexOf(")", clipBegin + 5);
+			if (clipEnd > clipBegin) {
+				const value = text.substring(clipBegin + 6, clipEnd).trim().replaceAll("  ", " ");
+				let values = value.split(",");
+				if (values.length == 4
+				 && isFinite(values[0])
+				 && isFinite(values[1])
+				 && isFinite(values[2])
+				 && isFinite(values[3])
+				) {
+					const x1 = Number(values[0]);
+					const y1 = Number(values[1]);
+					const x2 = Number(values[2]);
+					const y2 = Number(values[3]);
+					clip = [[x1,y1],[x2,y1],[x2,y2],[x1,y2]];
+				} else {
+					clip = [];
+					values = value.split(" ");
+					let last = [];
+					let b = 0;
+					values.forEach((v) => {
+						if (isFinite(v)) {
+							if (b) { // 베지에 곡선 무시
+								b--;
+								return;
+							}
+							v = Number(v);
+							if (last.length != 1) {
+								clip.push(last = [v]);
+							} else {
+								last.push(v);
+							}
+							
+						} else if (v == "b") {
+							b = 4;
+						}
+					});
+					if (last.length == 1) {
+						// 마지막에 좌표쌍 못 만든 값은 제거
+						clip.pop();
+					}
+				}
+				
+				// \clip 제거 후 \grd 위치 재확인
+				text = text.substring(0, clipBegin) + text.substring(clipEnd + 1);
+				grdBegin = text.indexOf("\\grd(");
+			}
+		}
+		
 		grdBegin += 5;
 		
 		let depth = 1;
 		let grdEnd = grdBegin;
-		for (; grdEnd < origin.Text.length; grdEnd++) {
-			if (origin.Text[grdEnd] == "(") {
+		for (; grdEnd < text.length; grdEnd++) {
+			if (text[grdEnd] == "(") {
 				depth++;
-			} else if (origin.Text[grdEnd] == ")") {
+			} else if (text[grdEnd] == ")") {
 				depth--;
 				if (depth == 0) {
 					break;
 				}
 			}
 		}
-		const params = origin.Text.substring(grdBegin, grdEnd).split(",");
+		const params = text.substring(grdBegin, grdEnd).split(",");
 		if (params.length < 4) {
 			events.push(origin);
 			return;
@@ -4352,9 +4535,10 @@ AssFile.prototype.gradation = function() {
 		if (params.length > 5 && isFinite(params[5])) {
 			px = Math.max(Number(params[5]), 5);
 		}
+		let gClips = [];
 		
-		let prev = origin.Text.substring(0, grdBegin-5);
-		let next = origin.Text.substring(grdEnd+1);
+		let prev = text.substring(0, grdBegin-5);
+		let next = text.substring(grdEnd+1);
 		
 		const grd = [{}, {}];
 		for (let i = 0; i < 2; i++) {
@@ -4429,9 +4613,9 @@ AssFile.prototype.gradation = function() {
 		
 		// 레이어 번호가 겹치기 때문에, 좌표 태그가 없었으면 스타일 기본 좌표로 고정해야 함
 		if ((prev.indexOf("\\pos(") < 0)
-		 || (next.indexOf("\\pos(") < 0)
-		 || (prev.indexOf("\\move(") < 0)
-		 || (next.indexOf("\\move(") < 0)
+		 && (next.indexOf("\\pos(") < 0)
+		 && (prev.indexOf("\\move(") < 0)
+		 && (next.indexOf("\\move(") < 0)
 		) {
 			if (defaultPoss[origin.Style]) {
 				prev += defaultPoss[origin.Style];
@@ -4491,118 +4675,150 @@ AssFile.prototype.gradation = function() {
 			const hx = h * tan;
 			
 			let c = c1;
-			let text = prev;
 			if (reverse) {
 				if (c < hx) {
-					text += `\\clip(m 0 0 l`
-						+	` ${ c    .toFixed(0)} 0`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	`)`;
+					gClips = [
+					[	[0   , 0]
+					,	[c   , 0]
+					,	[c-hx, h]
+					]];
 				} else {
-					text += `\\clip(m 0 0 l`
-						+	` ${ c    .toFixed(0)} 0`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	` 0 ${h}`
-						+	`)`;
+					gClips = [
+					[	[0   , 0]
+					,	[c   , 0]
+					,	[c-hx, h]
+					,	[0   , h]
+					]];
 				}
 			} else {
 				if (c < 0) {
-					text += `\\clip(m`
-						+	` ${ c    .toFixed(0)} 0 l`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	` 0 ${h}`
-						+	`)`;
+					gClips = [
+					[	[c   , 0]
+					,	[c-hx, h]
+					,	[0   , h]
+					]];
 				} else {
-					text += `\\clip(m 0 0 l`
-						+	` ${ c    .toFixed(0)} 0`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	` 0 ${h}`
-						+	`)`;
+					gClips = [
+					[	[0   , 0]
+					,	[c   , 0]
+					,	[c-hx, h]
+					,	[0   , h]
+					]];
 				}
 			}
-			cKeys.forEach((key) => {
-				const color = grd[0][key];
-				text += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
-			});
-			aKeys.forEach((key) => {
-				const alpha = grd[0][key];
-				text += `\\${key}&H${Color.hex(alpha)}&`;
-			});
-			text += next;
-			let event = new AssEvent(origin.start, origin.end, origin.Style, text);
-			event.Effect = "jmk";
-			events.push(event);
+			if (clip && clip.length) {
+				gClips = polygonClipping.intersection(gClips, [clip]);
+			} else {
+				gClips = [gClips];
+			}
+			if (gClips.length) {
+				let afterClip = "";
+				cKeys.forEach((key) => {
+					const color = grd[0][key];
+					afterClip += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
+				});
+				aKeys.forEach((key) => {
+					const alpha = grd[0][key];
+					afterClip += `\\${key}&H${Color.hex(alpha)}&`;
+				});
+				afterClip += next;
+				gClips.forEach((gClip) => {
+					let event = new AssEvent(origin.start, origin.end, origin.Style, `${prev}${toClip(gClip[0])}${afterClip}`);
+					event.Effect = "jmk";
+					events.push(event);
+				});
+			}
 			
 			for (; c < c2; c+=dx) {
 				const ratio = (c-c1) / (c2-c1);
-				text = `${prev}\\clip(m`
-					+	` ${ c       .toFixed(0)} 0 l`
-					+	` ${(c-hx   ).toFixed(0)} ${h}`
-					+	` ${(c-hx+dx).toFixed(0)} ${h}`
-					+	` ${(c   +dx).toFixed(0)} 0`
-					+	`)`;
-				cKeys.forEach((key) => {
-					const color0 = grd[0][key];
-					const color1 = grd[1][key];
-					const b = (color1.b-color0.b) * ratio + color0.b;
-					const g = (color1.g-color0.g) * ratio + color0.g;
-					const r = (color1.r-color0.r) * ratio + color0.r;
-					text += `\\${key}&H${Color.hex(b)}${Color.hex(g)}${Color.hex(r)}&`;
-				});
-				aKeys.forEach((key) => {
-					const alpha = (grd[1][key]-grd[0][key]) * ratio + grd[0][key];
-					text += `\\${key}&H${Color.hex(alpha)}&`;
-				});
-				text += next;
-				event = new AssEvent(origin.start, origin.end, origin.Style, text);
-				event.Effect = "jmk";
-				events.push(event);
+				gClips = [
+				[	[c      , 0]
+				,	[c-hx   , h]
+				,	[c-hx+dx, h]
+				,	[c   +dx, 0]
+				]];
+				gClips = [gClip];
+				if (clip && clip.length) {
+					gClips = polygonClipping.intersection(gClips, [clip]);
+				} else {
+					gClips = [gClips];
+				}
+				if (gClips.length) {
+					let afterClip = "";
+					cKeys.forEach((key) => {
+						const color0 = grd[0][key];
+						const color1 = grd[1][key];
+						const b = (color1.b-color0.b) * ratio + color0.b;
+						const g = (color1.g-color0.g) * ratio + color0.g;
+						const r = (color1.r-color0.r) * ratio + color0.r;
+						afterClip += `\\${key}&H${Color.hex(b)}${Color.hex(g)}${Color.hex(r)}&`;
+					});
+					aKeys.forEach((key) => {
+						const alpha = (grd[1][key]-grd[0][key]) * ratio + grd[0][key];
+						afterClip += `\\${key}&H${Color.hex(alpha)}&`;
+					});
+					afterClip += next;
+					gClips.forEach((gClip) => {
+						let event = new AssEvent(origin.start, origin.end, origin.Style, `${prev}${toClip(gClip[0])}${afterClip}`);
+						event.Effect = "jmk";
+						events.push(event);
+					});
+				}
 			}
 			
-			text = prev;
 			if (reverse) {
 				if (c < w) {
-					text += `\\clip(m`
-						+	` ${ c    .toFixed(0)} 0 l`
-						+	` ${ w               } 0`
-						+	` ${ w               } ${h}`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	`)`;
+					gClips = [
+					[	[c   , 0]
+					,	[w   , 0]
+					,	[w   , h]
+					,	[c-hx, h]
+					]];
 				} else {
-					text += `\\clip(m`
-						+	` ${ c    .toFixed(0)} 0 l`
-						+	` ${ w               } ${h}`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	`)`;
+					gClips = [
+					[	[c   , 0]
+					,	[w   , h]
+					,	[c-hx, h]
+					]];
 				}
 			} else {
 				if (c-hx < w) {
-					text += `\\clip(m`
-						+	` ${ c    .toFixed(0)} 0 l`
-						+	` ${ w               } 0`
-						+	` ${ w               } ${h}`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	`)`;
+					gClips = [
+					[	[c   , 0]
+					,	[w   , 0]
+					,	[w   , h]
+					,	[c-hx, h]
+					]];
 				} else {
-					text += `\\clip(m`
-						+	` ${ c    .toFixed(0)} 0 l`
-						+	` ${ w               } 0`
-						+	` ${(c-hx).toFixed(0)} ${h}`
-						+	`)`;
+					gClips = [
+					[	[c   , 0]
+					,	[w   , 0]
+					,	[c-hx, h]
+					]];
 				}
 			}
-			cKeys.forEach((key) => {
-				const color = grd[1][key];
-				text += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
-			});
-			aKeys.forEach((key) => {
-				const alpha = grd[1][key];
-				text += `\\${key}&H${Color.hex(alpha)}&`;
-			});
-			text += next;
-			event = new AssEvent(origin.start, origin.end, origin.Style, text);
-			event.Effect = "jmk";
-			events.push(event);
+			if (clip && clip.length) {
+				gClips = polygonClipping.intersection(gClips, [clip]);
+			} else {
+				gClips = [gClips];
+			}
+			if (gClips.length) {
+				let afterClip = "";
+				cKeys.forEach((key) => {
+					const color = grd[1][key];
+					afterClip += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
+				});
+				aKeys.forEach((key) => {
+					const alpha = grd[1][key];
+					afterClip += `\\${key}&H${Color.hex(alpha)}&`;
+				});
+				afterClip += next;
+				gClips.forEach((gClip) => {
+					let event = new AssEvent(origin.start, origin.end, origin.Style, `${prev}${toClip(gClip[0])}${afterClip}`);
+					event.Effect = "jmk";
+					events.push(event);
+				});
+			}
 			
 		} else {
 			// 세로 그라데이션
@@ -4622,120 +4838,149 @@ AssFile.prototype.gradation = function() {
 			const wy = w * cot;
 			
 			let c = c1;
-			let text = prev;
 			if (reverse) {
 				if (c < 0) {
-					text += `\\clip(m`
-						+	` ${w} 0 l`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` 0`+` ${ c    .toFixed(0)}`
-						+	`)`;
+					gClips = [
+					[	[w, 0   ]
+					,	[w, c-wy]
+					,	[0, c   ]
+					]];
 				} else {
-					text += `\\clip(m`
-						+	` ${w} 0 l`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` 0`+` ${ c    .toFixed(0)}`
-						+	` 0 0`
-						+	`)`;
+					gClips = [
+					[	[w, 0   ]
+					,	[w, c-wy]
+					,	[0, c   ]
+					,	[0, 0   ]
+					]];
 				}
 			} else {
 				if (c-wy < 0) {
-					text += `\\clip(m 0 0 l`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` 0`+` ${ c    .toFixed(0)}`
-						+	`)`;
+					gClips = [
+					[	[0, 0   ]
+					,	[w, c-wy]
+					,	[0, c   ]
+					]];
 				} else {
-					text += `\\clip(m 0 0 l`
-						+	` ${w} 0`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` 0`+` ${ c    .toFixed(0)}`
-						+	`)`;
+					gClips = [
+					[	[0, 0   ]
+					,	[w, 0   ]
+					,	[w, c-wy]
+					,	[0, c   ]
+					]];
 				}
 			}
-			cKeys.forEach((key) => {
-				const color = grd[0][key];
-				text += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
-			});
-			aKeys.forEach((key) => {
-				const alpha = grd[0][key];
-				text += `\\${key}&H${Color.hex(alpha)}&`;
-			});
-			text += next;
-			let event = new AssEvent(origin.start, origin.end, origin.Style, text);
-			event.Effect = "jmk";
-			events.push(event);
+			if (clip && clip.length) {
+				gClips = polygonClipping.intersection(gClips, [clip]);
+			} else {
+				gClips = [gClips];
+			}
+			if (gClips.length) {
+				let afterClip = "";
+				cKeys.forEach((key) => {
+					const color = grd[0][key];
+					afterClip += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
+				});
+				aKeys.forEach((key) => {
+					const alpha = grd[0][key];
+					afterClip += `\\${key}&H${Color.hex(alpha)}&`;
+				});
+				afterClip += next;
+				gClips.forEach((gClip) => {
+					let event = new AssEvent(origin.start, origin.end, origin.Style, `${prev}${toClip(gClip[0])}${afterClip}`);
+					event.Effect = "jmk";
+					events.push(event);
+				});
+			}
 			
 			for (; c < c2; c+=dy) {
 				const ratio = (c-c1) / (c2-c1);
-				text = prev;
-				text += `\\clip(m`
-					+	` 0`+` ${ c       .toFixed(0)} l`
-					+	` ${w} ${(c-wy   ).toFixed(0)}`
-					+	` ${w} ${(c-wy+dy).toFixed(0)}`
-					+	` 0`+` ${(c   +dy).toFixed(0)}`
-					+	`)`;
-				cKeys.forEach((key) => {
-					const color0 = grd[0][key];
-					const color1 = grd[1][key];
-					const b = (color1.b-color0.b) * ratio + color0.b;
-					const g = (color1.g-color0.g) * ratio + color0.g;
-					const r = (color1.r-color0.r) * ratio + color0.r;
-					text += `\\${key}&H${Color.hex(b)}${Color.hex(g)}${Color.hex(r)}&`;
-				});
-				aKeys.forEach((key) => {
-					const alpha = (grd[1][key]-grd[0][key]) * ratio + grd[0][key];
-					text += `\\${key}&H${Color.hex(alpha)}&`;
-				});
-				text += next;
-				event = new AssEvent(origin.start, origin.end, origin.Style, text);
-				event.Effect = "jmk";
-				events.push(event);
+				gClips = [
+				[	[0, c      ]
+				,	[w, c-wy   ]
+				,	[w, c-wy+dy]
+				,	[0, c   +dy]
+					]];
+				if (clip && clip.length) {
+					gClips = polygonClipping.intersection(gClips, [clip]);
+				} else {
+					gClips = [gClips];
+				}
+				if (gClips.length) {
+					let afterClip = "";
+					cKeys.forEach((key) => {
+						const color0 = grd[0][key];
+						const color1 = grd[1][key];
+						const b = (color1.b-color0.b) * ratio + color0.b;
+						const g = (color1.g-color0.g) * ratio + color0.g;
+						const r = (color1.r-color0.r) * ratio + color0.r;
+						afterClip += `\\${key}&H${Color.hex(b)}${Color.hex(g)}${Color.hex(r)}&`;
+					});
+					aKeys.forEach((key) => {
+						const alpha = (grd[1][key]-grd[0][key]) * ratio + grd[0][key];
+						afterClip += `\\${key}&H${Color.hex(alpha)}&`;
+					});
+					afterClip += next;
+					gClips.forEach((gClip) => {
+						event = new AssEvent(origin.start, origin.end, origin.Style, `${prev}${toClip(gClip[0])}${afterClip}`);
+						event.Effect = "jmk";
+						events.push(event);
+					});
+				}
 			}
 			
-			text = prev;
 			if (reverse) {
 				if (c-wy < h) {
-					text += `\\clip(m`
-						+	` 0`+` ${ c    .toFixed(0)} l`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` ${w} ${h}`
-						+	` 0`+` ${h}`
-						+	`)`;
+					gClips = [
+					[	[0, c   ]
+					,	[w, c-wy]
+					,	[w, h   ]
+					,	[0, h   ]
+					]];
 				} else {
-					text += `\\clip(m`
-						+	` 0`+` ${ c    .toFixed(0)} l`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` 0`+` ${h}`
-						+	`)`;
+					gClips = [
+					[	[0, c   ]
+					,	[w, c-wy]
+					,	[0, h   ]
+					]];
 				}
 			} else {
 				if (c < h) {
-					text += `\\clip(m`
-						+	` 0`+` ${ c    .toFixed(0)} l`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` ${w} ${h}`
-						+	` 0`+` ${h}`
-						+	`)`;
+					gClips = [
+					[	[0, c   ]
+					,	[w, c-wy]
+					,	[w, h   ]
+					,	[0, h   ]
+					]];
 				} else {
-					text += `\\clip(m`
-						+	` 0`+` ${ c    .toFixed(0)} l`
-						+	` ${w} ${(c-wy).toFixed(0)}`
-						+	` ${w} ${h}`
-						+	`)`;
+					gClips = [
+					[	[0, c   ]
+					,	[w, c-wy]
+					,	[w, h   ]
+					]];
 				}
 			}
-			cKeys.forEach((key) => {
-				const color = grd[1][key];
-				text += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
-			});
-			aKeys.forEach((key) => {
-				const alpha = grd[1][key];
-				text += `\\${key}&H${Color.hex(alpha)}&`;
-			});
-			text += next;
-			event = new AssEvent(origin.start, origin.end, origin.Style, text);
-			event.Effect = "jmk";
-			events.push(event);
+			if (clip && clip.length) {
+				gClips = polygonClipping.intersection(gClips, [clip]);
+			} else {
+				gClips = [gClips];
+			}
+			if (gClips.length) {
+				let afterClip = "";
+				cKeys.forEach((key) => {
+					const color = grd[1][key];
+					afterClip += `\\${key}&H${Color.hex(color.b)}${Color.hex(color.g)}${Color.hex(color.r)}&`;
+				});
+				aKeys.forEach((key) => {
+					const alpha = grd[1][key];
+					afterClip += `\\${key}&H${Color.hex(alpha)}&`;
+				});
+				afterClip += next;
+				gClips.forEach((gClip) => {
+					event = new AssEvent(origin.start, origin.end, origin.Style, `${prev}${toClip(gClip[0])}${afterClip}`);
+					event.Effect = "jmk";
+					events.push(event);
+				});
+			}
 		}
 	});
 	

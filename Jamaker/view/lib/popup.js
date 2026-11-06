@@ -156,7 +156,7 @@ ready(() => {
 			+	'	*, *::before, *::after {'
 			+	'		font-family: "Apple SD Gothic Neo" !important;'
 			+	'	}'
-			+	'}'
+			+	'}';
 		document.head.append(styleFont);
 	}
 	
@@ -166,6 +166,13 @@ ready(() => {
 	[...document.getElementsByTagName("input")].forEach((input) => {
 		input.setAttribute("autocomplete", "off");
 	});
+	
+	if (windowName == "help") {
+		const style = document.querySelector("style");
+		if (style) {
+			style.innerHTML += "\n* { user-select: text; }";
+		}
+	}
 });
 
 // opener가 있는 addon에서만 쓰임
@@ -259,7 +266,7 @@ Progress.set = (selector, ratio, unit="calc([ratio] * 100%)") => {
 }
 
 function setColor(color) {
-	fetch("lib/popup.color.css?261102").then(async (response) => {
+	fetch("lib/popup.color.css?261106").then(async (response) => {
 		let preset = await response.text();
 		for (let name in color) {
 			preset = preset.replaceAll(`[${name}]`, color[name]);
