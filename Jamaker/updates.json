@@ -1,4 +1,26 @@
-[ { "version": "2026.11.03"
+[ { "version": "2026.11.07"
+  , "comment":
+    [ "색상 입력기 실행 시 특정 조건에서 무한루프 문제 수정"
+    , "좌표 추적기 실행 시 기존 값 가져오도록 수정"
+    , "좌표 추적기 목표 추적 방식만 남김"
+    , "좌표 추적 결과 반영 방식 변경"
+    , "\\shifts 출력물 2~3코마 작화 관련 정책 변경"
+    , "\\shifts와 연동되는 \\sclip/\\siclip/\\sgrd 문법 추가"
+    , "그라데이션 \\pos 중복 생성 버그 수정"
+    , "그라데이션 \\clip과 동시 사용 가능하도록 개선"
+    , "도움말 블록지정 허용 등"
+    ]
+  , "files":
+    [ "view/addon/Shifts.html"
+    , "view/help/aboutAss.html"
+    , "view/lib/Jamaker.js"
+    , "view/lib/polygon-clipping.umd.min.js"
+    , "view/lib/popup.js"
+    , "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    ]
+  }
+, { "version": "2026.11.03"
   , "comment":
     [ "좌표 추적 기능 관련 보완"
     , "ass [LAST] 사용 시 프로젝트 파일에 프레임 시간 누락 문제 수정"
