@@ -4416,7 +4416,6 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 	return { x: pos[0], y: pos[1], fad: fad, t: t, ks: ks };
 }
 function toClip(poss) {
-	console.log(poss);
 	const values = ["m", poss[0][0].toFixed(1), poss[0][1].toFixed(1), "l"];
 	for (let i = 1; i < poss.length; i++) {
 		values.push(poss[i][0].toFixed(1));
@@ -4737,7 +4736,7 @@ AssFile.prototype.gradation = function() {
 				,	[c-hx+dx, h]
 				,	[c   +dx, 0]
 				]];
-				gClips = [gClip];
+				gClips = [gClips];
 				if (clip && clip.length) {
 					gClips = polygonClipping.intersection(gClips, [clip]);
 				} else {
