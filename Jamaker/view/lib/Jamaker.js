@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?261106";
-import "./Subtitle.Converter.js?261106";
-import "./AutoCompleteCodeMirror.js?261106";
-import "./SmiEditor.js?261106";
-import "./AssEditor.js?261106";
-import "./highlight/cm/javascript.js?261106";
+﻿import "./MenuStrip.js?261113";
+import "./Subtitle.Converter.js?261113";
+import "./AutoCompleteCodeMirror.js?261113";
+import "./SmiEditor.js?261113";
+import "./AssEditor.js?261113";
+import "./highlight/cm/javascript.js?261113";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?261106";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?261106", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?261113", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -87,7 +87,7 @@ window.Tab = function(text, path) {
 		{
 			assHold.isAssHold = true;
 			
-			this.holdSelector.append(assHold.selector = document.createElement("div"));
+			tab.holdSelector.append(assHold.selector = document.createElement("div"));
 			assHold.selector.classList.add("selector", "ass-only");
 			eData(assHold.selector, { hold: assHold });
 			{	const holdName = document.createElement("div");
@@ -98,12 +98,12 @@ window.Tab = function(text, path) {
 				assHold.selector.append(holdName);
 			}
 			assHold.selector.title = "ASS 추가 스크립트";
-			assHold.owner = this;
+			assHold.owner = tab;
 			
 			assHold.area.innerHTML = "";
 			assHold.area.classList.add("ass-hold");
 			assHold.area.append(SmiEditor.assHoldPreset.cloneNode(true));
-			this.holdArea.append(assHold.area);
+			tab.holdArea.append(assHold.area);
 			
 			const tabs = assHold.area.querySelector(".ass-tab-selector").children;
 			assHold.assEditor = new AssEditor(assHold.area.querySelector(".ass-editor"));
@@ -230,18 +230,18 @@ window.Tab = function(text, path) {
 		}
 		
 		let frameSyncs = [];
-		if (this.assFile) {
-			const events = this.assFile.getEvents();
+		if (tab.assFile) {
+			const events = tab.assFile.getEvents();
 			
 			const editAssFile = new AssFile(" "); // 공백이라도 안 넣으면 [Script Info] 자동 생성됨
-			this.assFile.parts.forEach((part) => {
+			tab.assFile.parts.forEach((part) => {
 				if (part.name == "Script Info") return;
 				if (part.name == "Events") return;
 				editAssFile.parts.push(part);
 			});
-			this.area.querySelector(".tab-ass-appends textarea").value = editAssFile.toText();
+			tab.area.querySelector(".tab-ass-appends textarea").value = editAssFile.toText();
 			
-			const info = this.assFile.getInfo();
+			const info = tab.assFile.getInfo();
 			if (info) {
 				let playResX = info.get("PlayResX");
 				let playResY = info.get("PlayResY");
@@ -270,22 +270,23 @@ window.Tab = function(text, path) {
 			// ASS용 파일 아니어도 값은 채워둠
 			tab.area.querySelector("div.tab-ass-appends input.inputPlayResX").value = Subtitle.video.width;
 			tab.area.querySelector("div.tab-ass-appends input.inputPlayResY").value = Subtitle.video.height;
+			tab.area.querySelector(".tab-ass-appends textarea").value = setting.newAssAppends;
 		}
 		
 		if (holds[0].automations) {
-			this.setAutomations(holds[0].automations);
+			tab.setAutomations(holds[0].automations);
 		}
 		
 		holds[0].frameSyncs = frameSyncs;
-		this.addHold(holds[0], true, true);
+		tab.addHold(holds[0], true, true);
 		for (let i = 1; i < holds.length; i++) {
 			holds[i].frameSyncs = frameSyncs;
-			this.addHold(holds[i], false, false);
+			tab.addHold(holds[i], false, false);
 		}
 	}
-	this.savedHolds = this.holds.slice(0);
+	tab.savedHolds = tab.holds.slice(0);
 	
-	this.holdSelector.addEventListener("click", (e) => {
+	tab.holdSelector.addEventListener("click", (e) => {
 		let el;
 		if (el = e.target.closest(".btn-hold-remove")) {
 			const hold = eData(el.parentNode.parentNode).hold;
@@ -364,7 +365,7 @@ window.Tab = function(text, path) {
 			return;
 		}
 	});
-	this.holdSelector.addEventListener("dblclick", (e) => {
+	tab.holdSelector.addEventListener("dblclick", (e) => {
 		const el = e.target.closest(".hold-name");
 		if (!el) return;
 		
@@ -373,9 +374,9 @@ window.Tab = function(text, path) {
 		
 	});
 	
-	eData(this.holdResizer, { owner: this });
+	eData(tab.holdResizer, { owner: tab });
 	
-	this.area.addEventListener("click", (e) => {
+	tab.area.addEventListener("click", (e) => {
 		const el = e.target.closest(".btn-hold-style");
 		if (!el) return;
 		
@@ -549,6 +550,87 @@ Tab.refreshScroll = function(aBody) {
 		wrapper.classList.remove("scrolling");
 		eData(aBody, "lastScroll", 0);
 	}, SmiEditor.scrollShow * 1000);
+}
+
+// 선택된 홀드 스타일에 따른 ASS 태그 자동완성 기본값 설정
+function refreshAutoCompleteForAss() {
+	const hold = SmiEditor.selected;
+	if (!hold) return;
+	
+	let playResX = hold.owner.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
+	let playResY = hold.owner.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
+	if (playResX && playResY && isFinite(playResX) && isFinite(playResY)) {
+		playResX = Number(playResX);
+		playResY = Number(playResY);
+	} else {
+		playResX = Subtitle.video.width;
+		playResY = Subtitle.video.height;
+	}
+	
+	const pos = { x: playResX / 2, y: playResY / 2 };
+	const style = hold.style;
+	switch (style.Alignment % 3) {
+		case 1: {
+			pos.x = style.MarginL;
+			break;
+		}
+		case 2: {
+			pos.x = (style.MarginR + playResX - style.MarginR) / 2;
+			break;
+		}
+		case 0: {
+			pos.x = playResX - style.MarginR;
+			break;
+		}
+	}
+	switch (Math.floor((style.Alignment - 1) / 3)) {
+		case 2: {
+			pos.y = style.MarginV;
+			break;
+		}
+		case 0: {
+			pos.y = playResY - style.MarginV;
+			break;
+		}
+	}
+	
+	SmiEditor.autoComplete["\\"] = ['\\', [
+			'\\c&HAAAAAA&'
+		,	'\\1a&H3F&'
+		,	'\\bord'
+		,	'\\blur'
+		,	'\\shad'
+		,	`\\pos(${pos.x},${pos.y})`
+		,	`\\move(${pos.x},${pos.y},${pos.x},${pos.y})`
+		,	'\\fad(0,0)'
+		,	'\\fadein'
+		,	'\\fadeout'
+		,	'\\fade(255,0,255,0,500,1000,1500)'
+		,	`\\org(${pos.x},${pos.y})`
+		,	'\\an'
+		,	'\\fn'
+		,	'\\fs'
+		,	'\\fscx'
+		,	'\\fscy'
+		,	'\\fsp'
+		,	'\\fax'
+		,	'\\fay'
+		,	'\\frx'
+		,	'\\fry'
+		,	'\\frz'
+		,	'\\shift(0,0)'
+		,	'\\zoom(110)'
+		,	`\\zoom(${pos.x},${pos.y},110)`
+		,	'\\alpha&H3F&'
+		,	'\\clip(0,0,500,500)'
+		,	'\\iclip(0,0,500,500)'
+		,	'\\3c&HAAAAAA&'
+		,	'\\3a&H3F&'
+		,	'\\4c&HAAAAAA&'
+		,	'\\4a&H3F&'
+		,	'\\\\|[SMI]'
+		,	'\\\\|[TEXT]'
+	]];
 }
 
 Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
@@ -746,6 +828,7 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 						if (input.name.startsWith("Margin")) {
 							// Margin 값에는 소수점 비허용
 							value = Math.round(value);
+							refreshAutoCompleteForAss();
 						}
 					} else {
 						value = 0;
@@ -805,6 +888,7 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 				if (input) {
 					hold.style[input.name] = input.value;
 					hold.refreshStyle();
+					refreshAutoCompleteForAss();
 					return;
 				}
 			});
@@ -951,7 +1035,7 @@ SmiEditor.prototype.refreshStyle = function() {
 			this.assStyle.body.push({});
 		}
 		const style = SmiFile.toAssStyle(this.style);
-		style.Name = this.name;
+		style.Name = this.area.classList.contains("main") ? "Default" : this.name;
 		this.assStyle.body[0] = style;
 		this.preview.querySelector("textarea[name=script]").value = (this.assStyle.toText() + "\n"); // 블록지정 편의성을 위해 줄바꿈 추가
 	}
@@ -1102,12 +1186,21 @@ SmiEditor.prototype.inputText = function(text, standCursor) {
 	if (typeof text != "string") return;
 	if (this.area.classList.contains("style")) {
 		if (text.length == 7 && text.startsWith("#")) {
-			this.style.PrimaryColour = text;
-			const input = this.area.querySelector("input[name=PrimaryColour]");
-			input.value = input.nextSibling.value = text;
-			this.refreshStyle();
+			// 홀드 스타일 편집기 색상코드 입력일 때
+			let input = document.activeElement;
+			if (input.classList.contains("color")) {
+				input = input.previousSibling;
+			} else if (input.classList.contains("bgr")) {
+				input = input.previousSibling.previousSibling;
+			}
+			if (input.name && input.name.endsWith("Colour")) {
+				this.style[input.name] = text;
+				input.value = input.nextSibling.value = text;
+				input.nextSibling.nextSibling.value = `&H${text.substring(5,7)}${text.substring(3,5)}${text.substring(1,3)}&`;
+				this.refreshStyle();
+			}
 		} else {
-			alert("SMI 에디터 모드가 아닙니다.");
+			alert("올바른 색상코드가 아닙니다.");
 			return;
 		}
 	} else {
@@ -1284,6 +1377,7 @@ Tab.prototype.selectHold = function(hold) {
 			index = this.holds.indexOf(hold);
 		}
 		SmiEditor.selected = hold;
+		refreshAutoCompleteForAss();
 		
 		[...this.holdSelector.querySelectorAll(".selected")].forEach((el) => { el.classList.remove("selected"); });
 		[...this.holdArea.getElementsByClassName("hold")].forEach((el) => { el.style.display = "none"; });
@@ -1536,7 +1630,7 @@ Tab.prototype.isSaved = function() {
 	return this.assHold.assEditor.isSaved;
 }
 
-Tab.prototype.toAss = function(orderByEndSync=false) {
+Tab.prototype.toAss = async function(orderByEndSync=false) {
 	let playResX = this.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
 	let playResY = this.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
 	if (playResX && playResY && isFinite(playResX) && isFinite(playResY)) {
@@ -1567,9 +1661,10 @@ Tab.prototype.toAss = function(orderByEndSync=false) {
 	});
 	const assFile = SmiFile.holdsToAss(this.holds, appendParts, append.getStyles().body, append.getEvents().body, playResX, playResY, orderByEndSync);
 	assFile.gradation();
-	this.getAutomations().forEach((automation) => {
-		assFile.automation(automation.target, automation.script, automation.withOrigin);
-	});
+	const automations = this.getAutomations();
+	for (const automation of automations) {
+		await assFile.automation(automation.target, automation.script, automation.withOrigin);
+	}
 	return assFile;
 }
 // 동영상 해상도 변경에 따른 ASS 좌표 조정
@@ -1600,9 +1695,43 @@ Tab.prototype.setResolution = function(x, y) {
 	const moveY = ((inputPlayResY.value = y) - playResY) / 2;
 	
 	this.holds.forEach((hold) => {
+		// 홀드 스타일 여백 변경
+		hold.style.MarginL += moveX;
+		hold.style.MarginR += moveX;
+		hold.style.MarginV += moveY;
+		
+		const area = hold.styleArea.querySelector(".hold-style");
+		area.querySelector("input[name=MarginL]").value = hold.style.MarginL;
+		area.querySelector("input[name=MarginR]").value = hold.style.MarginR;
+		area.querySelector("input[name=MarginV]").value = hold.style.MarginV;
+		
+		// 홀드 내용물 좌표 이동
 		hold.moveAssPos(moveX, moveY);
 	});
-	this.assHold.moveAssPos(moveX, moveY);
+	
+	{	// ASS 추가 스크립트
+		// 스타일 여백 변경
+		const taAppends = this.assHold.area.querySelector(".tab-ass-appends textarea");
+		const appends = taAppends.value;
+		if (appends.trim().length) {
+			const appendFile = new AssFile(appends);
+			appendFile.parts.forEach((appendPart) => {
+				if (appendPart.name == "Script Info") return;
+				if (appendPart.name == "Events") return;
+				if (appendPart.name == "V4+ Styles") {
+					appendPart.body.forEach((style) => {
+						if (style.Name == "p") return; // 의도적으로 \p1 태그 전용으로 만든 스타일
+						style.MarginL += moveX;
+						style.MarginR += moveX;
+						style.MarginV += moveY;
+					});
+				}
+			});
+			taAppends.value = appendFile.toText();
+		}
+		// 좌표 이동
+		this.assHold.moveAssPos(moveX, moveY);
+	}
 	return true;
 }
 SmiEditor.prototype.moveAssPos = function(x, y) {
@@ -1705,7 +1834,24 @@ SmiEditor.moveAssPos = function(text, x=0, y=0) {
 					const ps = tag.substring(tagName.length, tagEnd).split(",");
 					ps.forEach((p, k) => {
 						if (k >= 4) return; // 4개 넘어가면 move의 좌표가 아닌 시간값
-						ps[k] = Number(p) + (k%2==0 ? x : y); // 0,2번째는 x / 1,3번째는 y
+						
+						// 숫자가 아닌 수식을 넣은 경우 고려
+						let v = 0;
+						let append = "";
+						if (isFinite(p)) {
+							v = Number(p);
+						} else {
+							for (let l = 0; l < p.length; l++) {
+								if (isFinite(p[l])) {
+									v = v * 10 + Number(p[l]);
+								} else {
+									append = p.substring(l);
+									break;
+								}
+							}
+						}
+						
+						ps[k] = (v + (k%2==0 ? x : y)) + append; // 0,2번째는 x / 1,3번째는 y
 					});
 					tags[j] = tagName + ps.join(",") + ")";
 				}
@@ -1857,7 +2003,7 @@ SmiEditor.selectTab = function(index=-1) {
 		binder.setPath("");
 	}
 	SmiEditor.Viewer.refresh();
-	currentTab.holds[currentTab.holdIndex].refresh();
+	(SmiEditor.selected = currentTab.holds[currentTab.holdIndex]).refresh();
 	
 	// 탭에 따라 홀드 여부 다를 수 있음
 	refreshPaddingBottom();
@@ -2582,7 +2728,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?261106").then(async (response) => {
+		fetch("lib/Jamaker.color.css?261113").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2665,7 +2811,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?261106").then(async (response) => {
+		fetch("lib/Jamaker.size.css?261113").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2848,7 +2994,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?261106", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?261113", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -3249,7 +3395,7 @@ window.saveFile = function(asNew, isExport) {
 		
 		log("saveFile end", funcSince);
 		
-		function saveAfterConfirm() {
+		async function saveAfterConfirm() {
 			lastSave = new Date().getTime();
 			
 			let saveText = "";
@@ -3291,7 +3437,7 @@ window.saveFile = function(asNew, isExport) {
 			}
 			if (withAss) {
 				if (Subtitle.video.fs.length) {
-					const assText = currentTab.toAss().toText(true);
+					const assText = (await currentTab.toAss()).toText(true);
 					
 					const saveAssFrom = log("binder.save ass start");
 					binder.save(tabIndex, assText, assPath, 2/*ass*/);
@@ -3611,7 +3757,7 @@ window.afterSetFkf = function() {
 	log("afterSetFkf end", funcSince);
 }
 
-window.loadAssFile = function(text) {
+window.loadAssFile = async function(text) {
 	const currentTab = tabs[tabIndex];
 	if (!currentTab || !currentTab.withAss) {
 		alert("연동용 자막 파일이 열려있어야 ASS 파일을 읽을 수 있습니다.");
@@ -3624,7 +3770,7 @@ window.loadAssFile = function(text) {
 	let funcSince = log("loadAssFile start");
 	
 	// SMI -> ASS 변환 결과
-	const originFile = currentTab.toAss(true);
+	const originFile = await currentTab.toAss(true);
 	funcSince = log("loadAssFile - originFile", funcSince);
 	
 	// 따로 불러온 ASS 파일
@@ -5138,7 +5284,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?261106", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?261113", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5544,6 +5690,7 @@ window.runColorPicker = function(useWvPicker=false) {
 	
 	input.value = input.nextSibling.value = "#" + value;
 	
+	window.targetOfPosPicker = document.activeElement;
 	if (useWvPicker) {
 		modal.showModal();
 		input.click();
@@ -5949,6 +6096,12 @@ window.runPosPicker = function(mode = -1) {
  * SMI 노래방 자막 기반으로 ASS {\k} 기반 스크립트 생성
  * 색상태그 이외에 다른 걸 중간에 섞어 쓰지 않는다고 가정
  * ASS 변환 스크립트 이외의 주석은 없다고 가정
+ * 
+ * TODO: 현재 RUBY 태그 있으면 정상적으로 동작하지 않음
+ *       정렬 문제도 있는데, 그냥 날리는 게 맞나...?
+ *       굳이 한다면
+ *       1. RUBY 태그를 먼저 제거하고 돌리기
+ *       2. RUBY 태그 내용물만 따로 돌리고 정렬 맞추기
  */
 window.setAssKaraokeFromSmi = function(kf=false) {
 	const editor = SmiEditor.selected;

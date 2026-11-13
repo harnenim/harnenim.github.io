@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>설정</title>
-<script src="lib/popup.js?261106"></script>
-<script src="lib/SmiEditor.js?261106" type="module"></script>
-<script src="lib/highlight/cm/javascript.js?261106" type="module"></script>
+<script src="lib/popup.js?261113"></script>
+<script src="lib/SmiEditor.js?261113" type="module"></script>
+<script src="lib/highlight/cm/javascript.js?261113" type="module"></script>
 <script>
 windowName = "setting";
 
@@ -1168,7 +1168,7 @@ function init() {
 				previewRuby1.style.top = `${  0 - inputRubyPos.value * 0.4 }px`;
 				previewRuby2.style.top = `${ 60 - inputRubyPos.value * 0.4 }px`;
 			}
-			document.getElementById("style_viewer").addEventListener("input", (e) => {
+			document.getElementById("style_ruby").addEventListener("input", (e) => {
 				if (e.target == inputRubyPos) {
 					refreshPreviewRuby();
 					return;
@@ -1176,7 +1176,7 @@ function init() {
 				if (e.target.closest("#preview")) return;
 				refreshPreviewStyle();
 			});
-			document.getElementById("style_viewer").addEventListener("change", (e) => {
+			document.getElementById("style_ruby").addEventListener("change", (e) => {
 				if (e.target == inputRubyPos) {
 					refreshPreviewRuby();
 					return;
@@ -1225,6 +1225,7 @@ function init() {
 			setting.viewer.rubyPos    = document.querySelector("input[name=viewer_rubyPos]").value;
 			
 			setting.newFile           = editorNewFile.getValue();
+			setting.newAssAppends     = document.querySelector("textarea[name=newAssAppends]").value;
 			
 			setting.color.background  = document.querySelector("input[name=color_background]").value;
 			setting.color.selector    = document.querySelector("input[name=color_selector]"  ).value;
@@ -2284,7 +2285,7 @@ body:not(.hl) .CodeMirror .CodeMirror-cursor {
 					<p>설정창 열기</p>
 				</li>
 				<li data-input="openAddon('~~.html')">
-					<h4>openAddon("~~.html?261106")</h4>
+					<h4>openAddon("~~.html?261113")</h4>
 					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
 				</li>
 			</ul>
@@ -2468,19 +2469,22 @@ body:not(.hl) .CodeMirror .CodeMirror-cursor {
 			<div id="preview">
 				<div id="preview_main" contenteditable="true" spellcheck="false">Jamaker 0123 語 한글</div>
 			</div>
-			<fieldset id="style_ruby">
-				<legend>RUBY 태그 ASS 변환</legend>
-				<div>
-					<label><span>상하 위치 </span><input type="number" name="viewer_rubyPos" min="-150" max="50" />%</label>
-				</div>
-				<div>
-					<div style="top: 20px;">윗줄입니다.</div>
-					<div style="top: 80px;">아랫줄입니다.</div>
-					<div style="top:  0px;" class="ruby" id="preview_ruby1">RUBY 내용</div>
-					<div style="top: 60px;" class="ruby" id="preview_ruby2">RUBY 내용</div>
-				</div>
-			</fieldset>
 		</fieldset>
+		<fieldset id="style_ruby">
+			<legend>RUBY 태그 ASS 변환</legend>
+			<div>
+				<label><span>상하 위치 </span><input type="number" name="viewer_rubyPos" min="-150" max="50" />%</label>
+			</div>
+			<div>
+				<div style="top: 20px;">윗줄입니다.</div>
+				<div style="top: 80px;">아랫줄입니다.</div>
+				<div style="top:  0px;" class="ruby" id="preview_ruby1">RUBY 내용</div>
+				<div style="top: 60px;" class="ruby" id="preview_ruby2">RUBY 내용</div>
+			</div>
+		</fieldset>
+		<label>ASS 추가 스크립트 기본값
+			<textarea name="newAssAppends"></textarea>
+		</label>
 	</form>
 	
 	<form id="player">

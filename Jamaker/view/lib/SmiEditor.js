@@ -1,20 +1,20 @@
-﻿import "./SubtitleObject.js?261106";
+﻿import "./SubtitleObject.js?261113";
 
-import "./highlight/cm/codemirror.js?261106";
-import "./highlight/cm/scrollpastend.js?261106";
-import "./highlight/cm/mark-selection.js?261106";
-import "./highlight/cm/active-line.js?261106";
-import "./highlight/cm/sami.js?261106";
+import "./highlight/cm/codemirror.js?261113";
+import "./highlight/cm/scrollpastend.js?261113";
+import "./highlight/cm/mark-selection.js?261113";
+import "./highlight/cm/active-line.js?261113";
+import "./highlight/cm/sami.js?261113";
 
 {
 	let link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./SmiEditor.css?261106", import.meta.url).href;
+	link.href = new URL("./SmiEditor.css?261113", import.meta.url).href;
 	document.head.append(link);
 	
 	link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./highlight/cm/codemirror.css?261106", import.meta.url).href;
+	link.href = new URL("./highlight/cm/codemirror.css?261113", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -523,43 +523,6 @@ SmiEditor.setSetting = (setting) => {
 				}
 				SmiEditor.autoComplete[key] = value;
 			}
-			// ASS 태그 자동완성 지원
-			SmiEditor.autoComplete["\\"] = ['\\', [
-					'\\c&HAAAAAA&'
-				,	'\\1a&H3F&'
-				,	'\\bord'
-				,	'\\blur'
-				,	'\\shad'
-				,	'\\pos(0,0)'
-				,	'\\move(0,0,0,0)'
-				,	'\\fad(0,0)'
-				,	'\\fade(255,0,255,0,500,1000,1500)'
-				,	'\\fadein'
-				,	'\\fadeout'
-				,	'\\org(0,0)'
-				,	'\\an'
-				,	'\\fn'
-				,	'\\fs'
-				,	'\\fscx'
-				,	'\\fscy'
-				,	'\\fsp'
-				,	'\\fax'
-				,	'\\fay'
-				,	'\\frx'
-				,	'\\fry'
-				,	'\\frz'
-				,	'\\shift(0,0)'
-				,	'\\shift([TEXTx],[TEXTy])'
-				,	'\\zoom(110)'
-				,	'\\zoom([TEXTx],[TEXTy],[TEXTr])'
-				,	'\\alpha&H3F&'
-				,	'\\clip(0,0,0,0)'
-				,	'\\iclip(0,0,0,0)'
-				,	'\\3c&HAAAAAA&'
-				,	'\\3a&H3F&'
-				,	'\\4c&HAAAAAA&'
-				,	'\\4a&H3F&'
-			]];
 		}
 	}
 	
@@ -2659,7 +2622,7 @@ SmiEditor.Finder = {
 	last: { find: "", replace: "", withCase: false, reverse: false }
 ,	open: function(isReplace) {
 		this.onload = (isReplace ? this.onloadReplace : this.onloadFind);
-		let newWindow = window.open("finder.html?261106", "finder", "scrollbars=no,location=no,width=400,height=220");
+		let newWindow = window.open("finder.html?261113", "finder", "scrollbars=no,location=no,width=400,height=220");
 		if (newWindow) this.window = newWindow; // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 		binder.focus("finder");
 	}
@@ -2855,7 +2818,7 @@ SmiEditor.Finder = {
 SmiEditor.Viewer = {
 	window: null
 ,	open: function() {
-		let newWindow = window.open("viewer.html?261106", "viewer", "scrollbars=no,location=no,width=1,height=1");
+		let newWindow = window.open("viewer.html?261113", "viewer", "scrollbars=no,location=no,width=1,height=1");
 		if (newWindow) { // WebView2에서 팝업 재활용할 경우 null이 될 수 있음
 			this.window = newWindow.iframe?.contentWindow ?? newWindow; // 웹샘플 iframe 버전 대응
 		}

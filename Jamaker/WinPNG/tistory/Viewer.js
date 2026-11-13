@@ -1,6 +1,6 @@
-﻿import "./Subtitle.Converter.js?261106";
-import "./jszip.min.js?261106";
-import "./WinPNG.js?260708";
+﻿import "./Subtitle.Converter.js?261112";
+import "./jszip.min.js?261113";
+import "./WinPNG.js?261112";
 
 function initialSetting() {
 	// 기본 폰트: 맑은 고딕
@@ -9,8 +9,8 @@ function initialSetting() {
 	Subtitle.DefaultStyle.Fontsize = Math.round(18 / 5.86 * (25.5 * 1.001) * 100) / 100;
 	// ASS 줄표 들어간 대사 왼쪽 정렬 활성화
 	AssEvent.useAlignDialogue = true;
-	// ASS 후리가나 기본 위치에서 아래로 10%
-	AssEvent.rubyPos = -0.1;
+	// ASS 후리가나 기본 위치에서 아래로 5%
+	AssEvent.rubyPos = -0.05;
 };
 
 URL.files = {};
@@ -54,6 +54,9 @@ input.onload = async function() {
 		viewFileList.style.minWidth = "";
 		
 		const bmp = new BufferedImage(this);
+		if (!BufferedImage.canTrust()) {
+			await bmp.decodeFromUrl();
+		}
 		const possibility = WithTarget.possibility(bmp);
 		let parsed = await WithTarget.fromBitmap(bmp, possibility);
 		
@@ -127,8 +130,9 @@ async function convert(i) {
 			switch (part.name) {
 				case "Script Info":
 				case "V4+ Styles":
-				case "Events":
+				case "Events": {
 					break;
+				}
 				default: {
 					appendParts.push(part);
 				}
@@ -151,9 +155,9 @@ async function convert(i) {
 		const assFileObj = SmiFile.holdsToAss(holds, appendParts, append.getStyles().body, append.getEvents().body, x, y);
 		assFileObj.gradation();
 		if (holds[0].automations) {
-			holds[0].automations.forEach((automation) => {
-				assFileObj.automation(automation.target, automation.script, automation.withOrigin);
-			});
+			for (const automation of holds[0].automations) {
+				await assFileObj.automation(automation.target, automation.script, automation.withOrigin);
+			}
 		}
 		const assText = assFileObj.toText(true);
 		const assFile = new File([new Blob(["\uFEFF" + assText], { type: "text/plain;charset=utf-8" })], toConvert.filename);
@@ -585,15 +589,6 @@ async function dropUrl(url) {
 }
 
 async function onload() {
-	initialSetting();
-	
-	inputUrl = document.getElementById("inputUrl");
-	ivTarget = document.getElementById("ivTarget");
-	areaSettingZip = document.getElementById("areaSettingZip");
-	viewFileList = document.getElementById("viewFileList");
-	previewWindow = document.getElementById("previewWindow");
-	alertLayer = document.getElementById("alertLayer");
-	
 	const btn = document.getElementById("toggleWinPNG");
 	btn.addEventListener("click", () => {
 		if (winPNG.classList.contains("on")) {
@@ -604,16 +599,54 @@ async function onload() {
 		}
 	});
 	
+	initialSetting();
+	
+	inputUrl = document.getElementById("inputUrl");
+	ivTarget = document.getElementById("ivTarget");
+	areaSettingZip = document.getElementById("areaSettingZip");
+	viewFileList = document.getElementById("viewFileList");
+	previewWindow = document.getElementById("previewWindow");
+	alertLayer = document.getElementById("alertLayer");
+	
 	// 포커스 상관없이 붙여넣기 이벤트 동작
 	document.addEventListener("paste", paste);
+	
+	function openFile(file) {
+		const ext = file.name.substring(file.name.length - 4);
+		switch (ext.toLowerCase()) {
+			case ".png":
+			case ".bmp": {
+				inputUrl.value = input.src = URL.reset(file);
+				break;
+			}
+			case ".zip": {
+				ivTarget.innerHTML = "";
+				const comment = document.createElement("div");
+				comment.id = "comment";
+				comment.append("ZIP 파일입니다.");
+				ivTarget.append(comment);
+				inputUrl.value = URL.reset(file);
+				unzip(file);
+				break;
+			}
+			default: {
+				ivTarget.innerHTML = "";
+				const comment = document.createElement("div");
+				comment.id = "comment";
+				comment.append("단일 파일입니다.");
+				ivTarget.append(comment);
+				inputUrl.value = URL.reset(file);
+				setOne(file);
+			}
+		}
+	}
 	
 	{	// 파일 열기
 		const inputFile = document.createElement("input");
 		inputFile.type = "file";
 		inputFile.addEventListener("change", (e) => {
 			if (inputFile.files.length) {
-				inputUrl.value = input.src = URL.reset(inputFile.files[0]);
-				inputFile.value = "";
+				openFile(inputFile.files[0]);
 			}
 		});
 		document.getElementById("btnOpenFile").addEventListener("click", async () => {
@@ -648,34 +681,8 @@ async function onload() {
 			cover.style.display = "none";
 			if (e.dataTransfer) {
 				if (e.dataTransfer.files && e.dataTransfer.files.length) {
-					const file = e.dataTransfer.files[0];
-					const ext = file.name.substring(file.name.length - 4);
-					switch (ext.toLowerCase()) {
-						case ".png":
-						case ".bmp": {
-							inputUrl.value = input.src = URL.reset(file);
-							break;
-						}
-						case ".zip": {
-							ivTarget.innerHTML = "";
-							const comment = document.createElement("div");
-							comment.id = "comment";
-							comment.append("ZIP 파일입니다.");
-							ivTarget.append(comment);
-							inputUrl.value = URL.reset(file);
-							unzip(file);
-							break;
-						}
-						default: {
-							ivTarget.innerHTML = "";
-							const comment = document.createElement("div");
-							comment.id = "comment";
-							comment.append("단일 파일입니다.");
-							ivTarget.append(comment);
-							inputUrl.value = URL.reset(file);
-							setOne(file);
-						}
-					}
+					openFile(e.dataTransfer.files[0]);
+					
 				} else if (e.dataTransfer.items && e.dataTransfer.items.length) {
 					let urlItem = null;
 					[...e.dataTransfer.items].forEach((item) =>  {
