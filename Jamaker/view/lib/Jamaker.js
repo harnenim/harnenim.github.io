@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?261113";
-import "./Subtitle.Converter.js?261113";
-import "./AutoCompleteCodeMirror.js?261113";
-import "./SmiEditor.js?261113";
-import "./AssEditor.js?261113";
-import "./highlight/cm/javascript.js?261113";
+﻿import "./MenuStrip.js?261115";
+import "./Subtitle.Converter.js?261115";
+import "./AutoCompleteCodeMirror.js?261115";
+import "./SmiEditor.js?261115";
+import "./AssEditor.js?261115";
+import "./highlight/cm/javascript.js?261115";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?261113";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?261113", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?261115", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -555,7 +555,7 @@ Tab.refreshScroll = function(aBody) {
 // 선택된 홀드 스타일에 따른 ASS 태그 자동완성 기본값 설정
 function refreshAutoCompleteForAss() {
 	const hold = SmiEditor.selected;
-	if (!hold) return;
+	if (!hold || hold.assEditor) return;
 	
 	let playResX = hold.owner.area.querySelector("div.tab-ass-appends input.inputPlayResX").value;
 	let playResY = hold.owner.area.querySelector("div.tab-ass-appends input.inputPlayResY").value;
@@ -2728,7 +2728,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?261113").then(async (response) => {
+		fetch("lib/Jamaker.color.css?261115").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2811,7 +2811,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?261113").then(async (response) => {
+		fetch("lib/Jamaker.size.css?261115").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2994,7 +2994,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?261113", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?261115", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5284,7 +5284,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?261113", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?261115", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);

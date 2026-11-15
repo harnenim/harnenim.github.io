@@ -1,4 +1,13 @@
-[ { "version": "2026.11.14"
+[ { "version": "2026.11.15"
+  , "comment":
+    [ "ASS 추가 스크립트 먹통 현상 수정"
+    ]
+  , "files":
+    [ "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    ]
+  }
+, { "version": "2026.11.14"
   , "comment":
     [ "해상도 조정 시 \\pos에 수식 쓴 경우 NaN 발생 문제 수정"
     , "해상도 조정 시 여백 변경 연동"
