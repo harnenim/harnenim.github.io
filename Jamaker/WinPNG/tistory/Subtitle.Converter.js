@@ -1,5 +1,5 @@
 ﻿import "./SubtitleObject.js?261015";
-import "./polygon-clipping.umd.min.js?261115";
+import "./polygon-clipping.umd.min.js?261119";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'

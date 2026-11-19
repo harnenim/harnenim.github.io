@@ -1,5 +1,5 @@
-﻿import "./SubtitleObject.js?261115";
-import "./polygon-clipping.umd.min.js?261115";
+﻿import "./SubtitleObject.js?261119";
+import "./polygon-clipping.umd.min.js?261119";
 
 window.Combine = {
 	css: 'font-family: 맑은 고딕;'
@@ -2640,7 +2640,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 				} else {
 					item.End = AssEvent.toAssTime(item.end, false);
 				}
-				if (item.start == 0) item.start = 1;
+//				if (item.start == 0) item.start = 1;
 			}
 		} else {
 			// 프레임 값 없으면 fps 기반으로 계산
@@ -2652,68 +2652,14 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 			}
 		}
 		
-		const defaultPos = {};
+		const defaultPoss = {};
 		function getDefaultPos(styleName, an=0) {
-			let defPos = defaultPos[styleName];
+			let defPos = defaultPoss[styleName];
 			if (an) {
-				defPos = { x: playResX / 2, y: playResY / 2 };
-				const style = assFile.getStyle(styleName);
-				if (style) {
-					switch (an % 3) {
-						case 1: {
-							defPos.x = style.MarginL;
-							break;
-						}
-						case 2: {
-							defPos.x = (style.MarginR + playResX - style.MarginR) / 2;
-							break;
-						}
-						case 0: {
-							defPos.x = playResX - style.MarginR;
-							break;
-						}
-					}
-					switch (Math.floor((an - 1) / 3)) {
-						case 2: {
-							defPos.y = style.MarginV;
-							break;
-						}
-						case 0: {
-							defPos.y = playResY - style.MarginV;
-							break;
-						}
-					}
-				}
+				defPos = AssFile.getDefaultPos(assFile.getStyle(styleName), playResX, playResY, an);
 			} else {
 				if (!defPos) {
-					defaultPos[styleName] = defPos = { x: playResX / 2, y: playResY / 2 };
-					const style = assFile.getStyle(styleName);
-					if (style) {
-						switch (style.Alignment % 3) {
-							case 1: {
-								defPos.x = style.MarginL;
-								break;
-							}
-							case 2: {
-								defPos.x = (style.MarginR + playResX - style.MarginR) / 2;
-								break;
-							}
-							case 0: {
-								defPos.x = playResX - style.MarginR;
-								break;
-							}
-						}
-						switch (Math.floor((style.Alignment - 1) / 3)) {
-							case 2: {
-								defPos.y = style.MarginV;
-								break;
-							}
-							case 0: {
-								defPos.y = playResY - style.MarginV;
-								break;
-							}
-						}
-					}
+					defaultPoss[styleName] = defPos = AssFile.getDefaultPos(assFile.getStyle(styleName), playResX, playResY);
 				}
 			}
 			return defPos;
@@ -2970,10 +2916,13 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						} else if (!shifts && tag.startsWith("shifts(") && tag.endsWith(")")) {
 							// 원래 쉼표, x로 개발 시작했는데, 실사용 경험상 공백, 콜론으로 정책 변경
 							// 예외적이긴 하지만, 쉼표만으로 구분된 \shifts 태그를 손으로 수정하려고 하면 순서쌍을 알아보기 힘듦
-							const values = tag.substring(7, tag.length - 1).replaceAll("x", ":").replaceAll(" ", ",").split(",");
+							const textValues = tag.substring(7, tag.length - 1).replaceAll("x", ":").replaceAll(" ", ",");
+							const values = textValues.split(",");
 							if (values.length >= 2) {
 								// \\shifts(dx1,dy1,dx2,dy2,...)
-								shifts = { i: i, j: j, list: [{x:0,y:0}] };
+								shifts = { i: i, j: j, list: [{x:0,y:0}]
+									,	forced: (textValues.indexOf(".") > 0) // 소수점 있으면 아래에서 보정 돌리지 않음
+								};
 								for (let i = 0; i+1 < values.length; i+=2) {
 									const shift = {
 											x: isFinite(values[i  ]) ? Number(values[i  ]) : 0
@@ -3213,6 +3162,175 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 						const startIndex = Subtitle.findSyncIndex(item.start);
 						const endIndex   = Subtitle.findSyncIndex(item.end  );
 						const frameCount = endIndex - startIndex;
+						
+						// 움직임 부드럽게 보정
+						// TODO: x, y 따로 계산할까...?
+						if (!shifts.forced) {
+							//*
+							let moveGroupBegin = 0;
+							let wasMove0 = false;
+							let move0s = 0;
+							let moved = false;
+							let lastMove = { x: 0, y: 0 };
+							let withReverse = false;
+							let lastShift = shifts.list[0];
+							for (let si = 1; si < frameCount; si++) {
+								const shift = shifts.list[si < shifts.list.length ? si : shifts.list.length - 1];
+								const moveX = shift.x - lastShift.x;
+								const moveY = shift.y - lastShift.y;
+								const move = Math.abs(moveX) + Math.abs(moveY);
+								if (move > 3) { // 좌표 이동량이 3을 넘으면 그룹 끊기
+									// 끊으면서 이전 그룹 처리
+									if (moved && si - moveGroupBegin > 3) {
+										let begin = moveGroupBegin;
+										if (begin > 0) {
+											const first  = shifts.list[begin];
+											const second = shifts.list[begin + 1];
+											if (first.x == second.x && first.y == second.y) {
+												// 첫 항목이 단독 좌표가 아니면 보정치 계산 범위 확장
+												begin--;
+											}
+										}
+										let end = si;
+										{
+											const last   = shifts.list[end - 1];
+											const second = shifts.list[end - 2];
+											if (last.x == second.x && last.y == second.y) {
+												// 마지막 항목이 단독 좌표가 아니면 보정치 계산 범위 확장
+												end++;
+											}
+										}
+										const prev = shifts.list.slice(0, begin);
+										const list = gaussianSmoothPath(shifts.list.slice(begin, end), withReverse ? 1 : 6);
+										const next = shifts.list.slice(end);
+										shifts.list = prev.concat(list).concat(next);
+									}
+									moveGroupBegin = si;
+									wasMove0 = false;
+									move0s = 0;
+									moved = false;
+									withReverse = false;
+								} else {
+									if (move) {
+										// 그룹 내에서 움직임이 있어야 실제로 처리
+										wasMove0 = false;
+										moved = true;
+										if (!withReverse) {
+											// 이동 방향 역전이 있으면 의도된 떨림으로 간주해 보정치 줄임
+											if ((lastMove.x * moveX < 0)
+											 || (lastMove.y * moveY < 0)) {
+												withReverse = true;
+											}
+										}
+									} else if (!wasMove0) {
+										// 2프레임 이상 정지가 2회 이상 있을 때 처리
+										wasMove0 = true;
+										move0s++;
+									}
+									lastMove = { x: moveX, y: moveY };
+								}
+								lastShift = shift;
+							}
+							// 마지막 잔여 그룹 처리
+							if (moved && frameCount - moveGroupBegin > 3) {
+								let begin = moveGroupBegin;
+								if (begin > 0) {
+									const first  = shifts.list[begin];
+									const second = shifts.list[begin + 1];
+									if (first.x == second.x && first.y == second.y) {
+										// 첫 항목이 단독 좌표가 아니면 보정치 계산 범위 확장
+										begin--;
+									}
+								}
+								const prev = shifts.list.slice(0, begin);
+								const list = gaussianSmoothPath(shifts.list.slice(begin), withReverse ? 1 : 6);
+								shifts.list = prev.concat(list);
+							}
+							/*/
+							["x","y"].forEach((a) => {
+								let moveGroupBegin = 0;
+								let wasMove0 = false;
+								let move0s = 0;
+								let moved = false;
+								let lastMove = 0;
+								let withReverse = false;
+								let lastShift = shifts.list[0];
+								for (let si = 1; si < frameCount; si++) {
+									const shift = shifts.list[si < shifts.list.length ? si : shifts.list.length - 1];
+									const move = {
+											x: shift.x - lastShift.x
+										,	y: shift.y - lastShift.y
+									}
+									if (Math.abs(move.x) + Math.abs(move.y) > 3) { // 좌표 이동량이 3을 넘으면 그룹 끊기
+										// 끊으면서 이전 그룹 처리
+										if (moved && si - moveGroupBegin > 3) {
+											let begin = moveGroupBegin;
+											if (begin > 0) {
+												const first  = shifts.list[begin];
+												const second = shifts.list[begin + 1];
+												if (first[a] == second[a]) {
+													// 첫 항목이 단독 좌표가 아니면 보정치 계산 범위 확장
+													begin--;
+												}
+											}
+											let end = si;
+											{
+												const last   = shifts.list[end - 1];
+												const second = shifts.list[end - 2];
+												if (last[a] == second[a]) {
+													// 마지막 항목이 단독 좌표가 아니면 보정치 계산 범위 확장
+													end++;
+												}
+											}
+											const prev = shifts.list.slice(0, begin);
+											const list = gaussianSmooth(shifts.list.slice(begin, end), a, withReverse ? 1 : 6);
+											const next = shifts.list.slice(end);
+											shifts.list = prev.concat(list).concat(next);
+										}
+										moveGroupBegin = si;
+										wasMove0 = false;
+										move0s = 0;
+										moved = false;
+										withReverse = false;
+									} else {
+										if (move[a]) {
+											// 그룹 내에서 움직임이 있어야 실제로 처리
+											wasMove0 = false;
+											moved = true;
+											if (!withReverse) {
+												// 이동 방향 역전이 있으면 의도된 떨림으로 간주해 보정치 줄임
+												if (lastMove[a] * move[a] < 0) {
+													withReverse = true;
+												}
+											}
+										} else if (!wasMove0) {
+											// 2프레임 이상 정지가 2회 이상 있을 때 처리
+											wasMove0 = true;
+											move0s++;
+										}
+										lastMove = move[a];
+									}
+									lastShift = shift;
+								}
+								// 마지막 잔여 그룹 처리
+								if (moved && frameCount - moveGroupBegin > 3) {
+									let begin = moveGroupBegin;
+									if (begin > 0) {
+										const first  = shifts.list[begin];
+										const second = shifts.list[begin + 1];
+										if (first[a] == second[a]) {
+											// 첫 항목이 단독 좌표가 아니면 보정치 계산 범위 확장
+											begin--;
+										}
+									}
+									const prev = shifts.list.slice(0, begin);
+									const list = gaussianSmooth(shifts.list.slice(begin), a, withReverse ? 1 : 6);
+									shifts.list = prev.concat(list);
+								}
+							});
+							//*/
+						}
+						
 						let p = pos ?? dpos;
 						if (!p) {
 							// pos 태그 없었으면 스타일 기반으로 기본 위치 찾기
@@ -3240,7 +3358,7 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 
 							} else {
 								// 신규 좌표
-								tagTokens[p.i].tags[p.j] = `pos(${p.x + shift.x},${p.y + shift.y})`;
+								tagTokens[p.i].tags[p.j] = `pos(${Number((p.x + shift.x).toFixed(1))},${Number((p.y + shift.y).toFixed(1))})`;
 								
 								if (clip) {
 									const values = [];
@@ -3412,6 +3530,17 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 							
 							const defaultTags = {};
 							
+							{	// 전후 프레임도 뭉쳤는지 확인 
+								let last = shiftsBody[0];
+								last.prevFrames = last.frames;
+								for (let i = 1; i < shiftsBody.length; i++) {
+									const event = shiftsBody[i];
+									last.nextFrames = event.frames;
+									event.prevFrames = last.frames;
+								}
+								last.nextFrames = last.frames;
+							}
+							
 							shiftsBody.forEach((event) => {
 								// 각 태그의 원래 값을 구해야 중간 변화량을 구할 수 있음
 								let defaultStatus = null;
@@ -3427,11 +3556,11 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 										const style = assFile.getStyle(event.Style);
 										let color;
 										color = style.PrimaryColour; status["c" ] = [ Number("0x"+color.substring(8,10)), Number("0x"+color.substring(6,8)), Number("0x"+color.substring(4,6)) ];
-										status["1a"] = [255 - Number("0x"+color.substring(2,4))];
+										status["1a"] = [Number("0x"+color.substring(2,4))];
 										color = style.OutlineColour; status["3c"] = [ Number("0x"+color.substring(8,10)), Number("0x"+color.substring(6,8)), Number("0x"+color.substring(4,6)) ];
-										status["3a"] = [255 - Number("0x"+color.substring(2,4))];
+										status["3a"] = [Number("0x"+color.substring(2,4))];
 										color = style.BackColour   ; status["4c"] = [ Number("0x"+color.substring(8,10)), Number("0x"+color.substring(6,8)), Number("0x"+color.substring(4,6)) ];
-										status["4a"] = [255 - Number("0x"+color.substring(2,4))];
+										status["4a"] = [Number("0x"+color.substring(2,4))];
 										if (status["1a"][0] == status["3a"][0]
 										 && status["1a"][0] == status["4a"][0]) {
 											status["alpha"] = status["1a"];
@@ -3716,9 +3845,9 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 								
 								let text = "";
 								
-								if (event.frames > 3) {
+								if ((event.frames > 1 && event.prevFrames == 1 && event.nextFrames == 1) || event.frames > 3) {
 									// 여러 프레임 동일 좌표
-									// 3프레임까진 2~3코마 작화로 간주하여 단일 프레임처럼 처리
+									// 전후 프레임도 뭉쳤으면 3프레임까진 2~3코마 작화로 간주하여 단일 프레임처럼 처리
 									
 									// \t 태그 시분할
 									ts.forEach((t) => {
@@ -3881,9 +4010,9 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 														let tag1 = "";
 														let tag2 = "";
 														tags.forEach((tag) => {
-															tag0 += `\\${tag}&H${Color.hex(255 - Math.round(defaultStatus[tag] * fadeinRatioFrom))}&`;
-															tag1 += `\\${tag}&H${Color.hex(255 - defaultStatus[tag])}&`;
-															tag2 += `\\${tag}&H${Color.hex(255 - Math.round(defaultStatus[tag] * fadeoutRatioTo))}&`;
+															tag0 += `\\${tag}&H${Color.hex(255 - Math.round((255 - defaultStatus[tag]) * fadeinRatioFrom))}&`;
+															tag1 += `\\${tag}&H${Color.hex(defaultStatus[tag])}&`;
+															tag2 += `\\${tag}&H${Color.hex(255 - Math.round((255 - defaultStatus[tag]) * fadeoutRatioTo ))}&`;
 														});
 														text = `{${tag0}\\t(${fadeinTime}${tag1})\\t(${fadeoutTime}${tag2})}`;
 													} else {
@@ -3891,8 +4020,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 														let tag0 = "";
 														let tag1 = "";
 														tags.forEach((tag) => {
-															tag0 += `\\${tag}&H${Color.hex(255 - Math.round(defaultStatus[tag] * fadeinRatioFrom))}&`;
-															tag1 += `\\${tag}&H${Color.hex(255 - Math.round(defaultStatus[tag] * fadeinRatioTo))}&`;
+															tag0 += `\\${tag}&H${Color.hex(255 - Math.round((255 - defaultStatus[tag]) * fadeinRatioFrom))}&`;
+															tag1 += `\\${tag}&H${Color.hex(255 - Math.round((255 - defaultStatus[tag]) * fadeinRatioTo  ))}&`;
 														});
 														text = `{${tag0}\\t(${fadeinTime}${tag1})}`;
 													}
@@ -3901,8 +4030,8 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 													let tag0 = "";
 													let tag1 = "";
 													tags.forEach((tag) => {
-														tag0 += `\\${tag}&H${Color.hex(255 - Math.round(defaultStatus[tag] * fadeoutRatioFrom))}&`;
-														tag1 += `\\${tag}&H${Color.hex(255 - Math.round(defaultStatus[tag] * fadeoutRatioTo))}&`;
+														tag0 += `\\${tag}&H${Color.hex(255 - Math.round((255 - defaultStatus[tag]) * fadeoutRatioFrom))}&`;
+														tag1 += `\\${tag}&H${Color.hex(255 - Math.round((255 - defaultStatus[tag]) * fadeoutRatioTo  ))}&`;
 													});
 													text = `{${tag0}\\t(${fadeoutTime}${tag1})}`;
 												}
@@ -3912,24 +4041,24 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 												if (fadeoutRatioFrom + fadeoutRatioTo < 2) {
 													// 현재 싱크 범위에 페이드인/아웃 둘 다 존재
 													as.forEach((a) => {
-														const tag0 = `\\${a.tag}&H${ Color.hex(255 - Math.round(defaultStatus[a.tag] * fadeinRatioFrom)) }&`;
-														const tag1 = `\\${a.tag}&H${ Color.hex(255 - a.value) }&`;
-														const tag2 = `\\${a.tag}&H${ Color.hex(255 - Math.round(defaultStatus[a.tag] * fadeoutRatioTo )) }&`;
+														const tag0 = `\\${a.tag}&H${ Color.hex(255 - Math.round((255 - a.value) * fadeinRatioFrom)) }&`;
+														const tag1 = `\\${a.tag}&H${ Color.hex(a.value) }&`;
+														const tag2 = `\\${a.tag}&H${ Color.hex(255 - Math.round((255 - a.value) * fadeoutRatioTo )) }&`;
 														event.tokens[a.i*2+1].tags[a.j] = `${tag0}\\t(${fadeinTime}${tag1})\\t(${fadeoutTime}${tag2})`;
 													});
 												} else {
 													// 페이드인만 존제
 													as.forEach((a) => {
-														const tag0 = `\\${a.tag}&H${ Color.hex(255 - Math.round(defaultStatus[a.tag] * fadeinRatioFrom)) }&`;
-														const tag1 = `\\${a.tag}&H${ Color.hex(255 - Math.round(defaultStatus[a.tag] * fadeinRatioTo  )) }&`;
+														const tag0 = `\\${a.tag}&H${ Color.hex(255 - Math.round((255 - a.value) * fadeinRatioFrom)) }&`;
+														const tag1 = `\\${a.tag}&H${ Color.hex(255 - Math.round((255 - a.value) * fadeinRatioTo  )) }&`;
 														event.tokens[a.i*2+1].tags[a.j] = `${tag0}\\t(${fadeinTime}${tag1})`;
 													});
 												}
 											} else {
 												// 페이드아웃만 존재
 												as.forEach((a) => {
-													const tag0 = `\\${a.tag}&H${ Color.hex(255 - Math.round(defaultStatus[a.tag] * fadeoutRatioFrom)) }&`;
-													const tag1 = `\\${a.tag}&H${ Color.hex(255 - Math.round(defaultStatus[a.tag] * fadeoutRatioTo  )) }&`;
+													const tag0 = `\\${a.tag}&H${ Color.hex(255 - Math.round((255 - a.value) * fadeoutRatioFrom)) }&`;
+													const tag1 = `\\${a.tag}&H${ Color.hex(255 - Math.round((255 - a.value) * fadeoutRatioTo  )) }&`;
 													event.tokens[a.i*2+1].tags[a.j] = `${tag0}\\t(${fadeinTime}${tag1})`;
 												});
 											}
@@ -4046,13 +4175,13 @@ SmiFile.holdsToAss = function(holds, appendParts=[], appendStyles=[], appendEven
 												}
 												let tagFrame = "";
 												tags.forEach((tag) => {
-													tagFrame += `\\${tag}&H${ Color.hex(255 - Math.round(defaultStatus[tag] * ratio)) }&`;
+													tagFrame += `\\${tag}&H${ Color.hex(255 - Math.round((255 - defaultStatus[tag]) * ratio)) }&`;
 												});
 												text = `{${tagFrame}}`;
 											}
 											// 중간에 있는 투명도 태그 대체
 											as.forEach((a) => {
-												event.tokens[a.i*2+1].tags[a.j] = `${a.tag}&H${ Color.hex(255 - Math.round(defaultStatus[a.tag] * ratio)) }&`;
+												event.tokens[a.i*2+1].tags[a.j] = `${a.tag}&H${ Color.hex(255 - Math.round((255 - a.value) * ratio)) }&`;
 											});
 										}
 										event.tokens[fad.i*2+1].tags[fad.j] = "";
@@ -4224,29 +4353,86 @@ function reverseRotate(ox, oy, frx, fry, frz, px, py) {
 	return { x: ox+x, y: oy+y };
 }
 
+// \shifts 가우시안 커널 보정
+function gaussianSmoothPath(shifts, maxRadius=6) {
+	if (shifts.length <= 2) return shifts;
+	
+	return shifts.map((shift, i) => {
+		if (i == 0 || i == shifts.length - 1) {
+			return { x: shift.x, y: shift.y };
+		}
+		
+		const radius = Math.min(maxRadius, Math.min(i, shifts.length - 1 - i));
+		const sigma = Math.max(0.5, radius / 3);
+		
+		let smoothX = 0;
+		let smoothY = 0;
+		let totalWeight = 0;
+		
+		for (let k = -radius; k <= radius; k++) {
+			const j = Math.min(Math.max(i + k, 0), shifts.length - 1);
+			const weight = Math.exp(-(k * k) / (2 * sigma * sigma));
+
+			smoothX += shifts[j].x * weight;
+			smoothY += shifts[j].y * weight;
+			totalWeight += weight;
+		}
+		const smooth = {
+				x: Number((smoothX / totalWeight).toFixed(1))
+			,	y: Number((smoothY / totalWeight).toFixed(1))
+		};
+		return smooth;
+	});
+}
+function gaussianSmooth(shifts, key, maxRadius=6) {
+	if (shifts.length <= 2) return shifts;
+	
+	return shifts.map((shift, i) => {
+		if (i == 0 || i == shifts.length - 1) {
+			return shift;
+		}
+		
+		const radius = Math.min(maxRadius, Math.min(i, shifts.length - 1 - i));
+		const sigma = Math.max(0.5, radius / 3);
+		
+		let smooth = 0;
+		let totalWeight = 0;
+		
+		for (let k = -radius; k <= radius; k++) {
+			const j = Math.min(Math.max(i + k, 0), shifts.length - 1);
+			const weight = Math.exp(-(k * k) / (2 * sigma * sigma));
+			
+			smooth += shifts[j][key] * weight;
+			totalWeight += weight;
+		}
+		shift[key] = Number(Number(smooth / totalWeight).toFixed(1));
+		return shift;
+	});
+}
+
 AssFile.getDefaultPos = function(style, playResX=1920, playResY=1080, an=0) {
 	if (!an) an = style.Alignment;
-	let pos = [];
+	let pos = { x: 0, y: 0 };
 	switch (an % 3) {
 		case 1: // 왼쪽
-			pos.push(style.MarginL);
+			pos.x = style.MarginL;
 			break;
 		case 2: // 가운데
-			pos.push(playResX / 2);
+			pos.x = (playResX + style.MarginL - style.MarginR) / 2;
 			break;
 		case 0: // 오른쪽
-			pos.push(playResX - style.MarginR);
+			pos.x = playResX - style.MarginR;
 			break;
 	}
 	switch (Math.floor((an - 1) / 3)) {
 		case 0: // 아래
-			pos.push(playResY - style.MarginV);
+			pos.y = playResY - style.MarginV;
 			break;
 		case 1: // 가운데
-			pos.push(playResY / 2);
+			pos.y = playResY / 2;
 			break;
 		case 2: // 위
-			pos.push(style.MarginV);
+			pos.y = style.MarginV;
 			break;
 	}
 	return pos;
@@ -4302,7 +4488,7 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 						if (end > 0) {
 							const values = remains.substring(5, end).split(",");
 							if (values.length == 2 && isFinite(values[0]) && isFinite(values[1])) {
-								pos = [Number(values[0]), Number(values[1])];
+								pos = { x: Number(values[0]), y: Number(values[1]) };
 							}
 						}
 					} else if (!fad && remains.startsWith("\\fad(")) {
@@ -4427,23 +4613,23 @@ AssEvent.parseKaraoke = function(text, style, playResX=1920, playResY=1080) {
 	{	// \an7 기준으로 재계산
 		switch (an % 3) {
 			case 2: // 가운데
-				pos[0] -= div.offsetWidth / 2;
+				pos.x -= div.offsetWidth / 2;
 				break;
 			case 0: // 오른쪽
-				pos[0] -= div.offsetWidth;
+				pos.x -= div.offsetWidth;
 				break;
 		}
 		switch (Math.floor((an - 1) / 3)) {
 			case 0: // 아래
-				pos[1] -= height;
+				pos.y -= height;
 				break;
 			case 1: // 가운데
-				pos[1] -= height / 2;
+				pos.y -= height / 2;
 				break;
 		}
 	}
 	
-	return { x: pos[0], y: pos[1], fad: fad, t: t, ks: ks };
+	return { x: pos.x, y: pos.y, fad: fad, t: t, ks: ks };
 }
 function toClip(poss) {
 	const values = ["m", poss[0][0].toFixed(1), poss[0][1].toFixed(1), "l"];
@@ -4663,7 +4849,7 @@ AssFile.prototype.gradation = function() {
 				}
 				const style = this.getStyle(origin.Style);
 				const pos = AssFile.getDefaultPos(style, w, h, an);
-				const defaultPos = `\\pos(${pos[0]},${pos[1]})`;
+				const defaultPos = `\\pos(${pos.x},${pos.y})`;
 				prev += defaultPos;
 				
 				// \an 영향 없을 때만 스타일 기본 좌표 기억
@@ -5119,6 +5305,7 @@ AssFile.prototype.automation = async function(styleName, script) {
 		}
 	});
 	const style = this.getStyle(styleName) ?? Subtitle.DefaultStyle;
+	delete style.origin; // 자동화는 마지막 단계이므로, 불필요한 잔여 DOM 객체 있었으면 삭제
 	await callWorker({ func: "setStyle", values: [style] });
 	const events = [];
 	

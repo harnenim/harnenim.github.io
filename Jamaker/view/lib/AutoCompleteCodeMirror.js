@@ -1,7 +1,7 @@
 ﻿{
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./AutoComplete.css?261115", import.meta.url).href;
+	link.href = new URL("./AutoComplete.css?261119", import.meta.url).href;
 	document.head.append(link);
 	
 	// 자동완성 이외의 영역 클릭 시 자동완성 닫기
@@ -92,9 +92,21 @@ AutoCompleteCodeMirror.prototype.select = function(index) {
 		// 기존 항목 선택 해제
 		this.lis[this.selected].classList.remove("selected");
 	}
-	this.lis[this.selected = index].classList.add("selected");
+	const li = this.lis[this.selected = index];
+	li.classList.add("selected");
 	
-	// 스크롤됐을 수 있으므로 좌표도 한 번 갱신
+	// 자동완성 스크롤 필요한 경우 확인
+	const ol = AutoCompleteCodeMirror.view;
+	if (li.offsetTop <= ol.scrollTop) {
+		ol.scrollTop = li.offsetTop - 10;
+	} else {
+		const offsetBottom = li.offsetTop + li.offsetHeight;
+		if (offsetBottom >= (ol.scrollTop + ol.offsetHeight)) {
+			ol.scrollTop = offsetBottom - ol.offsetHeight + 10;
+		}
+	}
+	
+	// 에디터 스크롤됐을 수 있으므로 좌표도 한 번 갱신
 	this.setPos();
 }
 // 열기

@@ -1,9 +1,9 @@
-﻿import "./MenuStrip.js?261115";
-import "./Subtitle.Converter.js?261115";
-import "./AutoCompleteCodeMirror.js?261115";
-import "./SmiEditor.js?261115";
-import "./AssEditor.js?261115";
-import "./highlight/cm/javascript.js?261115";
+﻿import "./MenuStrip.js?261119";
+import "./Subtitle.Converter.js?261119";
+import "./AutoCompleteCodeMirror.js?261119";
+import "./SmiEditor.js?261119";
+import "./AssEditor.js?261119";
+import "./highlight/cm/javascript.js?261119";
 
 {
 	document.head.querySelectorAll("link").forEach((el) => {
@@ -14,7 +14,7 @@ import "./highlight/cm/javascript.js?261115";
 	
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = new URL("./Jamaker.css?261115", import.meta.url).href;
+	link.href = new URL("./Jamaker.css?261119", import.meta.url).href;
 	document.head.append(link);
 }
 
@@ -2668,6 +2668,7 @@ window.setSetting = function(setting, initial=false) {
 	editorSetting.autoComplete["0"][1].push(...setting.autoComplete.word.list);
 	editorSetting.autoComplete["0"][1].sort();
 	SmiEditor.setSetting(editorSetting);
+	refreshAutoCompleteForAss();
 	Smi.syncPreset = setting.sync.preset.replaceAll("{lang}", setting.sync.lang);
 	
 	if (initial) {
@@ -2728,7 +2729,7 @@ window.setSetting = function(setting, initial=false) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-		fetch("lib/Jamaker.color.css?261115").then(async (response) => {
+		fetch("lib/Jamaker.color.css?261119").then(async (response) => {
 			let preset = await response.text();
 			let styleColor = document.getElementById("styleColor");
 			if (!styleColor) {
@@ -2811,7 +2812,7 @@ window.setSetting = function(setting, initial=false) {
 		}
 	}
 	if (initial || (oldSetting.size != setting.size)) {
-		fetch("lib/Jamaker.size.css?261115").then(async (response) => {
+		fetch("lib/Jamaker.size.css?261119").then(async (response) => {
 			let preset = await response.text();
 			
 			let styleSize = document.getElementById("styleSize");
@@ -2994,7 +2995,7 @@ window.setHighlights = function(list) {
 }
 
 window.openSetting = function() {
-	SmiEditor.settingWindow = window.open("setting.html?261115", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
+	SmiEditor.settingWindow = window.open("setting.html?261119", "setting", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("setting"
 			, (setting.window.x < setting.player.window.x && setting.window.width < 880)
 			  ? (setting.window.x + (40 * DPI))
@@ -5284,7 +5285,7 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.windows.addon = window.open("addon/ExtSubmit.html?261115", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.windows.addon = window.open("addon/ExtSubmit.html?261119", "addon", "scrollbars=no,location=no,width=1,height=1");
 			setTimeout(() => {
 				SmiEditor.Addon.moveWindowToSetting("addon");
 			}, 1);
@@ -5814,35 +5815,6 @@ SmiEditor.prototype.detectPos = function(mode = -1) {
 			value = line.substring(begin, end).trim().replaceAll("  ", " ");
 			rMode = 2; // 자동 \p1이면 다각형 선택기
 			
-			/* 실제로 써보니, \an7\pos(0,0) 이외의 좌표에 맞추는 건 혼란만 부추김
-			
-			TODO: \shifts 기준 현재 좌표를 고려하는 건??
-			      이건 \p1만이 아니라 다른 좌표 기능에도 적용됨
-			
-			// \p1 태그로 그린 도형은 \pos, \move 확인 필요
-			// \an7이 아닌 경우는 고려하지 않음. 도형 크기에 따라 위치가 유동적임
-			// 홀드와 별개 스타일이 지정된 경우도 무시
-			ox = this.style.MarginL;
-			oy = this.style.MarginV;
-			do { // \pos 태그 찾기
-				let begin = line.indexOf("\\pos(");
-				if (begin < 0) {
-					if ((begin = line.indexOf("\\move(")) < 0) break;
-					begin += 6;
-				} else {
-					begin += 5;
-				}
-				if ((end = line.indexOf(")", begin)) < 0) break;
-				const pos = line.substring(begin, end).trim().replaceAll("  ", " ").split(",");
-				if (pos.length >= 2) {
-					if (isFinite(pos[0]) && isFinite(pos[1])) {
-						ox = Number(pos[0]);
-						oy = Number(pos[1]);
-					}
-				}
-			} while (false);
-			*/
-			
 			this.cm.setSelection({ line: lineNo, ch: begin }, { line: lineNo, ch: end });
 			foundTag = tagPos;
 		} while (false);
@@ -6096,12 +6068,7 @@ window.runPosPicker = function(mode = -1) {
  * SMI 노래방 자막 기반으로 ASS {\k} 기반 스크립트 생성
  * 색상태그 이외에 다른 걸 중간에 섞어 쓰지 않는다고 가정
  * ASS 변환 스크립트 이외의 주석은 없다고 가정
- * 
- * TODO: 현재 RUBY 태그 있으면 정상적으로 동작하지 않음
- *       정렬 문제도 있는데, 그냥 날리는 게 맞나...?
- *       굳이 한다면
- *       1. RUBY 태그를 먼저 제거하고 돌리기
- *       2. RUBY 태그 내용물만 따로 돌리고 정렬 맞추기
+ * RUBY 태그는 완벽하지 않으므로 사후 작업 필요
  */
 window.setAssKaraokeFromSmi = function(kf=false) {
 	const editor = SmiEditor.selected;
@@ -6109,178 +6076,348 @@ window.setAssKaraokeFromSmi = function(kf=false) {
 	
 	const smiFile = new SmiFile(editor.cm.getValue());
 	
-	const groups = [];
-	let group = { lines: [] };
-	smiFile.body.forEach((smi) => {
-		const lines = smi.text.split(/<br>/gi);
-		for (let i = 0; i < lines.length; i++) {
-			let text = "";
-			let step = -1;
-			const attrs = Smi.toAttrs(lines[i]);
-			let lastFc = ""; // 비활성 색상 확인
-			for (let j = attrs.length - 1; j >= 0; j--) {
-				if (attrs[j].text) {
-					lastFc = attrs[j].fc;
-					break;
-				}
-			}
-			attrs.forEach((attr) => {
-				if (attr.attrs) {
-					// RUBY 태그는 이중으로 들어감
-					attr.attrs.forEach((attr) => {
-						if (step < 0 && attr.text && lastFc == attr.fc) {
-							step = text.length;
-						}
-						text += attr.text;
-					});
-				} else if (attr.text) {
-					if (step < 0 && attr.text && lastFc == attr.fc) {
-						step = text.length;
-					}
-					text += attr.text;
-				}
-			});
-			
-			lines[i] = { attrs: attrs, text: text, step: (step < 0 ? 0 : step) };
-		}
-		let keep = (group.lines.length == lines.length);
-		if (keep) {
-			// 줄 수가 같을 때
-			for (let i = 0; i < lines.length; i++) {
-				if (group.lines[i].text != lines[i].text) {
-					// 태그를 제외한 텍스트가 달라졌으면 새 그룹
-					keep = false;
-					break;
-				}
-			}
-		}
-		if (keep) {
-			smi.steps = [];
-			smi.lines = [];
-			lines.forEach((line, i) => {
-				// 최종적으론 해당 그룹 마지막 싱크의 색상값을 구함
-				line.attrs.forEach((attr) => {
-					if (attr.attrs) {
-						attr.attrs.forEach((attr) => {
-							group.lines[i].fcTo = attr.fc;
-						});
-						return;
-					}
-					if (attr.fc) {
-						group.lines[i].fcTo = attr.fc;
-						return;
-					}
-				});
-				smi.steps.push(line.step);
-				smi.lines.push(line.attrs); // TODO: 일단 RUBY 태그 무시
-			});
-			group.smis.push(smi);
-			
-		} else {
-			smi.steps = [];
-			smi.lines = [];
-			lines.forEach((line) => {
-				smi.steps.push(line.step);
-				const simpleAttrs = [];
-				let lastAttr = null;
-				let fc = null; // 마지막 색상 기억
-				line.attrs.forEach((attr) => {
-					if (attr.attrs) {
-						// RUBY 태그는 이중으로 들어감
-						fc = attr.attrs[attr.attrs.length - 1].fc;
-						for (let i = 0; i < attr.attrs.length; i++) {
-							attr.attrs[0].text += attr.attrs[i].text;
-						}
-						for (let i = 0; i < attr.furigana.length; i++) {
-							attr.furigana[0].text += attr.furigana[i].text;
-						}
-						attr.attrs.length = 1;
-						attr.furigana.length = 1;
-					} else if (attr.fc) {
-						fc = attr.fc;
-					}
-					if (lastAttr) {
-						if (attr.attrs) {
-							// TODO: RUBY 태그는 별도로 처리..가 될지 모르겠네..........
-							simpleAttrs.push(last = attr);
-						} else {
-							// 이외에는 색상태그 무시하고 한 덩어리로 처리
-							last.text += attr.text;
-						}
-					} else {
-						simpleAttrs.push(attr);
-					}
-				});
-				smi.lines.push(line.attrs = simpleAttrs);
-				line.fcFrom = fc;
-			});
-			groups.push(group = {
-					lines: lines
-				,	smis: [smi]
-			});
-		}
-	});
+	let groups = [];
 	
-	const k = kf ? 'kf' : 'k';
-	groups.forEach((group, g) => {
-		if (group.smis.length < 2) return;
+	{
 		
-		group.lines.forEach((line, i) => {
+		{	// 텍스트 일치 여부로 1차 그룹 분리
+			let group = {};
+			let lastLineTexts = [];
+			smiFile.body.forEach((smi, s) => {
+				const lines = smi.text.split(/<br>/gi);
+				
+				let newGroup = false;
+				if (lastLineTexts.length == lines.length) {
+					for (let i = 0; i < lines.length; i++) {
+						Subtitle._tmp.innerHTML = lines[i];
+						if (Subtitle._tmp.innerText != lastLineTexts[i]) {
+							newGroup = true;
+							break;
+						}
+					}
+				} else {
+					newGroup = true;
+				}
+				
+				if (newGroup) {
+					group.end = smi.start;
+					groups.push(group = {
+							lineCount: lines.length
+						,	start: smi.start
+						,	smis: [], c1: [], c2: []
+					});
+					lastLineTexts = [];
+					for (let i = 0; i < lines.length; i++) {
+						Subtitle._tmp.innerHTML = lines[i];
+						lastLineTexts.push(Subtitle._tmp.innerText.trim());
+					}
+				}
+				smi.lineAttrs = [];
+				for (let i = 0; i < lines.length; i++) {
+					const attrs = Smi.toAttrs(lines[i]);
+					const newAttrs = [];
+					attrs.forEach((attr) => {
+						if (attr.text) {
+							newAttrs.push(attr);
+						} else if (attr.attrs) {
+							group.hasFurigana = true;
+							const furiAttrs = [];
+							const rubyAttrs = [];
+							attr.furigana.forEach((aAttr) => {
+								if (aAttr.text) {
+									furiAttrs.push(aAttr);
+								}
+							});
+							attr.attrs.forEach((aAttr) => {
+								if (aAttr.text) {
+									rubyAttrs.push(aAttr);
+								}
+							});
+							attr.furigana = furiAttrs;
+							attr.attrs = rubyAttrs;
+							newAttrs.push(attr);
+						}
+					});
+					smi.lineAttrs.push(newAttrs);
+				}
+				group.smis.push(smi);
+			});
+			group.end = smiFile.body[smiFile.body.length - 1].start;
+		}
+		
+		{	// 색상 일치 체크 및 분리
+			const newGroups = [];
+			function splitGroup(group) {
+				for (let i = 0; i < group.lineCount; i++) {
+					let maxAttrCount = 1;
+					for (let j = 0; j < group.smis.length; j++) {
+						let count = group.smis[j].lineAttrs[i].length;
+						if (count == 1 && group.smis[j].lineAttrs[i].attrs) {
+							count = group.smis[j].lineAttrs[i].attrs.length;
+						}
+						if (count > 1) {
+							maxAttrCount = count;
+						}
+					}
+					if (maxAttrCount == 1) {
+						// 그룹 내 색상 변화 없는 줄은 무시
+						continue;
+					}
+					
+					const firstAttrs = group.smis[0].lineAttrs[i];
+					let firstLastAttr = firstAttrs[firstAttrs.length - 1];
+					if (firstLastAttr.attrs) {
+						firstLastAttr = firstLastAttr.attrs[firstLastAttr.attrs.length - 1];
+					}
+					let c2 = firstLastAttr.fc;
+					let c2end = 1;
+					for (; c2end < group.smis.length; c2end++) {
+						const attrs = group.smis[c2end].lineAttrs[i];
+						let lastAttr = attrs[attrs.length - 1];
+						if (lastAttr.attrs) {
+							lastAttr = lastAttr.attrs[lastAttr.attrs.length - 1];
+						}
+						if (lastAttr.fc != c2) {
+							break;
+						}
+					}
+					
+					let firstFirstAttr = firstAttrs[0];
+					if (firstFirstAttr.attrs) {
+						firstFirstAttr = firstFirstAttr.attrs[0];
+					}
+					let c1 = firstFirstAttr.fc;
+					
+					let lastFirstAttr = firstFirstAttr;
+					let j = 1;
+					for (; j < group.smis.length; j++) {
+						let nextFirstAttr = group.smis[j].lineAttrs[i][0];
+						if (nextFirstAttr.attrs) {
+							nextFirstAttr = nextFirstAttr.attrs[0];
+						}
+						if (c1 == nextFirstAttr.fc) {
+							lastFirstAttr = nextFirstAttr;
+							break;
+						}
+						// 아직 첫 글자가 중간색인 경우 넘어감
+						c1 = nextFirstAttr.fc;
+					}
+					
+					for (; j < group.smis.length; j++) {
+						let nextFirstAttr = group.smis[j].lineAttrs[i][0];
+						if (nextFirstAttr.attrs) {
+							nextFirstAttr = nextFirstAttr.attrs[0];
+						}
+						if (c1 != nextFirstAttr.fc) {
+							// 첫 글자 색이 바뀌면 그룹 끊기
+							break;
+						}
+						if (nextFirstAttr.text.length < nextFirstAttr.text.length) {
+							// 칠해진 글자수 역전되면 그룹 끊기
+							break;
+						}
+						lastFirstAttr = nextFirstAttr;
+					}
+					
+					if (j < group.smis.length) {
+						// 그룹 끊기
+						const c1s = JSON.parse(JSON.stringify(group.c1));
+						const c2s = JSON.parse(JSON.stringify(group.c2));
+						c1s[i] = c1;
+						c2s[i] = c2;
+						splitGroup({ lineCount: group.lineCount, smis: group.smis.slice(0, j), c1: c1s, c2: c2s });
+						splitGroup({ lineCount: group.lineCount, smis: group.smis.slice(j   ), c1: group.c1, c2: group.c2 });
+						return;
+					} else {
+						group.c1[i] = c1;
+						group.c2[i] = c2;
+					}
+				}
+				newGroups.push(group);
+			}
+			groups.forEach(splitGroup);
+			groups = newGroups;
+		}
+		
+		const k = kf ? 'kf' : 'k';
+		groups.forEach((group) => {
+			if (group.smis.length < 2) return;
+			
 			group.smis.forEach((smi) => {
-				let step = line.text.length;
-				const attrs = smi.lines[i];
-				for (let j = attrs.length - 1; j >= 0; j--) {
-					if (!attrs[j].text) continue;
-					if (attrs[j].fc != line.fcFrom) break;
-					step -= attrs[j].text.length;
+				smi.furiAttrs = [];
+				for (let i = 0; i < group.lineCount; i++) {
+					const attrs = smi.lineAttrs[i];
+					let withRuby = false;
+					for (let j = 0; j < attrs.length; j++) {
+						if (attrs[j].attrs) {
+							withRuby = true;
+							break;
+						}
+					}
+					if (withRuby) {
+						let furiAttrs = [];
+						let lineAttrs = [];
+						let junkAttr = null;
+						attrs.forEach((attr) => {
+							if (attr.attrs) {
+								junkAttr = null;
+								attr.furigana.forEach((aAttr) => {
+									if (aAttr.fc != group.c2[i]) {
+										aAttr.fc = group.c1[i];
+									}
+									furiAttrs.push(aAttr);
+								});
+								attr.attrs.forEach((aAttr) => {
+									if (aAttr.fc != group.c2[i]) {
+										aAttr.fc = group.c1[i];
+									}
+									lineAttrs.push(aAttr);
+								});
+							} else {
+								if (junkAttr) {
+									junkAttr.text += attr.text;
+								} else {
+									junkAttr = new Attr(attr, attr.text);
+									junkAttr.junk = true;
+									furiAttrs.push(junkAttr);
+								}
+								lineAttrs.push(attr);
+							}
+						});
+						smi.furiAttrs.push(furiAttrs);
+						smi.lineAttrs[i] = lineAttrs;
+					} else {
+						smi.furiAttrs.push([]);
+					}
 				}
-				smi.steps[i] = step;
 			});
-			line.kText = "";
-		});
-		
-		let lastStart = group.smis[0].start;
-		let lastSteps = [];
-		group.lines.forEach((line) => { lastSteps.push(0); });
-		let steps = group.smis[0].steps;
-		group.smis.forEach((smi) => {
-			group.lines.forEach((line, i) => {
-				if (steps[i] < smi.steps[i]) {
-					line.kText += `{\\${k}${Math.round((smi.start - lastStart) / 10) }}` + line.text.substring(lastSteps[i], steps[i]);
-					lastSteps[i] = steps[i];
-					steps[i] = smi.steps[i];
-					lastStart = smi.start;
+			
+			let scripts = [];
+			for (let i = 0; i < group.lineCount; i++) {
+				if (!group.c1[i] || !group.c2[i]) {
+					let script = `0,,${group.smis.length},line${i},`;
+					const attrs = group.smis[0].lineAttrs[i];
+					for (let j = 0; j < attrs.length; j++) {
+						const attr = attrs[j];
+						if (attr.attrs) {
+							for (let k = 0; k < attr.attrs.length; k++) {
+								script += attr.attrs[k].text;
+							}
+						} else {
+							script += attr.text;
+						}
+					}
+					scripts.push(script.replaceAll("}{", ""));
+					continue;
 				}
-			});
-		});
-		let comment = "<!-- ASS\n";
-		group.lines.forEach((line, i) => {
-			if (lastSteps[i] == 0) {
-				delete line.fcFrom;
-				delete line.fcTo;
-				delete line.kText;
-				comment += `0,,${group.smis.length},line${i},` + line.text + "\n";
-				return;
-			}
-			const remains = line.text.substring(lastSteps[i]);
-			if (remains) {
-				let length = group.smis[group.smis.length - 1].start - lastStart;
-				if (g + 1 < groups.length) {
-					length = groups[g + 1].smis[0].start - lastStart;
+				const c1 = `${group.c1[i].substring(4,6)}${group.c1[i].substring(2,4)}${group.c1[i].substring(0,2)}`;
+				const c2 = `${group.c2[i].substring(4,6)}${group.c2[i].substring(2,4)}${group.c2[i].substring(0,2)}`;
+				{	// 일반 노래방 자막
+					let start = group.smis[0].start;
+					let script = `0,,${group.smis.length},line${i},{\\c&H${c1}&\\2c&H${c2}&}`;
+					let lastFilled = "";
+					let lastChar = null;
+					group.smis.forEach((smi) => {
+						let filled = "";
+						const attrs = smi.lineAttrs[i];
+						for (let j = 0; j < attrs.length; j++) {
+							const attr = attrs[j];
+							if (attr.attrs) {
+								for (let k = 0; k < attr.attrs.length; k++) {
+									if (attr.attrs[k].fc == group.c2[i]) {
+										break;
+									}
+									filled += attr.attrs[k].text;
+								}
+							} else {
+								if (attr.fc == group.c2[i]) {
+									break;
+								}
+								filled += attr.text;
+							}
+						}
+						if (filled == lastFilled) {
+							return;
+						}
+						if (lastChar) {
+							script += `{\\${k}${Math.round((smi.start - start) / 10)}}${lastChar}`;
+						}
+						lastChar = filled.substring(lastFilled.length);
+						lastFilled = filled;
+						start = smi.start;
+					});
+					if (lastChar) {
+						script += `{\\${k}${Math.round((group.end - start) / 10)}}${lastChar}`;
+					}
+					scripts.push(script.replaceAll("}{", ""));
 				}
-				line.kText += `{\\${k}${ Math.round((length) / 10) }}` + remains;
+				if (group.hasFurigana) {
+					// 노래방 자막 후리가나
+					let start = group.smis[0].start;
+					let script = `0,,${group.smis.length},line${i},{\\c&H${c1}&\\2c&H${c2}&\\fscy50}`;
+					let status = 0; // 최초: 0 / 일반: 1 / 후리가나: 2
+					let lastFilledChar = "";
+					let lastFilledJunk = "";
+					let lastChar = null;
+					let lastJunk = null;
+					
+					group.smis.forEach((smi) => {
+						let filledChar = "";
+						let filledJunk = "";
+						const attrs = smi.furiAttrs[i];
+						for (let j = 0; j < attrs.length; j++) {
+							const attr = attrs[j];
+							if (attr.fc == group.c2[i]) {
+								break;
+							}
+							if (attr.junk) {
+								filledJunk += attr.text;
+							} else {
+								filledChar += attr.text;
+							}
+						}
+						if (filledJunk != lastFilledJunk
+						 || filledChar != lastFilledChar) { // 바뀐 게 있으면
+							// 이전 부분 채우기
+							if (lastJunk && (filledChar != lastFilledChar)) {
+								script += `{${ status==1 ? "" : "\\alpha&HFF&" }${ status==2 ? "\\fscx100" : "" }\\k${Math.round((smi.start - start) / 10)}}${lastJunk}`;
+								status = 1;
+								lastJunk = "";
+								lastChar = "";
+								start = smi.start;
+							} else if (lastChar) {
+								script += `{${ status==2 ? "" : "\\fscx50\\alpha" }\\${k}${Math.round((smi.start - start) / 10)}}${lastChar}`;
+								status = 2;
+								lastJunk = "";
+								lastChar = "";
+								start = smi.start;
+							}
+							// 현재 부분 기억하기
+							if (filledJunk != lastFilledJunk) {
+								lastJunk = filledJunk.substring(lastFilledJunk.length);
+								lastFilledJunk = filledJunk;
+							} else {
+								lastChar = filledChar.substring(lastFilledChar.length);
+								lastFilledChar = filledChar;
+							}
+						}
+					});
+					// 마지막 부분 채우기
+					if (lastJunk) {
+						script += `{${ status==1 ? "" : "\\alpha&HFF&" }${ status==2 ? "\\fscx100" : "" }\\k${Math.round((group.end - start) / 10)}}${lastJunk}`;
+						status = 1;
+						lastJunk = "";
+					} else if (lastChar) {
+						script += `{${ status==2 ? "" : "\\fscx50\\alpha" }\\${k}${Math.round((group.end - start) / 10)}}${lastChar}`;
+						status = 2;
+						lastChar = "";
+					}
+					scripts.push(script.replaceAll("}{", "") + "\N　{}");
+				}
 			}
-			if (line.fcFrom && line.fcTo) {
-				const fcTo   = `${line.fcTo  .substring(4,6)}${line.fcTo  .substring(2,4)}${line.fcTo  .substring(0,2)}`;
-				const fcFrom = `${line.fcFrom.substring(4,6)}${line.fcFrom.substring(2,4)}${line.fcFrom.substring(0,2)}`;
-				comment += `0,,${group.smis.length},line${i},` + (`{\\c&H${fcTo}&\\2c&H${fcFrom}&}` + line.kText).replaceAll("}{", "") + "\n";
-			} else {
-				comment += `0,,${group.smis.length},line${i},` + line.kText + "\n";
-			}
+			group.smis[0].text = `<!--\n${ scripts.join("\n") }\n-->\n` + group.smis[0].text;
 		});
-		comment += "-->\n";
-		group.smis[0].text = comment + group.smis[0].text;
-	});
+	}
 	
 	const smis = [];
 	groups.forEach((group) => {

@@ -1,4 +1,20 @@
-[ { "version": "2026.11.15"
+[ { "version": "2026.11.20"
+  , "comment":
+    [ "특정 상황에서의 ASS 자동화 스크립트 미작동 오류 수정"
+    , "좌우 여백 다를 때 ASS \\pos 기본값 오류 수정"
+    , "설정 바꾼 직후 \\ 자동완성 안 열리는 문제 수정"
+    , "자동완성 방향키로 스크롤 안 되던 문제 수정"
+    , "ASS shifts 투명도 변화 버그 수정 및 미세 움직임 보정"
+    , "RUBY 태그 들어간 노래방 자막 ASS \\k 태그 자동생성 지원"
+    ]
+  , "files":
+    [ "view/lib/AutoCompleteCodeMirror.js"
+    , "view/lib/Jamaker.js"
+    , "view/lib/setting.js"
+    , "view/lib/Subtitle.Converter.js"
+    ]
+  }
+, { "version": "2026.11.15"
   , "comment":
     [ "ASS 추가 스크립트 먹통 현상 수정"
     ]
